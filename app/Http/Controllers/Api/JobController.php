@@ -277,7 +277,7 @@ class JobController extends Controller
         $validator = Validator::make($request->all(), [
             'job_posting_id' => 'required|exists:job_postings,id',
             'cover_letter' => 'required|string|max:2000',
-            'resume' => 'required|file|mimes:pdf,doc,docx|max:5120', // 5MB max
+            'resume' => 'nullable|file|mimes:pdf,doc,docx|max:5120', // 5MB max
             'additional_info' => 'nullable|string|max:1000'
         ]);
 

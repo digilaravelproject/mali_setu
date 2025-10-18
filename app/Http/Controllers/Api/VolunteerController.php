@@ -46,12 +46,12 @@ class VolunteerController extends Controller
             $query->where('end_date', '<=', $request->end_date);
         }
 
-        // Only show active opportunities that are accepting applications by default
-        if (!$request->has('include_inactive')) {
-            $query->where('status', 'active')
-                  ->where('start_date', '>', now())
-                  ->whereRaw('volunteers_registered < volunteers_needed');
-        }
+        // // Only show active opportunities that are accepting applications by default
+        // if (!$request->has('include_inactive')) {
+        //     $query->where('status', 'active')
+        //           ->where('start_date', '>', now())
+        //           ->whereRaw('volunteers_registered < volunteers_needed');
+        // }
 
         $opportunities = $query->with('applications')
                               ->orderBy('start_date', 'asc')

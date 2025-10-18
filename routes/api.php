@@ -31,6 +31,7 @@ Route::prefix('auth')->group(function () {
     Route::post('login', [AuthController::class, 'login']);
 });
 
+
 // Public business routes (for browsing)
 Route::prefix('business')->group(function () {
     Route::get('/', [BusinessController::class, 'index']);
@@ -70,7 +71,7 @@ Route::post('payment/webhook', [PaymentController::class, 'webhook']);
 Route::prefix('search')->group(function () {
     Route::get('global', [SearchController::class, 'globalSearch']);
     Route::get('businesses', [SearchController::class, 'searchBusinesses']);
-    Route::get('matrimony', [SearchController::class, 'searchMatrimony']);
+    Route::post('matrimony', [SearchController::class, 'searchMatrimony']);
     Route::get('jobs', [SearchController::class, 'searchJobs']);
     Route::get('volunteers', [SearchController::class, 'searchVolunteers']);
     Route::get('donations', [SearchController::class, 'searchDonations']);
@@ -100,7 +101,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     // Business Management Routes
     Route::prefix('business')->group(function () {
         Route::post('register', [BusinessController::class, 'register']);
-        Route::get('my-businesses', [BusinessController::class, 'getUserBusinesses']);
+        Route::post('my-businesses', [BusinessController::class, 'getUserBusinesses']);
         Route::put('{id}', [BusinessController::class, 'update']);
         Route::delete('{id}', [BusinessController::class, 'destroy']);
         Route::post('products', [BusinessController::class, 'addProduct']);
@@ -137,8 +138,8 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::prefix('payment')->group(function () {
         Route::post('create-order', [PaymentController::class, 'createOrder']);
         Route::post('verify', [PaymentController::class, 'verifyPayment']);
-        Route::get('transactions', [PaymentController::class, 'getTransactions']);
-        Route::get('transaction/{id}', [PaymentController::class, 'getTransaction']);
+        Route::post('transactions', [PaymentController::class, 'getTransactions']);
+        Route::post('transaction/{id}', [PaymentController::class, 'getTransaction']);
         Route::post('refund', [PaymentController::class, 'initiateRefund']);
     });
     
@@ -196,17 +197,17 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::post('/', [JobController::class, 'store']);
         Route::put('/{id}', [JobController::class, 'update']);
         Route::delete('/{id}', [JobController::class, 'destroy']);
-        Route::get('/my-jobs', [JobController::class, 'getUserJobs']);
+        Route::post('/my-jobs', [JobController::class, 'getUserJobs']);
         Route::post('/{id}/toggle-status', [JobController::class, 'toggleStatus']);
         
         // Job application management
         Route::post('/apply', [JobController::class, 'apply']);
-        Route::get('/my-applications', [JobController::class, 'getUserApplications']);
+        Route::post('/my-applications', [JobController::class, 'getUserApplications']);
         Route::get('/{jobId}/applications', [JobController::class, 'getJobApplications']);
         Route::put('/applications/{applicationId}/status', [JobController::class, 'updateApplicationStatus']);
         
         // Job analytics
-        Route::get('/analytics', [JobController::class, 'getJobAnalytics']);
+        Route::post('/analytics', [JobController::class, 'getJobAnalytics']);
     });
     
     // Admin Routes

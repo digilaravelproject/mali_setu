@@ -317,8 +317,11 @@ class PaymentController extends Controller
      */
     public function webhook(Request $request)
     {
-        $webhookSignature = $request->header('X-Razorpay-Signature');
+        // $webhookSignature = $request->header('X-Razorpay-Signature');
         $webhookBody = $request->getContent();
+
+        $webhookSignature = hash_hmac('sha256', $webhookBody, env('RAZORPAY_WEBHOOK_SECRET'));
+        //b613679a0814d9ec772f95d778c35fc5ff1697c493715653c6c712144292c5ad
         
         try {
             $this->razorpay->utility->verifyWebhookSignature(
@@ -351,6 +354,7 @@ class PaymentController extends Controller
             return response()->json(['error' => 'Invalid signature'], 400);
         }
     }
+    
 
     private function handlePaymentCaptured($payment)
     {

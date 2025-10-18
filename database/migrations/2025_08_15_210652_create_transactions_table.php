@@ -19,6 +19,7 @@ return new class extends Migration
             $table->enum('purpose', ['business_registration', 'matrimony_profile', 'donation']);
             $table->string('razorpay_payment_id')->nullable();
             $table->string('razorpay_order_id')->nullable();
+            $table->text('metadata');
             $table->enum('status', ['pending', 'completed', 'failed', 'refunded'])->default('pending');
             $table->integer('subscription_period')->nullable();
             $table->string('receipt_url', 500)->nullable();

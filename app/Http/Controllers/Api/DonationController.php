@@ -204,6 +204,7 @@ class DonationController extends Controller
 
         } catch (Exception $e) {
             Log::error('Error creating donation order: ' . $e->getMessage());
+
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to create donation order'

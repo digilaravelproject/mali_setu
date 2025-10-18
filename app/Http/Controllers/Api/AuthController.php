@@ -18,92 +18,103 @@ class AuthController extends Controller
      */
     public function register(Request $request)
     {
-        $validator = Validator::make($request->all(), [
-            'name'             => 'required|string|max:255',
-            'email'            => 'required|string|email|max:255|unique:users',
-            'age'              => 'nullable|integer|min:18|max:100', // optional, must be 18-100 if provided
-            'phone'            => 'required|string|max:15|unique:users',
-            'cast_certificate' => 'nullable|string',
-            'occupation'       => 'nullable|string|max:255',
-            'reffral_code'     => 'nullable|string|max:50',
-            'address'          => 'nullable|string|max:500',
-            'nearby_location'  => 'nullable|string|max:255',
-            'pincode'          => 'nullable|digits:6', // Indian pincode format
-            'road_number'      => 'nullable|string|max:50',
-            'state'            => 'nullable|string|max:100',
-            'city'             => 'nullable|string|max:100',
-            'sector'           => 'nullable|string|max:100',
-            'district'         => 'nullable|string|max:100',
-            'destination'      => 'nullable|string|max:255',
-            'password'         => 'required|string|min:8|confirmed',
-            'user_type'        => 'required|in:general,business,matrimony,volunteer',
-            'term_condition'   => 'accepted', // must be checked (true/1)
-        ]);
+        try {
+            $validator = Validator::make($request->all(), [
+                'name'             => 'required|string|max:255',
+                'email'            => 'required|string|email|max:255|unique:users',
+                'age'              => 'nullable|integer|min:18|max:100', // optional, must be 18-100 if provided
+                'phone'            => 'required|string|max:15|unique:users',
+                'cast_certificate' => 'nullable|string',
+                'occupation'       => 'nullable|string|max:255',
+                'reffral_code'     => 'nullable|string|max:50',
+                'address'          => 'nullable|string|max:500',
+                'nearby_location'  => 'nullable|string|max:255',
+                'pincode'          => 'nullable|digits:6', // Indian pincode format
+                'road_number'      => 'nullable|string|max:50',
+                'state'            => 'nullable|string|max:100',
+                'city'             => 'nullable|string|max:100',
+                'sector'           => 'nullable|string|max:100',
+                'district'         => 'nullable|string|max:100',
+                'destination'      => 'nullable|string|max:255',
+                'password'         => 'required|string|min:8|confirmed',
+                'user_type'        => 'required|in:general,business,matrimony,volunteer',
+                'term_condition'   => 'accepted', // must be checked (true/1)
+            ]);
 
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validation failed',
-                'errors' => $validator->errors()
-            ], 422);
-        }
-
-        if ($request->cast_certificate) {
-            $data = $request->cast_certificate;
-
-            // strip the "data:..." part
-            $data = preg_replace('#^data:.*?;base64,#', '', $data);
-            $fileData = base64_decode($data);
-
-            $fileName = uniqid() . '.pdf';
-
-            // Ensure the folder exists
-            if (!Storage::disk('public')->exists('certificates')) {
-                Storage::disk('public')->makeDirectory('certificates');
+            if ($validator->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Validation failed',
+                    'errors' => $validator->errors()
+                ], 422);
             }
 
-            // Save file in storage/app/public/certificates
-            $rev = Storage::disk('public')->put('certificates/' . $fileName, $fileData);
+            $cast_certificate = '';
 
-            // Save path in DB
-            $cast_certificate = 'certificates/' . $fileName;
+            if ($request->cast_certificate) {
+                $data = $request->cast_certificate;
+
+                // strip the "data:..." part
+                $data = preg_replace('#^data:.*?;base64,#', '', $data);
+                $fileData = base64_decode($data);
+
+                $fileName = uniqid() . '.pdf';
+
+                // Ensure the folder exists
+                if (!Storage::disk('public')->exists('certificates')) {
+                    Storage::disk('public')->makeDirectory('certificates');
+                }
+
+                // Save file in storage/app/public/certificates
+                $rev = Storage::disk('public')->put('certificates/' . $fileName, $fileData);
+
+                // Save path in DB
+                $cast_certificate = 'certificates/' . $fileName;
+            }
+
+            $user = User::create([
+                'name'                   => $request->name,
+                'email'                  => $request->email,
+                'phone'                  => $request->phone,
+                'password'               => Hash::make($request->password),
+                // optional fields
+                'age'                    => $request->age,
+                'occupation'             => $request->occupation,
+                'reffral_code'           => $request->reffral_code,
+                'address'                => $request->address,
+                'nearby_location'        => $request->nearby_location,
+                'pincode'                => $request->pincode,
+                'road_number'            => $request->road_number,
+                'state'                  => $request->state,
+                'city'                   => $request->city,
+                'sector'                 => $request->sector,
+                'district'               => $request->district,
+                'destination'            => $request->destination,
+                'cast_certificate'       => $cast_certificate,
+                'user_type'              => $request->user_type,
+                'caste_verification_status' => 'pending'
+            ]);
+            
+
+
+            $token = $user->createToken('auth_token')->plainTextToken;
+
+            return response()->json([
+                'success' => true,
+                'message' => 'User registered successfully',
+                'data' => [
+                    'user' => $user,
+                    'token' => $token,
+                    'token_type' => 'Bearer'
+                ]
+            ], 201);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch conversations',
+                'error' => $e->getMessage()
+            ], 500);
         }
-
-        $user = User::create([
-            'name'                   => $request->name,
-            'email'                  => $request->email,
-            'phone'                  => $request->phone,
-            'password'               => Hash::make($request->password),
-            // optional fields
-            'age'                    => $request->age,
-            'occupation'             => $request->occupation,
-            'reffral_code'           => $request->reffral_code,
-            'address'                => $request->address,
-            'nearby_location'        => $request->nearby_location,
-            'pincode'                => $request->pincode,
-            'road_number'            => $request->road_number,
-            'state'                  => $request->state,
-            'city'                   => $request->city,
-            'sector'                 => $request->sector,
-            'district'               => $request->district,
-            'destination'            => $request->destination,
-            'cast_certificate'       => $cast_certificate,
-            'user_type'              => $request->user_type,
-            'caste_verification_status' => 'pending'
-        ]);
-        
-
-        $token = $user->createToken('auth_token')->plainTextToken;
-
-        return response()->json([
-            'success' => true,
-            'message' => 'User registered successfully',
-            'data' => [
-                'user' => $user,
-                'token' => $token,
-                'token_type' => 'Bearer'
-            ]
-        ], 201);
     }
 
     /**

@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Services\ElasticsearchService;
 use App\Models\Business;
 use App\Models\MatrimonyProfile;
 use App\Models\JobPosting;
@@ -15,15 +14,8 @@ use Illuminate\Support\Facades\Log;
 
 class SearchController extends Controller
 {
-    protected $elasticsearchService;
-
-    public function __construct(ElasticsearchService $elasticsearchService)
-    {
-        $this->elasticsearchService = $elasticsearchService;
-    }
-
     /**
-     * Global search across all modules
+     * 🔎 Global search across all modules
      */
     public function globalSearch(Request $request)
     {
@@ -36,11 +28,7 @@ class SearchController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validation failed',
-                'errors' => $validator->errors()
-            ], 422);
+            return response()->json(['success' => false, 'errors' => $validator->errors()], 422);
         }
 
         try {
@@ -49,384 +37,302 @@ class SearchController extends Controller
             $from = $request->input('from', 0);
             $modules = $request->input('modules', []);
 
-            // Get indices based on requested modules
-            $indices = [];
-            if (!empty($modules)) {
-                foreach ($modules as $module) {
-                    $indices[] = config("elasticsearch.indices.{$module}.name");
-                }
+            $results = [];
+
+            if (empty($modules) || in_array('businesses', $modules)) {
+                $results['businesses'] = Business::where('business_name', 'like', "%$query%")
+                    ->orWhere('description', 'like', "%$query%")
+                    ->skip($from)->take($size)->get();
             }
 
-            $results = $this->elasticsearchService->globalSearch($query, $indices, $size, $from);
+            if (empty($modules) || in_array('matrimony', $modules)) {
+                $results['matrimony'] = MatrimonyProfile::where('name', 'like', "%$query%")
+                    ->orWhere('caste', 'like', "%$query%")
+                    ->orWhere('education', 'like', "%$query%")
+                    ->skip($from)->take($size)->get();
+            }
 
-            return response()->json([
-                'success' => true,
-                'data' => [
-                    'query' => $query,
-                    'total' => $results['hits']['total']['value'] ?? 0,
-                    'results' => $this->formatSearchResults($results['hits']['hits'] ?? []),
-                    'took' => $results['took'] ?? 0,
-                    'pagination' => [
-                        'from' => $from,
-                        'size' => $size,
-                        'total' => $results['hits']['total']['value'] ?? 0
-                    ]
-                ]
-            ]);
+            if (empty($modules) || in_array('jobs', $modules)) {
+                $results['jobs'] = JobPosting::where('title', 'like', "%$query%")
+                    ->orWhere('description', 'like', "%$query%")
+                    ->orWhere('skills_required', 'like', "%$query%")
+                    ->skip($from)->take($size)->get();
+            }
+
+            if (empty($modules) || in_array('volunteers', $modules)) {
+                $results['volunteers'] = VolunteerOpportunity::where('title', 'like', "%$query%")
+                    ->orWhere('description', 'like', "%$query%")
+                    ->orWhere('required_skills', 'like', "%$query%")
+                    ->skip($from)->take($size)->get();
+            }
+
+            if (empty($modules) || in_array('donations', $modules)) {
+                $results['donations'] = DonationCause::where('title', 'like', "%$query%")
+                    ->orWhere('description', 'like', "%$query%")
+                    ->orWhere('category', 'like', "%$query%")
+                    ->skip($from)->take($size)->get();
+            }
+
+            return response()->json(['success' => true, 'data' => $results]);
+
         } catch (\Exception $e) {
-            Log::error('Global search failed', ['error' => $e->getMessage(), 'query' => $request->input('query')]);
-            return response()->json([
-                'success' => false,
-                'message' => 'Search failed',
-                'error' => $e->getMessage()
-            ], 500);
+            Log::error('Global search failed', ['error' => $e->getMessage()]);
+            return response()->json(['success' => false, 'message' => 'Search failed'], 500);
         }
     }
 
     /**
-     * Search businesses
+     * 🔎 Search Businesses
      */
     public function searchBusinesses(Request $request)
     {
-        $validator = Validator::make($request->all(), [
-            'query' => 'sometimes|string|min:2|max:255',
-            'category' => 'sometimes|string',
-            'location' => 'sometimes|string',
-            'verified_only' => 'sometimes|boolean',
-            'size' => 'sometimes|integer|min:1|max:100',
-            'from' => 'sometimes|integer|min:0'
-        ]);
+        $query = Business::query();
 
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validation failed',
-                'errors' => $validator->errors()
-            ], 422);
+        if ($request->filled('query')) {
+            $query->where(function($q) use ($request) {
+                $q->where('business_name', 'like', "%{$request->query}%")
+                  ->orWhere('description', 'like', "%{$request->query}%");
+            });
         }
 
-        try {
-            $query = $request->input('query', '*');
-            $category = $request->input('category');
-            $location = $request->input('location');
-            $verifiedOnly = $request->input('verified_only', false);
-            $size = $request->input('size', 20);
-            $from = $request->input('from', 0);
-
-            $searchParams = [
-                'index' => config('elasticsearch.indices.businesses.name'),
-                'body' => [
-                    'query' => $this->buildBusinessQuery($query, $category, $location, $verifiedOnly),
-                    'size' => $size,
-                    'from' => $from,
-                    'sort' => [
-                        ['_score' => ['order' => 'desc']],
-                        ['created_at' => ['order' => 'desc']]
-                    ]
-                ]
-            ];
-
-            $results = $this->elasticsearchService->search($searchParams);
-
-            return response()->json([
-                'success' => true,
-                'data' => [
-                    'query' => $query,
-                    'filters' => compact('category', 'location', 'verifiedOnly'),
-                    'total' => $results['hits']['total']['value'] ?? 0,
-                    'results' => $this->formatSearchResults($results['hits']['hits'] ?? [], 'business'),
-                    'pagination' => [
-                        'from' => $from,
-                        'size' => $size,
-                        'total' => $results['hits']['total']['value'] ?? 0
-                    ]
-                ]
-            ]);
-        } catch (\Exception $e) {
-            Log::error('Business search failed', ['error' => $e->getMessage()]);
-            return response()->json([
-                'success' => false,
-                'message' => 'Business search failed',
-                'error' => $e->getMessage()
-            ], 500);
+        if ($request->filled('category')) {
+            $query->where('category', $request->category);
         }
+
+        if ($request->filled('location')) {
+            $query->where('location', 'like', "%{$request->location}%");
+        }
+
+        if ($request->boolean('verified_only')) {
+            $query->where('verification_status', 'approved');
+        }
+
+        $results = $query->latest()->paginate($request->size ?? 20);
+
+        return response()->json(['success' => true, 'data' => $results]);
     }
 
     /**
-     * Search matrimony profiles
+     * 🔎 Search Matrimony Profiles
      */
     public function searchMatrimony(Request $request)
     {
-        $validator = Validator::make($request->all(), [
-            'age_min' => 'sometimes|integer|min:18|max:100',
-            'age_max' => 'sometimes|integer|min:18|max:100',
-            'location' => 'sometimes|string',
-            'caste' => 'sometimes|string',
-            'education' => 'sometimes|string',
-            'occupation' => 'sometimes|string',
-            'gender' => 'sometimes|in:male,female,other',
-            'size' => 'sometimes|integer|min:1|max:100',
-            'from' => 'sometimes|integer|min:0'
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validation failed',
-                'errors' => $validator->errors()
-            ], 422);
+        $query = MatrimonyProfile::query();
+        
+        //Basic Details
+        if ($request->filled('age_min') || $request->filled('age_max')) {
+            $query->whereBetween('age', [$request->age_min ?? 18, $request->age_max ?? 100]);
         }
 
-        try {
-            $filters = $request->only(['age_min', 'age_max', 'location', 'caste', 'education', 'occupation', 'gender']);
-            $size = $request->input('size', 20);
-            $from = $request->input('from', 0);
-
-            $searchParams = [
-                'index' => config('elasticsearch.indices.matrimony.name'),
-                'body' => [
-                    'query' => $this->buildMatrimonyQuery($filters),
-                    'size' => $size,
-                    'from' => $from,
-                    'sort' => [
-                        ['created_at' => ['order' => 'desc']]
-                    ]
-                ]
-            ];
-
-            $results = $this->elasticsearchService->search($searchParams);
-
-            return response()->json([
-                'success' => true,
-                'data' => [
-                    'filters' => $filters,
-                    'total' => $results['hits']['total']['value'] ?? 0,
-                    'results' => $this->formatSearchResults($results['hits']['hits'] ?? [], 'matrimony'),
-                    'pagination' => [
-                        'from' => $from,
-                        'size' => $size,
-                        'total' => $results['hits']['total']['value'] ?? 0
-                    ]
-                ]
-            ]);
-        } catch (\Exception $e) {
-            Log::error('Matrimony search failed', ['error' => $e->getMessage()]);
-            return response()->json([
-                'success' => false,
-                'message' => 'Matrimony search failed',
-                'error' => $e->getMessage()
-            ], 500);
+        if ($request->filled('marital_status')) {
+            $query->whereJsonContains('personal_details->marital_status', $request->marital_status);
         }
+
+        if ($request->filled('profile_created_by')) {
+            $query->whereJsonContains('personal_details->profile_created_by', $request->profile_created_by);
+        }
+
+        if ($request->filled('language')) {
+            $query->whereJsonContains('personal_details->language', $request->language);
+        }
+
+        if ($request->filled('height')) {
+            $query->where('height', $request->height);
+        }
+
+        if ($request->filled('physical_status')) {
+            $query->where('physical_status', $request->physical_status);
+        }
+
+        //Profesional details
+        if ($request->filled('annual_income')) {
+            $query->whereBetween('personal_details->annual_income', [0, $request->annual_income]);
+        }
+
+        if ($request->filled('education')) {
+            $query->whereJsonContains('education_details->highest_qualification', $request->education);
+        }
+
+        if ($request->filled('employment_type')) {
+            $query->whereJsonContains('personal_details->employment_type', $request->employment_type);
+        }
+
+        //Family Details
+        if ($request->filled('family_status')) {
+            $query->whereJsonContains('family_details->family_class', $request->family_status);
+        }
+
+        if ($request->filled('family_type')) {
+            $query->whereJsonContains('personal_details->family_type', $request->family_type);
+        }
+
+        if ($request->filled('family_value')) {
+            $query->whereJsonContains('family_details->family_value', $request->family_value);
+        }
+
+        //Location Details
+        if ($request->filled('country')) {
+            $query->whereJsonContains('location_details->country', $request->country);
+        }
+
+        if ($request->filled('citizenship')) {
+            $query->whereJsonContains('personal_details->citizenship', $request->citizenship);
+        }
+
+        //Lifestyle Details
+        if ($request->filled('diet')) {
+            $query->whereJsonContains('lifestyle_details->diet', $request->diet);
+        }
+
+        if ($request->filled('smoking')) {
+            $query->whereJsonContains('lifestyle_details->smoking', $request->smoking);
+        }
+
+        if ($request->filled('drinking')) {
+            $query->whereJsonContains('lifestyle_details->drinking', $request->drinking);
+        }
+
+        //Profile type
+        if ($request->filled('photo')) {
+             $query->where('photo', '!=', '');
+        }
+
+        //Recently created profile
+        if ($request->filled('created_at')) {
+            switch ($request->created_at) {
+                case 'all':
+                    // no filter applied
+                    break;
+
+                case 'today':
+                    $query->whereDate('created_at', today());
+                    break;
+
+                case 'last_7_days':
+                    $query->where('created_at', '>=', now()->subDays(7));
+                    break;
+
+                case 'last_30_days':
+                    $query->where('created_at', '>=', now()->subDays(30));
+                    break;
+
+                case 'one_week':
+                    $query->whereBetween('created_at', [now()->subWeek(), now()]);
+                    break;
+
+                case 'one_month':
+                    $query->whereBetween('created_at', [now()->subMonth(), now()]);
+                    break;
+            }
+        }
+
+        // foreach (['location', 'caste', 'education', 'occupation', 'gender'] as $field) {
+        //     if ($request->filled($field)) {
+        //         $query->where($field, $request->$field);
+        //     }
+        // }
+
+        $query->where('approval_status', 'approved');
+
+        $results = $query->latest()->paginate($request->size ?? 20);
+
+        return response()->json(['success' => true, 'data' => $results]);
     }
 
     /**
-     * Search job postings
+     * 🔎 Search Jobs
      */
     public function searchJobs(Request $request)
     {
-        $validator = Validator::make($request->all(), [
-            'query' => 'sometimes|string|min:2|max:255',
-            'location' => 'sometimes|string',
-            'category' => 'sometimes|string',
-            'experience_level' => 'sometimes|in:entry,mid,senior,executive',
-            'employment_type' => 'sometimes|in:full_time,part_time,contract,freelance,internship',
-            'salary_min' => 'sometimes|numeric|min:0',
-            'salary_max' => 'sometimes|numeric|min:0',
-            'size' => 'sometimes|integer|min:1|max:100',
-            'from' => 'sometimes|integer|min:0'
-        ]);
+        $query = JobPosting::where('status', 'active');
 
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validation failed',
-                'errors' => $validator->errors()
-            ], 422);
+        if ($request->filled('query')) {
+            $query->where(function($q) use ($request) {
+                $q->where('title', 'like', "%{$request->query}%")
+                  ->orWhere('description', 'like', "%{$request->query}%")
+                  ->orWhere('skills_required', 'like', "%{$request->query}%");
+            });
         }
 
-        try {
-            $query = $request->input('query', '*');
-            $filters = $request->only(['location', 'category', 'experience_level', 'employment_type', 'salary_min', 'salary_max']);
-            $size = $request->input('size', 20);
-            $from = $request->input('from', 0);
-
-            $searchParams = [
-                'index' => config('elasticsearch.indices.jobs.name'),
-                'body' => [
-                    'query' => $this->buildJobQuery($query, $filters),
-                    'size' => $size,
-                    'from' => $from,
-                    'sort' => [
-                        ['_score' => ['order' => 'desc']],
-                        ['created_at' => ['order' => 'desc']]
-                    ]
-                ]
-            ];
-
-            $results = $this->elasticsearchService->search($searchParams);
-
-            return response()->json([
-                'success' => true,
-                'data' => [
-                    'query' => $query,
-                    'filters' => $filters,
-                    'total' => $results['hits']['total']['value'] ?? 0,
-                    'results' => $this->formatSearchResults($results['hits']['hits'] ?? [], 'job'),
-                    'pagination' => [
-                        'from' => $from,
-                        'size' => $size,
-                        'total' => $results['hits']['total']['value'] ?? 0
-                    ]
-                ]
-            ]);
-        } catch (\Exception $e) {
-            Log::error('Job search failed', ['error' => $e->getMessage()]);
-            return response()->json([
-                'success' => false,
-                'message' => 'Job search failed',
-                'error' => $e->getMessage()
-            ], 500);
+        foreach (['location', 'category', 'experience_level', 'employment_type'] as $field) {
+            if ($request->filled($field)) {
+                $query->where($field, $request->$field);
+            }
         }
+
+        if ($request->filled('salary_min') || $request->filled('salary_max')) {
+            $query->whereBetween('salary_max', [$request->salary_min ?? 0, $request->salary_max ?? 9999999]);
+        }
+
+        $results = $query->latest()->paginate($request->size ?? 20);
+
+        return response()->json(['success' => true, 'data' => $results]);
     }
 
     /**
-     * Search volunteer opportunities
+     * 🔎 Search Volunteers
      */
     public function searchVolunteers(Request $request)
     {
-        $validator = Validator::make($request->all(), [
-            'query' => 'sometimes|string|min:2|max:255',
-            'location' => 'sometimes|string',
-            'skills' => 'sometimes|string',
-            'start_date' => 'sometimes|date',
-            'end_date' => 'sometimes|date',
-            'size' => 'sometimes|integer|min:1|max:100',
-            'from' => 'sometimes|integer|min:0'
-        ]);
+        $query = VolunteerOpportunity::where('status', 'active');
 
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validation failed',
-                'errors' => $validator->errors()
-            ], 422);
+        if ($request->filled('query')) {
+            $query->where(function($q) use ($request) {
+                $q->where('title', 'like', "%{$request->query}%")
+                  ->orWhere('description', 'like', "%{$request->query}%")
+                  ->orWhere('required_skills', 'like', "%{$request->query}%");
+            });
         }
 
-        try {
-            $query = $request->input('query', '*');
-            $filters = $request->only(['location', 'skills', 'start_date', 'end_date']);
-            $size = $request->input('size', 20);
-            $from = $request->input('from', 0);
-
-            $searchParams = [
-                'index' => config('elasticsearch.indices.volunteers.name'),
-                'body' => [
-                    'query' => $this->buildVolunteerQuery($query, $filters),
-                    'size' => $size,
-                    'from' => $from,
-                    'sort' => [
-                        ['start_date' => ['order' => 'asc']],
-                        ['_score' => ['order' => 'desc']]
-                    ]
-                ]
-            ];
-
-            $results = $this->elasticsearchService->search($searchParams);
-
-            return response()->json([
-                'success' => true,
-                'data' => [
-                    'query' => $query,
-                    'filters' => $filters,
-                    'total' => $results['hits']['total']['value'] ?? 0,
-                    'results' => $this->formatSearchResults($results['hits']['hits'] ?? [], 'volunteer'),
-                    'pagination' => [
-                        'from' => $from,
-                        'size' => $size,
-                        'total' => $results['hits']['total']['value'] ?? 0
-                    ]
-                ]
-            ]);
-        } catch (\Exception $e) {
-            Log::error('Volunteer search failed', ['error' => $e->getMessage()]);
-            return response()->json([
-                'success' => false,
-                'message' => 'Volunteer search failed',
-                'error' => $e->getMessage()
-            ], 500);
+        if ($request->filled('location')) {
+            $query->where('location', 'like', "%{$request->location}%");
         }
+
+        if ($request->filled('skills')) {
+            $query->where('required_skills', 'like', "%{$request->skills}%");
+        }
+
+        if ($request->filled('start_date') || $request->filled('end_date')) {
+            $query->whereBetween('start_date', [$request->start_date ?? now(), $request->end_date ?? now()->addYears(10)]);
+        }
+
+        $results = $query->orderBy('start_date')->paginate($request->size ?? 20);
+
+        return response()->json(['success' => true, 'data' => $results]);
     }
 
     /**
-     * Search donation causes
+     * 🔎 Search Donations
      */
     public function searchDonations(Request $request)
     {
-        $validator = Validator::make($request->all(), [
-            'query' => 'sometimes|string|min:2|max:255',
-            'category' => 'sometimes|string',
-            'location' => 'sometimes|string',
-            'urgency' => 'sometimes|in:low,medium,high,critical',
-            'active_only' => 'sometimes|boolean',
-            'size' => 'sometimes|integer|min:1|max:100',
-            'from' => 'sometimes|integer|min:0'
-        ]);
+        $query = DonationCause::query();
 
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validation failed',
-                'errors' => $validator->errors()
-            ], 422);
+        if ($request->filled('query')) {
+            $query->where(function($q) use ($request) {
+                $q->where('title', 'like', "%{$request->query}%")
+                  ->orWhere('description', 'like', "%{$request->query}%")
+                  ->orWhere('category', 'like', "%{$request->query}%");
+            });
         }
 
-        try {
-            $query = $request->input('query', '*');
-            $filters = $request->only(['category', 'location', 'urgency', 'active_only']);
-            $size = $request->input('size', 20);
-            $from = $request->input('from', 0);
-
-            $searchParams = [
-                'index' => config('elasticsearch.indices.donations.name'),
-                'body' => [
-                    'query' => $this->buildDonationQuery($query, $filters),
-                    'size' => $size,
-                    'from' => $from,
-                    'sort' => [
-                        ['urgency_score' => ['order' => 'desc']],
-                        ['_score' => ['order' => 'desc']]
-                    ]
-                ]
-            ];
-
-            $results = $this->elasticsearchService->search($searchParams);
-
-            return response()->json([
-                'success' => true,
-                'data' => [
-                    'query' => $query,
-                    'filters' => $filters,
-                    'total' => $results['hits']['total']['value'] ?? 0,
-                    'results' => $this->formatSearchResults($results['hits']['hits'] ?? [], 'donation'),
-                    'pagination' => [
-                        'from' => $from,
-                        'size' => $size,
-                        'total' => $results['hits']['total']['value'] ?? 0
-                    ]
-                ]
-            ]);
-        } catch (\Exception $e) {
-            Log::error('Donation search failed', ['error' => $e->getMessage()]);
-            return response()->json([
-                'success' => false,
-                'message' => 'Donation search failed',
-                'error' => $e->getMessage()
-            ], 500);
+        foreach (['category', 'location', 'urgency'] as $field) {
+            if ($request->filled($field)) {
+                $query->where($field, $request->$field);
+            }
         }
+
+        if ($request->boolean('active_only')) {
+            $query->where('status', 'active')->where('end_date', '>=', now());
+        }
+
+        $results = $query->latest()->paginate($request->size ?? 20);
+
+        return response()->json(['success' => true, 'data' => $results]);
     }
 
     /**
-     * Get search suggestions/autocomplete
+     * 🔎 Suggestions (basic autocomplete)
      */
     public function getSuggestions(Request $request)
     {
@@ -438,318 +344,27 @@ class SearchController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validation failed',
-                'errors' => $validator->errors()
-            ], 422);
+            return response()->json(['success' => false, 'errors' => $validator->errors()], 422);
         }
 
-        try {
-            $query = $request->input('query');
-            $modules = $request->input('modules', []);
-            $size = $request->input('size', 10);
+        $query = $request->input('query');
+        $size = $request->input('size', 10);
+        $modules = $request->input('modules', []);
 
-            $indices = [];
-            if (!empty($modules)) {
-                foreach ($modules as $module) {
-                    $indices[] = config("elasticsearch.indices.{$module}.name");
-                }
-            }
+        $suggestions = [];
 
-            $results = $this->elasticsearchService->getSuggestions($query, $indices, $size);
-
-            return response()->json([
-                'success' => true,
-                'data' => [
-                    'query' => $query,
-                    'suggestions' => $this->formatSuggestions($results['suggest'] ?? [])
-                ]
-            ]);
-        } catch (\Exception $e) {
-            Log::error('Suggestions failed', ['error' => $e->getMessage()]);
-            return response()->json([
-                'success' => false,
-                'message' => 'Suggestions failed',
-                'error' => $e->getMessage()
-            ], 500);
-        }
-    }
-
-    /**
-     * Location-based search
-     */
-    public function locationSearch(Request $request)
-    {
-        $validator = Validator::make($request->all(), [
-            'query' => 'required|string|min:2|max:255',
-            'latitude' => 'required|numeric|between:-90,90',
-            'longitude' => 'required|numeric|between:-180,180',
-            'radius' => 'sometimes|integer|min:1|max:500',
-            'modules' => 'sometimes|array',
-            'modules.*' => 'in:businesses,matrimony,jobs,volunteers,donations',
-            'size' => 'sometimes|integer|min:1|max:100'
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validation failed',
-                'errors' => $validator->errors()
-            ], 422);
+        if (empty($modules) || in_array('businesses', $modules)) {
+            $suggestions['businesses'] = Business::where('business_name', 'like', "$query%")->limit($size)->pluck('business_name');
         }
 
-        try {
-            $query = $request->input('query');
-            $lat = $request->input('latitude');
-            $lon = $request->input('longitude');
-            $radius = $request->input('radius', 50);
-            $modules = $request->input('modules', []);
-            $size = $request->input('size', 20);
-
-            $indices = [];
-            if (!empty($modules)) {
-                foreach ($modules as $module) {
-                    $indices[] = config("elasticsearch.indices.{$module}.name");
-                }
-            }
-
-            $results = $this->elasticsearchService->locationSearch($query, $lat, $lon, $radius, $indices, $size);
-
-            return response()->json([
-                'success' => true,
-                'data' => [
-                    'query' => $query,
-                    'location' => ['latitude' => $lat, 'longitude' => $lon],
-                    'radius' => $radius,
-                    'total' => $results['hits']['total']['value'] ?? 0,
-                    'results' => $this->formatSearchResults($results['hits']['hits'] ?? []),
-                ]
-            ]);
-        } catch (\Exception $e) {
-            Log::error('Location search failed', ['error' => $e->getMessage()]);
-            return response()->json([
-                'success' => false,
-                'message' => 'Location search failed',
-                'error' => $e->getMessage()
-            ], 500);
-        }
-    }
-
-    // Private helper methods for building queries
-    private function buildBusinessQuery($query, $category, $location, $verifiedOnly)
-    {
-        $must = [];
-        $filter = [];
-
-        if ($query !== '*') {
-            $must[] = [
-                'multi_match' => [
-                    'query' => $query,
-                    'fields' => ['business_name^3', 'description^2', 'category', 'products', 'services'],
-                    'fuzziness' => 'AUTO'
-                ]
-            ];
+        if (empty($modules) || in_array('jobs', $modules)) {
+            $suggestions['jobs'] = JobPosting::where('title', 'like', "$query%")->limit($size)->pluck('title');
         }
 
-        if ($category) {
-            $filter[] = ['term' => ['category.keyword' => $category]];
+        if (empty($modules) || in_array('donations', $modules)) {
+            $suggestions['donations'] = DonationCause::where('title', 'like', "$query%")->limit($size)->pluck('title');
         }
 
-        if ($location) {
-            $must[] = [
-                'match' => [
-                    'location' => $location
-                ]
-            ];
-        }
-
-        if ($verifiedOnly) {
-            $filter[] = ['term' => ['verification_status' => 'approved']];
-        }
-
-        $query = ['bool' => []];
-        if (!empty($must)) $query['bool']['must'] = $must;
-        if (!empty($filter)) $query['bool']['filter'] = $filter;
-        if (empty($must) && empty($filter)) $query = ['match_all' => new \stdClass()];
-
-        return $query;
-    }
-
-    private function buildMatrimonyQuery($filters)
-    {
-        $must = [];
-        $filter = [];
-
-        if (isset($filters['age_min']) || isset($filters['age_max'])) {
-            $range = [];
-            if (isset($filters['age_min'])) $range['gte'] = $filters['age_min'];
-            if (isset($filters['age_max'])) $range['lte'] = $filters['age_max'];
-            $filter[] = ['range' => ['age' => $range]];
-        }
-
-        foreach (['location', 'caste', 'education', 'occupation', 'gender'] as $field) {
-            if (isset($filters[$field])) {
-                $filter[] = ['term' => [$field . '.keyword' => $filters[$field]]];
-            }
-        }
-
-        // Only show approved profiles
-        $filter[] = ['term' => ['approval_status' => 'approved']];
-
-        return ['bool' => ['filter' => $filter]];
-    }
-
-    private function buildJobQuery($query, $filters)
-    {
-        $must = [];
-        $filter = [];
-
-        if ($query !== '*') {
-            $must[] = [
-                'multi_match' => [
-                    'query' => $query,
-                    'fields' => ['title^3', 'description^2', 'skills_required', 'category'],
-                    'fuzziness' => 'AUTO'
-                ]
-            ];
-        }
-
-        foreach (['location', 'category', 'experience_level', 'employment_type'] as $field) {
-            if (isset($filters[$field])) {
-                $filter[] = ['term' => [$field . '.keyword' => $filters[$field]]];
-            }
-        }
-
-        if (isset($filters['salary_min']) || isset($filters['salary_max'])) {
-            $range = [];
-            if (isset($filters['salary_min'])) $range['gte'] = $filters['salary_min'];
-            if (isset($filters['salary_max'])) $range['lte'] = $filters['salary_max'];
-            $filter[] = ['range' => ['salary_max' => $range]];
-        }
-
-        // Only show active jobs
-        $filter[] = ['term' => ['status' => 'active']];
-
-        $query = ['bool' => []];
-        if (!empty($must)) $query['bool']['must'] = $must;
-        if (!empty($filter)) $query['bool']['filter'] = $filter;
-        if (empty($must) && empty($filter)) $query = ['match_all' => new \stdClass()];
-
-        return $query;
-    }
-
-    private function buildVolunteerQuery($query, $filters)
-    {
-        $must = [];
-        $filter = [];
-
-        if ($query !== '*') {
-            $must[] = [
-                'multi_match' => [
-                    'query' => $query,
-                    'fields' => ['title^3', 'description^2', 'required_skills', 'organization'],
-                    'fuzziness' => 'AUTO'
-                ]
-            ];
-        }
-
-        foreach (['location', 'skills'] as $field) {
-            if (isset($filters[$field])) {
-                $must[] = ['match' => [$field => $filters[$field]]];
-            }
-        }
-
-        if (isset($filters['start_date']) || isset($filters['end_date'])) {
-            $range = [];
-            if (isset($filters['start_date'])) $range['gte'] = $filters['start_date'];
-            if (isset($filters['end_date'])) $range['lte'] = $filters['end_date'];
-            $filter[] = ['range' => ['start_date' => $range]];
-        }
-
-        // Only show active opportunities
-        $filter[] = ['term' => ['status' => 'active']];
-
-        $query = ['bool' => []];
-        if (!empty($must)) $query['bool']['must'] = $must;
-        if (!empty($filter)) $query['bool']['filter'] = $filter;
-        if (empty($must) && empty($filter)) $query = ['match_all' => new \stdClass()];
-
-        return $query;
-    }
-
-    private function buildDonationQuery($query, $filters)
-    {
-        $must = [];
-        $filter = [];
-
-        if ($query !== '*') {
-            $must[] = [
-                'multi_match' => [
-                    'query' => $query,
-                    'fields' => ['title^3', 'description^2', 'category', 'organization'],
-                    'fuzziness' => 'AUTO'
-                ]
-            ];
-        }
-
-        foreach (['category', 'location', 'urgency'] as $field) {
-            if (isset($filters[$field])) {
-                $filter[] = ['term' => [$field . '.keyword' => $filters[$field]]];
-            }
-        }
-
-        if (isset($filters['active_only']) && $filters['active_only']) {
-            $filter[] = ['term' => ['status' => 'active']];
-            $filter[] = ['range' => ['end_date' => ['gte' => 'now']]];
-        }
-
-        $query = ['bool' => []];
-        if (!empty($must)) $query['bool']['must'] = $must;
-        if (!empty($filter)) $query['bool']['filter'] = $filter;
-        if (empty($must) && empty($filter)) $query = ['match_all' => new \stdClass()];
-
-        return $query;
-    }
-
-    private function formatSearchResults($hits, $type = null)
-    {
-        return array_map(function ($hit) use ($type) {
-            $result = [
-                'id' => $hit['_id'],
-                'type' => $hit['_index'],
-                'score' => $hit['_score'],
-                'source' => $hit['_source']
-            ];
-
-            if (isset($hit['highlight'])) {
-                $result['highlight'] = $hit['highlight'];
-            }
-
-            if (isset($hit['sort'])) {
-                $result['sort'] = $hit['sort'];
-            }
-
-            return $result;
-        }, $hits);
-    }
-
-    private function formatSuggestions($suggestions)
-    {
-        $formatted = [];
-        
-        foreach ($suggestions as $suggestionType => $suggestion) {
-            if (isset($suggestion[0]['options'])) {
-                foreach ($suggestion[0]['options'] as $option) {
-                    $formatted[] = [
-                        'text' => $option['text'],
-                        'score' => $option['_score'],
-                        'type' => str_replace('_suggest', '', $suggestionType)
-                    ];
-                }
-            }
-        }
-
-        return $formatted;
+        return response()->json(['success' => true, 'data' => $suggestions]);
     }
 }

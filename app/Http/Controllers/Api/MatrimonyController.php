@@ -170,7 +170,7 @@ class MatrimonyController extends Controller
     /**
      * Search matrimony profiles
      */
-    public function searchProfiles(Request $request)
+    public function searchProfiles_old(Request $request)
     {
         $query = MatrimonyProfile::with('user')
             ->where('approval_status', 'approved');
@@ -209,13 +209,137 @@ class MatrimonyController extends Controller
         ]);
     }
 
+    public function searchProfiles(Request $request)
+    {
+        $query = MatrimonyProfile::query();
+
+        //Basic Details
+        if ($request->filled('age_min') || $request->filled('age_max')) {
+            $query->whereBetween('age', [$request->age_min ?? 18, $request->age_max ?? 100]);
+        }
+
+        if ($request->filled('marital_status')) {
+            $query->whereJsonContains('personal_details->marital_status', $request->marital_status);
+        }
+
+        if ($request->filled('profile_created_by')) {
+            $query->whereJsonContains('personal_details->profile_created_by', $request->profile_created_by);
+        }
+
+        if ($request->filled('language')) {
+            $query->whereJsonContains('personal_details->language', $request->language);
+        }
+
+        if ($request->filled('height')) {
+            $query->where('height', $request->height);
+        }
+
+        if ($request->filled('physical_status')) {
+            $query->where('physical_status', $request->physical_status);
+        }
+
+        //Profesional details
+        if ($request->filled('annual_income')) {
+            $query->whereBetween('personal_details->annual_income', [0, $request->annual_income]);
+        }
+
+        if ($request->filled('education')) {
+            $query->whereJsonContains('education_details->highest_qualification', $request->education);
+        }
+
+        if ($request->filled('employment_type')) {
+            $query->whereJsonContains('personal_details->employment_type', $request->employment_type);
+        }
+
+        //Family Details
+        if ($request->filled('family_status')) {
+            $query->whereJsonContains('family_details->family_class', $request->family_status);
+        }
+
+        if ($request->filled('family_type')) {
+            $query->whereJsonContains('personal_details->family_type', $request->family_type);
+        }
+
+        if ($request->filled('family_value')) {
+            $query->whereJsonContains('family_details->family_value', $request->family_value);
+        }
+
+        //Location Details
+        if ($request->filled('country')) {
+            $query->whereJsonContains('location_details->country', $request->country);
+        }
+
+        if ($request->filled('citizenship')) {
+            $query->whereJsonContains('personal_details->citizenship', $request->citizenship);
+        }
+
+        //Lifestyle Details
+        if ($request->filled('diet')) {
+            $query->whereJsonContains('lifestyle_details->diet', $request->diet);
+        }
+
+        if ($request->filled('smoking')) {
+            $query->whereJsonContains('lifestyle_details->smoking', $request->smoking);
+        }
+
+        if ($request->filled('drinking')) {
+            $query->whereJsonContains('lifestyle_details->drinking', $request->drinking);
+        }
+
+        //Profile type
+        if ($request->filled('photo')) {
+             $query->where('photo', '!=', '');
+        }
+
+        //Recently created profile
+        if ($request->filled('created_at')) {
+            switch ($request->created_at) {
+                case 'all':
+                    // no filter applied
+                    break;
+
+                case 'today':
+                    $query->whereDate('created_at', today());
+                    break;
+
+                case 'last_7_days':
+                    $query->where('created_at', '>=', now()->subDays(7));
+                    break;
+
+                case 'last_30_days':
+                    $query->where('created_at', '>=', now()->subDays(30));
+                    break;
+
+                case 'one_week':
+                    $query->whereBetween('created_at', [now()->subWeek(), now()]);
+                    break;
+
+                case 'one_month':
+                    $query->whereBetween('created_at', [now()->subMonth(), now()]);
+                    break;
+            }
+        }
+
+        foreach (['location', 'caste', 'education', 'occupation', 'gender'] as $field) {
+            if ($request->filled($field)) {
+                $query->where($field, $request->$field);
+            }
+        }
+
+        $query->where('approval_status', 'approved');
+
+        $results = $query->latest()->paginate($request->size ?? 20);
+
+        return response()->json(['success' => true, 'data' => $results]);
+    }
+
     /**
      * Get single profile details
      */
     public function showProfile($id)
     {
         $profile = MatrimonyProfile::with('user')
-            ->where('approval_status', 'approved')
+            // ->where('approval_status', 'approved')
             ->findOrFail($id);
 
         return response()->json([
