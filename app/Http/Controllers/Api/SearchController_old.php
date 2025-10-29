@@ -13,7 +13,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Log;
 
-class SearchController extends Controller
+class SearchController_old extends Controller
 {
     protected $elasticsearchService;
 

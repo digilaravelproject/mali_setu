@@ -8,11 +8,15 @@ use App\Http\Controllers\Admin\BusinessManagementController;
 use App\Http\Controllers\Admin\MatrimonyManagementController;
 use App\Http\Controllers\Admin\PaymentManagementController;
 use App\Http\Controllers\Admin\CategoryManagementController;
+use App\Http\Controllers\Admin\HomepageHeroController;
+
 
 // Public route
 Route::get('/', function () {
     return view('welcome');
 });
+
+Route::resource('heroes', HomepageHeroController::class);
 
 // Admin Authentication Routes
 Route::prefix('admin')->name('admin.')->group(function () {

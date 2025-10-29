@@ -22,6 +22,10 @@ class JobController extends Controller
         $query = JobPosting::with(['business', 'business.user'])
             ->active()
             ->latest();
+        
+        if ($request->filled('business_id')) {
+            $query->where('business_id', $request->business_id);
+        }
 
         // Apply filters
         if ($request->filled('category')) {

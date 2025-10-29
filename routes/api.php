@@ -11,6 +11,9 @@ use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\VolunteerController;
 use App\Http\Controllers\Api\DonationController;
 use App\Http\Controllers\Api\JobController;
+use App\Http\Controllers\Api\SocialAuthController;
+use App\Http\Controllers\Api\HomepageHeroController;
+
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -29,8 +32,19 @@ use Illuminate\Support\Facades\Route;
 Route::prefix('auth')->group(function () {
     Route::post('register', [AuthController::class, 'register']);
     Route::post('login', [AuthController::class, 'login']);
+
+    Route::get('google', [SocialAuthController::class, 'redirectToGoogle']);
+    Route::get('google/callback', [SocialAuthController::class, 'handleGoogleCallback']);
+
+    Route::get('facebook', [SocialAuthController::class, 'redirectToFacebook']);
+    Route::get('facebook/callback', [SocialAuthController::class, 'handleFacebookCallback']);
 });
 
+// Volunteer Routes
+    Route::prefix('banner')->group(function () {
+        Route::get('/', [HomepageHeroController::class, 'index']);   // list (paginated)
+        Route::get('/{hero}', [HomepageHeroController::class, 'show']); // single
+    });
 
 // Public business routes (for browsing)
 Route::prefix('business')->group(function () {

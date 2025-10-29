@@ -238,6 +238,14 @@
                     Analytics
                 </a>
             </div>
+
+            <div class="nav-item">
+                <a href="{{ route('heroes.index') }}" 
+                class="nav-link {{ request()->routeIs('heroes.*') ? 'active' : '' }}">
+                    <i class="fas fa-image"></i>
+                    <span>Homepage Heroes</span>
+                </a>
+            </div>
             
             <div class="nav-item">
                 <a href="{{ route('admin.users.index') }}" class="nav-link {{ request()->routeIs('admin.users.*') ? 'active' : '' }}">

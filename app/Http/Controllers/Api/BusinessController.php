@@ -17,6 +17,14 @@ class BusinessController extends Controller
      */
     public function register(Request $request)
     {
+        if (Business::where('user_id', $request->user()->id)->exists()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'You already have a business profile.',
+                'errors'  => ['business' => ['A user can create only one business.']]
+            ], 409); // Conflict
+        }
+        
         $validator = Validator::make($request->all(), [
             'business_name' => 'required|string|max:255',
             'business_type' => 'required|in:product,service',
