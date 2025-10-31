@@ -10,6 +10,9 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\WelcomeMail;
+
 
 class AuthController extends Controller
 {
@@ -95,7 +98,17 @@ class AuthController extends Controller
                 'caste_verification_status' => 'pending'
             ]);
             
-
+            // ✅ NEW: Send welcome email (do not break registration on mail failure)
+            try {
+                Mail::to($user->email)->send(new WelcomeMail($user));
+            } catch (\Throwable $mailEx) {
+                // Optional: log it if you use logging
+                \Log::warning('Welcome email failed to send', [
+                    'user_id' => $user->id,
+                    'error'   => $mailEx->getMessage(),
+                ]);
+                // Do not return error; registration succeeded
+            }
 
             $token = $user->createToken('auth_token')->plainTextToken;
 
