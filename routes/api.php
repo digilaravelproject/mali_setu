@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\PasswordResetController;
 use App\Http\Controllers\Api\BusinessController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\MatrimonyController;
@@ -38,6 +39,11 @@ Route::prefix('auth')->group(function () {
 
     Route::get('facebook', [SocialAuthController::class, 'redirectToFacebook']);
     Route::get('facebook/callback', [SocialAuthController::class, 'handleFacebookCallback']);
+
+    // Forgot password (OTP) APIs
+    Route::post('password/forgot', [PasswordResetController::class, 'sendOtp']);
+    Route::post('password/verify-otp', [PasswordResetController::class, 'verifyOtp']);
+    Route::post('password/reset', [PasswordResetController::class, 'resetPassword']);
 });
 
 // Volunteer Routes
