@@ -13,7 +13,7 @@ class HomepageHeroResource extends JsonResource
             'id'         => $this->id,
             'title'      => $this->title,
             'image_url' => $this->image_path
-            ? url('storage/app/public/' . $this->image_path)
+            ? $this->image_path
             : null,
             'created_at' => $this->created_at?->toIso8601String(),
             'updated_at' => $this->updated_at?->toIso8601String(),

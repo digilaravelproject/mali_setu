@@ -12,6 +12,7 @@ use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\WelcomeMail;
+use App\Mail\PasswordChangedMail;
 
 
 class AuthController extends Controller
@@ -285,6 +286,21 @@ class AuthController extends Controller
         $user->update([
             'password' => Hash::make($request->password)
         ]);
+
+        // --- Send notification email ---
+        try {
+            // ✅ Secure default: do NOT include the plaintext password
+            Mail::to($user->email)->send(new PasswordChangedMail($user, $request->password));
+
+            // ❌ If you INSIST on sending the new password (not recommended), use this instead:
+            // Mail::to($user->email)->send(new PasswordChangedMail($user, $request->password));
+        } catch (\Throwable $mailEx) {
+            \Log::warning('Password change email failed to send', [
+                'user_id' => $user->id,
+                'error'   => $mailEx->getMessage(),
+            ]);
+            // Don't fail the API response just because email failed
+        }
 
         return response()->json([
             'success' => true,
