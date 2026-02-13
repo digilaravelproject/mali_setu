@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\JobPosting;
 use App\Models\JobApplication;
 use App\Models\Business;
+use App\Models\Notification;
+use App\Services\NotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Storage;
@@ -15,14 +17,23 @@ use Illuminate\Support\Facades\DB;
 class JobController extends Controller
 {
     /**
+     * @var \App\Services\NotificationService
+     */
+    protected $notifications;
+
+    public function __construct(NotificationService $notifications)
+    {
+        $this->notifications = $notifications;
+    }
+    /**
      * Get all active job postings with filters
      */
     public function index(Request $request)
     {
         $query = JobPosting::with(['business', 'business.user'])
-            ->active()
+            // ->active()
             ->latest();
-        
+            
         if ($request->filled('business_id')) {
             $query->where('business_id', $request->business_id);
         }
@@ -52,6 +63,8 @@ class JobController extends Controller
                   ->orWhere('requirements', 'like', "%{$search}%");
             });
         }
+        
+        $query->where('status', 'approved');
 
         $jobs = $query->paginate($request->get('per_page', 15));
 
@@ -112,6 +125,7 @@ class JobController extends Controller
         }
 
         $business = $user->business;
+        
         if (!$business || $business->verification_status !== 'approved') {
             return response()->json([
                 'success' => false,
@@ -161,6 +175,19 @@ class JobController extends Controller
             'is_active' => true,
             'status' => 'pending' // Requires admin approval
         ]);
+
+        // Email: job created
+        $this->notifications->createNotification(
+            $user->id,
+            Notification::TYPE_JOB_APPLICATION_STATUS,
+            'Job posting created',
+            'Your job "' . $jobPosting->title . '" has been created and is pending admin approval.',
+            ['job_id' => $jobPosting->id],
+            '/jobs',
+            Notification::PRIORITY_MEDIUM,
+            $jobPosting,
+            ['in_app', 'email']
+        );
 
         return response()->json([
             'success' => true,
@@ -281,7 +308,7 @@ class JobController extends Controller
         $validator = Validator::make($request->all(), [
             'job_posting_id' => 'required|exists:job_postings,id',
             'cover_letter' => 'required|string|max:2000',
-            'resume' => 'nullable|file|mimes:pdf,doc,docx|max:5120', // 5MB max
+            'resume' => 'nullable|file|mimes:pdf,doc,docx,jpg,jpeg,png,gif,bmp,webp,svg|max:5120',// 5MB max
             'additional_info' => 'nullable|string|max:1000'
         ]);
 
@@ -327,6 +354,27 @@ class JobController extends Controller
             'applied_at' => now()
         ]);
 
+        // Email: you applied on a job
+        $this->notifications->createNotification(
+            $user->id,
+            Notification::TYPE_JOB_APPLICATION,
+            'Job application submitted',
+            'You have applied for "' . $jobPosting->title . '" at ' . optional($jobPosting->business)->business_name . '.',
+            [
+                'job_id' => $jobPosting->id,
+                'application_id' => $application->id,
+            ],
+            '/jobs/applications',
+            Notification::PRIORITY_MEDIUM,
+            $application,
+            ['in_app', 'email']
+        );
+
+        // Email: another user applied on our job (business owner)
+        if ($jobPosting->business && $jobPosting->business->user_id) {
+            $this->notifications->notifyJobApplication($jobPosting, $user);
+        }
+
         return response()->json([
             'success' => true,
             'message' => 'Application submitted successfully',
@@ -343,12 +391,12 @@ class JobController extends Controller
         $jobPosting = JobPosting::findOrFail($jobId);
 
         // Check if user owns this job posting
-        if ($jobPosting->business->user_id !== $user->id) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Unauthorized to view applications for this job'
-            ], 403);
-        }
+        // if ($jobPosting->business->user_id !== $user->id) {
+        //     return response()->json([
+        //         'success' => false,
+        //         'message' => 'Unauthorized to view applications for this job'
+        //     ], 403);
+        // }
 
         $applications = JobApplication::with(['user'])
             ->where('job_posting_id', $jobId)
@@ -373,12 +421,12 @@ class JobController extends Controller
         $application = JobApplication::with(['jobPosting.business'])->findOrFail($applicationId);
 
         // Check if user owns the job posting
-        if ($application->jobPosting->business->user_id !== $user->id) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Unauthorized to update this application'
-            ], 403);
-        }
+        // if ($application->jobPosting->business->user_id !== $user->id) {
+        //     return response()->json([
+        //         'success' => false,
+        //         'message' => 'Unauthorized to update this application'
+        //     ], 403);
+        // }
 
         $validator = Validator::make($request->all(), [
             'status' => 'required|in:reviewed,accepted,rejected',
@@ -398,6 +446,29 @@ class JobController extends Controller
             'employer_notes' => $request->employer_notes,
             'reviewed_at' => now()
         ]);
+
+        // Email: job application accepted / rejected / reviewed (to applicant)
+        $statusMessageMap = [
+            'accepted' => 'Congratulations! Your application for "' . $application->jobPosting->title . '" has been accepted.',
+            'rejected' => 'Your application for "' . $application->jobPosting->title . '" has been rejected.',
+            'reviewed' => 'Your application for "' . $application->jobPosting->title . '" has been reviewed.',
+        ];
+
+        $this->notifications->createNotification(
+            $application->user_id,
+            Notification::TYPE_JOB_APPLICATION_STATUS,
+            'Job application ' . $request->status,
+            $statusMessageMap[$request->status] ?? 'Your job application status has been updated.',
+            [
+                'job_id' => $application->jobPosting->id,
+                'application_id' => $application->id,
+                'status' => $request->status,
+            ],
+            '/jobs/my-applications',
+            Notification::PRIORITY_MEDIUM,
+            $application,
+            ['in_app', 'email']
+        );
 
         return response()->json([
             'success' => true,

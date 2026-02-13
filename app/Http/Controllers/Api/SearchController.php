@@ -11,6 +11,7 @@ use App\Models\DonationCause;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
 
 class SearchController extends Controller
 {
@@ -225,16 +226,49 @@ class SearchController extends Controller
                     break;
             }
         }
+        
+        $authUserId = $request->user()->id;
 
         // foreach (['location', 'caste', 'education', 'occupation', 'gender'] as $field) {
         //     if ($request->filled($field)) {
         //         $query->where($field, $request->$field);
         //     }
         // }
+        
+        $query->where('user_id', '!=', $authUserId);
 
         $query->where('approval_status', 'approved');
 
         $results = $query->latest()->paginate($request->size ?? 20);
+
+        $filtered = $results->getCollection()->filter(function ($usr) use ($authUserId) {
+        
+            $connection = DB::table('connection_requests')
+                ->where(function ($q) use ($authUserId, $usr) {
+                    $q->where('sender_id', $authUserId)
+                      ->where('receiver_id', $usr->user_id);
+                })
+                ->orWhere(function ($q) use ($authUserId, $usr) {
+                    $q->where('sender_id', $usr->user_id)
+                      ->where('receiver_id', $authUserId);
+                })
+                ->orderBy('id', 'desc')
+                ->first();
+        
+            if ($connection) {
+                $usr->connection_status = $connection->status;
+        
+                // ❌ remove user if removed
+                return $connection->status !== 'removed';
+            }
+        
+            $usr->connection_status = 'not_connected';
+            return true;
+        });
+        
+        // ✅ reindex + set back to paginator
+        $results->setCollection($filtered->values());
+
 
         return response()->json(['success' => true, 'data' => $results]);
     }

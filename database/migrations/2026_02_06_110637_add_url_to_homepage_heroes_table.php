@@ -11,9 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('password_otps', function (Blueprint $table) {
-            $table->id();
-            $table->timestamps();
+        Schema::table('homepage_heroes', function (Blueprint $table) {
+            $table->string('url', 512)->nullable()->after('title');
         });
     }
 
@@ -22,6 +21,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('password_otps');
+        Schema::table('homepage_heroes', function (Blueprint $table) {
+            $table->dropColumn('url');
+        });
     }
 };

@@ -12,6 +12,7 @@ class HomepageHeroController extends Controller
     // GET /api/heroes?limit=10&page=1
     public function index(Request $request)
     {
+        
         // optional limit (default 10). If you want "all", pass limit=0
         $limit = (int) $request->get('limit', 10);
 

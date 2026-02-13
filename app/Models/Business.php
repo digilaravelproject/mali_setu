@@ -28,6 +28,8 @@ class Business extends Model
         'verified_by',
         'rejection_reason',
         'status',
+        'opening_time',
+        'closing_time',
         'photo',
     ];
 

@@ -14,6 +14,7 @@ use App\Http\Controllers\Api\DonationController;
 use App\Http\Controllers\Api\JobController;
 use App\Http\Controllers\Api\SocialAuthController;
 use App\Http\Controllers\Api\HomepageHeroController;
+use App\Http\Controllers\Api\GoogleAuthController;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -33,13 +34,15 @@ use Illuminate\Support\Facades\Route;
 Route::prefix('auth')->group(function () {
     Route::post('register', [AuthController::class, 'register']);
     Route::post('login', [AuthController::class, 'login']);
+    
+    Route::post('google-login', [GoogleAuthController::class, 'login']);
 
     Route::get('google', [SocialAuthController::class, 'redirectToGoogle']);
     Route::get('google/callback', [SocialAuthController::class, 'handleGoogleCallback']);
 
     Route::get('facebook', [SocialAuthController::class, 'redirectToFacebook']);
     Route::get('facebook/callback', [SocialAuthController::class, 'handleFacebookCallback']);
-
+    
     // Forgot password (OTP) APIs
     Route::post('password/forgot', [PasswordResetController::class, 'sendOtp']);
     Route::post('password/verify-otp', [PasswordResetController::class, 'verifyOtp']);
@@ -56,6 +59,7 @@ Route::prefix('auth')->group(function () {
 Route::prefix('business')->group(function () {
     Route::get('/', [BusinessController::class, 'index']);
     Route::get('/{id}', [BusinessController::class, 'show']);
+    Route::get('/category/{id}', [BusinessController::class, 'showOnCategory']);
     Route::get('/{id}/products', [BusinessController::class, 'getProducts']);
     Route::get('/{id}/services', [BusinessController::class, 'getServices']);
 });
@@ -63,7 +67,11 @@ Route::prefix('business')->group(function () {
 // Public matrimony routes (for browsing)
 Route::prefix('matrimony')->group(function () {
     Route::get('/search', [MatrimonyController::class, 'searchProfiles']);
-    Route::get('/profile/{id}', [MatrimonyController::class, 'showProfile']);
+    // Route::get('/profile/{id}', [MatrimonyController::class, 'showProfile']);
+    Route::middleware('auth:sanctum')->get(
+    '/profile/{id}',
+    [MatrimonyController::class, 'showProfile']);
+
 });
 
 // Public volunteer routes (for browsing)
@@ -91,7 +99,12 @@ Route::post('payment/webhook', [PaymentController::class, 'webhook']);
 Route::prefix('search')->group(function () {
     Route::get('global', [SearchController::class, 'globalSearch']);
     Route::get('businesses', [SearchController::class, 'searchBusinesses']);
-    Route::post('matrimony', [SearchController::class, 'searchMatrimony']);
+    // Route::post('matrimony', [SearchController::class, 'searchMatrimony']);
+    
+    Route::middleware('auth:sanctum')->post(
+    'matrimony',
+    [SearchController::class, 'searchMatrimony']);
+    
     Route::get('jobs', [SearchController::class, 'searchJobs']);
     Route::get('volunteers', [SearchController::class, 'searchVolunteers']);
     Route::get('donations', [SearchController::class, 'searchDonations']);
@@ -145,8 +158,10 @@ Route::middleware(['auth:sanctum'])->group(function () {
         
         // Connection requests
         Route::post('connection-request', [MatrimonyController::class, 'sendConnectionRequest']);
+        Route::post('remove-request', [MatrimonyController::class, 'sendRemoveUser']);
         Route::put('connection-request/{id}', [MatrimonyController::class, 'respondToConnectionRequest']);
         Route::get('connection-requests', [MatrimonyController::class, 'getConnectionRequests']);
+        Route::get('connected-users', [MatrimonyController::class, 'getConnectedUsers']);
         
         // Chat system
         Route::get('conversations', [MatrimonyController::class, 'getConversations']);

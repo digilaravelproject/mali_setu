@@ -410,43 +410,73 @@ class VolunteerController extends Controller
     /**
      * Create or update volunteer profile
      */
+
     public function updateVolunteerProfile(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'skills' => 'nullable|array',
-            'experience' => 'nullable|string',
+            'skills'       => 'nullable|array',     // coming as array from UI
+            'experience'   => 'nullable|string',
             'availability' => 'nullable|string',
-            'location' => 'nullable|string|max:255',
-            'bio' => 'nullable|string|max:1000',
-            'interests' => 'nullable|array',
+            'location'     => 'nullable|string|max:255',
+            'bio'          => 'nullable|string|max:1000',
+            'interests'    => 'nullable|array',     // will be JSON-encoded by cast
+            'status'       => 'nullable|in:active,inactive,pending',
         ]);
-
+    
         if ($validator->fails()) {
             return response()->json([
                 'success' => false,
                 'message' => 'Validation failed',
-                'errors' => $validator->errors()
+                'errors'  => $validator->errors()
             ], 422);
         }
-
+    
         $user = Auth::user();
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthenticated.',
+            ], 401);
+        }
+    
+        $data = $validator->validated();
+    
+        // Convert skills array -> CSV string because DB column is varchar(255)
+        if (array_key_exists('skills', $data)) {
+            if (is_array($data['skills'])) {
+                // Trim values and implode; keep within 255 if needed
+                $csv = implode(',', array_filter(array_map('trim', $data['skills']), fn($v) => $v !== ''));
+                // Optional: enforce length
+                $data['skills'] = mb_substr($csv, 0, 255);
+            } elseif ($data['skills'] === null) {
+                $data['skills'] = null;
+            }
+        }
+    
+        // interests stays as array; your model casts it to array and will JSON encode to longtext
+        // If frontend sometimes sends string, you can normalize:
+        if (array_key_exists('interests', $data) && is_string($data['interests'])) {
+            $decoded = json_decode($data['interests'], true);
+            $data['interests'] = is_array($decoded) ? $decoded : [];
+        }
+    
         $volunteerProfile = $user->volunteer;
-
+    
         if ($volunteerProfile) {
-            $volunteerProfile->update($request->all());
+            $volunteerProfile->update($data);
             $message = 'Volunteer profile updated successfully';
         } else {
             $volunteerProfile = VolunteerProfile::create(array_merge(
-                $request->all(),
-                ['user_id' => $user->id, 'status' => 'active']
+                $data,
+                ['user_id' => $user->id, 'status' => $data['status'] ?? 'active']
             ));
             $message = 'Volunteer profile created successfully';
         }
-
+    
         return response()->json([
             'success' => true,
             'message' => $message,
-            'data' => $volunteerProfile
+            'data'    => $volunteerProfile->fresh()
         ]);
     }
 }

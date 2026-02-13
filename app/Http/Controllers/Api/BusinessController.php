@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\Business;
 use App\Models\Product;
 use App\Models\Service;
+use App\Models\Notification;
+use App\Services\NotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Storage;
@@ -13,21 +15,32 @@ use Illuminate\Support\Facades\Storage;
 class BusinessController extends Controller
 {
     /**
+     * @var \App\Services\NotificationService
+     */
+    protected $notifications;
+
+    public function __construct(NotificationService $notifications)
+    {
+        $this->notifications = $notifications;
+    }
+    /**
      * Register a new business
      */
     public function register(Request $request)
     {
-        if (Business::where('user_id', $request->user()->id)->exists()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'You already have a business profile.',
-                'errors'  => ['business' => ['A user can create only one business.']]
-            ], 409); // Conflict
-        }
+        $user = $request->user();
+        
+        // if (Business::where('user_id', $request->user()->id)->exists()) {
+        //     return response()->json([
+        //         'success' => false,
+        //         'message' => 'You already have a business profile.',
+        //         'errors'  => ['business' => ['A user can create only one business.']]
+        //     ], 409);
+        // }
         
         $validator = Validator::make($request->all(), [
             'business_name' => 'required|string|max:255',
-            'business_type' => 'required|in:product,service',
+            'business_type' => 'required',
             'category_id' => 'required|integer|exists:business_categories,id',
             'description' => 'required|string',
             'contact_phone' => 'nullable|string|max:20',
@@ -35,6 +48,8 @@ class BusinessController extends Controller
             'website' => 'nullable|url',
             'photos' => 'nullable|array',
             'photos.*' => 'image|mimes:jpeg,png,jpg|max:2048',
+            'opening_time' => 'nullable|date_format:H:i',
+            'closing_time' => 'nullable|date_format:H:i',
         ]);
 
         if ($validator->fails()) {
@@ -62,6 +77,8 @@ class BusinessController extends Controller
             'contact_phone' => $request->contact_phone,
             'contact_email' => $request->contact_email,
             'website' => $request->website,
+            'opening_time' => $request->opening_time,
+            'closing_time' => $request->closing_time,
             'verification_status' => 'pending',
             'subscription_status' => 'trial',
         ]);
@@ -72,6 +89,25 @@ class BusinessController extends Controller
                 'photos' => $photoPaths   // directly store array
             ]);
         }
+        
+        if (empty($user->user_type) || $user->user_type != 'business') {
+            $user->update([
+                'user_type' => 'business'
+            ]);
+        }
+
+        // Email: business registered
+        $this->notifications->createNotification(
+            $user->id,
+            Notification::TYPE_BUSINESS_VERIFIED,
+            'Business registered',
+            'Your business "' . $business->business_name . '" has been registered and is pending verification.',
+            ['business_id' => $business->id],
+            '/business/manage',
+            Notification::PRIORITY_MEDIUM,
+            $business,
+            ['in_app', 'email']
+        );
 
         return response()->json([
             'success' => true,
@@ -127,16 +163,132 @@ class BusinessController extends Controller
     /**
      * Get single business details
      */
-    public function show($id)
+    public function show_old($id)
     {
-        $business = Business::with(['user', 'category', 'products', 'services', 'reviews.user'])
-            ->findOrFail($id);
+        $business = Business::with([
+            'user','category','products','services','reviews.user'
+        ])->find($id);
+        
+        if (!$business) {
+            return response()->json(['message' => 'Business not found'], 404);
+        }
+        
+        // $business = Business::with(['user', 'category', 'products', 'services', 'reviews.user'])
+        //     ->findOrFail($id);
 
         return response()->json([
             'success' => true,
             'data' => ['business' => $business]
         ]);
     }
+
+    public function show($id)
+    {
+        try {
+            // Validate ID (optional but recommended)
+            if (!is_numeric($id)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid business ID',
+                    'errors'  => ['id' => ['Business ID must be numeric']]
+                ], 422);
+            }
+    
+            // Fetch business with relationships
+            $business = Business::with([
+                'user',
+                'category',
+                'products',
+                'services',
+                'reviews.user'
+            ])->find($id);
+    
+            // Business not found
+            if (!$business) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Business not found'
+                ], 404);
+            }
+    
+            // Success response
+            return response()->json([
+                'success' => true,
+                'message' => 'Business fetched successfully',
+                'data' => [
+                    'business' => $business
+                ]
+            ], 200);
+    
+        } catch (\Throwable $e) {
+    
+            // Log error for debugging
+            \Log::error('Business show API error', [
+                'business_id' => $id,
+                'error' => $e->getMessage()
+            ]);
+    
+            // Server error response
+            return response()->json([
+                'success' => false,
+                'message' => 'Something went wrong. Please try again later.'
+            ], 500);
+        }
+    }
+    
+    public function showOnCategory($cat_id)
+    {
+        try {
+            // Validate category ID
+            if (!is_numeric($cat_id)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid category ID',
+                ], 422);
+            }
+    
+            // Fetch businesses by category_id
+            $businesses = Business::with([
+                'user',
+                'category',
+                'products',
+                'services',
+                'reviews.user'
+            ])
+            ->where('category_id', $cat_id)
+            ->get();
+    
+            // No business found
+            if ($businesses->isEmpty()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No businesses found for this category'
+                ], 404);
+            }
+    
+            // Success response
+            return response()->json([
+                'success' => true,
+                'message' => 'Businesses fetched successfully',
+                'data' => [
+                    'businesses' => $businesses
+                ]
+            ], 200);
+    
+        } catch (\Throwable $e) {
+    
+            \Log::error('Business category API error', [
+                'category_id' => $cat_id,
+                'error' => $e->getMessage()
+            ]);
+    
+            return response()->json([
+                'success' => false,
+                'message' => 'Something went wrong. Please try again later.'
+            ], 500);
+        }
+    }
+
 
     /**
      * Update business
@@ -148,12 +300,14 @@ class BusinessController extends Controller
 
         $validator = Validator::make($request->all(), [
             'business_name' => 'sometimes|string|max:255',
-            'business_type' => 'sometimes|in:product,service',
+            'business_type' => 'sometimes',
             'category_id' => 'sometimes|integer|exists:business_categories,id',
             'description' => 'sometimes|string',
             'contact_phone' => 'nullable|string|max:20',
             'contact_email' => 'nullable|email',
             'website' => 'nullable|url',
+            'opening_time' => 'sometimes|date_format:H:i',
+            'closing_time' => 'sometimes|date_format:H:i',
         ]);
 
         if ($validator->fails()) {
@@ -167,7 +321,21 @@ class BusinessController extends Controller
         $business->update($request->only([
             'business_name', 'business_type', 'category_id', 'description',
             'contact_phone', 'contact_email', 'website'
+            , 'opening_time', 'closing_time'
         ]));
+
+        // Email: business updated
+        $this->notifications->createNotification(
+            $request->user()->id,
+            Notification::TYPE_PROFILE_UPDATE,
+            'Business updated',
+            'Your business "' . $business->business_name . '" details have been updated.',
+            ['business_id' => $business->id],
+            '/business/manage',
+            Notification::PRIORITY_LOW,
+            $business,
+            ['in_app', 'email']
+        );
 
         return response()->json([
             'success' => true,
@@ -216,6 +384,22 @@ class BusinessController extends Controller
             'image_path' => $imagePath,
         ]);
 
+        // Email: product added
+        $this->notifications->createNotification(
+            $request->user()->id,
+            Notification::TYPE_BUSINESS_VERIFIED,
+            'New product added',
+            'A new product "' . $product->name . '" has been added to your business "' . $business->business_name . '".',
+            [
+                'business_id' => $business->id,
+                'product_id' => $product->id,
+            ],
+            '/business/manage',
+            Notification::PRIORITY_LOW,
+            $product,
+            ['in_app', 'email']
+        );
+
         return response()->json([
             'success' => true,
             'message' => 'Product added successfully',
@@ -262,6 +446,22 @@ class BusinessController extends Controller
             'cost' => $request->cost,
             'image_path' => $imagePath,
         ]);
+
+        // Email: service added
+        $this->notifications->createNotification(
+            $request->user()->id,
+            Notification::TYPE_BUSINESS_VERIFIED,
+            'New service added',
+            'A new service "' . $service->name . '" has been added to your business "' . $business->business_name . '".',
+            [
+                'business_id' => $business->id,
+                'service_id' => $service->id,
+            ],
+            '/business/manage',
+            Notification::PRIORITY_LOW,
+            $service,
+            ['in_app', 'email']
+        );
 
         return response()->json([
             'success' => true,

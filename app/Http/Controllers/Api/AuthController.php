@@ -125,7 +125,7 @@ class AuthController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to fetch conversations',
+                'message' => 'Failed to register the user',
                 'error' => $e->getMessage()
             ], 500);
         }

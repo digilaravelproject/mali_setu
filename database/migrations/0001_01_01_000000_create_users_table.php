@@ -21,7 +21,6 @@ return new class extends Migration
             $table->string('password');
 
             // Optional profile fields
-            $table->integer('age')->nullable();
             $table->string('cast_certificate')->nullable(); // file path (store filename here)
             $table->string('occupation', 255)->nullable();
             $table->string('reffral_code', 50)->nullable();

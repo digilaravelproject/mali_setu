@@ -2,10 +2,11 @@
 
 namespace App\Services;
 
+use App\Mail\NotificationMail;
 use App\Models\Notification;
 use App\Models\User;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Queue;
 
 class NotificationService
@@ -98,12 +99,13 @@ class NotificationService
                 return;
             }
 
-            // For now, we'll just log the email sending
-            // In a real implementation, you would use Laravel's Mail facade
+            // Send using generic notification email template
+            Mail::to($user->email)->send(new NotificationMail($notification));
+
             Log::info('Email notification sent', [
                 'notification_id' => $notification->id,
                 'user_email' => $user->email,
-                'subject' => $notification->title
+                'subject' => $notification->title,
             ]);
 
             $notification->markEmailSent();
