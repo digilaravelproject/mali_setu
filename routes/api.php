@@ -62,6 +62,7 @@ Route::prefix('business')->group(function () {
     Route::get('/category/{id}', [BusinessController::class, 'showOnCategory']);
     Route::get('/{id}/products', [BusinessController::class, 'getProducts']);
     Route::get('/{id}/services', [BusinessController::class, 'getServices']);
+    Route::post('/search_business', [BusinessController::class, 'searchBusiness']);
 });
 
 // Public matrimony routes (for browsing)

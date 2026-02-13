@@ -64,7 +64,7 @@ class JobController extends Controller
             });
         }
         
-        $query->where('status', 'approved');
+        // $query->where('status', 'approved');
 
         $jobs = $query->paginate($request->get('per_page', 15));
 
@@ -502,12 +502,12 @@ class JobController extends Controller
     {
         $user = Auth::user();
         
-        if ($user->user_type !== 'business' || !$user->business) {
-            return response()->json([
-                'success' => false,
-                'message' => 'No business profile found'
-            ], 404);
-        }
+        // if ($user->user_type !== 'business' || !$user->business) {
+        //     return response()->json([
+        //         'success' => false,
+        //         'message' => 'No business profile found'
+        //     ], 404);
+        // }
 
         $businessId = $user->business->id;
         
