@@ -135,6 +135,14 @@ class DonationController extends Controller
 
         try {
             $user = Auth::user();
+
+            // If request is unauthenticated, return 401 instead of throwing a fatal error
+            if (!$user) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unauthenticated. Please login and include a valid API token.'
+                ], 401);
+            }
             $cause = DonationCause::findOrFail($request->cause_id);
 
             // Check if cause is active
@@ -203,11 +211,13 @@ class DonationController extends Controller
             ]);
 
         } catch (Exception $e) {
-            Log::error('Error creating donation order: ' . $e->getMessage());
+
+            Log::error($e); // full error log
 
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to create donation order'
+                'message' => $e->getMessage(), // TEMP for debugging
+                'trace' => $e->getTraceAsString()
             ], 500);
         }
     }

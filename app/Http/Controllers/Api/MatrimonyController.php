@@ -8,6 +8,8 @@ use App\Models\ConnectionRequest;
 use App\Models\ChatConversation;
 use App\Models\ChatMessage;
 use App\Models\Notification;
+use App\Models\Cast;
+use App\Models\SubCast;
 use App\Services\NotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
@@ -144,6 +146,105 @@ class MatrimonyController extends Controller
             'message' => 'Matrimony profile created successfully',
             'data' => ['profile' => $profile]
         ], 201);
+    }
+
+    /**
+     * Get all casts
+     */
+    public function getCasts(Request $request)
+    {
+        try {
+            $casts = Cast::where('is_active', true)
+                // ->with('subCasts')
+                ->latest()
+                ->get();
+
+            if ($casts->isEmpty()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No casts found'
+                ], 404);
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Casts fetched successfully',
+                'data' => [
+                    'casts' => $casts,
+                    'count' => $casts->count()
+                ]
+            ], 200);
+
+        } catch (\Exception $e) {
+            \Log::error('Get casts API error', [
+                'error' => $e->getMessage()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Something went wrong. Please try again later.'
+            ], 500);
+        }
+    }
+
+    /**
+     * Get sub-casts by cast ID
+     */
+    public function getSubCasts(Request $request, $castId)
+    {
+        try {
+            // Validate cast ID
+            if (!is_numeric($castId)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid cast ID',
+                    'errors' => ['cast_id' => ['Cast ID must be numeric']]
+                ], 422);
+            }
+
+            // Check if cast exists and is active
+            $cast = Cast::find($castId);
+            if (!$cast || !$cast->is_active) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Cast not found or inactive'
+                ], 404);
+            }
+
+            // Fetch sub-casts for this cast
+            $subCasts = SubCast::where('cast_id', $castId)
+                ->where('is_active', true)
+                ->latest()
+                ->get();
+
+            if ($subCasts->isEmpty()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No sub-casts found for this cast'
+                ], 404);
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Sub-casts fetched successfully',
+                'data' => [
+                    'cast' => $cast,
+                    'sub_casts' => $subCasts,
+                    'count' => $subCasts->count()
+                ]
+            ], 200);
+
+        } catch (\Exception $e) {
+            \Log::error('Get sub-casts API error', [
+                'cast_id' => $castId,
+                'error' => $e->getMessage()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Something went wrong. Please try again later.'
+            ], 500);
+        }
     }
 
     /**

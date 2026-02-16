@@ -7,8 +7,12 @@ use App\Http\Controllers\Admin\UserManagementController;
 use App\Http\Controllers\Admin\BusinessManagementController;
 use App\Http\Controllers\Admin\MatrimonyManagementController;
 use App\Http\Controllers\Admin\PaymentManagementController;
+use App\Http\Controllers\Admin\DonationManagementController;
 use App\Http\Controllers\Admin\CategoryManagementController;
 use App\Http\Controllers\Admin\HomepageHeroController;
+use App\Http\Controllers\Admin\VolunteerManagementController;
+use App\Http\Controllers\Admin\CastManagementController;
+use App\Http\Controllers\Admin\PlanManagementController;
 
 
 // Public route
@@ -72,6 +76,23 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::post('/{id}/activate', [BusinessManagementController::class, 'activate'])->name('activate');
             Route::delete('/{id}', [BusinessManagementController::class, 'destroy'])->name('destroy');
         });
+
+        // Donation Management Routes
+        Route::prefix('donations')->name('donations.')->group(function () {
+            // Donation Causes management (must come before parameterized routes)
+            Route::get('/causes', [DonationManagementController::class, 'causes'])->name('causes');
+            Route::get('/causes/create', [DonationManagementController::class, 'createCause'])->name('causes.create');
+            Route::post('/causes', [DonationManagementController::class, 'storeCause'])->name('causes.store');
+            Route::get('/causes/{id}/edit', [DonationManagementController::class, 'editCause'])->name('causes.edit');
+            Route::put('/causes/{id}', [DonationManagementController::class, 'updateCause'])->name('causes.update');
+            Route::delete('/causes/{id}', [DonationManagementController::class, 'destroyCause'])->name('causes.destroy');
+            Route::patch('/causes/{id}/toggle-status', [DonationManagementController::class, 'toggleCauseStatus'])->name('causes.toggle-status');
+            
+            // Donations list and detail
+            Route::get('/', [DonationManagementController::class, 'index'])->name('index');
+            Route::get('/{id}', [DonationManagementController::class, 'show'])->name('show');
+            Route::delete('/{id}', [DonationManagementController::class, 'destroy'])->name('destroy');
+        });
         
         // Matrimony Management Routes
         Route::prefix('matrimony')->name('matrimony.')->group(function () {
@@ -95,6 +116,60 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::post('/{id}/refund', [PaymentManagementController::class, 'refund'])->name('refund');
             Route::post('/{id}/update-status', [PaymentManagementController::class, 'updateStatus'])->name('update-status');
             Route::get('/export', [PaymentManagementController::class, 'export'])->name('export');
+        });
+
+        // Volunteer Management Routes
+        Route::prefix('volunteers')->name('volunteers.')->group(function () {
+            Route::get('/', [VolunteerManagementController::class, 'index'])->name('index');
+            Route::get('/pending', [VolunteerManagementController::class, 'pending'])->name('pending');
+            Route::get('/verification', [VolunteerManagementController::class, 'verification'])->name('verification');
+            Route::post('/{id}/approve', [VolunteerManagementController::class, 'approve'])->name('approve');
+            Route::post('/{id}/reject', [VolunteerManagementController::class, 'reject'])->name('reject');
+            Route::get('/{id}', [VolunteerManagementController::class, 'show'])->name('show');
+            Route::delete('/{id}', [VolunteerManagementController::class, 'destroy'])->name('destroy');
+        });
+
+        // Plans Management Routes
+        Route::prefix('plans')->name('plans.')->group(function () {
+            Route::prefix('business')->name('business.')->group(function () {
+                Route::get('/', [PlanManagementController::class, 'businessIndex'])->name('index');
+                Route::get('/create', [PlanManagementController::class, 'createBusiness'])->name('create');
+                Route::post('/', [PlanManagementController::class, 'storeBusiness'])->name('store');
+                Route::get('/{id}/edit', [PlanManagementController::class, 'editBusiness'])->name('edit');
+                Route::put('/{id}', [PlanManagementController::class, 'updateBusiness'])->name('update');
+                Route::delete('/{id}', [PlanManagementController::class, 'destroyBusiness'])->name('destroy');
+            });
+            
+            // Matrimony plans
+            Route::prefix('matrimony')->name('matrimony.')->group(function () {
+                Route::get('/', [PlanManagementController::class, 'matrimonyIndex'])->name('index');
+                Route::get('/create', [PlanManagementController::class, 'createMatrimony'])->name('create');
+                Route::post('/', [PlanManagementController::class, 'storeMatrimony'])->name('store');
+                Route::get('/{id}/edit', [PlanManagementController::class, 'editMatrimony'])->name('edit');
+                Route::put('/{id}', [PlanManagementController::class, 'updateMatrimony'])->name('update');
+                Route::delete('/{id}', [PlanManagementController::class, 'destroyMatrimony'])->name('destroy');
+            });
+        });
+
+        // Cast Management Routes
+        Route::prefix('casts')->name('casts.')->group(function () {
+            // Cast routes
+            Route::get('/', [CastManagementController::class, 'index'])->name('index');
+            Route::get('/create', [CastManagementController::class, 'create'])->name('create');
+            Route::post('/', [CastManagementController::class, 'store'])->name('store');
+            Route::get('/{id}/edit', [CastManagementController::class, 'edit'])->name('edit');
+            Route::put('/{id}', [CastManagementController::class, 'update'])->name('update');
+            Route::delete('/{id}', [CastManagementController::class, 'destroy'])->name('destroy');
+            Route::patch('/{id}/toggle-status', [CastManagementController::class, 'toggleStatus'])->name('toggle-status');
+
+            // SubCast routes
+            Route::get('/{castId}/subcasts', [CastManagementController::class, 'subcastIndex'])->name('subcasts.index');
+            Route::get('/{castId}/subcasts/create', [CastManagementController::class, 'subcastCreate'])->name('subcasts.create');
+            Route::post('/{castId}/subcasts', [CastManagementController::class, 'subcastStore'])->name('subcasts.store');
+            Route::get('/{castId}/subcasts/{subCastId}/edit', [CastManagementController::class, 'subcastEdit'])->name('subcasts.edit');
+            Route::put('/{castId}/subcasts/{subCastId}', [CastManagementController::class, 'subcastUpdate'])->name('subcasts.update');
+            Route::delete('/{castId}/subcasts/{subCastId}', [CastManagementController::class, 'subcastDestroy'])->name('subcasts.destroy');
+            Route::patch('/{castId}/subcasts/{subCastId}/toggle-status', [CastManagementController::class, 'subcastToggleStatus'])->name('subcasts.toggle-status');
         });
         
         // Settings and Reports

@@ -15,6 +15,7 @@ use App\Http\Controllers\Api\JobController;
 use App\Http\Controllers\Api\SocialAuthController;
 use App\Http\Controllers\Api\HomepageHeroController;
 use App\Http\Controllers\Api\GoogleAuthController;
+use App\Http\Controllers\Api\PlanController;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -73,6 +74,10 @@ Route::prefix('matrimony')->group(function () {
     '/profile/{id}',
     [MatrimonyController::class, 'showProfile']);
 
+    // Cast and SubCast routes
+    Route::get('/casts', [MatrimonyController::class, 'getCasts']);
+    Route::get('/casts/{castId}/subcasts', [MatrimonyController::class, 'getSubCasts']);
+
 });
 
 // Public volunteer routes (for browsing)
@@ -85,6 +90,12 @@ Route::prefix('volunteer')->group(function () {
 Route::prefix('donation')->group(function () {
     Route::get('/causes', [DonationController::class, 'getCauses']);
     Route::get('/cause/{id}', [DonationController::class, 'getCause']);
+});
+
+// Public plans routes
+Route::prefix('plans')->group(function () {
+    Route::get('business', [PlanController::class, 'businessPlans']);
+    Route::get('matrimony', [PlanController::class, 'matrimonyPlans']);
 });
 
 // Public job routes (for browsing)

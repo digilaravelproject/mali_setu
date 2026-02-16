@@ -172,8 +172,26 @@ class SearchController extends Controller
         }
 
         //Location Details
+
+        if ($request->filled('state')) {
+            $query->whereRaw(
+                "LOWER(JSON_UNQUOTE(JSON_EXTRACT(location_details, '$.state'))) = ?",
+                [strtolower($request->state)]
+            );
+        }
+
         if ($request->filled('country')) {
-            $query->whereJsonContains('location_details->country', $request->country);
+            $query->whereRaw(
+                "LOWER(JSON_UNQUOTE(JSON_EXTRACT(location_details, '$.country'))) = ?",
+                [strtolower($request->country)]
+            );
+        }
+
+        if ($request->filled('city')) {
+            $query->whereRaw(
+                "LOWER(JSON_UNQUOTE(JSON_EXTRACT(location_details, '$.city'))) = ?",
+                [strtolower($request->city)]
+            );
         }
 
         if ($request->filled('citizenship')) {
@@ -194,9 +212,9 @@ class SearchController extends Controller
         }
 
         //Profile type
-        if ($request->filled('photo')) {
-             $query->where('photo', '!=', '');
-        }
+        // if ($request->filled('photo')) {
+        //      $query->where('photo', '!=', '');
+        // }
 
         //Recently created profile
         if ($request->filled('created_at')) {

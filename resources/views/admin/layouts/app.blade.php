@@ -262,6 +262,30 @@
             </div>
 
             <div class="nav-item">
+                <a class="nav-link d-flex justify-content-between align-items-center {{ request()->routeIs('admin.plans.*') ? 'active' : '' }}"
+                   data-bs-toggle="collapse" href="#plansMenu" role="button" aria-expanded="{{ request()->routeIs('admin.plans.*') ? 'true' : 'false' }}" aria-controls="plansMenu">
+                    <span><i class="fas fa-list-alt"></i> Manage Plans</span>
+                    <i class="fas fa-chevron-down"></i>
+                </a>
+
+                <div class="collapse {{ request()->routeIs('admin.plans.*') ? 'show' : '' }}" id="plansMenu">
+                    <div class="nav-item" style="margin-left: .6rem;">
+                        <a href="{{ route('admin.plans.business.index') }}" class="nav-link {{ request()->routeIs('admin.plans.business.*') ? 'active' : '' }}">
+                            <i class="fas fa-briefcase"></i>
+                            Business Plans
+                        </a>
+                    </div>
+
+                    <div class="nav-item" style="margin-left: .6rem;">
+                        <a href="{{ route('admin.plans.matrimony.index') }}" class="nav-link {{ request()->routeIs('admin.plans.matrimony.*') ? 'active' : '' }}">
+                            <i class="fas fa-user-friends"></i>
+                            Matrimony Plans
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="nav-item">
                 <a href="{{ route('admin.category.index') }}" class="nav-link {{ request()->routeIs('admin.category.*') ? 'active' : '' }}">
                     <i class="fas fa-shopping-bag"></i>
                     Category
@@ -276,9 +300,30 @@
             </div>
             
             <div class="nav-item">
+                <a href="{{ route('admin.volunteers.index') }}" class="nav-link {{ request()->routeIs('admin.volunteers.*') ? 'active' : '' }}">
+                    <i class="fas fa-hands-helping"></i>
+                    Volunteers
+                </a>
+            </div>
+            
+            <div class="nav-item">
+                <a href="{{ route('admin.donations.index') }}" class="nav-link {{ request()->routeIs('admin.donations.*') ? 'active' : '' }}">
+                    <i class="fas fa-heart"></i>
+                    Donations
+                </a>
+            </div>
+            
+            <div class="nav-item">
                 <a href="{{ route('admin.matrimony.index') }}" class="nav-link {{ request()->routeIs('admin.matrimony.*') ? 'active' : '' }}">
                     <i class="fas fa-heart"></i>
                     Matrimony
+                </a>
+            </div>
+
+            <div class="nav-item">
+                <a href="{{ route('admin.casts.index') }}" class="nav-link {{ request()->routeIs('admin.casts.*') ? 'active' : '' }}">
+                    <i class="fas fa-sitemap"></i>
+                    Manage Casts
                 </a>
             </div>
             

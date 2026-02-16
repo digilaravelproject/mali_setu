@@ -468,7 +468,7 @@ class VolunteerController extends Controller
         } else {
             $volunteerProfile = VolunteerProfile::create(array_merge(
                 $data,
-                ['user_id' => $user->id, 'status' => $data['status'] ?? 'active']
+                ['user_id' => $user->id, 'status' => $data['status'] ?? 'pending']
             ));
             $message = 'Volunteer profile created successfully';
         }
