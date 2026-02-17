@@ -30,6 +30,14 @@ class AuthController extends Controller
                 'phone'            => 'required|string|max:15|unique:users',
                 'cast_certificate' => 'nullable|string',
                 'occupation'       => 'nullable|string|max:255',
+                'occupation'       => 'nullable|string|max:255',
+                'occupation'       => 'nullable|string|max:255',
+                'occupation'       => 'nullable|string|max:255',
+                'company_name'     => 'nullable|string|max:255',
+                'dept_name'        => 'nullable|string|max:255',
+                'dob'              => 'nullable|date',
+                'designation'      => 'nullable|string|max:255',
+
                 'reffral_code'     => 'nullable|string|max:50',
                 'address'          => 'nullable|string|max:500',
                 'nearby_location'  => 'nullable|string|max:255',
@@ -48,7 +56,7 @@ class AuthController extends Controller
             if ($validator->fails()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Validation failed',
+                    'message' => $validator->errors(),
                     'errors' => $validator->errors()
                 ], 422);
             }
@@ -84,6 +92,10 @@ class AuthController extends Controller
                 // optional fields
                 'age'                    => $request->age,
                 'occupation'             => $request->occupation,
+                'company_name'           => $request->company_name,
+                'dept_name'              => $request->dept_name,
+                'dob'                    => $request->dob,
+                'designation'            => $request->designation,
                 'reffral_code'           => $request->reffral_code,
                 'address'                => $request->address,
                 'nearby_location'        => $request->nearby_location,
@@ -220,6 +232,10 @@ class AuthController extends Controller
             'phone'            => 'required|string|max:15|unique:users,phone,' . $user->id,
             'cast_certificate' => 'nullable|string',
             'occupation'       => 'nullable|string|max:255',
+            'company_name'     => 'nullable|string|max:255',
+            'dept_name'        => 'nullable|string|max:255',
+            'dob'              => 'nullable|date',
+            'designation'      => 'nullable|string|max:255',
             'address'          => 'nullable|string|max:500',
             'nearby_location'  => 'nullable|string|max:255',
             'pincode'          => 'nullable|digits:6',
@@ -241,7 +257,7 @@ class AuthController extends Controller
 
         // Handle password separately (hash if provided)
         $data = $request->only([
-            'name', 'email', 'age', 'phone', 'cast_certificate', 'occupation',
+            'name', 'email', 'age', 'phone', 'cast_certificate', 'occupation','company_name', 'dept_name', 'dob', 'designation',
             'address', 'nearby_location', 'pincode', 'road_number',
             'state', 'city', 'sector', 'district', 'destination'
         ]);
