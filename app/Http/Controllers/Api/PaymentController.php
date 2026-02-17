@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Transaction;
+use App\Models\Payment;
 use App\Models\Business;
 use App\Models\MatrimonyProfile;
 use App\Models\BusinessPlan;
@@ -244,6 +245,7 @@ class PaymentController extends Controller
             ], 422);
         }
 
+        $transaction = null;
         try {
             // Verify signature
             $attributes = [
@@ -252,21 +254,88 @@ class PaymentController extends Controller
                 'razorpay_signature' => $request->razorpay_signature
             ];
 
-            $this->razorpay->utility->verifyPaymentSignature($attributes);
+            try {
+                $this->razorpay->utility->verifyPaymentSignature($attributes);
+            } catch (\Exception $signatureError) {
+                Log::error('Razorpay signature verification failed: ' . $signatureError->getMessage());
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Payment signature verification failed. Invalid payment credentials.'
+                ], 400);
+            }
 
             // Get transaction
             $transaction = Transaction::where('id', $request->transaction_id)
                 ->where('user_id', $request->user()->id)
                 ->firstOrFail();
 
+            Log::info('Transaction found - ID: ' . $transaction->id . ', User: ' . $request->user()->id);
+
             // Update transaction
-            $transaction->update([
+            $updatedTransaction = $transaction->update([
                 'razorpay_payment_id' => $request->razorpay_payment_id,
                 'status' => 'completed',
             ]);
 
+            Log::info('Transaction updated with payment ID and completed status');
+
+            // Check if payment already exists for this transaction
+            $existingPayment = Payment::where('transaction_id', $transaction->id)->first();
+            
+            if (!$existingPayment) {
+                // Map purpose to payment_type enum
+                $paymentType = match($transaction->purpose) {
+                    'matrimony_profile' => 'matrimony_subscription',
+                    default => $transaction->purpose
+                };
+
+                // Prepare payment data with proper type conversions
+                $paymentData = [
+                    'user_id' => (int)$request->user()->id,
+                    'transaction_id' => (string)$transaction->id,
+                    'payment_id' => (string)$request->razorpay_payment_id,
+                    'order_id' => (string)$request->razorpay_order_id,
+                    'payment_type' => $paymentType,
+                    'amount' => (float)$transaction->amount,
+                    'currency' => (string)$transaction->currency,
+                    'payment_method' => 'razorpay',
+                    'status' => 'completed',
+                    'metadata' => [
+                        'razorpay_order_id' => $request->razorpay_order_id,
+                        'subscription_period' => $transaction->subscription_period ?? 1,
+                        'original_purpose' => $transaction->purpose
+                    ],
+                    'paid_at' => now(),
+                    'razorpay_response' => [
+                        'razorpay_payment_id' => $request->razorpay_payment_id,
+                        'razorpay_order_id' => $request->razorpay_order_id,
+                        'razorpay_signature' => $request->razorpay_signature
+                    ]
+                ];
+
+                Log::info('Creating payment with data: ' . json_encode($paymentData));
+
+                try {
+                    $payment = Payment::create($paymentData);
+                    Log::info('Payment record created successfully - Payment ID: ' . $payment->id);
+                } catch (\Exception $paymentError) {
+                    Log::error('Payment record creation failed: ' . $paymentError->getMessage());
+                    Log::error('Payment error code: ' . $paymentError->getCode());
+                    Log::error('Payment data attempted: ' . json_encode($paymentData));
+                    Log::error('Stack trace: ' . $paymentError->getTraceAsString());
+                    throw $paymentError;
+                }
+            } else {
+                Log::info('Payment already exists for transaction ID: ' . $transaction->id);
+            }
+
+            // Refresh transaction to get updated data
+            $transaction->refresh();
+
             // Process based on purpose
             $this->processPaymentPurpose($transaction);
+
+            Log::info('Payment verified successfully for transaction ID: ' . $transaction->id);
 
             return response()->json([
                 'success' => true,
@@ -274,17 +343,28 @@ class PaymentController extends Controller
                 'data' => ['transaction' => $transaction]
             ]);
 
-        } catch (\Exception $e) {
-            Log::error('Payment verification failed: ' . $e->getMessage());
-            
-            // Update transaction as failed
-            if (isset($transaction)) {
-                $transaction->update(['status' => 'failed']);
-            }
-
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            Log::error('Transaction not found - Transaction ID: ' . $request->transaction_id . ', User: ' . $request->user()->id);
             return response()->json([
                 'success' => false,
-                'message' => 'Payment verification failed'
+                'message' => 'Transaction not found or unauthorized'
+            ], 404);
+        } catch (\Exception $e) {
+            Log::error('Payment verification error: ' . get_class($e) . ' - ' . $e->getMessage());
+            Log::error('Stack trace: ' . $e->getTraceAsString());
+            
+            // Update transaction as failed
+            if ($transaction) {
+                $transaction->update(['status' => 'failed']);
+                Log::info('Transaction marked as failed - ID: ' . $transaction->id);
+            }
+
+            // Return error with details for debugging
+            $errorMessage = env('APP_DEBUG') ? $e->getMessage() : 'Payment verification failed';
+            
+            return response()->json([
+                'success' => false,
+                'message' => $errorMessage
             ], 400);
         }
     }

@@ -11,36 +11,30 @@ class Payment extends Model
     
     protected $fillable = [
         'user_id',
-        'business_id',
-        'matrimony_profile_id',
+        'payment_id',
+        'order_id',
+        'transaction_id',
+        'payment_type',
         'amount',
         'currency',
-        'payment_method',
-        'payment_gateway',
-        'payment_type',
-        'transaction_id',
-        'gateway_payment_id',
         'status',
-        'purpose',
-        'description',
+        'payment_method',
+        'razorpay_response',
         'metadata',
-        'refund_amount',
-        'refund_reason',
-        'refunded_by',
-        'notes',
-        'completed_at',
+        'description',
         'paid_at',
-        'failed_at',
-        'refunded_at'
+        'refund_amount',
+        'refunded_at',
+        'refund_reason',
+        'receipt_number',
     ];
     
     protected $casts = [
         'amount' => 'decimal:2',
         'refund_amount' => 'decimal:2',
         'metadata' => 'array',
-        'completed_at' => 'datetime',
+        'razorpay_response' => 'array',
         'paid_at' => 'datetime',
-        'failed_at' => 'datetime',
         'refunded_at' => 'datetime'
     ];
     
