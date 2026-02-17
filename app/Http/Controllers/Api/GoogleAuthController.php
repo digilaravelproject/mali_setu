@@ -46,8 +46,11 @@ class GoogleAuthController extends Controller
             return response()->json([
                 'status'  => true,
                 'message' => 'Login successful',
-                'data'    => $user,
-                'token'   => $token
+                'data' => [
+                    'user' => $user
+                ],
+                'token'   => $token,
+                'token_type' => 'Bearer'
             ]);
     
         } catch (\Illuminate\Validation\ValidationException $e) {
