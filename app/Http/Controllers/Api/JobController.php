@@ -124,7 +124,8 @@ class JobController extends Controller
             ], 403);
         }
 
-        $business = $user->business;
+        // $business = $user->business;
+        $business = Business::findOrFail($request->business_id);
         
         if (!$business || $business->verification_status !== 'approved') {
             return response()->json([
@@ -158,7 +159,7 @@ class JobController extends Controller
         }
 
         $jobPosting = JobPosting::create([
-            'business_id' => $business->id,
+            'business_id' => $request->business_id,
             'title' => $request->title,
             'description' => $request->description,
             'requirements' => $request->requirements,

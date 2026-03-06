@@ -47,7 +47,7 @@ class BusinessController extends Controller
             'contact_email' => 'nullable|email',
             'website' => 'nullable|url',
             'photos' => 'nullable|array',
-            'photos.*' => 'image|mimes:jpeg,png,jpg|max:2048',
+            'photos.*' => 'string',
             'opening_time' => 'nullable|date_format:H:i',
             'closing_time' => 'nullable|date_format:H:i',
         ]);
@@ -61,10 +61,29 @@ class BusinessController extends Controller
         }
 
         // Handle photo uploads
+        // $photoPaths = [];
+        // if ($request->hasFile('photos')) {
+        //     foreach ($request->file('photos') as $photo) {
+        //         $photoPaths[] = $photo->store('business/photos', 'public');
+        //     }
+        // }
+        
         $photoPaths = [];
-        if ($request->hasFile('photos')) {
-            foreach ($request->file('photos') as $photo) {
-                $photoPaths[] = $photo->store('business/photos', 'public');
+
+        if ($request->photos) {
+            foreach ($request->photos as $base64Image) {
+        
+                if (str_contains($base64Image, 'base64,')) {
+                    $base64Image = explode('base64,', $base64Image)[1];
+                }
+        
+                $imageData = base64_decode($base64Image);
+        
+                $fileName = 'business/photos/' . uniqid() . '.jpg';
+        
+                Storage::disk('public')->put($fileName, $imageData);
+        
+                $photoPaths[] = $fileName;
             }
         }
 
@@ -85,8 +104,10 @@ class BusinessController extends Controller
 
         // Store photo paths if any
         if (!empty($photoPaths)) {
+            $impPhoto = implode(', ', $photoPaths);
+            // echo'<pre>';print_r($photoPaths);die;
             $business->update([
-                'photos' => $photoPaths   // directly store array
+                'photo' => $impPhoto
             ]);
         }
         
@@ -376,6 +397,8 @@ class BusinessController extends Controller
             'contact_phone' => 'nullable|string|max:20',
             'contact_email' => 'nullable|email',
             'website' => 'nullable|url',
+            'photos' => 'nullable|array',
+            'photos.*' => 'string',
             'opening_time' => 'sometimes|date_format:H:i',
             'closing_time' => 'sometimes|date_format:H:i',
         ]);
@@ -386,6 +409,44 @@ class BusinessController extends Controller
                 'message' => 'Validation failed',
                 'errors' => $validator->errors()
             ], 422);
+        }
+        
+        $photoPaths = [];
+
+        // Get existing photos
+        $existingPhotos = $business->photo ? explode(',', $business->photo) : [];
+        
+        if ($request->photos) {
+        
+            foreach ($request->photos as $base64Image) {
+        
+                if (str_contains($base64Image, 'base64,')) {
+                    $base64Image = explode('base64,', $base64Image)[1];
+                }
+        
+                $imageData = base64_decode($base64Image);
+        
+                $fileName = 'business/photos/' . uniqid() . '.jpg';
+        
+                Storage::disk('public')->put($fileName, $imageData);
+        
+                $photoPaths[] = $fileName;
+            }
+        
+            // OPTIONAL: delete old photos
+            foreach ($existingPhotos as $oldPhoto) {
+                if (Storage::disk('public')->exists(trim($oldPhoto))) {
+                    Storage::disk('public')->delete(trim($oldPhoto));
+                }
+            }
+        
+            // Merge or replace (choose one)
+            $finalPhotos = $photoPaths; // replace
+            // $finalPhotos = array_merge($existingPhotos, $photoPaths); // append instead
+        
+            $business->update([
+                'photo' => implode(',', $finalPhotos)
+            ]);
         }
 
         $business->update($request->only([

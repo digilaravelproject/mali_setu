@@ -254,14 +254,37 @@ class AuthController extends Controller
                 'errors' => $validator->errors()
             ], 422);
         }
+    
+        $photoPaths = [];
 
-        // Handle password separately (hash if provided)
+        if ($request->photos) {
+            foreach ($request->photos as $base64Image) {
+        
+                if (str_contains($base64Image, 'base64,')) {
+                    $base64Image = explode('base64,', $base64Image)[1];
+                }
+        
+                $imageData = base64_decode($base64Image);
+        
+                $fileName = 'profile/photos/' . uniqid() . '.jpg';
+        
+                Storage::disk('public')->put($fileName, $imageData);
+        
+                $photoPaths[] = $fileName;
+            }
+        }
+
         $data = $request->only([
-            'name', 'email', 'age', 'phone', 'cast_certificate', 'occupation','company_name', 'dept_name', 'dob', 'designation',
+            'name', 'email', 'age', 'phone', 'cast_certificate', 'occupation',
+            'company_name', 'dept_name', 'dob', 'designation',
             'address', 'nearby_location', 'pincode', 'road_number',
             'state', 'city', 'sector', 'district', 'destination'
         ]);
-
+        
+        if (!empty($photoPaths)) {
+            $data['photo'] = implode(',', $photoPaths);
+        }
+        
         $user->update($data);
 
         return response()->json([

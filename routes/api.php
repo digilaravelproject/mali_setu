@@ -31,6 +31,8 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
+
+
 // Public authentication routes
 Route::prefix('auth')->group(function () {
     Route::post('register', [AuthController::class, 'register']);
