@@ -12,6 +12,7 @@ use App\Http\Controllers\Admin\CategoryManagementController;
 use App\Http\Controllers\Admin\HomepageHeroController;
 use App\Http\Controllers\Admin\VolunteerManagementController;
 use App\Http\Controllers\Admin\CastManagementController;
+use App\Http\Controllers\Admin\BlogManagementController;
 use App\Http\Controllers\Admin\PlanManagementController;
 
 
@@ -178,6 +179,17 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::put('/{castId}/subcasts/{subCastId}', [CastManagementController::class, 'subcastUpdate'])->name('subcasts.update');
             Route::delete('/{castId}/subcasts/{subCastId}', [CastManagementController::class, 'subcastDestroy'])->name('subcasts.destroy');
             Route::patch('/{castId}/subcasts/{subCastId}/toggle-status', [CastManagementController::class, 'subcastToggleStatus'])->name('subcasts.toggle-status');
+        });
+
+        // Blog Management Routes
+        Route::prefix('blogs')->name('blogs.')->group(function () {
+            Route::get('/', [BlogManagementController::class, 'index'])->name('index');
+            Route::get('/create', [BlogManagementController::class, 'create'])->name('create');
+            Route::post('/', [BlogManagementController::class, 'store'])->name('store');
+            Route::get('/{id}/edit', [BlogManagementController::class, 'edit'])->name('edit');
+            Route::put('/{id}', [BlogManagementController::class, 'update'])->name('update');
+            Route::delete('/{id}', [BlogManagementController::class, 'destroy'])->name('destroy');
+            Route::patch('/{id}/toggle-status', [BlogManagementController::class, 'toggleStatus'])->name('toggle-status');
         });
         
         // Settings and Reports

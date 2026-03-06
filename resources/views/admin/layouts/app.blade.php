@@ -326,6 +326,13 @@
                     Manage Casts
                 </a>
             </div>
+
+            <div class="nav-item">
+                <a href="{{ route('admin.blogs.index') }}" class="nav-link {{ request()->routeIs('admin.blogs.*') ? 'active' : '' }}">
+                    <i class="fas fa-newspaper"></i>
+                    Manage Blogs
+                </a>
+            </div>
             
             <div class="nav-item">
                 <a href="{{ route('admin.payments.index') }}" class="nav-link {{ request()->routeIs('admin.payments.*') ? 'active' : '' }}">

@@ -16,6 +16,7 @@ use App\Http\Controllers\Api\SocialAuthController;
 use App\Http\Controllers\Api\HomepageHeroController;
 use App\Http\Controllers\Api\GoogleAuthController;
 use App\Http\Controllers\Api\PlanController;
+use App\Http\Controllers\Api\BlogController;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -98,6 +99,13 @@ Route::prefix('donation')->group(function () {
 Route::prefix('plans')->group(function () {
     Route::get('business', [PlanController::class, 'businessPlans']);
     Route::get('matrimony', [PlanController::class, 'matrimonyPlans']);
+});
+
+// Public blog routes
+Route::prefix('blogs')->group(function () {
+    Route::get('/', [BlogController::class, 'index']);
+    Route::get('/search', [BlogController::class, 'search']);
+    Route::get('/{id}', [BlogController::class, 'show']);
 });
 
 // Public job routes (for browsing)
@@ -240,6 +248,12 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::get('history', [DonationController::class, 'getDonationHistory']);
         Route::get('analytics', [DonationController::class, 'getDonationAnalytics']);
         Route::get('receipt/{donationId}', [DonationController::class, 'downloadReceipt']);
+    });
+
+    // Blog Routes
+    Route::prefix('blogs')->group(function () {
+        Route::post('/', [BlogController::class, 'store']);
+        Route::post('{id}/like', [BlogController::class, 'like']);
     });
     
     // Job Management Routes
