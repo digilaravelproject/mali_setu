@@ -80,9 +80,9 @@
                                 <div class="col-md-3">
                                     <select name="business_type" class="form-select">
                                         <option value="">All Types</option>
-                                        <option value="retail" {{ request('business_type') == 'retail' ? 'selected' : '' }}>Retail</option>
-                                        <option value="service" {{ request('business_type') == 'service' ? 'selected' : '' }}>Service</option>
-                                        <option value="manufacturing" {{ request('business_type') == 'manufacturing' ? 'selected' : '' }}>Manufacturing</option>
+                                        @foreach($businessTypes as $type)
+                                            <option value="{{ $type }}" {{ request('business_type') == $type ? 'selected' : '' }}>{{ ucfirst($type) }}</option>
+                                        @endforeach
                                     </select>
                                 </div>
                                 <div class="col-md-4">

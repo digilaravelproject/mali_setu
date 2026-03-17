@@ -17,9 +17,9 @@ use App\Http\Controllers\Admin\PlanManagementController;
 
 
 // Public route
-Route::get('/', function () {
-    return view('welcome');
-});
+// Route::get('/', function () {
+//     return view('welcome');
+// });
 
 Route::resource('heroes', HomepageHeroController::class);
 
@@ -73,6 +73,8 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::post('/{id}/approve', [BusinessManagementController::class, 'approve'])->name('approve');
             Route::post('/{id}/reject', [BusinessManagementController::class, 'reject'])->name('reject');
             Route::get('/{id}', [BusinessManagementController::class, 'show'])->name('show');
+            Route::get('/{id}/edit', [BusinessManagementController::class, 'edit'])->name('edit');
+            Route::put('/{id}', [BusinessManagementController::class, 'update'])->name('update');
             Route::post('/{id}/suspend', [BusinessManagementController::class, 'suspend'])->name('suspend');
             Route::post('/{id}/activate', [BusinessManagementController::class, 'activate'])->name('activate');
             Route::delete('/{id}', [BusinessManagementController::class, 'destroy'])->name('destroy');

@@ -46,6 +46,12 @@ class BusinessManagementController extends Controller
         $businesses = $query->latest()->paginate(20);
         
         $categories = BusinessCategory::where('is_active', true)->get();
+
+        $businessTypes = Business::select('business_type')
+            ->distinct()
+            ->orderBy('business_type')
+            ->pluck('business_type')
+            ->toArray();
         
         $stats = [
             'total' => Business::count(),
@@ -58,7 +64,7 @@ class BusinessManagementController extends Controller
                 ->toArray()
         ];
         
-        return view('admin.businesses.index', compact('businesses', 'categories', 'stats'));
+        return view('admin.businesses.index', compact('businesses', 'categories', 'stats', 'businessTypes'));
     }
     
     /**
@@ -227,6 +233,54 @@ class BusinessManagementController extends Controller
         ])->findOrFail($id);
         
         return view('admin.businesses.show', compact('business'));
+    }
+
+    /**
+     * Show edit form for a business
+     */
+    public function edit($id)
+    {
+        $business = Business::findOrFail($id);
+        $categories = BusinessCategory::where('is_active', true)->get();
+
+        $baseTypes = [
+            'Public Ltd',
+            'Private Ltd',
+            'Proprietary /Partnership - LLP'
+        ];
+
+        $existingTypes = Business::select('business_type')
+            ->distinct()
+            ->orderBy('business_type')
+            ->pluck('business_type')
+            ->toArray();
+
+        $businessTypes = array_values(array_unique(array_merge($baseTypes, $existingTypes)));
+
+        return view('admin.businesses.edit', compact('business', 'categories', 'businessTypes'));
+    }
+
+    /**
+     * Update business details
+     */
+    public function update(Request $request, $id)
+    {
+        $business = Business::findOrFail($id);
+
+        $validated = $request->validate([
+            'business_name' => 'required|string|max:255',
+            'business_type' => 'required|string|max:255',
+            'category_id' => 'required|integer|exists:business_categories,id',
+            'description' => 'nullable|string',
+            'contact_phone' => 'nullable|string|max:20',
+            'contact_email' => 'nullable|email',
+            'website' => 'nullable|url',
+        ]);
+
+        $business->update($validated);
+
+        return redirect()->route('admin.businesses.show', $business->id)
+            ->with('success', 'Business updated successfully.');
     }
     
     /**

@@ -39,11 +39,11 @@
                                 </tr>
                                 <tr>
                                     <td><strong>Phone:</strong></td>
-                                    <td>{{ $business->phone ?? 'N/A' }}</td>
+                                    <td>{{ $business->contact_phone ?? 'N/A' }}</td>
                                 </tr>
                                 <tr>
                                     <td><strong>Email:</strong></td>
-                                    <td>{{ $business->email ?? 'N/A' }}</td>
+                                    <td>{{ $business->contact_email ?? 'N/A' }}</td>
                                 </tr>
                             </table>
                         </div>
@@ -178,6 +178,9 @@
                     <h6 class="m-0 font-weight-bold text-primary">Actions</h6>
                 </div>
                 <div class="card-body">
+                    <a href="{{ route('admin.businesses.edit', $business->id) }}" class="btn btn-primary btn-block mb-2">
+                        <i class="fas fa-edit"></i> Edit Business
+                    </a>
                     @if($business->verification_status == 'pending')
                         <!-- Approve Business Form -->
                         <form action="{{ route('admin.businesses.approve', $business->id) }}" method="POST" class="d-inline w-100 mb-2">
