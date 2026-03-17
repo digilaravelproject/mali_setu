@@ -81,6 +81,7 @@ class BlogController extends Controller
         $validator = Validator::make($request->all(), [
             'title' => 'required|string|max:255',
             'description' => 'required|string',
+            'blog_type' => 'nullable|string',
             'tags' => 'nullable|array',
             'tags.*' => 'string',
             'media' => 'nullable|string',
@@ -140,6 +141,7 @@ class BlogController extends Controller
             'user_id' => $user->id,
             'title' => $request->title,
             'description' => $request->description,
+            'blog_type' => $request->blog_type,
             'tags' => $tags,
             'media_path' => $mediaPath,
             'media_type' => $mediaType,

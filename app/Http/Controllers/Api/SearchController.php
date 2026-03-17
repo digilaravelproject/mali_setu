@@ -419,4 +419,80 @@ class SearchController extends Controller
 
         return response()->json(['success' => true, 'data' => $suggestions]);
     }
+    
+    /**
+     * Search businesses by name or description
+     */
+    public function searchBusiness(Request $request)
+    {
+        try {
+            // Validate search string
+            $validator = Validator::make($request->all(), [
+                'search' => 'required|string|min:1|max:255',
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Validation failed',
+                    'errors' => $validator->errors()
+                ], 422);
+            }
+
+            $searchQuery = $request->input('search');
+
+            // Search businesses by name or description
+            $businesses = Business::with([
+                'user',
+                'category',
+                'products',
+                'services',
+                'reviews.user'
+            ])
+            ->where('verification_status', 'approved')
+            ->where(function ($query) use ($searchQuery) {
+                $query->where('business_name', 'like', '%' . $searchQuery . '%')
+                      ->orWhere('description', 'like', '%' . $searchQuery . '%')
+                      ->orWhere('country', 'like', '%' . $searchQuery . '%')
+                      ->orWhere('state', 'like', '%' . $searchQuery . '%')
+                      ->orWhere('district', 'like', '%' . $searchQuery . '%')
+                      ->orWhere('taluka', 'like', '%' . $searchQuery . '%')
+                      ->orWhere('city', 'like', '%' . $searchQuery . '%')
+                      ->orWhere('pincode', 'like', '%' . $searchQuery . '%');
+            })
+            ->get();
+
+            // No businesses found
+            if ($businesses->isEmpty()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No businesses found matching your search'
+                ], 404);
+            }
+
+            // Success response
+            return response()->json([
+                'success' => true,
+                'message' => 'Businesses found successfully',
+                'data' => [
+                    'businesses' => $businesses,
+                    'count' => $businesses->count()
+                ]
+            ], 200);
+
+        } catch (\Throwable $e) {
+
+            // Log error for debugging
+            \Log::error('Business search API error', [
+                'search_query' => $request->input('search'),
+                'error' => $e->getMessage()
+            ]);
+
+            // Server error response
+            return response()->json([
+                'success' => false,
+                'message' => 'Something went wrong. Please try again later.'
+            ], 500);
+        }
+    }
 }

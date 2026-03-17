@@ -19,6 +19,13 @@ class Business extends Model
         'description',
         'contact_phone',
         'contact_email',
+        // 👇 add these
+        'country',
+        'state',
+        'district',
+        'taluka',
+        'city',
+        'pincode',
         'website',
         'verification_status',
         'subscription_status',

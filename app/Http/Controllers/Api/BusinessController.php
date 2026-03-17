@@ -45,20 +45,39 @@ class BusinessController extends Controller
             'description' => 'required|string',
             'contact_phone' => 'nullable|string|max:20',
             'contact_email' => 'nullable|email',
+            
+            // 👇 NEW FIELDS
+            'country' => 'required|string|max:100',
+            'state' => 'required|string|max:100',
+            'district' => 'required|string|max:100',
+            'taluka' => 'nullable|string|max:100',
+            'city' => 'required|string|max:100',
+            'pincode' => 'required|digits:6',
+    
             'website' => 'nullable|url',
             'photos' => 'nullable|array',
             'photos.*' => 'string',
             'opening_time' => 'nullable|date_format:H:i',
             'closing_time' => 'nullable|date_format:H:i',
         ]);
-
+        
         if ($validator->fails()) {
+            $errors = $validator->errors();
+        
             return response()->json([
                 'success' => false,
-                'message' => 'Validation failed',
-                'errors' => $validator->errors()
+                'message' => $errors->first(), // 👈 get first error message
+                'errors' => $errors
             ], 422);
         }
+
+        // if ($validator->fails()) {
+        //     return response()->json([
+        //         'success' => false,
+        //         'message' => 'Validation failed',
+        //         'errors' => $validator->errors()
+        //     ], 422);
+        // }
 
         // Handle photo uploads
         // $photoPaths = [];
@@ -95,6 +114,15 @@ class BusinessController extends Controller
             'description' => $request->description,
             'contact_phone' => $request->contact_phone,
             'contact_email' => $request->contact_email,
+            
+            // 👇 NEW FIELDS
+            'country' => $request->country,
+            'state' => $request->state,
+            'district' => $request->district,
+            'taluka' => $request->taluka,
+            'city' => $request->city,
+            'pincode' => $request->pincode,
+    
             'website' => $request->website,
             'opening_time' => $request->opening_time,
             'closing_time' => $request->closing_time,
@@ -249,76 +277,6 @@ class BusinessController extends Controller
                 'error' => $e->getMessage()
             ]);
     
-            // Server error response
-            return response()->json([
-                'success' => false,
-                'message' => 'Something went wrong. Please try again later.'
-            ], 500);
-        }
-    }
-
-    /**
-     * Search businesses by name or description
-     */
-    public function searchBusiness(Request $request)
-    {
-        try {
-            // Validate search string
-            $validator = Validator::make($request->all(), [
-                'search' => 'required|string|min:1|max:255',
-            ]);
-
-            if ($validator->fails()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Validation failed',
-                    'errors' => $validator->errors()
-                ], 422);
-            }
-
-            $searchQuery = $request->input('search');
-
-            // Search businesses by name or description
-            $businesses = Business::with([
-                'user',
-                'category',
-                'products',
-                'services',
-                'reviews.user'
-            ])
-            ->where('verification_status', 'approved')
-            ->where(function ($query) use ($searchQuery) {
-                $query->where('business_name', 'like', '%' . $searchQuery . '%')
-                      ->orWhere('description', 'like', '%' . $searchQuery . '%');
-            })
-            ->get();
-
-            // No businesses found
-            if ($businesses->isEmpty()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'No businesses found matching your search'
-                ], 404);
-            }
-
-            // Success response
-            return response()->json([
-                'success' => true,
-                'message' => 'Businesses found successfully',
-                'data' => [
-                    'businesses' => $businesses,
-                    'count' => $businesses->count()
-                ]
-            ], 200);
-
-        } catch (\Throwable $e) {
-
-            // Log error for debugging
-            \Log::error('Business search API error', [
-                'search_query' => $request->input('search'),
-                'error' => $e->getMessage()
-            ]);
-
             // Server error response
             return response()->json([
                 'success' => false,

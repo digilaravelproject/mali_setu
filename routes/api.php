@@ -66,7 +66,6 @@ Route::prefix('business')->group(function () {
     Route::get('/category/{id}', [BusinessController::class, 'showOnCategory']);
     Route::get('/{id}/products', [BusinessController::class, 'getProducts']);
     Route::get('/{id}/services', [BusinessController::class, 'getServices']);
-    Route::post('/search_business', [BusinessController::class, 'searchBusiness']);
 });
 
 // Public matrimony routes (for browsing)
@@ -132,6 +131,8 @@ Route::prefix('search')->group(function () {
     Route::get('donations', [SearchController::class, 'searchDonations']);
     Route::get('suggestions', [SearchController::class, 'getSuggestions']);
     Route::get('location', [SearchController::class, 'locationSearch']);
+    
+    Route::post('/search_business', [SearchController::class, 'searchBusiness']);
 });
 
 // Protected authentication routes

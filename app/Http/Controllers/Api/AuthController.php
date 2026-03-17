@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Models\Transaction;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -108,7 +109,7 @@ class AuthController extends Controller
                 'destination'            => $request->destination,
                 'cast_certificate'       => $cast_certificate,
                 'user_type'              => $request->user_type,
-                'caste_verification_status' => 'pending'
+                'caste_verification_status' => 'approved'
             ]);
             
             // ✅ NEW: Send welcome email (do not break registration on mail failure)
@@ -207,12 +208,39 @@ class AuthController extends Controller
     /**
      * Get authenticated user profile
      */
-    public function profile(Request $request)
+    public function profile_old(Request $request)
     {
         return response()->json([
             'success' => true,
             'data' => [
                 'user' => $request->user()->load(['casteCertificate', 'business', 'matrimonyProfile'])
+            ]
+        ]);
+    }
+
+    public function profile(Request $request)
+    {
+        $user = $request->user()->load([
+            'casteCertificate',
+            'business',
+            'matrimonyProfile'
+        ]);
+    
+        // Get latest successful transaction
+        $transaction = Transaction::where('user_id', $user->id)
+            ->whereNotNull('razorpay_payment_id')
+            ->latest()
+            ->first();
+    
+        // Add payment data inside user object
+        $user->has_payment = $transaction ? true : false;
+        $user->payment_purpose = $transaction->purpose ?? null;
+        $user->payment_amount = $transaction->amount ?? null;
+    
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'user' => $user
             ]
         ]);
     }

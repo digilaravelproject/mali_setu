@@ -15,6 +15,7 @@ class Blog extends Model
         'user_id',
         'title',
         'description',
+        'blog_type',
         'tags',
         'media_path',
         'media_type',
