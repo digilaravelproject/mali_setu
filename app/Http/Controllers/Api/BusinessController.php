@@ -71,13 +71,15 @@ class BusinessController extends Controller
             ], 422);
         }
 
-        // if ($validator->fails()) {
-        //     return response()->json([
-        //         'success' => false,
-        //         'message' => 'Validation failed',
-        //         'errors' => $validator->errors()
-        //     ], 422);
-        // }
+        if ($validator->fails()) {
+            $errors = $validator->errors();
+        
+            return response()->json([
+                'success' => false,
+                'message' => $errors->first(), // 👈 get first error message
+                'errors' => $errors
+            ], 422);
+        }
 
         // Handle photo uploads
         // $photoPaths = [];
@@ -362,10 +364,12 @@ class BusinessController extends Controller
         ]);
 
         if ($validator->fails()) {
+            $errors = $validator->errors();
+        
             return response()->json([
                 'success' => false,
-                'message' => 'Validation failed',
-                'errors' => $validator->errors()
+                'message' => $errors->first(), // 👈 get first error message
+                'errors' => $errors
             ], 422);
         }
         
@@ -447,10 +451,12 @@ class BusinessController extends Controller
         ]);
 
         if ($validator->fails()) {
+            $errors = $validator->errors();
+        
             return response()->json([
                 'success' => false,
-                'message' => 'Validation failed',
-                'errors' => $validator->errors()
+                'message' => $errors->first(), // 👈 get first error message
+                'errors' => $errors
             ], 422);
         }
 
@@ -510,10 +516,12 @@ class BusinessController extends Controller
         ]);
 
         if ($validator->fails()) {
+            $errors = $validator->errors();
+        
             return response()->json([
                 'success' => false,
-                'message' => 'Validation failed',
-                'errors' => $validator->errors()
+                'message' => $errors->first(), // 👈 get first error message
+                'errors' => $errors
             ], 422);
         }
 

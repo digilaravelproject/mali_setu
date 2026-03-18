@@ -151,10 +151,12 @@ class JobController extends Controller
         ]);
 
         if ($validator->fails()) {
+            $errors = $validator->errors();
+        
             return response()->json([
                 'success' => false,
-                'message' => 'Validation failed',
-                'errors' => $validator->errors()
+                'message' => $errors->first(), // 👈 get first error message
+                'errors' => $errors
             ], 422);
         }
 
@@ -230,10 +232,12 @@ class JobController extends Controller
         ]);
 
         if ($validator->fails()) {
+            $errors = $validator->errors();
+        
             return response()->json([
                 'success' => false,
-                'message' => 'Validation failed',
-                'errors' => $validator->errors()
+                'message' => $errors->first(), // 👈 get first error message
+                'errors' => $errors
             ], 422);
         }
 
@@ -314,10 +318,12 @@ class JobController extends Controller
         ]);
 
         if ($validator->fails()) {
+            $errors = $validator->errors();
+        
             return response()->json([
                 'success' => false,
-                'message' => 'Validation failed',
-                'errors' => $validator->errors()
+                'message' => $errors->first(), // 👈 get first error message
+                'errors' => $errors
             ], 422);
         }
 
@@ -435,10 +441,12 @@ class JobController extends Controller
         ]);
 
         if ($validator->fails()) {
+            $errors = $validator->errors();
+        
             return response()->json([
                 'success' => false,
-                'message' => 'Validation failed',
-                'errors' => $validator->errors()
+                'message' => $errors->first(), // 👈 get first error message
+                'errors' => $errors
             ], 422);
         }
 
