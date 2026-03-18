@@ -225,18 +225,38 @@ class AuthController extends Controller
             'business',
             'matrimonyProfile'
         ]);
-    
-        // Get latest successful transaction
-        $transaction = Transaction::where('user_id', $user->id)
+
+        // Get latest transaction (any type)
+        $latestTransaction = Transaction::where('user_id', $user->id)
             ->whereNotNull('razorpay_payment_id')
             ->latest()
             ->first();
-    
-        // Add payment data inside user object
-        $user->has_payment = $transaction ? true : false;
-        $user->payment_purpose = $transaction->purpose ?? null;
-        $user->payment_amount = $transaction->amount ?? null;
-    
+
+        $transaction = null;
+
+        if ($latestTransaction && $latestTransaction->purpose === 'donation') {
+            // If latest is donation → find last valid purpose
+            $transaction = Transaction::where('user_id', $user->id)
+                ->whereNotNull('razorpay_payment_id')
+                ->whereIn('purpose', ['business_registration', 'matrimony_profile'])
+                ->latest()
+                ->first();
+        } else {
+            // If latest is already valid
+            $transaction = $latestTransaction;
+        }
+
+        // Assign values
+        if ($transaction) {
+            $user->has_payment = true;
+            $user->payment_purpose = $transaction->purpose;
+            $user->payment_amount = $transaction->amount;
+        } else {
+            $user->has_payment = false;
+            $user->payment_purpose = null;
+            $user->payment_amount = null;
+        }
+
         return response()->json([
             'success' => true,
             'data' => [

@@ -14,6 +14,17 @@ use App\Http\Controllers\Admin\VolunteerManagementController;
 use App\Http\Controllers\Admin\CastManagementController;
 use App\Http\Controllers\Admin\BlogManagementController;
 use App\Http\Controllers\Admin\PlanManagementController;
+use Illuminate\Support\Facades\Mail;
+
+Route::get('/test-mail', function () {
+
+    Mail::raw('This is a test email from Laravel.', function ($message) {
+        $message->to('darshankondekar01@gmail.com')
+                ->subject('Laravel Test Email');
+    });
+
+    return "Test email sent successfully!";
+});
 
 
 // Public route

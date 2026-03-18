@@ -64,6 +64,7 @@ class Notification extends Model
     const TYPE_ADMIN_ANNOUNCEMENT = 'admin_announcement';
     const TYPE_PROFILE_UPDATE = 'profile_update';
     const TYPE_NEW_MESSAGE = 'new_message';
+    const TYPE_SUBSCRIPTION_EXPIRY_REMINDER = 'subscription_expiry_reminder';
 
     // Priority levels
     const PRIORITY_LOW = 'low';
