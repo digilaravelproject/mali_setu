@@ -1,7 +1,7 @@
 @extends('admin.layouts.app')
 
-@section('title', 'Donation Causes')
-@section('page-title', 'Donation Causes Management')
+@section('title', 'Contribution Causes')
+@section('page-title', 'Contribution Causes Management')
 
 @section('content')
 <div class="container-fluid">
@@ -9,13 +9,13 @@
         <div class="col-12">
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
-                    <h3 class="card-title">Donation Causes</h3>
+                    <h3 class="card-title">Contribution Causes</h3>
                     <div class="card-tools">
                         <a href="{{ route('admin.donations.causes.create') }}" class="btn btn-success btn-sm">
                             <i class="fas fa-plus"></i> Add New Cause
                         </a>
                         <a href="{{ route('admin.donations.index') }}" class="btn btn-info btn-sm">
-                            <i class="fas fa-list"></i> View Donations
+                            <i class="fas fa-list"></i> View Contribution
                         </a>
                     </div>
                 </div>

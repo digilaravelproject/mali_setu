@@ -1,7 +1,7 @@
 @extends('admin.layouts.app')
 
-@section('title', 'Donations Management')
-@section('page-title', 'Donations Management')
+@section('title', 'Contribution Management')
+@section('page-title', 'Contributions Management')
 
 @section('content')
 <div class="container-fluid">
@@ -9,7 +9,7 @@
         <div class="col-12">
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
-                    <h3 class="card-title">All Donations</h3>
+                    <h3 class="card-title">All Contributions</h3>
                     <div class="card-tools">
                         <a href="{{ route('admin.donations.causes') }}" class="btn btn-success btn-sm">
                             <i class="fas fa-plus"></i> Manage Causes
@@ -26,7 +26,7 @@
                                     <div class="d-flex justify-content-between">
                                         <div>
                                             <h4>{{ $stats['total'] ?? 0 }}</h4>
-                                            <p class="mb-0">Total Donations</p>
+                                            <p class="mb-0">Total Contributions</p>
                                         </div>
                                         <div class="align-self-center">
                                             <i class="fas fa-heart fa-2x"></i>
@@ -120,7 +120,7 @@
                         </div>
                     </form>
                     
-                    <!-- Donations Table -->
+                    <!-- Contributions Table -->
                     <div class="table-responsive">
                         <table class="table table-hover">
                             <thead>
@@ -177,7 +177,7 @@
                                     <tr>
                                         <td colspan="7" class="text-center text-muted py-4">
                                             <i class="fas fa-inbox fa-2x mb-2"></i>
-                                            <p>No donations found</p>
+                                            <p>No contributions found</p>
                                         </td>
                                     </tr>
                                 @endif

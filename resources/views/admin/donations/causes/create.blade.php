@@ -1,7 +1,7 @@
 @extends('admin.layouts.app')
 
-@section('title', 'Create Donation Cause')
-@section('page-title', 'Create New Donation Cause')
+@section('title', 'Create Contribution Cause')
+@section('page-title', 'Create New Contribution Cause')
 
 @section('content')
 <div class="container-fluid">
@@ -9,7 +9,7 @@
         <div class="col-md-8">
             <div class="card">
                 <div class="card-header">
-                    <h3 class="card-title">Add New Donation Cause</h3>
+                    <h3 class="card-title">Add New Contribution Cause</h3>
                 </div>
                 
                 <div class="card-body">

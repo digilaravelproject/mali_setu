@@ -309,7 +309,7 @@
             <div class="nav-item">
                 <a href="{{ route('admin.donations.index') }}" class="nav-link {{ request()->routeIs('admin.donations.*') ? 'active' : '' }}">
                     <i class="fas fa-heart"></i>
-                    Donations
+                    Contribution
                 </a>
             </div>
             

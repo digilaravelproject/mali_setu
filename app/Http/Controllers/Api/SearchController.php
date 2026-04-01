@@ -7,6 +7,7 @@ use App\Models\Business;
 use App\Models\MatrimonyProfile;
 use App\Models\JobPosting;
 use App\Models\VolunteerOpportunity;
+use App\Models\VolunteerProfile;
 use App\Models\DonationCause;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
@@ -91,8 +92,8 @@ class SearchController extends Controller
 
         if ($request->filled('query')) {
             $query->where(function($q) use ($request) {
-                $q->where('business_name', 'like', "%{$request->query}%")
-                  ->orWhere('description', 'like', "%{$request->query}%");
+                $q->where('business_name', 'like', "%{$request->input('query')}%")
+                  ->orWhere('description', 'like', "%{$request->input('query')}%");
             });
         }
 
@@ -300,9 +301,9 @@ class SearchController extends Controller
 
         if ($request->filled('query')) {
             $query->where(function($q) use ($request) {
-                $q->where('title', 'like', "%{$request->query}%")
-                  ->orWhere('description', 'like', "%{$request->query}%")
-                  ->orWhere('skills_required', 'like', "%{$request->query}%");
+                $q->where('title', 'like', "%{$request->input('query')}%")
+                  ->orWhere('description', 'like', "%{$request->input('query')}%")
+                  ->orWhere('skills_required', 'like', "%{$request->input('query')}%");
             });
         }
 
@@ -330,9 +331,9 @@ class SearchController extends Controller
 
         if ($request->filled('query')) {
             $query->where(function($q) use ($request) {
-                $q->where('title', 'like', "%{$request->query}%")
-                  ->orWhere('description', 'like', "%{$request->query}%")
-                  ->orWhere('required_skills', 'like', "%{$request->query}%");
+                $q->where('title', 'like', "%{$request->input('query')}%")
+                  ->orWhere('description', 'like', "%{$request->input('query')}%")
+                  ->orWhere('required_skills', 'like', "%{$request->input('query')}%");
             });
         }
 
@@ -354,6 +355,47 @@ class SearchController extends Controller
     }
 
     /**
+     * 🔎 Search Volunteer Profiles
+     */
+    public function searchVolunteerProfiles(Request $request)
+    {
+        $query = VolunteerProfile::with('user')->where('status', 'active');
+
+        if ($request->filled('query')) {
+            $search = $request->input('query');
+            $query->where(function ($q) use ($search) {
+                $q->where('skills', 'like', "%{$search}%")
+                    ->orWhere('experience', 'like', "%{$search}%")
+                    ->orWhere('availability', 'like', "%{$search}%")
+                    ->orWhere('location', 'like', "%{$search}%")
+                    ->orWhere('bio', 'like', "%{$search}%")
+                    ->orWhere('interests', 'like', "%{$search}%")
+                    ->orWhereHas('user', function ($q2) use ($search) {
+                        $q2->where('name', 'like', "%{$search}%")
+                            ->orWhere('email', 'like', "%{$search}%")
+                            ->orWhere('phone', 'like', "%{$search}%");
+                    });
+            });
+        }
+
+        if ($request->filled('location')) {
+            $query->where('location', 'like', "%{$request->location}%");
+        }
+
+        if ($request->filled('experience')) {
+            $query->where('experience', 'like', "%{$request->experience}%");
+        }
+
+        if ($request->filled('availability')) {
+            $query->where('availability', 'like', "%{$request->availability}%");
+        }
+
+        $results = $query->latest()->paginate($request->size ?? 20);
+
+        return response()->json(['success' => true, 'data' => $results]);
+    }
+
+    /**
      * 🔎 Search Donations
      */
     public function searchDonations(Request $request)
@@ -362,9 +404,9 @@ class SearchController extends Controller
 
         if ($request->filled('query')) {
             $query->where(function($q) use ($request) {
-                $q->where('title', 'like', "%{$request->query}%")
-                  ->orWhere('description', 'like', "%{$request->query}%")
-                  ->orWhere('category', 'like', "%{$request->query}%");
+                $q->where('title', 'like', "%{$request->input('query')}%")
+                  ->orWhere('description', 'like', "%{$request->input('query')}%")
+                  ->orWhere('category', 'like', "%{$request->input('query')}%");
             });
         }
 

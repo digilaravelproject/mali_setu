@@ -128,6 +128,7 @@ Route::prefix('search')->group(function () {
     
     Route::get('jobs', [SearchController::class, 'searchJobs']);
     Route::get('volunteers', [SearchController::class, 'searchVolunteers']);
+    Route::get('volunteer-profiles', [SearchController::class, 'searchVolunteerProfiles']);
     Route::get('donations', [SearchController::class, 'searchDonations']);
     Route::get('suggestions', [SearchController::class, 'getSuggestions']);
     Route::get('location', [SearchController::class, 'locationSearch']);

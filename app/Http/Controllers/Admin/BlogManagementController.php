@@ -37,6 +37,42 @@ class BlogManagementController extends Controller
     }
 
     /**
+     * Display the blog access user listing.
+     */
+    public function accessUsers(Request $request)
+    {
+        $query = 
+            \App\Models\User::query();
+
+        if ($request->has('search') && $request->search !== '') {
+            $query->where(function($q) use ($request) {
+                $q->where('name', 'like', '%' . $request->search . '%')
+                  ->orWhere('email', 'like', '%' . $request->search . '%');
+            });
+        }
+
+        $users = $query->latest()->paginate(20);
+
+        return view('admin.blogs.access', compact('users'));
+    }
+
+    /**
+     * Toggle blog creation access for a user.
+     */
+    public function toggleUserAccess($id)
+    {
+        try {
+            $user = \App\Models\User::findOrFail($id);
+            $user->blog_access = !$user->blog_access;
+            $user->save();
+
+            return redirect()->back()->with('success', 'Blog access updated for ' . $user->name);
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Failed to update blog access: ' . $e->getMessage());
+        }
+    }
+
+    /**
      * Show the form for creating a new blog.
      */
     public function create()

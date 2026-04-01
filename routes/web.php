@@ -197,6 +197,8 @@ Route::prefix('admin')->name('admin.')->group(function () {
         // Blog Management Routes
         Route::prefix('blogs')->name('blogs.')->group(function () {
             Route::get('/', [BlogManagementController::class, 'index'])->name('index');
+            Route::get('/access', [BlogManagementController::class, 'accessUsers'])->name('access');
+            Route::patch('/users/{id}/toggle-access', [BlogManagementController::class, 'toggleUserAccess'])->name('toggle-user-access');
             Route::get('/create', [BlogManagementController::class, 'create'])->name('create');
             Route::post('/', [BlogManagementController::class, 'store'])->name('store');
             Route::get('/{id}/edit', [BlogManagementController::class, 'edit'])->name('edit');

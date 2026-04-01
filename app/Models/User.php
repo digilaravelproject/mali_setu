@@ -46,6 +46,7 @@ class User extends Authenticatable
         'sector',
         'district',
         'destination',
+        'blog_access',
     ];
 
     /**
@@ -68,6 +69,7 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'blog_access' => 'boolean',
         ];
     }
 

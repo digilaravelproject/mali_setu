@@ -23,7 +23,7 @@
                     <div class="row no-gutters align-items-center">
                         <div class="col mr-2">
                             <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
-                                Total Users
+                                <a href="{{ route('admin.users.index') }}" class="text-decoration-none">Total Users</a>
                             </div>
                             <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $stats['users']['total'] }}</div>
                             <div class="text-xs text-muted mt-1">
@@ -46,7 +46,7 @@
                     <div class="row no-gutters align-items-center">
                         <div class="col mr-2">
                             <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
-                                Businesses
+                                <a href="{{ route('admin.businesses.index') }}" class="text-decoration-none">Businesses</a>
                             </div>
                             <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $stats['businesses']['total'] }}</div>
                             <div class="text-xs text-muted mt-1">
@@ -69,7 +69,7 @@
                     <div class="row no-gutters align-items-center">
                         <div class="col mr-2">
                             <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
-                                Matrimony Profiles
+                                <a href="{{ route('admin.matrimony.index') }}" class="text-decoration-none">Matrimony Profiles</a>
                             </div>
                             <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $stats['matrimony']['total'] }}</div>
                             <div class="text-xs text-muted mt-1">
@@ -85,7 +85,7 @@
         </div>
 
         <!-- Revenue Card -->
-        <div class="col-xl-3 col-md-6 mb-4">
+        <?php /*<div class="col-xl-3 col-md-6 mb-4">
             <div class="card border-left-warning shadow h-100 py-2">
                 <div class="card-body">
                     <div class="row no-gutters align-items-center">
@@ -104,7 +104,7 @@
                     </div>
                 </div>
             </div>
-        </div>
+        </div>*/ ?>
     </div>
 
     <!-- Pending Verifications Alert -->

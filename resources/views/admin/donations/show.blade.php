@@ -1,7 +1,7 @@
 @extends('admin.layouts.app')
 
-@section('title', 'Donation Details')
-@section('page-title', 'Donation Details')
+@section('title', 'Contribution Details')
+@section('page-title', 'Contribution Details')
 
 @section('content')
 <div class="container-fluid">
@@ -9,7 +9,7 @@
         <div class="col-md-8">
             <div class="card">
                 <div class="card-header">
-                    <h3 class="card-title">Donation #{{ $donation->id }}</h3>
+                    <h3 class="card-title">Contribution #{{ $donation->id }}</h3>
                 </div>
                 
                 <div class="card-body">
@@ -27,7 +27,7 @@
                             </p>
                         </div>
                         <div class="col-md-6">
-                            <h5 class="text-muted">Donation Information</h5>
+                            <h5 class="text-muted">Contribution Information</h5>
                             <p class="mb-2">
                                 <strong>Amount:</strong> <span class="badge bg-success">₹{{ number_format($donation->amount, 2) }}</span>
                             </p>
@@ -106,7 +106,7 @@
                         @csrf
                         @method('DELETE')
                         <button type="submit" class="btn btn-danger btn-block" onclick="return confirm('Are you sure?')">
-                            <i class="fas fa-trash"></i> Delete Donation
+                            <i class="fas fa-trash"></i> Delete Contribution
                         </button>
                     </form>
                 </div>
