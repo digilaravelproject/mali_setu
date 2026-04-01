@@ -117,7 +117,7 @@ class SearchController extends Controller
     /**
      * 🔎 Search Matrimony Profiles
      */
-    public function searchMatrimony(Request $request)
+    public function searchMatrimony_oldd(Request $request)
     {
         $query = MatrimonyProfile::query();
         
@@ -136,6 +136,10 @@ class SearchController extends Controller
 
         if ($request->filled('language')) {
             $query->whereJsonContains('personal_details->language', $request->language);
+        }
+        
+        if ($request->filled('personal_details')) {
+            $query->whereJsonContains('personal_details->name', $request->name);
         }
 
         if ($request->filled('height')) {
@@ -291,6 +295,70 @@ class SearchController extends Controller
 
         return response()->json(['success' => true, 'data' => $results]);
     }
+    
+    public function searchMatrimony(Request $request)
+    {
+        $query = MatrimonyProfile::query();
+    
+        /*
+        |--------------------------------------------------------------------------
+        | BASIC DETAILS
+        |--------------------------------------------------------------------------
+        */
+    
+        if ($request->filled('age_min') || $request->filled('age_max')) {
+    
+            $min = $request->age_min ?? 18;
+            $max = $request->age_max ?? 100;
+    
+            $query->whereBetween('age', [$min, $max]);
+        }
+    
+        /*
+    NAME SEARCH
+    */
+
+    if ($request->filled('name')) {
+
+        $query->whereRaw(
+            "LOWER(JSON_UNQUOTE(JSON_EXTRACT(personal_details, '$.name'))) LIKE ?",
+            ['%' . strtolower(trim($request->name)) . '%']
+        );
+    }
+
+    /*
+    AGE FILTER
+    */
+
+    if ($request->filled('age_min') || $request->filled('age_max')) {
+
+        $query->whereBetween(
+            'age',
+            [
+                $request->age_min ?? 18,
+                $request->age_max ?? 100
+            ]
+        );
+    }
+
+    /*
+    REQUIRED FILTERS
+    */
+
+    $authUserId = $request->user()->id;
+
+    $query->where('user_id', '!=', $authUserId);
+
+    $query->where(
+        'approval_status',
+        'approved'
+    );
+
+    return response()->json([
+        'success' => true,
+        'data' => $query->latest()->paginate(20)
+    ]);
+}
 
     /**
      * 🔎 Search Jobs

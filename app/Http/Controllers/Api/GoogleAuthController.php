@@ -47,10 +47,10 @@ class GoogleAuthController extends Controller
                 'status'  => true,
                 'message' => 'Login successful',
                 'data' => [
-                    'user' => $user
+                    'user' => $user,
+                    'token'   => $token,
+                    'token_type' => 'Bearer'
                 ],
-                'token'   => $token,
-                'token_type' => 'Bearer'
             ]);
     
         } catch (\Illuminate\Validation\ValidationException $e) {

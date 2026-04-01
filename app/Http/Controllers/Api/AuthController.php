@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\WelcomeMail;
 use App\Mail\PasswordChangedMail;
+use Carbon\Carbon;
 
 
 class AuthController extends Controller
@@ -36,7 +37,7 @@ class AuthController extends Controller
                 'occupation'       => 'nullable|string|max:255',
                 'company_name'     => 'nullable|string|max:255',
                 'dept_name'        => 'nullable|string|max:255',
-                'dob'              => 'nullable|date',
+                'dob' => 'nullable|date_format:d/m/Y',
                 'designation'      => 'nullable|string|max:255',
 
                 'reffral_code'     => 'nullable|string|max:50',
@@ -83,6 +84,20 @@ class AuthController extends Controller
 
                 // Save path in DB
                 $cast_certificate = 'certificates/' . $fileName;
+            }
+
+            if ($request->filled('dob')) {
+                try {
+                    // Convert dd/mm/yyyy to yyyy-mm-dd
+                    $request->merge([
+                        'dob' => Carbon::createFromFormat('d/m/Y', $request->dob)->format('Y-m-d')
+                    ]);
+                } catch (\Exception $e) {
+                    // Handle invalid date format if needed
+                    return response()->json([
+                        'error' => 'Invalid date format. Expected dd/mm/yyyy.'
+                    ], 422);
+                }
             }
 
             $user = User::create([
