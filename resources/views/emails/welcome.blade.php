@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Welcome to {{ config('app.name') }}</title>
+    <title>Welcome to Mali Setu</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -73,23 +73,23 @@
     <h2>Welcome!</h2>
     <h4>Hi {{ $name }}, we're glad to have you 🎉</h4>
 
-    <p>Thank you for joining <strong>{{ config('app.name') }}</strong>! Your account has been successfully created.</p>
+    <p>Thank you for joining <strong>Mali Setu</strong>! Your account has been successfully created.</p>
 
     <div class="welcome-box">
         Start exploring your dashboard and enjoy all the features we’ve built for you.
     </div>
 
     <p style="text-align: center;">
-        <a href="{{ config('app.url') }}" class="button">Go to {{ config('app.name') }}</a>
+        <a href="{{ config('app.url') }}" class="button">Go to Mali Setu</a>
     </p>
 
     <p>If you have any questions, feel free to reply to this email. Our team is always ready to help!</p>
 
     <p>Warm regards,<br>
-    <strong>{{ config('app.name') }} Team</strong></p>
+    <strong>Mali Setu Team</strong></p>
 
     <div class="footer">
-        &copy; {{ date('Y') }} {{ config('app.name') }}. All rights reserved.
+        &copy; {{ date('Y') }} Mali Setu. All rights reserved.
     </div>
 </div>
 </body>
