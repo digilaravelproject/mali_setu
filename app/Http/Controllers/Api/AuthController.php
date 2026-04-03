@@ -251,6 +251,9 @@ class AuthController extends Controller
 
         $transaction = null;
 
+        // Check if matrimony profile exists
+        $user->is_matrimony = $user->matrimonyProfile ? true : false;
+
         if ($latestTransaction && $latestTransaction->purpose === 'donation') {
             // If latest is donation → find last valid purpose
             $transaction = Transaction::where('user_id', $user->id)
