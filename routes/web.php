@@ -27,10 +27,15 @@ Route::get('/test-mail', function () {
 });
 
 
+use App\Http\Controllers\PageController;
+
 // Public route
 // Route::get('/', function () {
 //     return view('welcome');
 // });
+
+Route::get('/privacy-policy', [PageController::class, 'privacyPolicy'])->name('privacy-policy');
+Route::get('/terms-condition', [PageController::class, 'termsCondition'])->name('terms-condition');
 
 Route::resource('heroes', HomepageHeroController::class);
 

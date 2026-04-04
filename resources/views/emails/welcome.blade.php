@@ -79,9 +79,9 @@
         Start exploring your dashboard and enjoy all the features we’ve built for you.
     </div>
 
-    <p style="text-align: center;">
+    <!-- <p style="text-align: center;">
         <a href="{{ config('app.url') }}" class="button">Go to Mali Setu</a>
-    </p>
+    </p> -->
 
     <p>If you have any questions, feel free to reply to this email. Our team is always ready to help!</p>
 
