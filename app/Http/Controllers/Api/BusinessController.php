@@ -344,7 +344,7 @@ class BusinessController extends Controller
     /**
      * Update business
      */
-    public function update(Request $request, $id)
+    public function update_old(Request $request, $id)
     {
         $business = Business::where('user_id', $request->user()->id)
             ->findOrFail($id);
@@ -434,6 +434,128 @@ class BusinessController extends Controller
             'success' => true,
             'message' => 'Business updated successfully',
             'data' => ['business' => $business]
+        ]);
+    }
+
+    /**
+     * Update business
+     */
+    public function update(Request $request, $id)
+    {
+        $business = Business::where('user_id', $request->user()->id)
+            ->findOrFail($id);
+
+        $validator = Validator::make($request->all(), [
+            'business_name' => 'sometimes|string|max:255',
+            'business_type' => 'sometimes',
+            'category_id' => 'sometimes|integer|exists:business_categories,id',
+            'description' => 'sometimes|string',
+            'contact_phone' => 'nullable|string|max:20',
+            'contact_email' => 'nullable|email',
+
+            // NEW ADDRESS FIELDS
+            'country' => 'sometimes|string|max:100',
+            'state' => 'sometimes|string|max:100',
+            'district' => 'sometimes|string|max:100',
+            'taluka' => 'nullable|string|max:100',
+            'city' => 'sometimes|string|max:100',
+            'pincode' => 'sometimes|digits:6',
+
+            'website' => 'nullable|url',
+
+            'photos' => 'nullable|array',
+            'photos.*' => 'string',
+
+            'opening_time' => 'sometimes|date_format:H:i',
+            'closing_time' => 'sometimes|date_format:H:i',
+        ]);
+
+        if ($validator->fails()) {
+            $errors = $validator->errors();
+
+            return response()->json([
+                'success' => false,
+                'message' => $errors->first(),
+                'errors' => $errors
+            ], 422);
+        }
+
+        $photoPaths = [];
+
+        // Existing photos
+        $existingPhotos = $business->photo
+            ? explode(',', $business->photo)
+            : [];
+
+        if ($request->photos) {
+
+            foreach ($request->photos as $base64Image) {
+
+                if (str_contains($base64Image, 'base64,')) {
+                    $base64Image = explode('base64,', $base64Image)[1];
+                }
+
+                $imageData = base64_decode($base64Image);
+
+                $fileName = 'business/photos/' . uniqid() . '.jpg';
+
+                Storage::disk('public')->put($fileName, $imageData);
+
+                $photoPaths[] = $fileName;
+            }
+
+            // Delete old photos (optional)
+            foreach ($existingPhotos as $oldPhoto) {
+                if (Storage::disk('public')->exists(trim($oldPhoto))) {
+                    Storage::disk('public')->delete(trim($oldPhoto));
+                }
+            }
+
+            $business->update([
+                'photo' => implode(',', $photoPaths)
+            ]);
+        }
+
+        // Update all fields
+        $business->update($request->only([
+            'business_name',
+            'business_type',
+            'category_id',
+            'description',
+            'contact_phone',
+            'contact_email',
+
+            'country',
+            'state',
+            'district',
+            'taluka',
+            'city',
+            'pincode',
+
+            'website',
+            'opening_time',
+            'closing_time'
+        ]));
+
+        // Notification
+        $this->notifications->createNotification(
+            $request->user()->id,
+            Notification::TYPE_PROFILE_UPDATE,
+            'Business updated',
+            'Your business "' . $business->business_name . '" details have been updated.',
+            ['business_id' => $business->id],
+            '/business/manage',
+            Notification::PRIORITY_LOW,
+            $business,
+            ['in_app', 'email']
+        );
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Business updated successfully',
+            'data' => [
+                'business' => $business->fresh()
+            ]
         ]);
     }
 
