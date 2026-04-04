@@ -15,6 +15,14 @@
     </div>
 
     <div class="row">
+        <div class="col-12 mb-3">
+            @if($business->verification_status == 'approved' && $business->completed_business_registrations_count == 0)
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Payment pending for this business. The user has not completed the business registration payment yet.
+                </div>
+            @endif
+        </div>
         <!-- Business Information -->
         <div class="col-md-8">
             <div class="card shadow mb-4">
@@ -66,6 +74,18 @@
                                             <span class="badge bg-warning">Pending</span>
                                         @else
                                             <span class="badge bg-danger">Rejected</span>
+                                        @endif
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Payment Status:</strong></td>
+                                    <td>
+                                        @if($business->completed_business_registrations_count > 0)
+                                            <span class="badge bg-success">Paid</span>
+                                        @elseif($business->pending_business_registrations_count > 0)
+                                            <span class="badge bg-warning">Payment Pending</span>
+                                        @else
+                                            <span class="badge bg-secondary">Not Paid</span>
                                         @endif
                                     </td>
                                 </tr>

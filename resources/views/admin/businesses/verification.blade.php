@@ -98,6 +98,7 @@
                                         <th>Email</th>
                                         <th>Business Type</th>
                                         <th>Category</th>
+                                        <th>Payment</th>
                                         <th>Submitted</th>
                                         <th>Actions</th>
                                     </tr>
@@ -123,6 +124,15 @@
                                             @endif
                                         </td>
                                         <td>
+                                            @if($business->completed_business_registrations_count > 0)
+                                                <span class="badge bg-success">Paid</span>
+                                            @elseif($business->pending_business_registrations_count > 0)
+                                                <span class="badge bg-warning">Payment Pending</span>
+                                            @else
+                                                <span class="badge bg-secondary">Not Paid</span>
+                                            @endif
+                                        </td>
+                                        <td>
                                             {{ $business->created_at->format('M d, Y') }}
                                             <br>
                                             <small class="text-muted">{{ $business->created_at->diffForHumans() }}</small>
@@ -133,10 +143,16 @@
                                                    class="btn btn-sm btn-info" title="View Details">
                                                     <i class="fas fa-eye"></i>
                                                 </a>
-                                                <button type="button" class="btn btn-sm btn-success" 
-                                                        onclick="approveBusiness({{ $business->id }})" title="Approve">
-                                                    <i class="fas fa-check"></i>
-                                                </button>
+                                                @if($business->completed_business_registrations_count > 0)
+                                                    <button type="button" class="btn btn-sm btn-success" 
+                                                            onclick="approveBusiness({{ $business->id }})" title="Approve">
+                                                        <i class="fas fa-check"></i>
+                                                    </button>
+                                                @else
+                                                    <button type="button" class="btn btn-sm btn-secondary" title="Payment pending. Cannot approve." disabled>
+                                                        <i class="fas fa-check"></i>
+                                                    </button>
+                                                @endif
                                                 <button type="button" class="btn btn-sm btn-danger" 
                                                         onclick="rejectBusiness({{ $business->id }})" title="Reject">
                                                     <i class="fas fa-times"></i>

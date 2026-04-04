@@ -170,7 +170,7 @@
     <div class="wrapper">
         <div class="container">
             <div class="header">
-                <div class="logo">{{ config('app.name') }}</div>
+                <div class="logo">Mali Setu</div>
                 <div class="tagline">Businesses • Jobs • Matrimony • Community</div>
             </div>
 
@@ -204,7 +204,7 @@
 
         <div class="footer">
             <div class="footer-links">
-                &copy; {{ date('Y') }} {{ config('app.name') }}. All rights reserved.<br>
+                &copy; {{ date('Y') }} Mali Setu. All rights reserved.<br>
                 <p style="margin-top: 10px; font-size: 11px;">
                     Sent to {{ $notification->user->email ?? 'your email' }}. 
                     <a href="#">Unsubscribe</a> from these alerts.

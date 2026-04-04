@@ -60,10 +60,10 @@
 
     <p>This OTP is valid for <strong>10 minutes</strong>. If you didn’t request this, please ignore this email.</p>
 
-    <p>Thank you,<br>{{ config('app.name') }}</p>
+    <p>Thank you,<br>Mali Setu</p>
 
     <div class="footer">
-        &copy; {{ date('Y') }} {{ config('app.name') }}. All rights reserved.
+        &copy; {{ date('Y') }} Mali Setu. All rights reserved.
     </div>
 </div>
 </body>

@@ -88,6 +88,9 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::get('/verification', [BusinessManagementController::class, 'verification'])->name('verification');
             Route::post('/{id}/approve', [BusinessManagementController::class, 'approve'])->name('approve');
             Route::post('/{id}/reject', [BusinessManagementController::class, 'reject'])->name('reject');
+            Route::get('/{id}/jobs', [BusinessManagementController::class, 'jobs'])->name('jobs');
+            Route::post('/jobs/{jobId}/approve', [BusinessManagementController::class, 'approveJob'])->name('jobs.approve');
+            Route::post('/jobs/{jobId}/reject', [BusinessManagementController::class, 'rejectJob'])->name('jobs.reject');
             Route::get('/{id}', [BusinessManagementController::class, 'show'])->name('show');
             Route::get('/{id}/edit', [BusinessManagementController::class, 'edit'])->name('edit');
             Route::put('/{id}', [BusinessManagementController::class, 'update'])->name('update');

@@ -110,7 +110,7 @@ Route::prefix('blogs')->group(function () {
 // Public job routes (for browsing)
 Route::prefix('jobs')->group(function () {
     Route::get('/', [JobController::class, 'index']);
-    Route::get('/{id}', [JobController::class, 'show']);
+    Route::middleware('auth:sanctum')->get('/{id}', [JobController::class, 'show']);
 });
 
 // Payment webhook (public)

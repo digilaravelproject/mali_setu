@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Transaction;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
@@ -99,6 +100,39 @@ class Business extends Model
     public function jobPostings(): HasMany
     {
         return $this->hasMany(JobPosting::class);
+    }
+
+    /**
+     * Get business registration transactions for this business owner.
+     */
+    public function businessRegistrationTransactions(): HasMany
+    {
+        return $this->hasMany(Transaction::class, 'user_id', 'user_id')
+            ->where('purpose', 'business_registration');
+    }
+
+    /**
+     * Get a simple payment status for this business.
+     */
+    public function getBusinessPaymentStatusAttribute(): string
+    {
+        if ($this->businessRegistrationTransactions()->where('status', 'completed')->exists()) {
+            return 'paid';
+        }
+
+        if ($this->businessRegistrationTransactions()->where('status', 'pending')->exists()) {
+            return 'pending';
+        }
+
+        return 'unpaid';
+    }
+
+    /**
+     * Determine whether business payment is pending.
+     */
+    public function getPaymentPendingAttribute(): bool
+    {
+        return $this->businessPaymentStatus !== 'paid';
     }
 
     /**

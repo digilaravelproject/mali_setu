@@ -5,8 +5,10 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Business;
 use App\Models\BusinessCategory;
+use App\Models\JobPosting;
 use App\Models\Product;
 use App\Models\Service;
+use App\Models\Transaction;
 use Illuminate\Http\Request;
 
 class BusinessManagementController extends Controller
@@ -16,7 +18,16 @@ class BusinessManagementController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Business::with(['user', 'category', 'products', 'services']);
+        $query = Business::with(['user', 'category', 'products', 'services'])
+            ->withCount([
+                'businessRegistrationTransactions as completed_business_registrations_count' => function ($query) {
+                    $query->where('status', 'completed');
+                },
+                'businessRegistrationTransactions as pending_business_registrations_count' => function ($query) {
+                    $query->where('status', 'pending');
+                },
+                'jobPostings'
+            ]);
         
         // Filter by verification status
         if ($request->has('verification_status') && $request->verification_status !== '') {
@@ -73,6 +84,14 @@ class BusinessManagementController extends Controller
     public function verification(Request $request)
     {
         $query = Business::with(['user', 'category', 'products', 'services'])
+            ->withCount([
+                'businessRegistrationTransactions as completed_business_registrations_count' => function ($query) {
+                    $query->where('status', 'completed');
+                },
+                'businessRegistrationTransactions as pending_business_registrations_count' => function ($query) {
+                    $query->where('status', 'pending');
+                },
+            ])
             ->where('verification_status', 'pending');
             
         // Search functionality
@@ -113,20 +132,36 @@ class BusinessManagementController extends Controller
     {
         try {
             $business = Business::findOrFail($businessId);
-            
+
+            $paymentCompleted = Transaction::where('user_id', $business->user_id)
+                ->where('purpose', 'business_registration')
+                ->where('status', 'completed')
+                ->exists();
+
+            if (! $paymentCompleted) {
+                $message = 'Payment is pending for this business. Approval is not allowed until payment is complete.';
+                if ($request->ajax()) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => $message
+                    ], 422);
+                }
+                return redirect()->back()->with('error', $message);
+            }
+
             $business->update([
                 'verification_status' => 'approved',
                 'verified_at' => now(),
                 'verified_by' => auth()->id()
             ]);
-            
+
             if ($request->ajax()) {
                 return response()->json([
                     'success' => true,
                     'message' => 'Business approved successfully!'
                 ]);
             }
-            
+
             return redirect()->back()->with('success', 'Business approved successfully!');
         } catch (\Exception $e) {
             if ($request->ajax()) {
@@ -135,7 +170,7 @@ class BusinessManagementController extends Controller
                     'message' => 'Failed to approve business: ' . $e->getMessage()
                 ], 500);
             }
-            
+
             return redirect()->back()->with('error', 'Failed to approve business.');
         }
     }
@@ -219,6 +254,49 @@ class BusinessManagementController extends Controller
     }
     
     /**
+     * View business jobs
+     */
+    public function jobs($id)
+    {
+        $business = Business::with([
+            'user',
+            'category',
+            'jobPostings' => function ($query) {
+                $query->with(['applications.user'])->withCount('applications')->orderBy('created_at', 'desc');
+            }
+        ])->findOrFail($id);
+
+        if ($business->verification_status !== 'approved') {
+            return redirect()->route('admin.businesses.index')
+                ->with('error', 'Jobs can only be viewed for approved businesses.');
+        }
+
+        return view('admin.businesses.jobs', compact('business'));
+    }
+
+    /**
+     * Approve business job posting
+     */
+    public function approveJob(Request $request, $jobId)
+    {
+        $job = JobPosting::findOrFail($jobId);
+        $job->update(['status' => 'approved', 'is_active' => true]);
+
+        return redirect()->back()->with('success', 'Job posting approved successfully.');
+    }
+
+    /**
+     * Reject business job posting
+     */
+    public function rejectJob(Request $request, $jobId)
+    {
+        $job = JobPosting::findOrFail($jobId);
+        $job->update(['status' => 'rejected']);
+
+        return redirect()->back()->with('success', 'Job posting rejected successfully.');
+    }
+    
+    /**
      * View business details
      */
     public function show($id)
@@ -230,7 +308,16 @@ class BusinessManagementController extends Controller
             'services', 
             'locations',
             'reviews.user'
-        ])->findOrFail($id);
+        ])
+        ->withCount([
+            'businessRegistrationTransactions as completed_business_registrations_count' => function ($query) {
+                $query->where('status', 'completed');
+            },
+            'businessRegistrationTransactions as pending_business_registrations_count' => function ($query) {
+                $query->where('status', 'pending');
+            },
+        ])
+        ->findOrFail($id);
         
         return view('admin.businesses.show', compact('business'));
     }
