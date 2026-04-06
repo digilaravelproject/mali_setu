@@ -50,6 +50,8 @@ class AuthController extends Controller
                 'sector'           => 'nullable|string|max:100',
                 'district'         => 'nullable|string|max:100',
                 'destination'      => 'nullable|string|max:255',
+                'latitude'         => 'nullable|numeric|between:-90,90',
+                'longitude'        => 'nullable|numeric|between:-180,180',
                 'password'         => 'required|string|min:8|confirmed',
                 'user_type'        => 'required|in:general,business,matrimony,volunteer',
                 'term_condition'   => 'accepted', // must be checked (true/1)
@@ -122,6 +124,8 @@ class AuthController extends Controller
                 'sector'                 => $request->sector,
                 'district'               => $request->district,
                 'destination'            => $request->destination,
+                'latitude'               => $request->latitude,
+                'longitude'              => $request->longitude,
                 'cast_certificate'       => $cast_certificate,
                 'user_type'              => $request->user_type,
                 'caste_verification_status' => 'approved'
@@ -312,6 +316,8 @@ class AuthController extends Controller
             'sector'           => 'nullable|string|max:100',
             'district'         => 'nullable|string|max:100',
             'destination'      => 'nullable|string|max:255',
+            'latitude'         => 'nullable|numeric|between:-90,90',
+            'longitude'        => 'nullable|numeric|between:-180,180',
         ]);
 
         if ($validator->fails()) {
@@ -347,7 +353,8 @@ class AuthController extends Controller
             'name', 'email', 'age', 'phone', 'cast_certificate', 'occupation',
             'company_name', 'dept_name', 'dob', 'designation',
             'address', 'nearby_location', 'pincode', 'road_number',
-            'state', 'city', 'sector', 'district', 'destination'
+            'state', 'city', 'sector', 'district', 'destination',
+            'latitude', 'longitude'
         ]);
         
         if (!empty($photoPaths)) {

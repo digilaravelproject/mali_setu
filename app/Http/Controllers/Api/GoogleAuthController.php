@@ -17,6 +17,8 @@ class GoogleAuthController extends Controller
             $request->validate([
                 'google_id' => 'required|string',
                 'email'     => 'required|email',
+                'latitude'  => 'nullable|numeric|between:-90,90',
+                'longitude' => 'nullable|numeric|between:-180,180',
             ]);
     
             $user = User::where('email', $request->email)
@@ -34,6 +36,14 @@ class GoogleAuthController extends Controller
             if (empty($user->google_id)) {
                 $user->update([
                     'google_id' => $request->google_id
+                ]);
+            }
+
+            // Update latitude and longitude if provided
+            if ($request->has('latitude') || $request->has('longitude')) {
+                $user->update([
+                    'latitude'  => $request->latitude ?? $user->latitude,
+                    'longitude' => $request->longitude ?? $user->longitude,
                 ]);
             }
     

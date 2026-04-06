@@ -53,12 +53,14 @@ class BusinessController extends Controller
             'taluka' => 'nullable|string|max:100',
             'city' => 'required|string|max:100',
             'pincode' => 'required|digits:6',
-    
+
             'website' => 'nullable|url',
             'photos' => 'nullable|array',
             'photos.*' => 'string',
             'opening_time' => 'nullable|date_format:H:i',
             'closing_time' => 'nullable|date_format:H:i',
+            'latitude' => 'nullable|numeric|between:-90,90',
+            'longitude' => 'nullable|numeric|between:-180,180',
         ]);
         
         if ($validator->fails()) {
@@ -128,6 +130,8 @@ class BusinessController extends Controller
             'website' => $request->website,
             'opening_time' => $request->opening_time,
             'closing_time' => $request->closing_time,
+            'latitude' => $request->latitude,
+            'longitude' => $request->longitude,
             'verification_status' => 'pending',
             'subscription_status' => 'trial',
         ]);
@@ -468,6 +472,8 @@ class BusinessController extends Controller
 
             'opening_time' => 'sometimes|date_format:H:i',
             'closing_time' => 'sometimes|date_format:H:i',
+            'latitude' => 'nullable|numeric|between:-90,90',
+            'longitude' => 'nullable|numeric|between:-180,180',
         ]);
 
         if ($validator->fails()) {
@@ -534,7 +540,9 @@ class BusinessController extends Controller
 
             'website',
             'opening_time',
-            'closing_time'
+            'closing_time',
+            'latitude',
+            'longitude'
         ]));
 
         // Notification

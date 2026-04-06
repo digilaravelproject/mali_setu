@@ -46,6 +46,8 @@ class User extends Authenticatable
         'sector',
         'district',
         'destination',
+        'latitude',
+        'longitude',
         'blog_access',
     ];
 

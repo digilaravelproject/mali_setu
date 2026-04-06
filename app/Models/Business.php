@@ -39,6 +39,8 @@ class Business extends Model
         'opening_time',
         'closing_time',
         'photo',
+        'latitude',
+        'longitude',
     ];
 
     protected $casts = [
