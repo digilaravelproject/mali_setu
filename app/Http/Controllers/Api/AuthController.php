@@ -243,39 +243,38 @@ class AuthController extends Controller
             'matrimonyProfile'
         ]);
 
-        // Get latest transaction (any type)
-        $latestTransaction = Transaction::where('user_id', $user->id)
-            ->whereNotNull('razorpay_payment_id')
-            ->latest()
-            ->first();
-
         $transaction = null;
 
         // Check if matrimony profile exists
         $user->is_matrimony = $user->matrimonyProfile ? true : false;
 
-        if ($latestTransaction && $latestTransaction->purpose === 'donation') {
-            // If latest is donation → find last valid purpose
-            $transaction = Transaction::where('user_id', $user->id)
-                ->whereNotNull('razorpay_payment_id')
-                ->whereIn('purpose', ['business_registration', 'matrimony_profile'])
-                ->latest()
-                ->first();
-        } else {
-            // If latest is already valid
-            $transaction = $latestTransaction;
-        }
+        $user->is_business = $user->business ? true : false;
 
-        // Assign values
-        if ($transaction) {
-            $user->has_payment = true;
-            $user->payment_purpose = $transaction->purpose;
-            $user->payment_amount = $transaction->amount;
-        } else {
-            $user->has_payment = false;
-            $user->payment_purpose = null;
-            $user->payment_amount = null;
-        }
+        /*
+        |--------------------------------------------------------------------------
+        | Check Matrimony Payment
+        |--------------------------------------------------------------------------
+        */
+        $matrimonyPayment = Transaction::where('user_id', $user->id)
+            ->where('purpose', 'matrimony_profile')
+            ->whereNotNull('razorpay_payment_id')
+            ->latest()
+            ->first();
+
+        $user->has_matrimony_payment = !is_null($matrimonyPayment);
+
+        /*
+        |--------------------------------------------------------------------------
+        | Check Business Payment
+        |--------------------------------------------------------------------------
+        */
+        $businessPayment = Transaction::where('user_id', $user->id)
+            ->where('purpose', 'business_registration')
+            ->whereNotNull('razorpay_payment_id')
+            ->latest()
+            ->first();
+
+        $user->has_business_payment = !is_null($businessPayment);
 
         return response()->json([
             'success' => true,
