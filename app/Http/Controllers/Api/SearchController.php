@@ -536,9 +536,10 @@ class SearchController extends Controller
     public function searchBusiness(Request $request)
     {
         try {
-            // Validate search string
+            // Validate search string and optional radius
             $validator = Validator::make($request->all(), [
                 'search' => 'required|string|min:1|max:255',
+                'radius' => 'nullable|numeric|min:0|max:100',
             ]);
 
             if ($validator->fails()) {
@@ -549,9 +550,27 @@ class SearchController extends Controller
                 ], 422);
             }
 
-            $searchQuery = $request->input('search');
+            $user = $request->user();
 
-            // Search businesses by name or description
+            if (!$user || is_null($user->latitude) || is_null($user->longitude)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Logged in user latitude and longitude are required'
+                ], 422);
+            }
+
+            $searchQuery = $request->input('search');
+            $radiusKm = $request->input('radius', 5);
+            $userLatitude = $user->latitude;
+            $userLongitude = $user->longitude;
+
+            $distanceSql = "(
+                6371 * acos(
+                    cos(radians(?)) * cos(radians(latitude)) * cos(radians(longitude) - radians(?)) +
+                    sin(radians(?)) * sin(radians(latitude))
+                )
+            )";
+
             $businesses = Business::with([
                 'user',
                 'category',
@@ -559,7 +578,14 @@ class SearchController extends Controller
                 'services',
                 'reviews.user'
             ])
+            ->selectRaw("businesses.*, {$distanceSql} AS distance", [
+                $userLatitude,
+                $userLongitude,
+                $userLatitude
+            ])
             ->where('verification_status', 'approved')
+            ->whereNotNull('latitude')
+            ->whereNotNull('longitude')
             ->where(function ($query) use ($searchQuery) {
                 $query->where('business_name', 'like', '%' . $searchQuery . '%')
                       ->orWhere('description', 'like', '%' . $searchQuery . '%')
@@ -570,17 +596,17 @@ class SearchController extends Controller
                       ->orWhere('city', 'like', '%' . $searchQuery . '%')
                       ->orWhere('pincode', 'like', '%' . $searchQuery . '%');
             })
+            ->havingRaw('distance <= ?', [$radiusKm])
+            ->orderBy('distance', 'asc')
             ->get();
 
-            // No businesses found
             if ($businesses->isEmpty()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'No businesses found matching your search'
+                    'message' => 'No businesses found within ' . $radiusKm . ' km of your location'
                 ], 404);
             }
 
-            // Success response
             return response()->json([
                 'success' => true,
                 'message' => 'Businesses found successfully',
@@ -591,14 +617,11 @@ class SearchController extends Controller
             ], 200);
 
         } catch (\Throwable $e) {
-
-            // Log error for debugging
             \Log::error('Business search API error', [
                 'search_query' => $request->input('search'),
                 'error' => $e->getMessage()
             ]);
 
-            // Server error response
             return response()->json([
                 'success' => false,
                 'message' => 'Something went wrong. Please try again later.'

@@ -133,7 +133,7 @@ Route::prefix('search')->group(function () {
     Route::get('suggestions', [SearchController::class, 'getSuggestions']);
     Route::get('location', [SearchController::class, 'locationSearch']);
     
-    Route::post('/search_business', [SearchController::class, 'searchBusiness']);
+    Route::middleware('auth:sanctum')->post('/search_business', [SearchController::class, 'searchBusiness']);
 });
 
 // Protected authentication routes
