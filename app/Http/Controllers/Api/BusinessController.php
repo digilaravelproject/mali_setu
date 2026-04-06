@@ -189,7 +189,7 @@ class BusinessController extends Controller
     /**
      * Get all businesses with pagination
      */
-    public function index(Request $request)
+    public function index_oldd(Request $request)
     {
         $query = Business::with(['user', 'category', 'products', 'services'])
             ->where('verification_status', 'approved');
@@ -206,6 +206,89 @@ class BusinessController extends Controller
         if ($request->has('search')) {
             $query->where('business_name', 'like', '%' . $request->search . '%');
         }
+
+        $businesses = $query->paginate(10);
+
+        return response()->json([
+            'success' => true,
+            'data' => $businesses
+        ]);
+    }
+
+    /**
+     * Get all businesses with pagination and distance filter
+     */
+    public function index(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'latitude' => 'required|numeric|min:-90|max:90',
+            'longitude' => 'required|numeric|min:-180|max:180',
+            'radius' => 'nullable|numeric|min:0|max:100',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        $userLatitude = $request->latitude;
+        $userLongitude = $request->longitude;
+        $radiusKm = $request->input('radius', 5);
+
+        $distanceSql = "(
+            6371 * acos(
+                cos(radians(?)) *
+                cos(radians(latitude)) *
+                cos(radians(longitude) - radians(?)) +
+                sin(radians(?)) *
+                sin(radians(latitude))
+            )
+        )";
+
+        $query = Business::with([
+                'user',
+                'category',
+                'products',
+                'services'
+            ])
+            ->selectRaw("businesses.*, {$distanceSql} AS distance", [
+                $userLatitude,
+                $userLongitude,
+                $userLatitude
+            ])
+            ->where('verification_status', 'approved')
+            ->whereNotNull('latitude')
+            ->whereNotNull('longitude');
+
+        /*
+        |--------------------------------------------------------------------------
+        | Apply Filters
+        |--------------------------------------------------------------------------
+        */
+
+        if ($request->has('category_id')) {
+            $query->where('category_id', $request->category_id);
+        }
+
+        if ($request->has('business_type')) {
+            $query->where('business_type', $request->business_type);
+        }
+
+        if ($request->has('search')) {
+            $query->where('business_name', 'like', '%' . $request->search . '%');
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Radius Filter
+        |--------------------------------------------------------------------------
+        */
+
+        $query->havingRaw('distance <= ?', [$radiusKm])
+            ->orderBy('distance', 'asc');
 
         $businesses = $query->paginate(10);
 
@@ -291,7 +374,7 @@ class BusinessController extends Controller
         }
     }
     
-    public function showOnCategory($cat_id)
+    public function showOnCategory_old($cat_id)
     {
         try {
             // Validate category ID
@@ -344,6 +427,99 @@ class BusinessController extends Controller
         }
     }
 
+    public function showOnCategory(Request $request, $cat_id)
+    {
+        try {
+            // Validate inputs
+            $validator = Validator::make(
+                array_merge($request->all(), ['cat_id' => $cat_id]),
+                [
+                    'cat_id' => 'required|numeric',
+                    'latitude' => 'required|numeric|min:-90|max:90',
+                    'longitude' => 'required|numeric|min:-180|max:180',
+                    'radius' => 'nullable|numeric|min:0|max:100',
+                ]
+            );
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Validation failed',
+                    'errors' => $validator->errors()
+                ], 422);
+            }
+
+            $userLatitude = $request->input('latitude');
+            $userLongitude = $request->input('longitude');
+
+            // Default radius = 5 KM
+            $radiusKm = $request->input('radius', 5);
+
+            // Haversine formula
+            $distanceSql = "(
+                6371 * acos(
+                    cos(radians(?)) *
+                    cos(radians(latitude)) *
+                    cos(radians(longitude) - radians(?)) +
+                    sin(radians(?)) *
+                    sin(radians(latitude))
+                )
+            )";
+
+            $businesses = Business::with([
+                'user',
+                'category',
+                'products',
+                'services',
+                'reviews.user'
+            ])
+            ->selectRaw("businesses.*, {$distanceSql} AS distance", [
+                $userLatitude,
+                $userLongitude,
+                $userLatitude
+            ])
+            ->where('category_id', $cat_id)
+            ->where('verification_status', 'approved')
+            ->whereNotNull('latitude')
+            ->whereNotNull('longitude')
+
+            // Filter within radius
+            ->havingRaw('distance <= ?', [$radiusKm])
+
+            ->orderBy('distance', 'asc')
+
+            ->get();
+
+            if ($businesses->isEmpty()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No businesses found within ' . $radiusKm . ' km for this category'
+                ], 404);
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Businesses fetched successfully',
+                'data' => [
+                    'businesses' => $businesses,
+                    'count' => $businesses->count(),
+                    'radius_km' => $radiusKm
+                ]
+            ], 200);
+
+        } catch (\Throwable $e) {
+
+            \Log::error('Business category API error', [
+                'category_id' => $cat_id,
+                'error' => $e->getMessage()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Something went wrong. Please try again later.'
+            ], 500);
+        }
+    }
 
     /**
      * Update business

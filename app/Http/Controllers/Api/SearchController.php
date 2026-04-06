@@ -539,6 +539,8 @@ class SearchController extends Controller
             // Validate search string and optional radius
             $validator = Validator::make($request->all(), [
                 'search' => 'required|string|min:1|max:255',
+                'latitude' => 'required|numeric|min:-90|max:90',
+                'longitude' => 'required|numeric|min:-180|max:180',
                 'radius' => 'nullable|numeric|min:0|max:100',
             ]);
 
@@ -552,17 +554,18 @@ class SearchController extends Controller
 
             $user = $request->user();
 
-            if (!$user || is_null($user->latitude) || is_null($user->longitude)) {
+            $userLatitude = $request->input('latitude');
+            $userLongitude = $request->input('longitude');
+
+            if (is_null($userLatitude) || is_null($userLongitude)) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Logged in user latitude and longitude are required'
+                    'message' => 'atitude and longitude are required'
                 ], 422);
             }
 
             $searchQuery = $request->input('search');
             $radiusKm = $request->input('radius', 5);
-            $userLatitude = $user->latitude;
-            $userLongitude = $user->longitude;
 
             $distanceSql = "(
                 6371 * acos(

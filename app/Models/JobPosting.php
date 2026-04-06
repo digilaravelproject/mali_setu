@@ -152,7 +152,6 @@ class JobPosting extends Model
     {
         return $this->is_active && 
                $this->status === 'approved' &&
-               $this->expires_at > now() &&
                (!$this->application_deadline || $this->application_deadline > now());
     }
 
