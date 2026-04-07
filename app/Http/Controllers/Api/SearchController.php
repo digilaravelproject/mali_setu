@@ -561,7 +561,7 @@ class SearchController extends Controller
     /**
      * Search businesses by name or description
      */
-    public function searchBusiness(Request $request)
+    public function searchBusiness_5KM(Request $request)
     {
         try {
             // Validate search string and optional radius
@@ -653,6 +653,117 @@ class SearchController extends Controller
                 'error' => $e->getMessage()
             ]);
 
+            return response()->json([
+                'success' => false,
+                'message' => 'Something went wrong. Please try again later.'
+            ], 500);
+        }
+    }
+
+    /**
+     * Search businesses by name or description
+     * Get all businesses sorted by distance (low to high)
+     * Send KMfromuser in response
+     */
+    public function searchBusiness(Request $request)
+    {
+        try {
+            // Validate inputs
+            $validator = Validator::make($request->all(), [
+                'search' => 'required|string|min:1|max:255',
+                'latitude' => 'required|numeric|min:-90|max:90',
+                'longitude' => 'required|numeric|min:-180|max:180',
+            ]);
+    
+            if ($validator->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Validation failed',
+                    'errors' => $validator->errors()
+                ], 422);
+            }
+    
+            $userLatitude = $request->input('latitude');
+            $userLongitude = $request->input('longitude');
+            $searchQuery = $request->input('search');
+    
+            /*
+            |-----------------------------------------------------------
+            | Haversine Formula to calculate distance in KM
+            |-----------------------------------------------------------
+            */
+            $distanceSql = "(
+                6371 * acos(
+                    cos(radians(?)) *
+                    cos(radians(latitude)) *
+                    cos(radians(longitude) - radians(?)) +
+                    sin(radians(?)) *
+                    sin(radians(latitude))
+                )
+            )";
+    
+            $businesses = Business::with([
+                    'user',
+                    'category',
+                    'products',
+                    'services',
+                    'reviews.user'
+                ])
+                ->selectRaw("
+                    businesses.*,
+                    {$distanceSql} AS KMfromuser
+                ", [
+                    $userLatitude,
+                    $userLongitude,
+                    $userLatitude
+                ])
+                ->where('verification_status', 'approved')
+                ->whereNotNull('latitude')
+                ->whereNotNull('longitude')
+                ->where(function ($query) use ($searchQuery) {
+                    $query->where('business_name', 'like', '%' . $searchQuery . '%')
+                        ->orWhere('description', 'like', '%' . $searchQuery . '%')
+                        ->orWhere('country', 'like', '%' . $searchQuery . '%')
+                        ->orWhere('state', 'like', '%' . $searchQuery . '%')
+                        ->orWhere('district', 'like', '%' . $searchQuery . '%')
+                        ->orWhere('taluka', 'like', '%' . $searchQuery . '%')
+                        ->orWhere('city', 'like', '%' . $searchQuery . '%')
+                        ->orWhere('pincode', 'like', '%' . $searchQuery . '%');
+                })
+                ->orderBy('KMfromuser', 'asc')
+                ->get();
+    
+            /*
+            | Optional: Round KM value to 2 decimal places
+            */
+            $businesses->transform(function ($business) {
+                $business->KMfromuser = round($business->KMfromuser, 2);
+                return $business;
+            });
+    
+            if ($businesses->isEmpty()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No businesses found'
+                ], 200);
+            }
+    
+            return response()->json([
+                'success' => true,
+                'message' => 'Businesses found successfully',
+                'data' => [
+                    'businesses' => $businesses,
+                    'count' => $businesses->count()
+                ]
+            ], 200);
+    
+        } catch (\Throwable $e) {
+    
+            \Log::error('Business search API error', [
+                'search_query' => $request->input('search'),
+                'error' => $e->getMessage()
+            ]);
+    
             return response()->json([
                 'success' => false,
                 'message' => 'Something went wrong. Please try again later.'
