@@ -117,9 +117,21 @@ class SearchController extends Controller
     /**
      * 🔎 Search Matrimony Profiles
      */
-    public function searchMatrimony_oldd(Request $request)
+    public function searchMatrimony(Request $request)
     {
         $query = MatrimonyProfile::query();
+
+        /*
+        NAME SEARCH
+        */
+
+        if ($request->filled('name')) {
+
+            $query->whereRaw(
+                "LOWER(JSON_UNQUOTE(JSON_EXTRACT(personal_details, '$.name'))) LIKE ?",
+                ['%' . strtolower(trim($request->name)) . '%']
+            );
+        }
         
         //Basic Details
         if ($request->filled('age_min') || $request->filled('age_max')) {
@@ -296,7 +308,7 @@ class SearchController extends Controller
         return response()->json(['success' => true, 'data' => $results]);
     }
     
-    public function searchMatrimony(Request $request)
+    public function searchMatrimony_new(Request $request)
     {
         $query = MatrimonyProfile::query();
     
