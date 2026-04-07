@@ -289,20 +289,36 @@ class SearchController extends Controller
                 })
                 ->orderBy('id', 'desc')
                 ->first();
-        
-            if ($connection) {
-                $usr->connection_status = $connection->status;
-        
-                // ❌ remove user if removed
-                return $connection->status !== 'removed';
-            }
-        
-            $usr->connection_status = 'not_connected';
-            return true;
-        });
-        
-        // ✅ reindex + set back to paginator
-        $results->setCollection($filtered->values());
+                
+         /*
+        ✅ ADD conversation_id (NEW)
+        */
+            $conversation = DB::table('chat_conversations')
+            ->where(function ($q) use ($authUserId, $usr) {
+                $q->where('user1_id', $authUserId)
+                  ->where('user2_id', $usr->user_id);
+            })
+            ->orWhere(function ($q) use ($authUserId, $usr) {
+                $q->where('user1_id', $usr->user_id)
+                  ->where('user2_id', $authUserId);
+            })
+            ->first();
+
+            $usr->conversation_id = $conversation->id ?? null;
+            
+                if ($connection) {
+                    $usr->connection_status = $connection->status;
+            
+                    // ❌ remove user if removed
+                    return $connection->status !== 'removed';
+                }
+            
+                $usr->connection_status = 'not_connected';
+                return true;
+            });
+            
+            // ✅ reindex + set back to paginator
+            $results->setCollection($filtered->values());
 
 
         return response()->json(['success' => true, 'data' => $results]);
@@ -619,7 +635,7 @@ class SearchController extends Controller
                 return response()->json([
                     'success' => false,
                     'message' => 'No businesses found within ' . $radiusKm . ' km of your location'
-                ], 404);
+                ], 200);
             }
 
             return response()->json([

@@ -507,7 +507,7 @@ class MatrimonyController extends Controller
     /**
      * Get single profile details
      */
-    public function showProfile(Request $request, $id)
+    public function showProfile_old(Request $request, $id)
     {
         $profile = MatrimonyProfile::with('user')
             // ->where('approval_status', 'approved')
@@ -540,6 +540,57 @@ class MatrimonyController extends Controller
         return response()->json([
             'success' => true,
             'data' => ['profile' => $profile]
+        ]);
+    }
+
+    /**
+     * Get single profile details
+     */
+    public function showProfile(Request $request, $id)
+    {
+        $profile = MatrimonyProfile::with('user')
+            // ->where('approval_status', 'approved')
+            ->findOrFail($id);
+    
+        $authUserId = $request->user()->id;
+    
+        if (!empty($profile)) {
+    
+            // ✅ FIX: use user_id instead of profile id
+            $usr_id = $profile->user_id;
+    
+            $connection = DB::table('connection_requests')
+                ->where(function ($q) use ($authUserId, $usr_id) {
+                    $q->where('sender_id', $authUserId)
+                      ->where('receiver_id', $usr_id);
+                })
+                ->orWhere(function ($q) use ($authUserId, $usr_id) {
+                    $q->where('sender_id', $usr_id)
+                      ->where('receiver_id', $authUserId);
+                })
+                ->orderBy('id', 'desc')
+                ->first();
+    
+            if ($connection) {
+    
+                // ❌ remove user if removed (same pattern as your search logic)
+                if ($connection->status === 'removed') {
+                    $profile->connection_status = 'not_connected';
+                } else {
+                    $profile->connection_status = $connection->status;
+                }
+    
+            } else {
+    
+                $profile->connection_status = 'not_connected';
+            }
+        }
+    
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'profile' => $profile
+            ]
         ]);
     }
 
@@ -664,10 +715,18 @@ class MatrimonyController extends Controller
             ], 422);
         }
 
-        $connectionRequest = ConnectionRequest::where('id', $id)
-            ->where('receiver_id', $request->user()->id)
-            ->where('status', 'pending')
-            ->firstOrFail();
+        $connectionRequest = ConnectionRequest::where([
+            'id' => $id,
+            'receiver_id' => $request->user()->id,
+            'status' => 'pending'
+        ])->first();
+        
+        if (empty($connectionRequest)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No pending connection request found.'
+            ], 200);
+        }
 
         $connectionRequest->update([
             'status' => $request->status,
