@@ -51,6 +51,7 @@ class BusinessController extends Controller
             'state' => 'required|string|max:100',
             'district' => 'required|string|max:100',
             'taluka' => 'nullable|string|max:100',
+            'address' => 'nullable|string|max:500',
             'city' => 'required|string|max:100',
             'pincode' => 'required|digits:6',
 
@@ -124,6 +125,7 @@ class BusinessController extends Controller
             'state' => $request->state,
             'district' => $request->district,
             'taluka' => $request->taluka,
+            'address' => $request->address,
             'city' => $request->city,
             'pincode' => $request->pincode,
     
@@ -846,6 +848,7 @@ class BusinessController extends Controller
             'state' => 'sometimes|string|max:100',
             'district' => 'sometimes|string|max:100',
             'taluka' => 'nullable|string|max:100',
+            'address' => 'nullable|string|max:500',
             'city' => 'sometimes|string|max:100',
             'pincode' => 'sometimes|digits:6',
 
@@ -919,6 +922,7 @@ class BusinessController extends Controller
             'state',
             'district',
             'taluka',
+            'address',
             'city',
             'pincode',
 

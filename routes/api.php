@@ -76,6 +76,10 @@ Route::prefix('matrimony')->group(function () {
     '/profile/{id}',
     [MatrimonyController::class, 'showProfile']);
 
+    Route::middleware('auth:sanctum')->get(
+    '/profile_user_id/{id}',
+    [MatrimonyController::class, 'showProfileOnUserId']);
+
     // Cast and SubCast routes
     Route::get('/casts', [MatrimonyController::class, 'getCasts']);
     Route::get('/casts/{castId}/subcasts', [MatrimonyController::class, 'getSubCasts']);

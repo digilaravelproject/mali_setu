@@ -25,6 +25,7 @@ class Business extends Model
         'state',
         'district',
         'taluka',
+        'address',
         'city',
         'pincode',
         'website',

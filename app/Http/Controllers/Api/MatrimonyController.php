@@ -595,6 +595,62 @@ class MatrimonyController extends Controller
     }
 
     /**
+     * Get single profile details
+     */
+    public function showProfileOnUserId(Request $request, $id)
+    {
+        // $profile = MatrimonyProfile::with('user')
+        //     // ->where('approval_status', 'approved')
+        //     ->findOrFail($id);
+
+        $profile = MatrimonyProfile::with('user')
+            // ->where('approval_status', 'approved')
+            ->where('user_id', $id)
+            ->firstOrFail();
+    
+        $authUserId = $request->user()->id;
+    
+        if (!empty($profile)) {
+    
+            // ✅ FIX: use user_id instead of profile id
+            $usr_id = $profile->user_id;
+    
+            $connection = DB::table('connection_requests')
+                ->where(function ($q) use ($authUserId, $usr_id) {
+                    $q->where('sender_id', $authUserId)
+                      ->where('receiver_id', $usr_id);
+                })
+                ->orWhere(function ($q) use ($authUserId, $usr_id) {
+                    $q->where('sender_id', $usr_id)
+                      ->where('receiver_id', $authUserId);
+                })
+                ->orderBy('id', 'desc')
+                ->first();
+    
+            if ($connection) {
+    
+                // ❌ remove user if removed (same pattern as your search logic)
+                if ($connection->status === 'removed') {
+                    $profile->connection_status = 'not_connected';
+                } else {
+                    $profile->connection_status = $connection->status;
+                }
+    
+            } else {
+    
+                $profile->connection_status = 'not_connected';
+            }
+        }
+    
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'profile' => $profile
+            ]
+        ]);
+    }
+
+    /**
      * Send connection request
      */
     public function sendConnectionRequest(Request $request)
