@@ -17,6 +17,7 @@ use App\Http\Controllers\Api\HomepageHeroController;
 use App\Http\Controllers\Api\GoogleAuthController;
 use App\Http\Controllers\Api\PlanController;
 use App\Http\Controllers\Api\BlogController;
+use App\Http\Controllers\Api\LocationController;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -115,6 +116,11 @@ Route::prefix('blogs')->group(function () {
 Route::prefix('jobs')->group(function () {
     Route::get('/', [JobController::class, 'index']);
     Route::middleware('auth:sanctum')->get('/{id}', [JobController::class, 'show']);
+});
+
+// Public location routes
+Route::prefix('location')->group(function () {
+    Route::get('by-pincode', [LocationController::class, 'getLocationByPinCode']);
 });
 
 // Payment webhook (public)

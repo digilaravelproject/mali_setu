@@ -299,6 +299,8 @@ class MatrimonyController extends Controller
             'location_details' => 'sometimes|array',
             'partner_preferences' => 'sometimes|array',
             'privacy_settings' => 'nullable|array',
+            'photos' => 'nullable|array',
+            'photos.*' => 'image|mimes:jpeg,png,jpg|max:2048',
         ]);
 
         if ($validator->fails()) {
@@ -311,12 +313,44 @@ class MatrimonyController extends Controller
             ], 422);
         }
 
+        // Handle photo uploads
+        $photoPaths = [];
+        if (!empty($request->personal_details['photos'])) {
+            foreach ($request->personal_details['photos'] as $photo) {
+        
+                // Check if base64 image
+                if (preg_match('/^data:image\/(\w+);base64,/', $photo, $type)) {
+        
+                    $imageType = $type[1]; // jpg, png, jpeg, webp, etc
+                    $photo = substr($photo, strpos($photo, ',') + 1);
+                    $photo = base64_decode($photo);
+        
+                    if ($photo === false) {
+                        continue;
+                    }
+        
+                    $fileName = 'matrimony/photos/' . Str::uuid() . '.' . $imageType;
+        
+                    Storage::disk('public')->put($fileName, $photo);
+        
+                    $photoPaths[] = $fileName;
+                }
+            }
+        }
+
         $profile->update($request->only([
             'age', 'height', 'weight', 'complexion', 'physical_status',
             'personal_details', 'family_details', 'education_details',
             'professional_details', 'lifestyle_details', 'location_details',
             'partner_preferences', 'privacy_settings'
         ]));
+
+        // Store photo paths if any
+        if (!empty($photoPaths)) {
+            $profile->update([
+                'personal_details' => array_merge($profile->personal_details, ['photos' => $photoPaths])
+            ]);
+        }
 
         // Email: matrimony profile updated
         $this->notifications->createNotification(
@@ -606,7 +640,7 @@ class MatrimonyController extends Controller
         $profile = MatrimonyProfile::with('user')
             // ->where('approval_status', 'approved')
             ->where('user_id', $id)
-            ->firstOrFail();
+        ->firstOrFail();
     
         $authUserId = $request->user()->id;
     
