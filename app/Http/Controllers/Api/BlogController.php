@@ -16,7 +16,16 @@ class BlogController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Blog::with('user')->withCount('likes')->orderBy('created_at', 'desc');
+        $userId = auth()->id();
+        
+        $query = Blog::with('user')
+        ->withCount('likes')
+        ->withExists([
+            'likes as is_liked' => function ($q) use ($userId) {
+                $q->where('user_id', $userId);
+            }
+        ])
+        ->orderBy('created_at', 'desc');
 
         if ($request->filled('search')) {
             $search = $request->search;

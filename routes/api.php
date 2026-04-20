@@ -98,7 +98,7 @@ Route::prefix('donation')->group(function () {
     Route::get('/causes', [DonationController::class, 'getCauses']);
     Route::get('/cause/{id}', [DonationController::class, 'getCause']);
 });
-
+    
 // Public plans routes
 Route::prefix('plans')->group(function () {
     Route::get('business', [PlanController::class, 'businessPlans']);
@@ -107,9 +107,9 @@ Route::prefix('plans')->group(function () {
 
 // Public blog routes
 Route::prefix('blogs')->group(function () {
-    Route::get('/', [BlogController::class, 'index']);
+    Route::middleware('auth:sanctum')->get('/', [BlogController::class, 'index']);
     Route::get('/search', [BlogController::class, 'search']);
-    Route::get('/{id}', [BlogController::class, 'show']);
+    Route::middleware('auth:sanctum')->get('/{id}', [BlogController::class, 'show']);
 });
 
 // Public job routes (for browsing)
