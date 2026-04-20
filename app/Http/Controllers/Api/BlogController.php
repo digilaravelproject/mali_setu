@@ -48,7 +48,18 @@ class BlogController extends Controller
      */
     public function show($id)
     {
-        $blog = Blog::with('user')->withCount('likes')->findOrFail($id);
+        $userId = auth()->id(); // logged-in user
+        
+        // $blog = Blog::with('user')->withCount('likes')->findOrFail($id);
+        $blog = Blog::with('user')
+            ->withCount('likes')
+            ->withExists([
+                'likes as is_liked' => function ($query) use ($userId) {
+                    $query->where('user_id', $userId);
+                }
+            ])
+        ->findOrFail($id);
+
 
         $related = Blog::where('id', '!=', $blog->id)
             ->when($blog->tags, function ($query) use ($blog) {

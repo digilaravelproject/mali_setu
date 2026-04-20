@@ -518,7 +518,7 @@ class JobController extends Controller
         //     ], 404);
         // }
 
-        $businessId = $user->business->id;
+        $businessId = $request->business_id;
         
         $analytics = [
             'total_jobs' => JobPosting::where('business_id', $businessId)->count(),
