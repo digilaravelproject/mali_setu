@@ -24,6 +24,7 @@ class Business extends Model
         'country',
         'state',
         'district',
+        'village',
         'taluka',
         'address',
         'city',

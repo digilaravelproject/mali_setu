@@ -45,6 +45,7 @@ class User extends Authenticatable
         'city',
         'sector',
         'district',
+        'village',
         'destination',
         'latitude',
         'longitude',

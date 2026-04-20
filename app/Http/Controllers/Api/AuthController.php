@@ -49,6 +49,7 @@ class AuthController extends Controller
                 'city'             => 'nullable|string|max:100',
                 'sector'           => 'nullable|string|max:100',
                 'district'         => 'nullable|string|max:100',
+                'village'          => 'nullable|string|max:100',
                 'destination'      => 'nullable|string|max:255',
                 'latitude'         => 'nullable|numeric|between:-90,90',
                 'longitude'        => 'nullable|numeric|between:-180,180',
@@ -122,8 +123,7 @@ class AuthController extends Controller
                 'state'                  => $request->state,
                 'city'                   => $request->city,
                 'sector'                 => $request->sector,
-                'district'               => $request->district,
-                'destination'            => $request->destination,
+                'district'               => $request->district,                'village'                 => $request->village,                'destination'            => $request->destination,
                 'latitude'               => $request->latitude,
                 'longitude'              => $request->longitude,
                 'cast_certificate'       => $cast_certificate,
@@ -315,6 +315,7 @@ class AuthController extends Controller
             'city'             => 'nullable|string|max:100',
             'sector'           => 'nullable|string|max:100',
             'district'         => 'nullable|string|max:100',
+            'village'          => 'nullable|string|max:100',
             'destination'      => 'nullable|string|max:255',
             'latitude'         => 'nullable|numeric|between:-90,90',
             'longitude'        => 'nullable|numeric|between:-180,180',
@@ -353,7 +354,7 @@ class AuthController extends Controller
             'name', 'email', 'age', 'phone', 'cast_certificate', 'occupation',
             'company_name', 'dept_name', 'dob', 'designation',
             'address', 'nearby_location', 'pincode', 'road_number',
-            'state', 'city', 'sector', 'district', 'destination',
+            'state', 'city', 'sector', 'district', 'village', 'destination',
             'latitude', 'longitude'
         ]);
         

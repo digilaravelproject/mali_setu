@@ -623,6 +623,7 @@ class SearchController extends Controller
                       ->orWhere('country', 'like', '%' . $searchQuery . '%')
                       ->orWhere('state', 'like', '%' . $searchQuery . '%')
                       ->orWhere('district', 'like', '%' . $searchQuery . '%')
+                      ->orWhere('village', 'like', '%' . $searchQuery . '%')
                       ->orWhere('taluka', 'like', '%' . $searchQuery . '%')
                       ->orWhere('city', 'like', '%' . $searchQuery . '%')
                       ->orWhere('pincode', 'like', '%' . $searchQuery . '%');
@@ -726,6 +727,7 @@ class SearchController extends Controller
                         ->orWhere('country', 'like', '%' . $searchQuery . '%')
                         ->orWhere('state', 'like', '%' . $searchQuery . '%')
                         ->orWhere('district', 'like', '%' . $searchQuery . '%')
+                        ->orWhere('village', 'like', '%' . $searchQuery . '%')
                         ->orWhere('taluka', 'like', '%' . $searchQuery . '%')
                         ->orWhere('city', 'like', '%' . $searchQuery . '%')
                         ->orWhere('pincode', 'like', '%' . $searchQuery . '%');
