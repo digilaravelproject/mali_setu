@@ -376,9 +376,21 @@ class BusinessController extends Controller
         }
     
         if ($request->filled('search')) {
-            $query->where('business_name', 'like', '%' . $request->search . '%');
+            $searchTerm = '%' . $request->search . '%';
+            $query->where(function ($q) use ($searchTerm) {
+                $q->where('business_name', 'like', $searchTerm)
+                    ->orWhere('description', 'like', $searchTerm)
+                    ->orWhere('address', 'like', $searchTerm)
+                    ->orWhere('country', 'like', $searchTerm)
+                    ->orWhere('state', 'like', $searchTerm)
+                    ->orWhere('district', 'like', $searchTerm)
+                    ->orWhere('village', 'like', $searchTerm)
+                    ->orWhere('taluka', 'like', $searchTerm)
+                    ->orWhere('city', 'like', $searchTerm)
+                    ->orWhere('pincode', 'like', $searchTerm);
+            });
         }
-    
+
         /*
         |--------------------------------------------------------------------------
         | Optional Radius Filter (only if provided)
