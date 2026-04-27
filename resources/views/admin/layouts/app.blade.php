@@ -335,6 +335,13 @@
             </div>
             
             <div class="nav-item">
+                <a href="{{ route('admin.educations.index') }}" class="nav-link {{ request()->routeIs('admin.educations.*') ? 'active' : '' }}">
+                    <i class="fas fa-graduation-cap"></i>
+                    Manage Education
+                </a>
+            </div>
+            
+            <div class="nav-item">
                 <a href="{{ route('admin.payments.index') }}" class="nav-link {{ request()->routeIs('admin.payments.*') ? 'active' : '' }}">
                     <i class="fas fa-credit-card"></i>
                     Payments

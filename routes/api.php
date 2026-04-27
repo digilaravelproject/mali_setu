@@ -18,6 +18,7 @@ use App\Http\Controllers\Api\GoogleAuthController;
 use App\Http\Controllers\Api\PlanController;
 use App\Http\Controllers\Api\BlogController;
 use App\Http\Controllers\Api\LocationController;
+use App\Http\Controllers\Api\EducationController;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -110,6 +111,11 @@ Route::prefix('blogs')->group(function () {
     Route::middleware('auth:sanctum')->get('/', [BlogController::class, 'index']);
     Route::get('/search', [BlogController::class, 'search']);
     Route::middleware('auth:sanctum')->get('/{id}', [BlogController::class, 'show']);
+});
+
+// Public education listing
+Route::prefix('education')->group(function () {
+    Route::get('/', [EducationController::class, 'index']);
 });
 
 // Public job routes (for browsing)

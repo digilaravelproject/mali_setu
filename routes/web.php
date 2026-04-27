@@ -13,6 +13,7 @@ use App\Http\Controllers\Admin\HomepageHeroController;
 use App\Http\Controllers\Admin\VolunteerManagementController;
 use App\Http\Controllers\Admin\CastManagementController;
 use App\Http\Controllers\Admin\BlogManagementController;
+use App\Http\Controllers\Admin\EducationManagementController;
 use App\Http\Controllers\Admin\PlanManagementController;
 use Illuminate\Support\Facades\Mail;
 
@@ -213,6 +214,17 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::put('/{id}', [BlogManagementController::class, 'update'])->name('update');
             Route::delete('/{id}', [BlogManagementController::class, 'destroy'])->name('destroy');
             Route::patch('/{id}/toggle-status', [BlogManagementController::class, 'toggleStatus'])->name('toggle-status');
+        });
+        
+        // Education Management Routes
+        Route::prefix('educations')->name('educations.')->group(function () {
+            Route::get('/', [EducationManagementController::class, 'index'])->name('index');
+            Route::get('/create', [EducationManagementController::class, 'create'])->name('create');
+            Route::post('/', [EducationManagementController::class, 'store'])->name('store');
+            Route::get('/{id}/edit', [EducationManagementController::class, 'edit'])->name('edit');
+            Route::put('/{id}', [EducationManagementController::class, 'update'])->name('update');
+            Route::delete('/{id}', [EducationManagementController::class, 'destroy'])->name('destroy');
+            Route::patch('/{id}/toggle-status', [EducationManagementController::class, 'toggleStatus'])->name('toggle-status');
         });
         
         // Settings and Reports
