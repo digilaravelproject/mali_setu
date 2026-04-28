@@ -37,6 +37,7 @@ use App\Http\Controllers\PageController;
 
 Route::get('/privacy-policy', [PageController::class, 'privacyPolicy'])->name('privacy-policy');
 Route::get('/terms-condition', [PageController::class, 'termsCondition'])->name('terms-condition');
+Route::get('/contact-us', [PageController::class, 'contactUs'])->name('contact-us');
 
 Route::resource('heroes', HomepageHeroController::class);
 
