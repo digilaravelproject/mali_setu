@@ -15,6 +15,7 @@ use App\Http\Controllers\Api\JobController;
 use App\Http\Controllers\Api\SocialAuthController;
 use App\Http\Controllers\Api\HomepageHeroController;
 use App\Http\Controllers\Api\GoogleAuthController;
+use App\Http\Controllers\Api\AppleAuthController;
 use App\Http\Controllers\Api\PlanController;
 use App\Http\Controllers\Api\BlogController;
 use App\Http\Controllers\Api\LocationController;
@@ -42,6 +43,8 @@ Route::prefix('auth')->group(function () {
     Route::post('login', [AuthController::class, 'login']);
     
     Route::post('google-login', [GoogleAuthController::class, 'login']);
+
+    Route::post('apple-login', [AppleAuthController::class, 'login']);
 
     Route::get('google', [SocialAuthController::class, 'redirectToGoogle']);
     Route::get('google/callback', [SocialAuthController::class, 'handleGoogleCallback']);
