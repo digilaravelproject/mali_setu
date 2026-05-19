@@ -63,6 +63,30 @@ Route::middleware('auth')->group(function () {
     Route::post('/dashboard/profile', [DashboardController::class, 'updateProfile'])->name('dashboard.profile.update');
     Route::post('/dashboard/change-password', [DashboardController::class, 'changePassword'])->name('dashboard.password.change');
     Route::delete('/dashboard/delete-account', [DashboardController::class, 'deleteAccount'])->name('dashboard.account.delete');
+
+    // Business Enterprise & Dependent Modules (Products, Services, Jobs, Razorpay Subscriptions)
+    Route::prefix('dashboard/business')->name('dashboard.business.')->group(function () {
+        Route::post('register', [DashboardController::class, 'registerBusiness'])->name('register');
+        Route::post('update', [DashboardController::class, 'updateBusiness'])->name('update');
+        Route::delete('delete', [DashboardController::class, 'deleteBusiness'])->name('delete');
+        Route::post('subscribe', [DashboardController::class, 'createBusinessOrder'])->name('subscribe');
+        Route::post('verify-payment', [DashboardController::class, 'verifyBusinessPayment'])->name('verify-payment');
+
+        // Products Catalog CRUD
+        Route::post('products', [DashboardController::class, 'addProduct'])->name('products.add');
+        Route::delete('products/{id}', [DashboardController::class, 'deleteProduct'])->name('products.delete');
+
+        // Services Catalog CRUD
+        Route::post('services', [DashboardController::class, 'addService'])->name('services.add');
+        Route::delete('services/{id}', [DashboardController::class, 'deleteService'])->name('services.delete');
+
+        // Jobs Hub CRUD & Applicant tracking
+        Route::post('jobs', [DashboardController::class, 'addJob'])->name('jobs.add');
+        Route::post('jobs/{id}/update', [DashboardController::class, 'updateJob'])->name('jobs.update');
+        Route::delete('jobs/{id}', [DashboardController::class, 'deleteJob'])->name('jobs.delete');
+        Route::post('jobs/{id}/toggle', [DashboardController::class, 'toggleJob'])->name('jobs.toggle');
+        Route::post('applications/{id}/status', [DashboardController::class, 'updateApplicationStatus'])->name('applications.status');
+    });
 });
 
 Route::resource('heroes', HomepageHeroController::class);

@@ -232,111 +232,219 @@
                 </div>
             @endif
 
-            <form action="{{ route('register') }}" method="POST" class="mt-4">
+            <form action="{{ route('register') }}" method="POST" enctype="multipart/form-data" class="mt-4">
                 @csrf
                 
-                <!-- Full Name -->
-                <div class="mb-4">
-                    <label class="form-label small fw-bold text-secondary">Full Name</label>
-                    <input 
-                        type="text" 
-                        name="name" 
-                        value="{{ old('name') }}" 
-                        class="form-control form-control-lg @error('name') is-invalid @enderror" 
-                        placeholder="Enter full name" 
-                        required
-                    >
-                </div>
-
-                <div class="row">
-                    <!-- Email Input -->
-                    <div class="col-md-6 mb-4">
-                        <label class="form-label small fw-bold text-secondary">Email Address</label>
-                        <input 
-                            type="email" 
-                            name="email" 
-                            value="{{ old('email') }}" 
-                            class="form-control form-control-lg @error('email') is-invalid @enderror" 
-                            placeholder="name@example.com" 
-                            required
-                        >
-                    </div>
-
-                    <!-- Phone Input -->
-                    <div class="col-md-6 mb-4">
-                        <label class="form-label small fw-bold text-secondary">Phone Number</label>
-                        <input 
-                            type="text" 
-                            name="phone" 
-                            value="{{ old('phone') }}" 
-                            class="form-control form-control-lg @error('phone') is-invalid @enderror" 
-                            placeholder="Enter 10-digit phone" 
-                            required
-                        >
-                    </div>
-                </div>
-
-                <!-- Select Profile Type (Interactive Grid) -->
-                <div class="mb-4">
-                    <label class="form-label small fw-bold text-secondary mb-3">I am signing up as a...</label>
-                    <input type="hidden" name="user_type" id="user_type" value="{{ old('user_type', 'general') }}">
-                    
-                    <div class="row g-3">
-                        <div class="col-6 col-sm-3">
-                            <div class="type-option-card selected" data-type="general" onclick="selectUserType('general')">
-                                <div class="type-icon"><i class="fa-solid fa-users"></i></div>
-                                <h6 class="small fw-bold mb-0">General</h6>
+                <!-- Section 1: Personal Details -->
+                <div class="card border-0 rounded-4 shadow-sm mb-4" style="background: rgba(255, 255, 255, 0.5); backdrop-filter: blur(10px);">
+                    <div class="card-body p-4">
+                        <h5 class="fw-bold mb-4 text-primary"><i class="fa-solid fa-user me-2"></i> 1. Personal Information</h5>
+                        
+                        <div class="row">
+                            <!-- Title select -->
+                            <div class="col-md-3 mb-3">
+                                <label class="form-label small fw-bold text-secondary">Title *</label>
+                                <select name="title" class="form-select form-select-lg @error('title') is-invalid @enderror" required>
+                                    <option value="Mr." {{ old('title') == 'Mr.' ? 'selected' : '' }}>Mr.</option>
+                                    <option value="Mrs." {{ old('title') == 'Mrs.' ? 'selected' : '' }}>Mrs.</option>
+                                    <option value="Ms." {{ old('title') == 'Ms.' ? 'selected' : '' }}>Ms.</option>
+                                    <option value="Dr." {{ old('title') == 'Dr.' ? 'selected' : '' }}>Dr.</option>
+                                </select>
+                            </div>
+                            <!-- First Name -->
+                            <div class="col-md-9 mb-3">
+                                <label class="form-label small fw-bold text-secondary">First Name *</label>
+                                <input type="text" name="first_name" value="{{ old('first_name') }}" class="form-control form-control-lg @error('first_name') is-invalid @enderror" placeholder="Enter first name" required>
                             </div>
                         </div>
-                        <div class="col-6 col-sm-3">
-                            <div class="type-option-card" data-type="business" onclick="selectUserType('business')">
-                                <div class="type-icon"><i class="fa-solid fa-briefcase"></i></div>
-                                <h6 class="small fw-bold mb-0">Business</h6>
+
+                        <div class="row">
+                            <!-- Middle Name -->
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label small fw-bold text-secondary">Middle Name</label>
+                                <input type="text" name="middle_name" value="{{ old('middle_name') }}" class="form-control form-control-lg @error('middle_name') is-invalid @enderror" placeholder="Enter middle name (optional)">
+                            </div>
+                            <!-- Last Name -->
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label small fw-bold text-secondary">Last Name *</label>
+                                <input type="text" name="last_name" value="{{ old('last_name') }}" class="form-control form-control-lg @error('last_name') is-invalid @enderror" placeholder="Enter last name" required>
                             </div>
                         </div>
-                        <div class="col-6 col-sm-3">
-                            <div class="type-option-card" data-type="matrimony" onclick="selectUserType('matrimony')">
-                                <div class="type-icon"><i class="fa-solid fa-heart"></i></div>
-                                <h6 class="small fw-bold mb-0">Matrimony</h6>
+
+                        <div class="row">
+                            <!-- Email -->
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label small fw-bold text-secondary">Email Address *</label>
+                                <input type="email" name="email" value="{{ old('email') }}" class="form-control form-control-lg @error('email') is-invalid @enderror" placeholder="name@example.com" required>
+                            </div>
+                            <!-- Date of Birth -->
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label small fw-bold text-secondary">Date of Birth *</label>
+                                <input type="date" name="dob" value="{{ old('dob') }}" class="form-control form-control-lg @error('dob') is-invalid @enderror" required>
                             </div>
                         </div>
-                        <div class="col-6 col-sm-3">
-                            <div class="type-option-card" data-type="volunteer" onclick="selectUserType('volunteer')">
-                                <div class="type-icon"><i class="fa-solid fa-handshake-angle"></i></div>
-                                <h6 class="small fw-bold mb-0">Volunteer</h6>
+
+                        <!-- Phone Number with +91 code prefix -->
+                        <div class="mb-2">
+                            <label class="form-label small fw-bold text-secondary">Mobile Number *</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light fw-bold text-secondary border-end-0 rounded-start-3" style="padding: 14px 20px;">+91</span>
+                                <input type="tel" name="phone" value="{{ old('phone') }}" class="form-control form-control-lg border-start-0 rounded-end-3 @error('phone') is-invalid @enderror" placeholder="10-digit mobile number" pattern="[0-9]{10}" required>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <div class="row">
-                    <!-- Password Input -->
-                    <div class="col-md-6 mb-4">
-                        <label class="form-label small fw-bold text-secondary">Password</label>
-                        <input 
-                            type="password" 
-                            name="password" 
-                            class="form-control form-control-lg @error('password') is-invalid @enderror" 
-                            placeholder="Min 8 characters" 
-                            required
-                        >
+                <!-- Section 2: Verification Details -->
+                <div class="card border-0 rounded-4 shadow-sm mb-4" style="background: rgba(255, 255, 255, 0.5); backdrop-filter: blur(10px);">
+                    <div class="card-body p-4">
+                        <h5 class="fw-bold mb-3 text-primary"><i class="fa-solid fa-file-shield me-2"></i> 2. Caste Verification</h5>
+                        <p class="small text-secondary mb-4">Please upload a valid Caste Certificate or other proof (Father's Caste Document) to verify community authenticity. Supported: JPG, JPEG, PNG, PDF (Max: 5MB).</p>
+                        
+                        <div class="mb-2">
+                            <label class="form-label small fw-bold text-secondary">Caste Certificate File *</label>
+                            <input type="file" name="cast_certificate" class="form-control form-control-lg @error('cast_certificate') is-invalid @enderror" accept=".jpg,.jpeg,.png,.pdf" required>
+                        </div>
                     </div>
+                </div>
 
-                    <!-- Password Confirmation Input -->
-                    <div class="col-md-6 mb-4">
-                        <label class="form-label small fw-bold text-secondary">Confirm Password</label>
-                        <input 
-                            type="password" 
-                            name="password_confirmation" 
-                            class="form-control form-control-lg" 
-                            placeholder="Repeat password" 
-                            required
-                        >
+                <!-- Section 3: Address Details -->
+                <div class="card border-0 rounded-4 shadow-sm mb-4" style="background: rgba(255, 255, 255, 0.5); backdrop-filter: blur(10px);">
+                    <div class="card-body p-4">
+                        <h5 class="fw-bold mb-4 text-primary"><i class="fa-solid fa-location-dot me-2"></i> 3. Address Details</h5>
+                        
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold text-secondary">Address Line *</label>
+                            <input type="text" name="address" value="{{ old('address') }}" class="form-control form-control-lg @error('address') is-invalid @enderror" placeholder="House/Flat No, Apartment, Street" required>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label small fw-bold text-secondary">Pincode *</label>
+                                <input type="text" name="pincode" value="{{ old('pincode') }}" class="form-control form-control-lg @error('pincode') is-invalid @enderror" placeholder="6-digit pincode" maxlength="6" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label small fw-bold text-secondary">Country *</label>
+                                <input type="text" name="country" value="{{ old('country', 'India') }}" class="form-control form-control-lg @error('country') is-invalid @enderror" required>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label small fw-bold text-secondary">State *</label>
+                                <input type="text" name="state" value="{{ old('state') }}" class="form-control form-control-lg @error('state') is-invalid @enderror" placeholder="Enter state" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label small fw-bold text-secondary">City *</label>
+                                <input type="text" name="city" value="{{ old('city') }}" class="form-control form-control-lg @error('city') is-invalid @enderror" placeholder="Enter city" required>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label small fw-bold text-secondary">Taluka</label>
+                                <input type="text" name="taluka" value="{{ old('taluka') }}" class="form-control form-control-lg @error('taluka') is-invalid @enderror" placeholder="Enter taluka (optional)">
+                            </div>
+                            <div class="col-md-6 mb-2">
+                                <label class="form-label small fw-bold text-secondary">Village *</label>
+                                <input type="text" name="village" value="{{ old('village') }}" class="form-control form-control-lg @error('village') is-invalid @enderror" placeholder="Enter village" required>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section 4: Professional & Security Details -->
+                <div class="card border-0 rounded-4 shadow-sm mb-4" style="background: rgba(255, 255, 255, 0.5); backdrop-filter: blur(10px);">
+                    <div class="card-body p-4">
+                        <h5 class="fw-bold mb-4 text-primary"><i class="fa-solid fa-briefcase me-2"></i> 4. Professional & Security Details</h5>
+                        
+                        <!-- Select Profile Type (Interactive Grid) -->
+                        <div class="mb-4">
+                            <label class="form-label small fw-bold text-secondary mb-3">I am signing up as a... *</label>
+                            <input type="hidden" name="user_type" id="user_type" value="{{ old('user_type', 'general') }}">
+                            
+                            <div class="row g-3">
+                                <div class="col-6 col-sm-3">
+                                    <div class="type-option-card selected" data-type="general" onclick="selectUserType('general')">
+                                        <div class="type-icon"><i class="fa-solid fa-users"></i></div>
+                                        <h6 class="small fw-bold mb-0">General</h6>
+                                    </div>
+                                </div>
+                                <div class="col-6 col-sm-3">
+                                    <div class="type-option-card" data-type="business" onclick="selectUserType('business')">
+                                        <div class="type-icon"><i class="fa-solid fa-briefcase"></i></div>
+                                        <h6 class="small fw-bold mb-0">Business</h6>
+                                    </div>
+                                </div>
+                                <div class="col-6 col-sm-3">
+                                    <div class="type-option-card" data-type="matrimony" onclick="selectUserType('matrimony')">
+                                        <div class="type-icon"><i class="fa-solid fa-heart"></i></div>
+                                        <h6 class="small fw-bold mb-0">Matrimony</h6>
+                                    </div>
+                                </div>
+                                <div class="col-6 col-sm-3">
+                                    <div class="type-option-card" data-type="volunteer" onclick="selectUserType('volunteer')">
+                                        <div class="type-icon"><i class="fa-solid fa-handshake-angle"></i></div>
+                                        <h6 class="small fw-bold mb-0">Volunteer</h6>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Occupation & Company -->
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label small fw-bold text-secondary">Occupation *</label>
+                                <input type="text" name="occupation" value="{{ old('occupation') }}" class="form-control form-control-lg @error('occupation') is-invalid @enderror" placeholder="E.g., Engineer, Farmer, Shopkeeper" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label small fw-bold text-secondary">Company Name</label>
+                                <input type="text" name="company_name" value="{{ old('company_name') }}" class="form-control form-control-lg @error('company_name') is-invalid @enderror" placeholder="Enter company (optional)">
+                            </div>
+                        </div>
+
+                        <!-- Dept & Designation -->
+                        <div class="row mb-4">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label small fw-bold text-secondary">Department Name</label>
+                                <input type="text" name="dept_name" value="{{ old('dept_name') }}" class="form-control form-control-lg @error('dept_name') is-invalid @enderror" placeholder="Enter department (optional)">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label small fw-bold text-secondary">Designation</label>
+                                <input type="text" name="designation" value="{{ old('designation') }}" class="form-control form-control-lg @error('designation') is-invalid @enderror" placeholder="Enter designation (optional)">
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <!-- Password Input -->
+                            <div class="col-md-6 mb-4">
+                                <label class="form-label small fw-bold text-secondary">Password *</label>
+                                <input 
+                                    type="password" 
+                                    name="password" 
+                                    class="form-control form-control-lg @error('password') is-invalid @enderror" 
+                                    placeholder="Min 8 characters" 
+                                    required
+                                >
+                            </div>
+
+                            <!-- Password Confirmation Input -->
+                            <div class="col-md-6 mb-4">
+                                <label class="form-label small fw-bold text-secondary">Confirm Password *</label>
+                                <input 
+                                    type="password" 
+                                    name="password_confirmation" 
+                                    class="form-control form-control-lg" 
+                                    placeholder="Repeat password" 
+                                    required
+                                >
+                            </div>
+                        </div>
                     </div>
                 </div>
 
                 <!-- Terms & Conditions Checkbox -->
-                <div class="mb-4 form-check d-flex align-items-center gap-2">
+                <div class="mb-4 form-check d-flex align-items-center gap-2 px-4">
                     <input type="checkbox" name="term_condition" class="form-check-input shadow-none cursor-pointer" id="term_condition" value="1" required>
                     <label class="form-check-label small text-secondary cursor-pointer" for="term_condition">
                         I agree to the <a href="{{ url('terms-condition') }}" class="text-primary text-decoration-none fw-bold" target="_blank">Terms of Service</a> & <a href="{{ url('privacy-policy') }}" class="text-primary text-decoration-none fw-bold" target="_blank">Privacy Policy</a>
@@ -344,7 +452,7 @@
                 </div>
 
                 <!-- Submit Button -->
-                <button type="submit" class="btn btn-primary btn-lg w-100 mt-2">
+                <button type="submit" class="btn btn-primary btn-lg w-100 mt-2 py-3 rounded-4 shadow-sm fw-bold">
                     Create Account <i class="fa-solid fa-user-plus ms-2"></i>
                 </button>
             </form>

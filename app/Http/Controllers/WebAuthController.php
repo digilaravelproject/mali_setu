@@ -13,6 +13,8 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Mail;
 use Carbon\Carbon;
 
+use Illuminate\Support\Facades\Storage;
+
 class WebAuthController extends Controller
 {
     /**
@@ -70,11 +72,27 @@ class WebAuthController extends Controller
     public function register(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'name'             => 'required|string|max:255',
-            'email'            => 'required|string|email|max:255|unique:users',
-            'phone'            => 'required|string|max:15|unique:users',
-            'password'         => 'required|string|min:8|confirmed',
+            'title'            => 'required|string|in:Mr.,Mrs.,Ms.,Dr.',
+            'first_name'       => 'required|string|max:100',
+            'middle_name'      => 'nullable|string|max:100',
+            'last_name'        => 'required|string|max:100',
+            'email'            => 'required|string|email|max:255|unique:users,email',
+            'phone'            => 'required|string|max:15|unique:users,phone',
+            'dob'              => 'required|date',
+            'cast_certificate' => 'required|file|mimes:jpeg,png,jpg,pdf|max:5120',
+            'address'          => 'required|string|max:500',
+            'pincode'          => 'required|digits:6',
+            'state'            => 'required|string|max:100',
+            'city'             => 'required|string|max:100',
+            'country'          => 'required|string|max:100',
+            'taluka'           => 'nullable|string|max:100',
+            'village'          => 'required|string|max:100',
             'user_type'        => 'required|in:general,business,matrimony,volunteer',
+            'occupation'       => 'required|string|max:255',
+            'company_name'     => 'nullable|string|max:255',
+            'dept_name'        => 'nullable|string|max:255',
+            'designation'      => 'nullable|string|max:255',
+            'password'         => 'required|string|min:8|confirmed',
             'term_condition'   => 'accepted',
         ]);
 
@@ -83,10 +101,38 @@ class WebAuthController extends Controller
         }
 
         try {
+            // Handle caste certificate upload
+            $cast_certificate = '';
+            if ($request->hasFile('cast_certificate')) {
+                $file = $request->file('cast_certificate');
+                $fileName = uniqid() . '.' . $file->getClientOriginalExtension();
+                if (!Storage::disk('public')->exists('certificates')) {
+                    Storage::disk('public')->makeDirectory('certificates');
+                }
+                Storage::disk('public')->putFileAs('certificates', $file, $fileName);
+                $cast_certificate = 'certificates/' . $fileName;
+            }
+
+            // Concatenate title, first, middle, last name into name
+            $name = trim($request->title . ' ' . $request->first_name . ' ' . ($request->middle_name ? $request->middle_name . ' ' : '') . $request->last_name);
+
             $user = User::create([
-                'name'                   => $request->name,
+                'name'                   => $name,
                 'email'                  => $request->email,
                 'phone'                  => $request->phone,
+                'dob'                    => $request->dob,
+                'cast_certificate'       => $cast_certificate,
+                'address'                => $request->address,
+                'pincode'                => $request->pincode,
+                'state'                  => $request->state,
+                'city'                   => $request->city,
+                'country'                => $request->country,
+                'taluka'                 => $request->taluka,
+                'village'                => $request->village,
+                'occupation'             => $request->occupation,
+                'company_name'           => $request->company_name,
+                'dept_name'              => $request->dept_name,
+                'designation'            => $request->designation,
                 'password'               => Hash::make($request->password),
                 'user_type'              => $request->user_type,
                 'caste_verification_status' => 'approved', // mirror the API default
@@ -109,7 +155,8 @@ class WebAuthController extends Controller
             return redirect()->route('dashboard')->with('success', 'Registration successful! Welcome to Mali Setu.');
 
         } catch (\Exception $e) {
-            return back()->withErrors(['error' => 'Failed to register. Please try again.'])->withInput();
+            \Log::error('Web registration failure: ' . $e->getMessage() . "\n" . $e->getTraceAsString());
+            return back()->withErrors(['error' => 'Failed to register. Please try again. ' . $e->getMessage()])->withInput();
         }
     }
 
