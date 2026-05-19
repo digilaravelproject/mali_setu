@@ -15,18 +15,23 @@
 
     <style>
         :root { 
-            --primary: #0b66c3; 
-            --primary-dark: #064284;
+            --primary: #ad1457; 
+            --primary-dark: #7f0037;
             --accent: #ff7a59; 
-            --light-bg: #f8fbff;
+            --light-bg: #fff5f8;
             --glass: rgba(255, 255, 255, 0.1);
         }
         
         body { font-family: 'Plus Jakarta Sans', sans-serif; color: #2d3436; overflow-x: hidden; }
         
+        /* Bootstrap Helper Overrides for Robust Pink Theme */
+        .text-primary { color: var(--primary) !important; }
+        .bg-primary { background-color: var(--primary) !important; }
+        .border-primary { border-color: var(--primary) !important; }
+        
         /* Glassmorphism & Custom Elements */
         .hero { 
-            background: radial-gradient(circle at top right, #1175db, #062a54); 
+            background: radial-gradient(circle at top right, #d81b60, #4a0022); 
             padding: 120px 0 160px;
             clip-path: ellipse(150% 100% at 50% 0%);
             color: #fff;
@@ -52,13 +57,13 @@
         }
         .category-card:hover {
             transform: translateY(-10px);
-            box-shadow: 0 20px 40px rgba(11, 102, 195, 0.15);
+            box-shadow: 0 20px 40px rgba(173, 20, 87, 0.15);
         }
 
         .icon-circle {
             width: 70px; height: 70px;
             border-radius: 20px;
-            background: #f0f7ff;
+            background: #ffe4e8;
             display: flex; align-items: center; justify-content: center;
             margin: 0 auto 1.5rem;
             color: var(--primary);
@@ -86,10 +91,12 @@
         @media (max-width: 991px) { .how-it-works-step::after { display: none; } }
 
         .swiper-pagination-bullet-active { background: var(--primary) !important; }
-        footer { background: #041a33; }
+        footer { background: #210210; }
         
-        .btn-primary { background-color: var(--primary); border: none; padding: 12px 30px; border-radius: 12px; font-weight: 600; }
-        .btn-outline-primary { border-color: var(--primary); color: var(--primary); padding: 12px 30px; border-radius: 12px; }
+        .btn-primary { background-color: var(--primary) !important; border: none; padding: 12px 30px; border-radius: 12px; font-weight: 600; transition: 0.3s; }
+        .btn-primary:hover { background-color: var(--primary-dark) !important; transform: translateY(-2px); box-shadow: 0 8px 15px rgba(173, 20, 87, 0.15); }
+        .btn-outline-primary { border-color: var(--primary) !important; color: var(--primary) !important; padding: 12px 30px; border-radius: 12px; transition: 0.3s; }
+        .btn-outline-primary:hover { background-color: var(--primary) !important; color: #fff !important; }
         .btn-warning { background-color: var(--accent); border: none; color: #fff; }
     </style>
 </head>
@@ -115,7 +122,11 @@
                 <li class="nav-item"><a class="nav-link px-3" href="#directory">Directory</a></li>
                 <li class="nav-item"><a class="nav-link px-3" href="#matrimony">Matrimony</a></li>
                 <li class="nav-item"><a class="nav-link px-3" href="#community">Community</a></li>
-                <li class="nav-item ms-lg-3"><a class="btn btn-primary" href="#">Sign In</a></li>
+                @auth
+                    <li class="nav-item ms-lg-3"><a class="btn btn-primary" href="{{ route('dashboard') }}"><i class="fa-solid fa-gauge me-2"></i>Dashboard</a></li>
+                @else
+                    <li class="nav-item ms-lg-3"><a class="btn btn-primary" href="{{ route('login') }}"><i class="fa-solid fa-right-to-bracket me-2"></i>Sign In</a></li>
+                @endauth
             </ul>
         </div>
     </div>
@@ -305,8 +316,8 @@
                     <li class="mb-3"><i class="fa-solid fa-circle-check text-success me-2"></i> Free Registration</li>
                 </ul>
                 <div class="d-flex gap-3">
-                    <a href="#" class="btn btn-primary">Browse Profiles</a>
-                    <a href="#" class="btn btn-outline-primary">Register Free</a>
+                    <a href="#directory" class="btn btn-primary">Browse Profiles</a>
+                    <a href="{{ route('register') }}" class="btn btn-outline-primary">Register Free</a>
                 </div>
             </div>
             <div class="col-lg-7" data-aos="fade-left">
@@ -369,8 +380,8 @@
                 <h2 class="display-5 fw-bold mb-3">Ready to Join Your Community?</h2>
                 <p class="lead opacity-75 mb-5">Join thousands of members today and experience growth together.</p>
                 <div class="d-flex gap-3 justify-content-center">
-                    <a href="#" class="btn btn-warning btn-lg px-5">Join as Member</a>
-                    <a href="#" class="btn btn-light btn-lg px-5 text-primary">List Business</a>
+                    <a href="{{ route('register') }}" class="btn btn-warning btn-lg px-5">Join as Member</a>
+                    <a href="{{ route('register') }}" class="btn btn-light btn-lg px-5 text-primary">List Business</a>
                 </div>
             </div>
             <!-- Decorative circle -->

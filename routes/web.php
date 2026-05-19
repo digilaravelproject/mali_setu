@@ -29,6 +29,8 @@ Route::get('/test-mail', function () {
 
 
 use App\Http\Controllers\PageController;
+use App\Http\Controllers\WebAuthController;
+use App\Http\Controllers\DashboardController;
 
 // Public route
 Route::get('/', function () {
@@ -38,6 +40,30 @@ Route::get('/', function () {
 Route::get('/privacy-policy', [PageController::class, 'privacyPolicy'])->name('privacy-policy');
 Route::get('/terms-condition', [PageController::class, 'termsCondition'])->name('terms-condition');
 Route::get('/contact-us', [PageController::class, 'contactUs'])->name('contact-us');
+
+// Guest (Before-Login) Routes
+Route::middleware('guest')->group(function () {
+    Route::get('/login', [WebAuthController::class, 'showLogin'])->name('login');
+    Route::post('/login', [WebAuthController::class, 'login']);
+
+    Route::get('/register', [WebAuthController::class, 'showRegister'])->name('register');
+    Route::post('/register', [WebAuthController::class, 'register']);
+
+    Route::get('/forgot-password', [WebAuthController::class, 'showForgotPassword'])->name('password.request');
+    Route::post('/forgot-password/otp', [WebAuthController::class, 'sendOtp'])->name('password.otp.send');
+    Route::post('/verify-otp', [WebAuthController::class, 'verifyOtp'])->name('password.otp.verify');
+    Route::post('/reset-password', [WebAuthController::class, 'resetPassword'])->name('password.update');
+});
+
+// Protected (After-Login) Routes
+Route::middleware('auth')->group(function () {
+    Route::post('/logout', [WebAuthController::class, 'logout'])->name('logout');
+
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::post('/dashboard/profile', [DashboardController::class, 'updateProfile'])->name('dashboard.profile.update');
+    Route::post('/dashboard/change-password', [DashboardController::class, 'changePassword'])->name('dashboard.password.change');
+    Route::delete('/dashboard/delete-account', [DashboardController::class, 'deleteAccount'])->name('dashboard.account.delete');
+});
 
 Route::resource('heroes', HomepageHeroController::class);
 

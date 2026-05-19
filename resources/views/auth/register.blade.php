@@ -1,0 +1,399 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Create Account — Mali Setu</title>
+    <meta name="description" content="Register an account on Mali Setu today. Expand your business, find matches, and serve the community.">
+
+    <!-- Bootstrap & Google Fonts -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --primary: #ad1457;
+            --primary-dark: #7f0037;
+            --accent: #ff7a59;
+            --light-bg: #fff5f8;
+            --glass: rgba(255, 255, 255, 0.85);
+            --border-glow: rgba(173, 20, 87, 0.15);
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: linear-gradient(135deg, #fff0f5 0%, #ffe4e1 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #2d3436;
+            padding: 40px 20px;
+        }
+
+        /* Bootstrap Overrides */
+        .text-primary { color: var(--primary) !important; }
+        .bg-primary { background-color: var(--primary) !important; }
+
+        .auth-container {
+            max-width: 1100px;
+            width: 100%;
+            background: var(--glass);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            border-radius: 30px;
+            box-shadow: 0 30px 60px rgba(173, 20, 87, 0.1);
+            overflow: hidden;
+            transition: all 0.4s ease;
+        }
+
+        .auth-banner {
+            background: linear-gradient(135deg, #ad1457, #5c0529);
+            color: #fff;
+            padding: 50px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .auth-banner::before {
+            content: '';
+            position: absolute;
+            width: 300px;
+            height: 300px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 50%;
+            top: -100px;
+            right: -100px;
+        }
+
+        .auth-form-side {
+            padding: 50px;
+        }
+
+        .form-control-lg, .form-select-lg {
+            border-radius: 12px;
+            font-size: 1rem;
+            padding: 14px 20px;
+            border: 1.5px solid #e2e8f0;
+            background: rgba(255, 255, 255, 0.8);
+            transition: all 0.3s ease;
+        }
+
+        .form-control-lg:focus, .form-select-lg:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px var(--border-glow);
+            background: #fff;
+        }
+
+        .btn-primary {
+            background: var(--primary) !important;
+            border: none;
+            padding: 14px;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 1.05rem;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark) !important;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(173, 20, 87, 0.2);
+        }
+
+        .back-home {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: var(--primary);
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: 0.3s;
+            z-index: 10;
+        }
+
+        .back-home:hover {
+            color: var(--primary-dark);
+            transform: translateX(-3px);
+        }
+
+        .brand-logo {
+            height: 50px;
+            width: auto;
+            margin-bottom: 30px;
+        }
+
+        /* Interactive User Type Select Cards */
+        .type-option-card {
+            border: 2px solid #e2e8f0;
+            border-radius: 16px;
+            padding: 16px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
+            background: #fff;
+        }
+
+        .type-option-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.03);
+            border-color: var(--primary);
+        }
+
+        .type-option-card.selected {
+            border-color: var(--primary);
+            background: #ffe4e8;
+            box-shadow: 0 10px 20px rgba(173, 20, 87, 0.08);
+        }
+
+        .type-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            background: #ffe4e8;
+            color: var(--primary);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            margin-bottom: 12px;
+            transition: 0.3s;
+        }
+
+        .type-option-card.selected .type-icon {
+            background: var(--primary);
+            color: #fff;
+        }
+
+        .help-panel {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(5px);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 24px;
+            margin-top: 30px;
+        }
+
+        @media (max-width: 991px) {
+            .auth-banner {
+                display: none !important;
+            }
+            .auth-form-side {
+                padding: 40px 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<a href="{{ url('/') }}" class="back-home">
+    <i class="fa-solid fa-arrow-left"></i> Back to Home
+</a>
+
+<div class="auth-container">
+    <div class="row g-0">
+        <!-- Banner Side -->
+        <div class="col-lg-5 auth-banner">
+            <div>
+                <img src="{{ asset('landing_page_logo.jpeg') }}" alt="MaliSetu Logo" class="brand-logo rounded-3 shadow-sm bg-white p-2">
+                <h2 class="fw-bold mt-4">Empowering Our Community Digitally</h2>
+                <p class="opacity-75 mt-3">Register your profile today to access secure Matrimony profiles, connect your business, list volunteer options, or interact with professional services.</p>
+            </div>
+
+            <!-- Dynamic Info Cards on selected type -->
+            <div class="help-panel">
+                <h6 class="fw-bold text-warning mb-2" id="info-title">General Membership</h6>
+                <p class="small opacity-75 mb-0" id="info-description">Standard membership allows you to browse the active business directory, verify details, and read official community announcements.</p>
+            </div>
+            
+            <div class="border-top border-white border-opacity-10 pt-4 mt-4">
+                <small class="opacity-50">Already have an account? <a href="{{ route('login') }}" class="text-warning fw-bold text-decoration-none">Sign In instead</a></small>
+            </div>
+        </div>
+
+        <!-- Form Side -->
+        <div class="col-lg-7 auth-form-side">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h3 class="fw-bold mb-0">Register Profile</h3>
+                <span class="text-muted small">Have an account? <a href="{{ route('login') }}" class="text-primary fw-bold text-decoration-none">Sign In</a></span>
+            </div>
+
+            @if($errors->any())
+                <div class="alert alert-danger alert-dismissible fade show rounded-4 border-0 shadow-sm mb-4" role="alert">
+                    <i class="fa-solid fa-triangle-exclamation me-2"></i> {{ $errors->first() }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            @endif
+
+            <form action="{{ route('register') }}" method="POST" class="mt-4">
+                @csrf
+                
+                <!-- Full Name -->
+                <div class="mb-4">
+                    <label class="form-label small fw-bold text-secondary">Full Name</label>
+                    <input 
+                        type="text" 
+                        name="name" 
+                        value="{{ old('name') }}" 
+                        class="form-control form-control-lg @error('name') is-invalid @enderror" 
+                        placeholder="Enter full name" 
+                        required
+                    >
+                </div>
+
+                <div class="row">
+                    <!-- Email Input -->
+                    <div class="col-md-6 mb-4">
+                        <label class="form-label small fw-bold text-secondary">Email Address</label>
+                        <input 
+                            type="email" 
+                            name="email" 
+                            value="{{ old('email') }}" 
+                            class="form-control form-control-lg @error('email') is-invalid @enderror" 
+                            placeholder="name@example.com" 
+                            required
+                        >
+                    </div>
+
+                    <!-- Phone Input -->
+                    <div class="col-md-6 mb-4">
+                        <label class="form-label small fw-bold text-secondary">Phone Number</label>
+                        <input 
+                            type="text" 
+                            name="phone" 
+                            value="{{ old('phone') }}" 
+                            class="form-control form-control-lg @error('phone') is-invalid @enderror" 
+                            placeholder="Enter 10-digit phone" 
+                            required
+                        >
+                    </div>
+                </div>
+
+                <!-- Select Profile Type (Interactive Grid) -->
+                <div class="mb-4">
+                    <label class="form-label small fw-bold text-secondary mb-3">I am signing up as a...</label>
+                    <input type="hidden" name="user_type" id="user_type" value="{{ old('user_type', 'general') }}">
+                    
+                    <div class="row g-3">
+                        <div class="col-6 col-sm-3">
+                            <div class="type-option-card selected" data-type="general" onclick="selectUserType('general')">
+                                <div class="type-icon"><i class="fa-solid fa-users"></i></div>
+                                <h6 class="small fw-bold mb-0">General</h6>
+                            </div>
+                        </div>
+                        <div class="col-6 col-sm-3">
+                            <div class="type-option-card" data-type="business" onclick="selectUserType('business')">
+                                <div class="type-icon"><i class="fa-solid fa-briefcase"></i></div>
+                                <h6 class="small fw-bold mb-0">Business</h6>
+                            </div>
+                        </div>
+                        <div class="col-6 col-sm-3">
+                            <div class="type-option-card" data-type="matrimony" onclick="selectUserType('matrimony')">
+                                <div class="type-icon"><i class="fa-solid fa-heart"></i></div>
+                                <h6 class="small fw-bold mb-0">Matrimony</h6>
+                            </div>
+                        </div>
+                        <div class="col-6 col-sm-3">
+                            <div class="type-option-card" data-type="volunteer" onclick="selectUserType('volunteer')">
+                                <div class="type-icon"><i class="fa-solid fa-handshake-angle"></i></div>
+                                <h6 class="small fw-bold mb-0">Volunteer</h6>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <!-- Password Input -->
+                    <div class="col-md-6 mb-4">
+                        <label class="form-label small fw-bold text-secondary">Password</label>
+                        <input 
+                            type="password" 
+                            name="password" 
+                            class="form-control form-control-lg @error('password') is-invalid @enderror" 
+                            placeholder="Min 8 characters" 
+                            required
+                        >
+                    </div>
+
+                    <!-- Password Confirmation Input -->
+                    <div class="col-md-6 mb-4">
+                        <label class="form-label small fw-bold text-secondary">Confirm Password</label>
+                        <input 
+                            type="password" 
+                            name="password_confirmation" 
+                            class="form-control form-control-lg" 
+                            placeholder="Repeat password" 
+                            required
+                        >
+                    </div>
+                </div>
+
+                <!-- Terms & Conditions Checkbox -->
+                <div class="mb-4 form-check d-flex align-items-center gap-2">
+                    <input type="checkbox" name="term_condition" class="form-check-input shadow-none cursor-pointer" id="term_condition" value="1" required>
+                    <label class="form-check-label small text-secondary cursor-pointer" for="term_condition">
+                        I agree to the <a href="{{ url('terms-condition') }}" class="text-primary text-decoration-none fw-bold" target="_blank">Terms of Service</a> & <a href="{{ url('privacy-policy') }}" class="text-primary text-decoration-none fw-bold" target="_blank">Privacy Policy</a>
+                    </label>
+                </div>
+
+                <!-- Submit Button -->
+                <button type="submit" class="btn btn-primary btn-lg w-100 mt-2">
+                    Create Account <i class="fa-solid fa-user-plus ms-2"></i>
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    // Interactive selection logic
+    const profilesInfo = {
+        general: {
+            title: "General Membership",
+            desc: "Standard membership allows you to browse the active business directory, verify details, and read official community announcements."
+        },
+        business: {
+            title: "Business Account",
+            desc: "List your shop, service profile, or enterprise. Highlight products, advertise services, receive payments, and post jobs to hire community talent."
+        },
+        matrimony: {
+            title: "Matrimony SEEKER Profile",
+            desc: "Create a detailed personal matchmaking profile. Send connection requests, chat with potential life partners securely under high-privacy filters."
+        },
+        volunteer: {
+            title: "Volunteer Program",
+            desc: "Engage in social work. View opportunities listed by charities or community nodes, apply for tasks, and coordinate events."
+        }
+    };
+
+    function selectUserType(type) {
+        // Set hidden input
+        document.getElementById('user_type').value = type;
+
+        // Change select class
+        document.querySelectorAll('.type-option-card').forEach(card => {
+            card.classList.remove('selected');
+        });
+        document.querySelector(`.type-option-card[data-type="${type}"]`).classList.add('selected');
+
+        // Update banner text
+        document.getElementById('info-title').innerText = profilesInfo[type].title;
+        document.getElementById('info-description').innerText = profilesInfo[type].desc;
+    }
+
+    // Set initial from old value if redirected with errors
+    document.addEventListener('DOMContentLoaded', () => {
+        const type = document.getElementById('user_type').value;
+        selectUserType(type);
+    });
+</script>
+</body>
+</html>
