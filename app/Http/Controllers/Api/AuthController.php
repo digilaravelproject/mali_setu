@@ -425,4 +425,47 @@ class AuthController extends Controller
             'message' => 'Password changed successfully'
         ]);
     }
+
+    /**
+     * Delete authenticated user's account
+     */
+    public function deleteAccount(Request $request)
+    {
+        $user = $request->user();
+
+        try {
+            // Delete stored files: cast certificate and photos
+            if ($user->cast_certificate && Storage::disk('public')->exists($user->cast_certificate)) {
+                Storage::disk('public')->delete($user->cast_certificate);
+            }
+
+            if (!empty($user->photo)) {
+                foreach (explode(',', $user->photo) as $p) {
+                    $p = trim($p);
+                    if ($p && Storage::disk('public')->exists($p)) {
+                        Storage::disk('public')->delete($p);
+                    }
+                }
+            }
+
+            // Revoke tokens (Sanctum)
+            if (method_exists($user, 'tokens')) {
+                $user->tokens()->delete();
+            }
+
+            // Delete user record
+            $user->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Account deleted successfully'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to delete account',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
 }

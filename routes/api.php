@@ -161,6 +161,7 @@ Route::middleware('auth:sanctum')->prefix('auth')->group(function () {
     Route::get('profile', [AuthController::class, 'profile']);
     Route::put('profile', [AuthController::class, 'updateProfile']);
     Route::post('change-password', [AuthController::class, 'changePassword']);
+    Route::delete('delete-account', [AuthController::class, 'deleteAccount']);
 });
 
 // Test route to verify authentication
