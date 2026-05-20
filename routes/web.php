@@ -53,6 +53,9 @@ Route::middleware('guest')->group(function () {
     Route::post('/forgot-password/otp', [WebAuthController::class, 'sendOtp'])->name('password.otp.send');
     Route::post('/verify-otp', [WebAuthController::class, 'verifyOtp'])->name('password.otp.verify');
     Route::post('/reset-password', [WebAuthController::class, 'resetPassword'])->name('password.update');
+
+    Route::get('/auth/google', [WebAuthController::class, 'redirectToGoogle'])->name('auth.google');
+    Route::get('/auth/google/callback', [WebAuthController::class, 'handleGoogleCallback'])->name('auth.google.callback');
 });
 
 // Protected (After-Login) Routes

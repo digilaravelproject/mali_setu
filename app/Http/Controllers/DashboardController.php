@@ -55,6 +55,10 @@ class DashboardController extends Controller
             'verified_users' => User::where('caste_verification_status', 'approved')->count(),
             'my_donations_sum' => $user->donations()->where('status', 'completed')->sum('amount') ?? 0,
             'my_applications_count' => $user->jobApplications()->count() ?? 0,
+            'businesses_count' => \App\Models\Business::count(),
+            'products_count' => \App\Models\Product::count(),
+            'services_count' => \App\Models\Service::count(),
+            'jobs_count' => \App\Models\JobPosting::count(),
         ];
 
         // Fetch categories, plans, and job postings for business module

@@ -282,14 +282,9 @@
 
             <!-- Social Logins -->
             <div class="row g-3">
-                <div class="col-sm-6">
-                    <a href="#" class="social-btn">
-                        <i class="fa-brands fa-google text-danger fs-5"></i> Google
-                    </a>
-                </div>
-                <div class="col-sm-6">
-                    <a href="#" class="social-btn">
-                        <i class="fa-brands fa-apple text-dark fs-5"></i> Apple ID
+                <div class="col-12">
+                    <a href="{{ route('auth.google') }}" class="social-btn border border-opacity-50 shadow-sm py-3 text-center d-flex align-items-center justify-content-center gap-2">
+                        <i class="fa-brands fa-google text-danger fs-5"></i> Continue with Google
                     </a>
                 </div>
             </div>

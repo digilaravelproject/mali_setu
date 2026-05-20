@@ -1,420 +1,9 @@
-<!doctype html>
-<html lang="en">
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Dashboard — Mali Setu</title>
-    <meta name="description" content="Manage your Mali Setu profile, settings, and community modules.">
+@extends('layouts.app')
 
-    <!-- Bootstrap & Google Fonts -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700;800&display=swap" rel="stylesheet">
-
-    <style>
-        :root {
-            --primary: #ad1457;
-            --primary-dark: #7f0037;
-            --accent: #ff7a59;
-            --light-bg: #fff5f8;
-            --glass: rgba(255, 255, 255, 0.95);
-            --border-glow: rgba(173, 20, 87, 0.15);
-            --sidebar-width: 280px;
-        }
-
-        body {
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            background-color: var(--light-bg);
-            color: #2d3436;
-            min-height: 100vh;
-            overflow-x: hidden;
-        }
-
-        /* Bootstrap Overrides */
-        .text-primary { color: var(--primary) !important; }
-        .bg-primary { background-color: var(--primary) !important; }
-
-        /* Premium Dashboard Layout */
-        .dashboard-wrapper {
-            display: flex;
-            min-height: 100vh;
-        }
-
-        /* Sidebar Styling */
-        .sidebar {
-            width: var(--sidebar-width);
-            background: linear-gradient(180deg, #ad1457 0%, #5c0529 100%);
-            color: #fff;
-            padding: 30px 20px;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            position: fixed;
-            top: 0; bottom: 0; left: 0;
-            z-index: 100;
-            box-shadow: 10px 0 30px rgba(173, 20, 87, 0.05);
-            transition: all 0.3s ease;
-        }
-
-        .sidebar-brand {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding-bottom: 30px;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
-            margin-bottom: 30px;
-            text-decoration: none;
-            color: #fff;
-        }
-
-        .sidebar-logo {
-            height: 40px;
-            width: auto;
-            border-radius: 8px;
-            background: #fff;
-            padding: 4px;
-        }
-
-        .nav-menu {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-            flex-grow: 1;
-        }
-
-        .nav-item {
-            margin-bottom: 8px;
-        }
-
-        .nav-link-custom {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            padding: 14px 20px;
-            color: rgba(255,255,255,0.75);
-            text-decoration: none;
-            border-radius: 12px;
-            font-weight: 600;
-            transition: all 0.3s ease;
-            cursor: pointer;
-        }
-
-        .nav-link-custom:hover {
-            color: #fff;
-            background: rgba(255,255,255,0.1);
-            transform: translateX(4px);
-        }
-
-        .nav-link-custom.active {
-            color: #fff;
-            background: rgba(255,255,255,0.15);
-            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
-        }
-
-        .logout-btn {
-            background: rgba(255, 74, 74, 0.1);
-            color: #ff7878;
-        }
-
-        .logout-btn:hover {
-            background: #ff4a4a;
-            color: #fff;
-        }
-
-        /* Content Area Styling */
-        .main-content {
-            margin-left: var(--sidebar-width);
-            flex-grow: 1;
-            padding: 40px;
-            transition: all 0.3s ease;
-        }
-
-        /* Header Card */
-        .welcome-banner {
-            background: radial-gradient(circle at top right, #d81b60, #4a0022);
-            color: #fff;
-            border-radius: 24px;
-            padding: 40px;
-            box-shadow: 0 15px 35px rgba(173, 20, 87, 0.15);
-            margin-bottom: 35px;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .welcome-banner::before {
-            content: '';
-            position: absolute;
-            width: 250px;
-            height: 250px;
-            background: rgba(255, 255, 255, 0.04);
-            border-radius: 50%;
-            top: -50px; right: -50px;
-        }
-
-        /* Glass Cards */
-        .glass-card {
-            background: var(--glass);
-            border: 1px solid rgba(255, 255, 255, 0.5);
-            border-radius: 20px;
-            padding: 30px;
-            box-shadow: 0 10px 30px rgba(173, 20, 87, 0.02);
-            margin-bottom: 30px;
-            transition: all 0.3s ease;
-        }
-
-        .glass-card:hover {
-            box-shadow: 0 15px 35px rgba(173, 20, 87, 0.05);
-        }
-
-        .metric-icon {
-            width: 55px; height: 55px;
-            border-radius: 14px;
-            background: #ffe4e8;
-            color: var(--primary);
-            display: flex; align-items: center; justify-content: center;
-            font-size: 22px;
-            margin-bottom: 20px;
-        }
-
-        .tab-panel {
-            display: none;
-        }
-
-        .tab-panel.active {
-            display: block;
-            animation: fadeIn 0.4s ease;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .form-label {
-            font-weight: 600;
-            font-size: 0.9rem;
-            color: #4a5568;
-            margin-bottom: 8px;
-        }
-
-        .form-control, .form-select {
-            border-radius: 10px;
-            padding: 12px 18px;
-            border: 1.5px solid #e2e8f0;
-            background: #fff;
-            transition: all 0.3s ease;
-        }
-
-        .form-control:focus, .form-select:focus {
-            border-color: var(--primary);
-            box-shadow: 0 0 0 4px var(--border-glow);
-        }
-
-        .profile-photo-circle {
-            width: 110px; height: 110px;
-            border-radius: 50%;
-            object-fit: cover;
-            border: 4px solid #fff;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
-        }
-
-        .badge-verified {
-            background-color: #2ec4b6;
-            color: #fff;
-            font-size: 0.8rem;
-            padding: 6px 14px;
-            border-radius: 50px;
-            font-weight: 700;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .badge-type {
-            background-color: var(--accent);
-            color: #fff;
-            font-size: 0.8rem;
-            padding: 6px 14px;
-            border-radius: 50px;
-            font-weight: 700;
-        }
-
-        @media (max-width: 991px) {
-            .sidebar {
-                transform: translateX(-100%);
-            }
-            .sidebar.active {
-                transform: translateX(0);
-            }
-            .main-content {
-                margin-left: 0;
-                padding: 20px;
-            }
-        }
-
-        /* Top Navbar Styling */
-        .dashboard-navbar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: rgba(255, 255, 255, 0.75);
-            backdrop-filter: blur(15px);
-            -webkit-backdrop-filter: blur(15px);
-            border: 1px solid rgba(173, 20, 87, 0.08);
-            border-radius: 16px;
-            padding: 15px 30px;
-            margin-bottom: 35px;
-            box-shadow: 0 10px 30px rgba(173, 20, 87, 0.03);
-        }
-
-        .navbar-brand-title {
-            font-size: 1.25rem;
-            font-weight: 700;
-            color: #2d3748;
-        }
-
-        .navbar-user-dropdown {
-            position: relative;
-        }
-
-        .navbar-dropdown-btn {
-            background: rgba(173, 20, 87, 0.05);
-            border: none;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            cursor: pointer;
-            padding: 8px 18px;
-            border-radius: 50px;
-            transition: all 0.3s ease;
-            color: #ad1457;
-            font-weight: 600;
-        }
-
-        .navbar-dropdown-btn:hover {
-            background: rgba(173, 20, 87, 0.1);
-        }
-
-        .navbar-dropdown-menu {
-            position: absolute;
-            top: 120%;
-            right: 0;
-            background: #fff;
-            border-radius: 12px;
-            border: 1px solid rgba(0,0,0,0.05);
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-            min-width: 220px;
-            display: none;
-            flex-direction: column;
-            padding: 8px 0;
-            z-index: 1000;
-        }
-
-        .navbar-dropdown-menu.show {
-            display: flex;
-        }
-
-        .navbar-dropdown-item {
-            padding: 10px 20px;
-            color: #495057;
-            font-weight: 500;
-            text-decoration: none;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            border: none;
-            background: none;
-            width: 100%;
-            text-align: left;
-        }
-
-        .navbar-dropdown-item:hover {
-            background: #fff5f8;
-            color: #ad1457;
-        }
-    </style>
-</head>
-<body>
-
-<div class="dashboard-wrapper">
-    <!-- Sidebar -->
-    <aside class="sidebar" id="sidebarMenu">
-        <div>
-            <a href="{{ url('/') }}" class="sidebar-brand">
-                <img src="{{ asset('landing_page_logo.jpeg') }}" alt="MaliSetu Logo" class="sidebar-logo">
-                <h5 class="fw-bold mb-0">Mali Setu</h5>
-            </a>
-
-            <ul class="nav-menu">
-                <li class="nav-item">
-                    <a class="nav-link-custom active" onclick="switchTab('business', this)">
-                        <i class="fa-solid fa-briefcase"></i> Manage Business
-                    </a>
-                </li>
-            </ul>
-        </div>
-
-        <div>
-            <form action="{{ route('logout') }}" method="POST" id="logout-form">
-                @csrf
-                <button type="submit" class="nav-link-custom logout-btn w-100 border-0 text-start">
-                    <i class="fa-solid fa-arrow-right-from-bracket"></i> Sign Out
-                </button>
-            </form>
-        </div>
-    </aside>
-
-    <!-- Main Content Area -->
-    <main class="main-content">
-        <!-- Top Navbar -->
-        <nav class="dashboard-navbar">
-            <div class="navbar-brand-title">
-                <i class="fa-solid fa-briefcase text-primary me-2"></i> Mali Setu Workspace
-            </div>
-            
-            <div class="navbar-user-dropdown">
-                <button class="navbar-dropdown-btn" onclick="toggleNavbarDropdown(event)">
-                    <i class="fa-solid fa-circle-user fs-5"></i>
-                    <span>{{ $user->name }}</span>
-                    <i class="fa-solid fa-chevron-down small"></i>
-                </button>
-                <div class="navbar-dropdown-menu" id="navbarDropdownMenu">
-                    <button class="navbar-dropdown-item" onclick="selectDropdownTab('edit-profile')">
-                        <i class="fa-solid fa-user-pen text-primary"></i> Edit Profile
-                    </button>
-                    <button class="navbar-dropdown-item" onclick="selectDropdownTab('change-password')">
-                        <i class="fa-solid fa-key text-primary"></i> Security
-                    </button>
-                    <button class="navbar-dropdown-item" onclick="selectDropdownTab('features')">
-                        <i class="fa-solid fa-circle-nodes text-primary"></i> My Featured Nodes
-                    </button>
-                    <div class="dropdown-divider my-1"></div>
-                    <button class="navbar-dropdown-item text-danger" onclick="selectDropdownTab('danger-zone')">
-                        <i class="fa-solid fa-triangle-exclamation text-danger"></i> Danger Zone
-                    </button>
-                </div>
-            </div>
-        </nav>
-
-        <!-- Toast / Alerts Display -->
-        @if(session('success'))
-            <div class="alert alert-success alert-dismissible fade show rounded-4 border-0 shadow-sm mb-4" role="alert">
-                <i class="fa-solid fa-circle-check me-2"></i> {{ session('success') }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-        @endif
-
-        @if($errors->any())
-            <div class="alert alert-danger alert-dismissible fade show rounded-4 border-0 shadow-sm mb-4" role="alert">
-                <i class="fa-solid fa-triangle-exclamation me-2"></i> {{ $errors->first() }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-        @endif
+@section('content')
 
         <!-- Tab 1: Overview -->
-        <div class="tab-panel" id="tab-overview">
+        <div class="tab-panel active" id="tab-overview">
             <div class="welcome-banner">
                 <div class="row align-items-center">
                     <div class="col-md-8">
@@ -434,82 +23,166 @@
                 </div>
             </div>
 
-            <!-- Stats grid -->
-            <div class="row g-4 mb-4">
-                <div class="col-md-3">
-                    <div class="glass-card text-center">
-                        <div class="metric-icon mx-auto"><i class="fa-solid fa-id-card"></i></div>
-                        <h6 class="text-secondary fw-semibold">Verification</h6>
-                        <h4 class="fw-bold mt-2">
-                            @if($user->caste_verification_status === 'approved')
-                                <span class="badge bg-success small"><i class="fa-solid fa-check-double me-1"></i> Approved</span>
-                            @else
-                                <span class="badge bg-warning text-dark small"><i class="fa-solid fa-hourglass-start me-1"></i> Pending</span>
-                            @endif
-                        </h4>
+            <!-- Platform Stats Grid -->
+            <div class="row g-3 mb-4">
+                <div class="col-md col-sm-6 col-12">
+                    <div class="glass-card text-center p-3 h-100 d-flex flex-column justify-content-center" style="border-left: 4px solid var(--primary);">
+                        <div class="metric-icon mx-auto text-primary mb-2" style="width:36px; height:36px; line-height:36px; font-size: 14px;"><i class="fa-solid fa-users"></i></div>
+                        <h6 class="text-secondary fw-semibold mb-1 small">Total Members</h6>
+                        <h4 class="fw-bold mb-0 text-dark font-monospace">{{ $stats['total_users'] }}</h4>
                     </div>
                 </div>
-                <div class="col-md-3">
-                    <div class="glass-card text-center">
-                        <div class="metric-icon mx-auto"><i class="fa-solid fa-handshake-angle"></i></div>
-                        <h6 class="text-secondary fw-semibold">Matched Roles</h6>
-                        <h4 class="fw-bold mt-2 text-primary">{{ ucfirst($user->user_type) }}</h4>
+                <div class="col-md col-sm-6 col-12">
+                    <div class="glass-card text-center p-3 h-100 d-flex flex-column justify-content-center" style="border-left: 4px solid var(--primary);">
+                        <div class="metric-icon mx-auto text-primary mb-2" style="width:36px; height:36px; line-height:36px; font-size: 14px;"><i class="fa-solid fa-briefcase"></i></div>
+                        <h6 class="text-secondary fw-semibold mb-1 small">Businesses</h6>
+                        <h4 class="fw-bold mb-0 text-dark font-monospace">{{ $stats['businesses_count'] }}</h4>
                     </div>
                 </div>
-                <div class="col-md-3">
-                    <div class="glass-card text-center">
-                        <div class="metric-icon mx-auto"><i class="fa-solid fa-wallet"></i></div>
-                        <h6 class="text-secondary fw-semibold">Matrimony Pay</h6>
-                        <h4 class="fw-bold mt-2">
-                            @if($user->has_matrimony_payment)
-                                <span class="badge bg-teal" style="background:#00b4d8"><i class="fa-solid fa-crown me-1"></i> Premium</span>
-                            @else
-                                <span class="badge bg-secondary small">Free tier</span>
-                            @endif
-                        </h4>
+                <div class="col-md col-sm-6 col-12">
+                    <div class="glass-card text-center p-3 h-100 d-flex flex-column justify-content-center" style="border-left: 4px solid var(--primary);">
+                        <div class="metric-icon mx-auto text-primary mb-2" style="width:36px; height:36px; line-height:36px; font-size: 14px;"><i class="fa-solid fa-box-open"></i></div>
+                        <h6 class="text-secondary fw-semibold mb-1 small">Products Listed</h6>
+                        <h4 class="fw-bold mb-0 text-dark font-monospace">{{ $stats['products_count'] }}</h4>
                     </div>
                 </div>
-                <div class="col-md-3">
-                    <div class="glass-card text-center">
-                        <div class="metric-icon mx-auto"><i class="fa-solid fa-briefcase"></i></div>
-                        <h6 class="text-secondary fw-semibold">Business Listing</h6>
-                        <h4 class="fw-bold mt-2">
-                            @if($user->is_business)
-                                <span class="badge bg-success small">Registered</span>
-                            @else
-                                <span class="badge bg-light text-muted border small">No listing</span>
-                            @endif
-                        </h4>
+                <div class="col-md col-sm-6 col-12">
+                    <div class="glass-card text-center p-3 h-100 d-flex flex-column justify-content-center" style="border-left: 4px solid var(--primary);">
+                        <div class="metric-icon mx-auto text-primary mb-2" style="width:36px; height:36px; line-height:36px; font-size: 14px;"><i class="fa-solid fa-gears"></i></div>
+                        <h6 class="text-secondary fw-semibold mb-1 small">Services</h6>
+                        <h4 class="fw-bold mb-0 text-dark font-monospace">{{ $stats['services_count'] }}</h4>
+                    </div>
+                </div>
+                <div class="col-md col-sm-6 col-12">
+                    <div class="glass-card text-center p-3 h-100 d-flex flex-column justify-content-center" style="border-left: 4px solid var(--primary);">
+                        <div class="metric-icon mx-auto text-primary mb-2" style="width:36px; height:36px; line-height:36px; font-size: 14px;"><i class="fa-solid fa-user-tie"></i></div>
+                        <h6 class="text-secondary fw-semibold mb-1 small">Jobs Open</h6>
+                        <h4 class="fw-bold mb-0 text-dark font-monospace">{{ $stats['jobs_count'] }}</h4>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Clickable Categories Grid -->
+            <div class="glass-card mb-4 text-start">
+                <div class="d-flex align-items-center gap-2 mb-3">
+                    <div class="bg-primary bg-opacity-10 text-primary p-2.5 rounded-3 d-flex align-items-center justify-content-center" style="width:42px; height:42px;">
+                        <i class="fa-solid fa-tags fs-5"></i>
+                    </div>
+                    <div>
+                        <h5 class="fw-bold mb-0 text-dark">Business Categories</h5>
+                        <p class="text-secondary small mb-0">Explore sectors or click a category to register/edit a business under that catalog.</p>
+                    </div>
+                </div>
+                <div class="row row-cols-1 row-cols-sm-2 row-cols-md-4 g-2 pt-2">
+                    @foreach($categories as $cat)
+                        <div class="col">
+                            <button onclick="selectCategoryOnDashboard({{ $cat->id }})" class="btn btn-outline-primary w-100 py-2.5 rounded-3 text-start d-flex align-items-center justify-content-between px-3 hover-scale cursor-pointer bg-white" style="border-color: rgba(173,20,87,0.2); color: #2d3436; transition: all 0.2s ease;">
+                                <span class="small fw-semibold text-truncate"><i class="fa-solid fa-tag text-primary me-2 opacity-75"></i> {{ $cat->name }}</span>
+                                <i class="fa-solid fa-circle-chevron-right text-primary opacity-50 fs-6"></i>
+                            </button>
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+
+            <!-- Quick Access Section -->
+            <div class="row g-4 mb-4 text-start">
+                <!-- 1. Matrimony Access -->
+                <div class="col-md-4">
+                    <div class="glass-card h-100 d-flex flex-column justify-content-between hover-scale" style="border-top: 5px solid #ff7a59; transition: all 0.3s ease;">
+                        <div>
+                            <div class="d-flex align-items-center justify-content-between mb-3">
+                                <div class="bg-accent bg-opacity-10 text-accent p-2.5 rounded-3 d-flex align-items-center justify-content-center" style="width:40px; height:40px; background: rgba(255,122,89,0.1); color: #ff7a59;">
+                                    <i class="fa-solid fa-heart fs-5"></i>
+                                </div>
+                                @if($user->has_matrimony_payment)
+                                    <span class="badge py-1 px-2.5 rounded-pill text-white small" style="background:#00b4d8"><i class="fa-solid fa-crown me-1"></i> Premium</span>
+                                @else
+                                    <span class="badge bg-secondary py-1 px-2.5 rounded-pill text-white small">Free Tier</span>
+                                @endif
+                            </div>
+                            <h5 class="fw-bold text-dark mb-2">Matrimony Seeker</h5>
+                            <p class="text-secondary small mb-0">Find and connect with verified matches in your community. Set up matchmaking filters and express interest safely.</p>
+                        </div>
+                        <button onclick="selectDropdownTab('features')" class="btn btn-outline-dark btn-sm w-100 py-2 mt-4 rounded-3 cursor-pointer fw-semibold">
+                            Access Listings <i class="fa-solid fa-arrow-right ms-1 text-primary"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 2. Business Access -->
+                <div class="col-md-4">
+                    <div class="glass-card h-100 d-flex flex-column justify-content-between hover-scale" style="border-top: 5px solid #ad1457; transition: all 0.3s ease;">
+                        <div>
+                            <div class="d-flex align-items-center justify-content-between mb-3">
+                                <div class="bg-primary bg-opacity-10 text-primary p-2.5 rounded-3 d-flex align-items-center justify-content-center" style="width:40px; height:40px;">
+                                    <i class="fa-solid fa-briefcase fs-5"></i>
+                                </div>
+                                @if($user->is_business)
+                                    <span class="badge bg-success py-1 px-2.5 rounded-pill text-white small"><i class="fa-solid fa-check-double me-1"></i> Registered</span>
+                                @else
+                                    <span class="badge bg-light text-muted border py-1 px-2.5 rounded-pill small">No Listing</span>
+                                @endif
+                            </div>
+                            <h5 class="fw-bold text-dark mb-2">Business Directory</h5>
+                            <p class="text-secondary small mb-0">List your own business, showcase catalogs, active services, publish job requirements, and hire local talent.</p>
+                        </div>
+                        <button onclick="switchTab('business', document.querySelector('.sidebar a[onclick*=\'business\']'))" class="btn btn-outline-dark btn-sm w-100 py-2 mt-4 rounded-3 cursor-pointer fw-semibold">
+                            Access Listings <i class="fa-solid fa-arrow-right ms-1 text-primary"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 3. Volunteer Access -->
+                <div class="col-md-4">
+                    <div class="glass-card h-100 d-flex flex-column justify-content-between hover-scale" style="border-top: 5px solid #2ec4b6; transition: all 0.3s ease;">
+                        <div>
+                            <div class="d-flex align-items-center justify-content-between mb-3">
+                                <div class="bg-success bg-opacity-10 text-success p-2.5 rounded-3 d-flex align-items-center justify-content-center" style="width:40px; height:40px; background: rgba(46,196,182,0.1); color: #2ec4b6;">
+                                    <i class="fa-solid fa-handshake-angle fs-5"></i>
+                                </div>
+                                @if($user->volunteer)
+                                    <span class="badge bg-success py-1 px-2.5 rounded-pill text-white small">Active</span>
+                                @else
+                                    <span class="badge bg-light text-muted border py-1 px-2.5 rounded-pill small">Not Joined</span>
+                                @endif
+                            </div>
+                            <h5 class="fw-bold text-dark mb-2">Volunteer Services</h5>
+                            <p class="text-secondary small mb-0">Participate in community service drives, local relief campaigns, and coordinate events directly with coordinators.</p>
+                        </div>
+                        <button onclick="selectDropdownTab('features')" class="btn btn-outline-dark btn-sm w-100 py-2 mt-4 rounded-3 cursor-pointer fw-semibold">
+                            Access Listings <i class="fa-solid fa-arrow-right ms-1 text-primary"></i>
+                        </button>
                     </div>
                 </div>
             </div>
 
             <!-- Profile Summary -->
-            <div class="glass-card">
+            <div class="glass-card text-start">
                 <h5 class="fw-bold mb-4"><i class="fa-solid fa-user me-2 text-primary"></i> Profile Information</h5>
                 <div class="row g-3">
                     <div class="col-sm-6">
                         <div class="border-bottom pb-2">
                             <small class="text-secondary">Full Name</small>
-                            <p class="mb-0 fw-semibold">{{ $user->name }}</p>
+                            <p class="mb-0 fw-semibold text-dark">{{ $user->name }}</p>
                         </div>
                     </div>
                     <div class="col-sm-6">
                         <div class="border-bottom pb-2">
                             <small class="text-secondary">Email Address</small>
-                            <p class="mb-0 fw-semibold">{{ $user->email }}</p>
+                            <p class="mb-0 fw-semibold text-dark">{{ $user->email }}</p>
                         </div>
                     </div>
                     <div class="col-sm-6">
                         <div class="border-bottom pb-2">
                             <small class="text-secondary">Phone Number</small>
-                            <p class="mb-0 fw-semibold">{{ $user->phone }}</p>
+                            <p class="mb-0 fw-semibold text-dark">{{ $user->phone }}</p>
                         </div>
                     </div>
                     <div class="col-sm-6">
                         <div class="border-bottom pb-2">
                             <small class="text-secondary">Member Since</small>
-                            <p class="mb-0 fw-semibold">{{ $user->created_at->format('d M, Y') }}</p>
+                            <p class="mb-0 fw-semibold text-dark">{{ $user->created_at->format('d M, Y') }}</p>
                         </div>
                     </div>
                 </div>
@@ -715,7 +388,7 @@
         </div>
 
         <!-- Tab: Business Module -->
-        <div class="tab-panel active" id="tab-business">
+        <div class="tab-panel" id="tab-business">
             <div class="glass-card">
                 
                 <!-- 1. Business List View -->
@@ -1739,129 +1412,4 @@
     </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-<script>
-    // Toggle Navbar Dropdown
-    function toggleNavbarDropdown(event) {
-        event.stopPropagation();
-        const dropdown = document.getElementById('navbarDropdownMenu');
-        if (dropdown) {
-            dropdown.classList.toggle('show');
-        }
-    }
-
-    // Close dropdown when clicking outside
-    document.addEventListener('click', function(event) {
-        const dropdown = document.getElementById('navbarDropdownMenu');
-        if (dropdown && dropdown.classList.contains('show')) {
-            const isClickInside = dropdown.contains(event.target) || event.target.closest('.navbar-dropdown-btn');
-            if (!isClickInside) {
-                dropdown.classList.remove('show');
-            }
-        }
-    });
-
-    // Dropdown Tab Select Handler
-    function selectDropdownTab(tabId) {
-        // Toggle tab links in sidebar (deactivate them)
-        document.querySelectorAll('.nav-link-custom').forEach(link => {
-            link.classList.remove('active');
-        });
-
-        // Hide all main tab panels
-        document.querySelectorAll('.tab-panel').forEach(panel => {
-            panel.classList.remove('active');
-        });
-
-        // Show targeted panel
-        const targetPanel = document.getElementById(`tab-${tabId}`);
-        if (targetPanel) {
-            targetPanel.classList.add('active');
-        }
-
-        // Close navbar dropdown
-        const dropdown = document.getElementById('navbarDropdownMenu');
-        if (dropdown) {
-            dropdown.classList.remove('show');
-        }
-    }
-
-    // Switch sidebar tab
-    function switchTab(tabId, el) {
-        // Toggle tab links
-        document.querySelectorAll('.nav-link-custom').forEach(link => {
-            link.classList.remove('active');
-        });
-        if (el) {
-            el.classList.add('active');
-        }
-
-        // Toggle panel visibility
-        document.querySelectorAll('.tab-panel').forEach(panel => {
-            panel.classList.remove('active');
-        });
-        
-        const targetPanel = document.getElementById(`tab-${tabId}`);
-        if(targetPanel) {
-            targetPanel.classList.add('active');
-        }
-
-        // If switching back to business, show list view by default
-        if (tabId === 'business') {
-            toggleBusinessSection('list');
-        }
-    }
-
-    // Business modular sub-view toggling
-    function toggleBusinessSection(viewName) {
-        const listSec = document.getElementById('business-list-view');
-        const setupSec = document.getElementById('business-setup-section');
-        const consoleSec = document.getElementById('business-console-section');
-        const editSec = document.getElementById('business-edit-section');
-
-        if (listSec) listSec.style.display = 'none';
-        if (setupSec) setupSec.style.display = 'none';
-        if (consoleSec) consoleSec.style.display = 'none';
-        if (editSec) editSec.style.display = 'none';
-
-        if (viewName === 'list' && listSec) {
-            listSec.style.display = 'block';
-        } else if (viewName === 'setup' && setupSec) {
-            setupSec.style.display = 'block';
-        } else if (viewName === 'console' && consoleSec) {
-            consoleSec.style.display = 'block';
-        } else if (viewName === 'edit' && editSec) {
-            editSec.style.display = 'block';
-        }
-    }
-
-    function openEditJobModal(job) {
-        document.getElementById('edit_job_title').value = job.title;
-        document.getElementById('edit_job_location').value = job.location;
-        document.getElementById('edit_job_employment_type').value = job.employment_type;
-        document.getElementById('edit_job_experience_level').value = job.experience_level;
-        document.getElementById('edit_job_category').value = job.category;
-        document.getElementById('edit_job_salary_range').value = job.salary_range;
-        document.getElementById('edit_job_description').value = job.description;
-        document.getElementById('edit_job_requirements').value = job.requirements;
-        
-        const formAction = `/dashboard/business/jobs/${job.id}/update`;
-        document.getElementById('editJobForm').setAttribute('action', formAction);
-        
-        const modal = new bootstrap.Modal(document.getElementById('editJobModal'));
-        modal.show();
-    }
-
-    function openModerateModal(applicationId, status) {
-        document.getElementById('moderate_status').value = status;
-        document.getElementById('moderate_status_text').innerText = status.toUpperCase();
-        
-        const formAction = `/dashboard/business/applications/${applicationId}/status`;
-        document.getElementById('moderateForm').setAttribute('action', formAction);
-        
-        const modal = new bootstrap.Modal(document.getElementById('moderateModal'));
-        modal.show();
-    }
-</script>
-</body>
-</html>
+@endsection
