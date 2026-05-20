@@ -160,9 +160,9 @@
                                 <div class="banner-slide-wrapper position-relative" style="height: 250px; background: url('{{ asset('storage/' . $banner->image_path) }}') center/cover no-repeat;">
                                     <div class="banner-overlay position-absolute w-100 h-100 top-0 start-0 d-flex flex-column justify-content-end p-4 text-start" style="background: linear-gradient(180deg, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.75) 100%);">
                                         <h3 class="fw-bold text-white mb-2">{{ $banner->title }}</h3>
-                                        @if($banner->url)
+                                        <?php /*@if($banner->url)
                                             <a href="{{ $banner->url }}" target="_blank" class="btn btn-primary btn-sm rounded-pill px-4 align-self-start fw-semibold shadow-sm">Explore More <i class="fa-solid fa-arrow-up-right-from-square ms-1"></i></a>
-                                        @endif
+                                        @endif */?>
                                     </div>
                                 </div>
                             </div>

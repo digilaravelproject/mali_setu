@@ -15,6 +15,7 @@
         :root {
             --primary: #ad1457;
             --primary-dark: #7f0037;
+            --primary-rgb: 173,20,87;
             --accent: #ff7a59;
             --light-bg: #fff5f8;
             --glass: rgba(255, 255, 255, 0.95);
@@ -131,7 +132,7 @@
 
         /* Header Card */
         .welcome-banner {
-            background: radial-gradient(circle at top right, #d81b60, #4a0022);
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
             color: #fff;
             border-radius: 24px;
             padding: 40px;
@@ -169,7 +170,7 @@
         .metric-icon {
             width: 55px; height: 55px;
             border-radius: 14px;
-            background: #ffe4e8;
+            background: rgba(var(--primary-rgb), 0.08);
             color: var(--primary);
             display: flex; align-items: center; justify-content: center;
             font-size: 22px;
@@ -216,6 +217,46 @@
             object-fit: cover;
             border: 4px solid #fff;
             box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+        }
+
+        /* Buttons consistent with sidebar primary color */
+        .btn-primary {
+            background-color: var(--primary) !important;
+            border-color: var(--primary) !important;
+            color: #fff !important;
+        }
+
+        .btn-outline-primary {
+            color: var(--primary) !important;
+            border-color: var(--primary) !important;
+        }
+
+        /* Pagination styling (Bootstrap-compatible) */
+        .pagination {
+            margin: 0;
+            padding: 0.5rem;
+            display: flex;
+            gap: 6px;
+            list-style: none;
+        }
+
+        .pagination .page-link {
+            color: var(--primary);
+            border: 1px solid rgba(0,0,0,0.08);
+            padding: 6px 10px;
+            border-radius: 6px;
+            background: #fff;
+        }
+
+        .pagination .page-item.active .page-link {
+            background: var(--primary);
+            color: #fff;
+            border-color: var(--primary);
+        }
+
+        .pagination .page-link:hover {
+            background: rgba(var(--primary-rgb), 0.06);
+            color: var(--primary);
         }
 
         .badge-verified {
@@ -278,7 +319,7 @@
         }
 
         .navbar-dropdown-btn {
-            background: rgba(173, 20, 87, 0.05);
+            background: rgba(var(--primary-rgb), 0.05);
             border: none;
             display: flex;
             align-items: center;
@@ -287,7 +328,7 @@
             padding: 8px 18px;
             border-radius: 50px;
             transition: all 0.3s ease;
-            color: #ad1457;
+            color: var(--primary);
             font-weight: 600;
         }
 
@@ -331,8 +372,8 @@
         }
 
         .navbar-dropdown-item:hover {
-            background: #fff5f8;
-            color: #ad1457;
+            background: rgba(var(--primary-rgb), 0.04);
+            color: var(--primary);
         }
     </style>
     @yield('styles')

@@ -6,8 +6,12 @@
     
     <div class="navbar-user-dropdown">
         <button class="navbar-dropdown-btn" onclick="toggleNavbarDropdown(event)">
-            <i class="fa-solid fa-circle-user fs-5"></i>
-            <span>{{ $user->name }}</span>
+            @if(optional(auth()->user())->photo)
+                <img src="{{ asset('storage/' . auth()->user()->photo) }}" alt="Profile" style="width:36px;height:36px;border-radius:50%;object-fit:cover;border:2px solid #fff;" />
+            @else
+                <span style="display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg, rgba(173,20,87,0.18), rgba(173,20,87,0.10));color:#fff;font-size:16px;"><i class="fa-solid fa-user"></i></span>
+            @endif
+            <span>{{ optional(auth()->user())->name }}</span>
             <i class="fa-solid fa-chevron-down small"></i>
         </button>
         <div class="navbar-dropdown-menu" id="navbarDropdownMenu">

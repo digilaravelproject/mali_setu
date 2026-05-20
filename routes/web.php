@@ -68,12 +68,15 @@ Route::middleware('auth')->group(function () {
     Route::post('/dashboard/change-password', [DashboardController::class, 'changePassword'])->name('dashboard.password.change');
     Route::delete('/dashboard/delete-account', [DashboardController::class, 'deleteAccount'])->name('dashboard.account.delete');
 
-    // AJAX directory search / browse
-    Route::get('/dashboard/businesses/search', [DashboardController::class, 'searchDirectoryBusinesses'])->name('dashboard.businesses.search');
-    Route::get('/dashboard/businesses/category/{id}', [DashboardController::class, 'getCategoryBusinesses'])->name('dashboard.businesses.category');
+    // Dedicated Business Management & Directory Routes (Decoupled & Standard MVC)
+    Route::get('/dashboard/business/browse', [BusinessController::class, 'browse'])->name('dashboard.business.browse');
+    Route::get('/dashboard/business/profile/{id}', [BusinessController::class, 'show'])->name('dashboard.business.show');
+    Route::post('/dashboard/business/reviews', [BusinessController::class, 'storeReview'])->name('dashboard.business.reviews.store');
 
     // Dedicated Business Management Console Route
     Route::get('/dashboard/business', [BusinessController::class, 'index'])->name('dashboard.business.index');
+    Route::get('/dashboard/business/create', [BusinessController::class, 'create'])->name('dashboard.business.create');
+    Route::get('/dashboard/business/edit', [BusinessController::class, 'edit'])->name('dashboard.business.edit');
 
     // Business Enterprise & Dependent Modules (Products, Services, Jobs, Razorpay Subscriptions)
     Route::prefix('dashboard/business')->name('dashboard.business.')->group(function () {
@@ -97,6 +100,27 @@ Route::middleware('auth')->group(function () {
         Route::delete('jobs/{id}', [BusinessController::class, 'deleteJob'])->name('jobs.delete');
         Route::post('jobs/{id}/toggle', [BusinessController::class, 'toggleJob'])->name('jobs.toggle');
         Route::post('applications/{id}/status', [BusinessController::class, 'updateApplicationStatus'])->name('applications.status');
+    });
+
+    // ── Matrimony Module ──────────────────────────────────────────────────
+    Route::prefix('dashboard/matrimony')->name('matrimony.')->group(function () {
+        Route::get('/',                          [\App\Http\Controllers\MatrimonyController::class, 'index'])->name('index');
+        Route::get('/create',                    [\App\Http\Controllers\MatrimonyController::class, 'create'])->name('create');
+        Route::post('/create',                   [\App\Http\Controllers\MatrimonyController::class, 'store'])->name('store');
+        Route::get('/edit',                      [\App\Http\Controllers\MatrimonyController::class, 'edit'])->name('edit');
+        Route::post('/update',                   [\App\Http\Controllers\MatrimonyController::class, 'update'])->name('update');
+        Route::delete('/delete',                 [\App\Http\Controllers\MatrimonyController::class, 'destroy'])->name('delete');
+        Route::get('/browse',                    [\App\Http\Controllers\MatrimonyController::class, 'browse'])->name('browse');
+        Route::get('/profile/{id}',              [\App\Http\Controllers\MatrimonyController::class, 'show'])->name('show');
+        Route::post('/request/send',             [\App\Http\Controllers\MatrimonyController::class, 'sendRequest'])->name('request.send');
+        Route::get('/requests',                  [\App\Http\Controllers\MatrimonyController::class, 'requests'])->name('requests');
+        Route::post('/request/{id}/respond',     [\App\Http\Controllers\MatrimonyController::class, 'respondRequest'])->name('request.respond');
+        Route::get('/conversations',             [\App\Http\Controllers\MatrimonyController::class, 'conversations'])->name('conversations');
+        Route::get('/chat/{conversationId}',     [\App\Http\Controllers\MatrimonyController::class, 'chat'])->name('chat');
+        Route::post('/chat/send',                [\App\Http\Controllers\MatrimonyController::class, 'sendMessage'])->name('chat.send');
+        Route::get('/chat/{conversationId}/fetch', [\App\Http\Controllers\MatrimonyController::class, 'fetchMessages'])->name('chat.fetch');
+        Route::post('/subscribe',                [\App\Http\Controllers\MatrimonyController::class, 'createOrder'])->name('subscribe');
+        Route::post('/verify-payment',           [\App\Http\Controllers\MatrimonyController::class, 'verifyPayment'])->name('verify-payment');
     });
 });
 

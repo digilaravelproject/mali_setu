@@ -4,11 +4,23 @@ namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Models\Business;
+use App\Models\BusinessCategory;
+use App\Models\BusinessPlan;
+use App\Models\Product;
+use App\Models\Service;
+use App\Models\JobPosting;
+use App\Models\JobApplication;
 use App\Models\Transaction;
+use App\Models\Payment;
+use App\Models\Notification;
+use App\Models\BusinessReview;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class BusinessController extends Controller
 {
@@ -33,12 +45,12 @@ class BusinessController extends Controller
             ->first();
         $user->has_business_payment = !is_null($businessPayment);
 
-        $categories = \App\Models\BusinessCategory::where('is_active', true)->get();
-        $plans = \App\Models\BusinessPlan::where('active', true)->get();
+        $categories = BusinessCategory::where('is_active', true)->get();
+        $plans = BusinessPlan::where('active', true)->get();
         
         $jobs = [];
         if ($user->business) {
-            $jobs = \App\Models\JobPosting::where('business_id', $user->business->id)
+            $jobs = JobPosting::where('business_id', $user->business->id)
                 ->with(['applications.user'])
                 ->latest()
                 ->get();
@@ -50,10 +62,23 @@ class BusinessController extends Controller
             'businesses_count' => $userBusiness ? 1 : 0,
             'products_count' => $userBusiness ? $userBusiness->products()->count() : 0,
             'services_count' => $userBusiness ? $userBusiness->services()->count() : 0,
-            'jobs_count' => $userBusiness ? \App\Models\JobPosting::where('business_id', $userBusiness->id)->count() : 0,
+            'jobs_count' => $userBusiness ? JobPosting::where('business_id', $userBusiness->id)->count() : 0,
         ];
 
-        return view('dashboard.business', compact('user', 'stats', 'categories', 'plans', 'jobs'));
+        return view('business.index', compact('user', 'stats', 'categories', 'plans', 'jobs'));
+    }
+
+    /**
+     * Show Business Registration Form
+     */
+    public function create()
+    {
+        $user = Auth::user();
+        if ($user->business) {
+            return redirect()->route('dashboard.business.index')->with('success', 'You already have a registered business.');
+        }
+        $categories = BusinessCategory::where('is_active', true)->get();
+        return view('business.create', compact('categories'));
     }
 
     /**
@@ -62,6 +87,9 @@ class BusinessController extends Controller
     public function registerBusiness(Request $request)
     {
         $user = Auth::user();
+        if ($user->business) {
+            return redirect()->route('dashboard.business.index')->with('success', 'You already have a registered business.');
+        }
 
         $request->validate([
             'business_name' => 'required|string|max:255',
@@ -98,7 +126,7 @@ class BusinessController extends Controller
                 }
             }
 
-            $business = \App\Models\Business::create([
+            $business = Business::create([
                 'user_id' => $user->id,
                 'business_name' => $request->business_name,
                 'business_type' => $request->business_type,
@@ -126,17 +154,21 @@ class BusinessController extends Controller
                 $user->update(['user_type' => 'business']);
             }
 
-            app(\App\Services\NotificationService::class)->createNotification(
-                $user->id,
-                \App\Models\Notification::TYPE_BUSINESS_VERIFIED,
-                'Business registered',
-                'Your business "' . $business->business_name . '" has been registered and is pending verification.',
-                ['business_id' => $business->id],
-                '/business/manage',
-                \App\Models\Notification::PRIORITY_MEDIUM,
-                $business,
-                ['in_app', 'email']
-            );
+            try {
+                app(\App\Services\NotificationService::class)->createNotification(
+                    $user->id,
+                    Notification::TYPE_BUSINESS_VERIFIED,
+                    'Business registered',
+                    'Your business "' . $business->business_name . '" has been registered and is pending verification.',
+                    ['business_id' => $business->id],
+                    '/business/manage',
+                    Notification::PRIORITY_MEDIUM,
+                    $business,
+                    ['in_app', 'email']
+                );
+            } catch (\Exception $e) {
+                \Log::warning('Business registration notification failed: ' . $e->getMessage());
+            }
 
             return redirect()->route('dashboard.business.index')->with('success', 'Business registered successfully! Enjoy your 30-day trial.');
 
@@ -147,12 +179,23 @@ class BusinessController extends Controller
     }
 
     /**
+     * Show Business Editing Form
+     */
+    public function edit()
+    {
+        $user = Auth::user();
+        $business = Business::where('user_id', $user->id)->firstOrFail();
+        $categories = BusinessCategory::where('is_active', true)->get();
+        return view('business.edit', compact('business', 'categories'));
+    }
+
+    /**
      * Update Business Profile Details
      */
     public function updateBusiness(Request $request)
     {
         $user = Auth::user();
-        $business = \App\Models\Business::where('user_id', $user->id)->firstOrFail();
+        $business = Business::where('user_id', $user->id)->firstOrFail();
 
         $request->validate([
             'business_name' => 'required|string|max:255',
@@ -177,8 +220,10 @@ class BusinessController extends Controller
         ]);
 
         try {
-            $photoPaths = [];
+            $photoPaths = $business->photo ? explode(', ', $business->photo) : [];
             if ($request->hasFile('photos')) {
+                // If user uploads new photos, we append or replace them.
+                // Let's replace them in the standard way.
                 if ($business->photo) {
                     foreach (explode(',', $business->photo) as $oldP) {
                         $oldP = trim($oldP);
@@ -188,6 +233,7 @@ class BusinessController extends Controller
                     }
                 }
 
+                $photoPaths = [];
                 foreach ($request->file('photos') as $file) {
                     $fileName = uniqid() . '.' . $file->getClientOriginalExtension();
                     if (!Storage::disk('public')->exists('business/photos')) {
@@ -218,6 +264,102 @@ class BusinessController extends Controller
     }
 
     /**
+     * Browse approved businesses (Directory)
+     */
+    public function browse(Request $request)
+    {
+        $categories = BusinessCategory::where('is_active', true)->get();
+        
+        $query = Business::where('verification_status', 'approved')
+            ->with(['category', 'products', 'services']);
+
+        // Quick Search Filters
+        if ($request->filled('q')) {
+            $q = $request->q;
+            $query->where(function($sub) use ($q) {
+                $sub->where('business_name', 'like', "%{$q}%")
+                    ->orWhere('description', 'like', "%{$q}%")
+                    ->orWhere('city', 'like', "%{$q}%")
+                    ->orWhere('state', 'like', "%{$q}%");
+            });
+        }
+
+        // Category Filter
+        if ($request->filled('category_id')) {
+            $query->where('category_id', $request->category_id);
+        }
+
+        // Location Filter (City/State)
+        if ($request->filled('location')) {
+            $loc = $request->location;
+            $query->where(function($sub) use ($loc) {
+                $sub->where('city', 'like', "%{$loc}%")
+                    ->orWhere('state', 'like', "%{$loc}%");
+            });
+        }
+
+        $businesses = $query->latest()->paginate(12)->withQueryString();
+
+        return view('business.browse', compact('businesses', 'categories'));
+    }
+
+    /**
+     * Show Public Business Profile Details
+     */
+    public function show($id)
+    {
+        $business = Business::with([
+            'category', 
+            'products', 
+            'services', 
+            'jobPostings' => function($q) {
+                $q->where('is_active', true)->where('status', 'approved');
+            }, 
+            'reviews' => function($q) {
+                $q->where('status', 'approved')->with('user')->latest();
+            }
+        ])->findOrFail($id);
+
+        // Calculate average rating
+        $avgRating = $business->reviews->avg('rating') ?? 0;
+
+        return view('business.show', compact('business', 'avgRating'));
+    }
+
+    /**
+     * Store Business Review (One review per user per business)
+     */
+    public function storeReview(Request $request)
+    {
+        $request->validate([
+            'business_id' => 'required|integer|exists:businesses,id',
+            'rating'      => 'required|integer|min:1|max:5',
+            'review_text' => 'nullable|string|max:1000',
+        ]);
+
+        $user = Auth::user();
+
+        // Check if user already reviewed this business
+        $existing = BusinessReview::where('business_id', $request->business_id)
+            ->where('user_id', $user->id)
+            ->first();
+
+        if ($existing) {
+            return back()->withErrors(['error' => 'You have already submitted a review for this business.']);
+        }
+
+        BusinessReview::create([
+            'business_id' => $request->business_id,
+            'user_id'     => $user->id,
+            'rating'      => $request->rating,
+            'review_text' => $request->review_text,
+            'status'      => 'approved', // Auto-approved on web for better user interaction, or standard pending
+        ]);
+
+        return back()->with('success', 'Your review has been submitted successfully!');
+    }
+
+    /**
      * Create Razorpay Order for Business Plan Subscription
      */
     public function createBusinessOrder(Request $request)
@@ -226,7 +368,7 @@ class BusinessController extends Controller
             'plan_id' => 'required|integer|exists:business_plans,id',
         ]);
 
-        $plan = \App\Models\BusinessPlan::find($request->plan_id);
+        $plan = BusinessPlan::find($request->plan_id);
         if (!$plan || !$plan->active) {
             return response()->json([
                 'success' => false,
@@ -248,7 +390,7 @@ class BusinessController extends Controller
 
             $razorpayOrder = $razorpay->order->create($orderData);
 
-            $transaction = \App\Models\Transaction::create([
+            $transaction = Transaction::create([
                 'user_id' => $request->user()->id,
                 'amount' => $amount,
                 'currency' => 'INR',
@@ -308,7 +450,7 @@ class BusinessController extends Controller
                 ], 400);
             }
 
-            $transaction = \App\Models\Transaction::where('id', $request->transaction_id)
+            $transaction = Transaction::where('id', $request->transaction_id)
                 ->where('user_id', $request->user()->id)
                 ->firstOrFail();
 
@@ -317,9 +459,9 @@ class BusinessController extends Controller
                 'status' => 'completed',
             ]);
 
-            $existingPayment = \App\Models\Payment::where('transaction_id', $transaction->id)->first();
+            $existingPayment = Payment::where('transaction_id', $transaction->id)->first();
             if (!$existingPayment) {
-                \App\Models\Payment::create([
+                Payment::create([
                     'user_id' => $request->user()->id,
                     'transaction_id' => $transaction->id,
                     'payment_id' => $request->razorpay_payment_id,
@@ -329,21 +471,21 @@ class BusinessController extends Controller
                     'currency' => $transaction->currency,
                     'payment_method' => 'razorpay',
                     'status' => 'completed',
-                    'metadata' => [
+                    'metadata' => json_encode([
                         'razorpay_order_id' => $request->razorpay_order_id,
                         'subscription_period' => $transaction->subscription_period ?? 1,
                         'original_purpose' => $transaction->purpose
-                    ],
+                    ]),
                     'paid_at' => now(),
-                    'razorpay_response' => [
+                    'razorpay_response' => json_encode([
                         'razorpay_payment_id' => $request->razorpay_payment_id,
                         'razorpay_order_id' => $request->razorpay_order_id,
                         'razorpay_signature' => $request->razorpay_signature
-                    ]
+                    ])
                 ]);
             }
 
-            $business = \App\Models\Business::where('user_id', $transaction->user_id)
+            $business = Business::where('user_id', $transaction->user_id)
                 ->latest()
                 ->first();
 
@@ -385,7 +527,7 @@ class BusinessController extends Controller
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
-        $business = \App\Models\Business::where('id', $request->business_id)
+        $business = Business::where('id', $request->business_id)
             ->where('user_id', Auth::id())
             ->firstOrFail();
 
@@ -394,7 +536,7 @@ class BusinessController extends Controller
             $imagePath = $request->file('image')->store('products', 'public');
         }
 
-        \App\Models\Product::create([
+        Product::create([
             'business_id' => $request->business_id,
             'name' => $request->name,
             'description' => $request->description,
@@ -410,8 +552,8 @@ class BusinessController extends Controller
      */
     public function deleteProduct($id)
     {
-        $product = \App\Models\Product::findOrFail($id);
-        $business = \App\Models\Business::where('id', $product->business_id)
+        $product = Product::findOrFail($id);
+        $business = Business::where('id', $product->business_id)
             ->where('user_id', Auth::id())
             ->firstOrFail();
 
@@ -436,7 +578,7 @@ class BusinessController extends Controller
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
-        $business = \App\Models\Business::where('id', $request->business_id)
+        $business = Business::where('id', $request->business_id)
             ->where('user_id', Auth::id())
             ->firstOrFail();
 
@@ -445,7 +587,7 @@ class BusinessController extends Controller
             $imagePath = $request->file('image')->store('services', 'public');
         }
 
-        \App\Models\Service::create([
+        Service::create([
             'business_id' => $request->business_id,
             'name' => $request->name,
             'description' => $request->description,
@@ -461,8 +603,8 @@ class BusinessController extends Controller
      */
     public function deleteService($id)
     {
-        $service = \App\Models\Service::findOrFail($id);
-        $business = \App\Models\Business::where('id', $service->business_id)
+        $service = Service::findOrFail($id);
+        $business = Business::where('id', $service->business_id)
             ->where('user_id', Auth::id())
             ->firstOrFail();
 
@@ -492,11 +634,11 @@ class BusinessController extends Controller
             'category' => 'required|string|max:100',
         ]);
 
-        $business = \App\Models\Business::where('id', $request->business_id)
+        $business = Business::where('id', $request->business_id)
             ->where('user_id', Auth::id())
             ->firstOrFail();
 
-        \App\Models\JobPosting::create([
+        JobPosting::create([
             'business_id' => $request->business_id,
             'title' => $request->title,
             'description' => $request->description,
@@ -520,8 +662,8 @@ class BusinessController extends Controller
      */
     public function updateJob(Request $request, $id)
     {
-        $jobPosting = \App\Models\JobPosting::findOrFail($id);
-        $business = \App\Models\Business::where('id', $jobPosting->business_id)
+        $jobPosting = JobPosting::findOrFail($id);
+        $business = Business::where('id', $jobPosting->business_id)
             ->where('user_id', Auth::id())
             ->firstOrFail();
 
@@ -550,8 +692,8 @@ class BusinessController extends Controller
      */
     public function deleteJob($id)
     {
-        $jobPosting = \App\Models\JobPosting::findOrFail($id);
-        $business = \App\Models\Business::where('id', $jobPosting->business_id)
+        $jobPosting = JobPosting::findOrFail($id);
+        $business = Business::where('id', $jobPosting->business_id)
             ->where('user_id', Auth::id())
             ->firstOrFail();
 
@@ -564,8 +706,8 @@ class BusinessController extends Controller
      */
     public function toggleJob($id)
     {
-        $jobPosting = \App\Models\JobPosting::findOrFail($id);
-        $business = \App\Models\Business::where('id', $jobPosting->business_id)
+        $jobPosting = JobPosting::findOrFail($id);
+        $business = Business::where('id', $jobPosting->business_id)
             ->where('user_id', Auth::id())
             ->firstOrFail();
 
@@ -581,7 +723,7 @@ class BusinessController extends Controller
      */
     public function updateApplicationStatus(Request $request, $id)
     {
-        $application = \App\Models\JobApplication::with('jobPosting.business')->findOrFail($id);
+        $application = JobApplication::with('jobPosting.business')->findOrFail($id);
         if ($application->jobPosting->business->user_id !== Auth::id()) {
             abort(403);
         }
@@ -606,7 +748,7 @@ class BusinessController extends Controller
         try {
             app(\App\Services\NotificationService::class)->createNotification(
                 $application->user_id,
-                \App\Models\Notification::TYPE_JOB_APPLICATION_STATUS,
+                Notification::TYPE_JOB_APPLICATION_STATUS,
                 'Job application status: ' . ucfirst($request->status),
                 $statusMessageMap[$request->status] ?? 'Your job application status has been updated.',
                 [
@@ -615,7 +757,7 @@ class BusinessController extends Controller
                     'status' => $request->status,
                 ],
                 '/jobs/my-applications',
-                \App\Models\Notification::PRIORITY_MEDIUM,
+                Notification::PRIORITY_MEDIUM,
                 $application,
                 ['in_app', 'email']
             );
@@ -632,7 +774,7 @@ class BusinessController extends Controller
     public function deleteBusiness()
     {
         $user = Auth::user();
-        $business = \App\Models\Business::where('user_id', $user->id)->firstOrFail();
+        $business = Business::where('user_id', $user->id)->firstOrFail();
 
         try {
             foreach ($business->products as $product) {

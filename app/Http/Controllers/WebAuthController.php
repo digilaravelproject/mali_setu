@@ -315,31 +315,34 @@ class WebAuthController extends Controller
     {
         try {
             if ($request->has('sandbox') || !config('services.google.client_id')) {
-                // Find or create the Google Sandbox user
-                $user = User::firstOrCreate(
-                    ['email' => 'sandbox.google@malisetu.com'],
-                    [
-                        'name' => 'Google Sandbox User',
-                        'phone' => '+919999999999',
-                        'password' => Hash::make(Str::random(16)),
-                        'user_type' => 'general',
-                        'caste_verification_status' => 'approved'
-                    ]
-                );
+                $user = User::where('email', 'sandbox.google@malisetu.com')->first();
+                if (!$user) {
+                    return redirect()->route('login')->withErrors([
+                        'email' => 'No account found for this Google email. Please register first.'
+                    ]);
+                }
                 Auth::login($user);
-                return redirect()->route('dashboard')->with('success', 'Logged in smoothly via Google Sandbox!');
+                return redirect()->route('dashboard')->with('success', 'Logged in via Google Sandbox!');
             }
 
             $googleUser = Socialite::driver('google')->user();
-            $user = User::updateOrCreate(
-                ['email' => $googleUser->getEmail()],
-                [
-                    'name' => $googleUser->getName(),
-                    'google_id' => $googleUser->getId(),
-                    'password' => Hash::make(Str::random(16)),
-                    'caste_verification_status' => 'approved'
-                ]
-            );
+            $user = User::where('email', $googleUser->getEmail())->first();
+
+            if (!$user) {
+                return redirect()->route('login')->withErrors([
+                    'email' => 'No account found for this Google email. Please register first to join Mali Setu.'
+                ]);
+            }
+
+            if (!$user->google_id) {
+                $user->update(['google_id' => $googleUser->getId()]);
+            }
+
+            if ($user->caste_verification_status === 'pending' || $user->caste_verification_status === 'rejected') {
+                return redirect()->route('login')->withErrors([
+                    'email' => 'Your caste verification status is not approved yet.'
+                ]);
+            }
 
             Auth::login($user);
             return redirect()->route('dashboard')->with('success', 'Successfully logged in with Google!');

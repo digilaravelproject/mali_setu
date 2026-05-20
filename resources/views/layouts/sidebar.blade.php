@@ -12,9 +12,37 @@
                     <i class="fa-solid fa-chart-line"></i> Dashboard
                 </a>
             </li>
+
+            <!-- Matrimony Module -->
             <li class="nav-item">
-                <a href="{{ route('dashboard.business.index') }}" class="nav-link-custom {{ Request::routeIs('dashboard.business.index') ? 'active' : '' }}">
+                <a href="{{ route('matrimony.index') }}" class="nav-link-custom {{ Request::routeIs('matrimony.*') ? 'active' : '' }}">
+                    <i class="fa-solid fa-heart"></i> Matrimony
+                </a>
+            </li>
+            <li class="nav-item ps-3">
+                <a href="{{ route('matrimony.browse') }}" class="nav-link-custom small {{ Request::routeIs('matrimony.browse') ? 'active' : '' }}" style="font-size:0.82rem; padding: 8px 16px;">
+                    <i class="fa-solid fa-magnifying-glass text-primary"></i> Users Profiles
+                </a>
+            </li>
+            <li class="nav-item ps-3">
+                <a href="{{ route('matrimony.requests') }}" class="nav-link-custom small {{ Request::routeIs('matrimony.requests') ? 'active' : '' }}" style="font-size:0.82rem; padding: 8px 16px;">
+                    <i class="fa-solid fa-paper-plane text-primary"></i> Requests
+                </a>
+            </li>
+            <li class="nav-item ps-3">
+                <a href="{{ route('matrimony.conversations') }}" class="nav-link-custom small {{ Request::routeIs('matrimony.conversations') || Request::routeIs('matrimony.chat') ? 'active' : '' }}" style="font-size:0.82rem; padding: 8px 16px;">
+                    <i class="fa-solid fa-comments text-primary"></i> Messages
+                </a>
+            </li>
+
+            <li class="nav-item">
+                <a href="{{ route('dashboard.business.index') }}" class="nav-link-custom {{ Request::routeIs('dashboard.business.index') || Request::routeIs('dashboard.business.create') || Request::routeIs('dashboard.business.edit') ? 'active' : '' }}">
                     <i class="fa-solid fa-briefcase"></i> Manage Business
+                </a>
+            </li>
+            <li class="nav-item ps-3">
+                <a href="{{ route('dashboard.business.browse') }}" class="nav-link-custom small {{ Request::routeIs('dashboard.business.browse') || Request::routeIs('dashboard.business.show') ? 'active' : '' }}" style="font-size:0.82rem; padding: 8px 16px;">
+                    <i class="fa-solid fa-magnifying-glass text-primary"></i> Total Businesses
                 </a>
             </li>
         </ul>
