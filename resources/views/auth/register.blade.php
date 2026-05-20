@@ -419,25 +419,37 @@
                             <!-- Password Input -->
                             <div class="col-md-6 mb-4">
                                 <label class="form-label small fw-bold text-secondary">Password *</label>
-                                <input 
-                                    type="password" 
-                                    name="password" 
-                                    class="form-control form-control-lg @error('password') is-invalid @enderror" 
-                                    placeholder="Min 8 characters" 
-                                    required
-                                >
+                                <div class="input-group">
+                                    <input 
+                                        type="password" 
+                                        name="password" 
+                                        id="reg-password"
+                                        class="form-control form-control-lg @error('password') is-invalid @enderror" 
+                                        placeholder="Min 8 characters" 
+                                        required
+                                    >
+                                    <button type="button" class="btn btn-outline-secondary border-start-0 bg-white" onclick="togglePasswordVisibility('reg-password', this)" style="border-top-right-radius: 8px; border-bottom-right-radius: 8px;">
+                                        <i class="fa-solid fa-eye text-secondary"></i>
+                                    </button>
+                                </div>
                             </div>
 
                             <!-- Password Confirmation Input -->
                             <div class="col-md-6 mb-4">
                                 <label class="form-label small fw-bold text-secondary">Confirm Password *</label>
-                                <input 
-                                    type="password" 
-                                    name="password_confirmation" 
-                                    class="form-control form-control-lg" 
-                                    placeholder="Repeat password" 
-                                    required
-                                >
+                                <div class="input-group">
+                                    <input 
+                                        type="password" 
+                                        name="password_confirmation" 
+                                        id="reg-confirm-password"
+                                        class="form-control form-control-lg" 
+                                        placeholder="Repeat password" 
+                                        required
+                                    >
+                                    <button type="button" class="btn btn-outline-secondary border-start-0 bg-white" onclick="togglePasswordVisibility('reg-confirm-password', this)" style="border-top-right-radius: 8px; border-bottom-right-radius: 8px;">
+                                        <i class="fa-solid fa-eye text-secondary"></i>
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -497,10 +509,58 @@
         document.getElementById('info-description').innerText = profilesInfo[type].desc;
     }
 
-    // Set initial from old value if redirected with errors
+    // Toggle Password Visibility
+    function togglePasswordVisibility(inputId, button) {
+        const input = document.getElementById(inputId);
+        const icon = button.querySelector('i');
+        if (input.type === 'password') {
+            input.type = 'text';
+            icon.classList.remove('fa-eye');
+            icon.classList.add('fa-eye-slash');
+        } else {
+            input.type = 'password';
+            icon.classList.remove('fa-eye-slash');
+            icon.classList.add('fa-eye');
+        }
+    }
+
+    // Indian Pincode Auto-lookup and Auto-population
     document.addEventListener('DOMContentLoaded', () => {
         const type = document.getElementById('user_type').value;
         selectUserType(type);
+
+        const pincodeInput = document.querySelector('input[name="pincode"]');
+        if (pincodeInput) {
+            pincodeInput.addEventListener('input', function() {
+                const pincode = this.value.trim();
+                if (pincode.length === 6 && /^\d+$/.test(pincode)) {
+                    pincodeInput.classList.add('is-valid');
+                    
+                    fetch(`https://api.postalpincode.in/pincode/${pincode}`)
+                        .then(res => res.json())
+                        .then(data => {
+                            if (data && data[0] && data[0].Status === 'Success') {
+                                const postOffice = data[0].PostOffice[0];
+                                const state = postOffice.State;
+                                const city = postOffice.District; 
+                                
+                                const stateInput = document.querySelector('input[name="state"]');
+                                const cityInput = document.querySelector('input[name="city"]');
+                                
+                                if (stateInput) {
+                                    stateInput.value = state;
+                                    stateInput.classList.add('is-valid');
+                                }
+                                if (cityInput) {
+                                    cityInput.value = city;
+                                    cityInput.classList.add('is-valid');
+                                }
+                            }
+                        })
+                        .catch(err => console.error('Error fetching pincode details:', err));
+                }
+            });
+        }
     });
 </script>
 </body>

@@ -399,6 +399,12 @@
 
     // Dropdown Tab Select Handler
     function selectDropdownTab(tabId) {
+        const targetPanel = document.getElementById(`tab-${tabId}`);
+        if (!targetPanel) {
+            window.location.href = `/dashboard?tab=${tabId}`;
+            return;
+        }
+
         // Toggle tab links in sidebar (deactivate them)
         document.querySelectorAll('.nav-link-custom').forEach(link => {
             link.classList.remove('active');
@@ -410,10 +416,7 @@
         });
 
         // Show targeted panel
-        const targetPanel = document.getElementById(`tab-${tabId}`);
-        if (targetPanel) {
-            targetPanel.classList.add('active');
-        }
+        targetPanel.classList.add('active');
 
         // Close navbar dropdown
         const dropdown = document.getElementById('navbarDropdownMenu');
@@ -424,6 +427,12 @@
 
     // Switch sidebar tab
     function switchTab(tabId, el) {
+        const targetPanel = document.getElementById(`tab-${tabId}`);
+        if (!targetPanel) {
+            window.location.href = `/dashboard?tab=${tabId}`;
+            return;
+        }
+
         // Toggle tab links
         document.querySelectorAll('.nav-link-custom').forEach(link => {
             link.classList.remove('active');
@@ -437,10 +446,7 @@
             panel.classList.remove('active');
         });
         
-        const targetPanel = document.getElementById(`tab-${tabId}`);
-        if(targetPanel) {
-            targetPanel.classList.add('active');
-        }
+        targetPanel.classList.add('active');
 
         // If switching back to business, show list view by default
         if (tabId === 'business') {
@@ -450,29 +456,14 @@
 
     // Helper to dynamically select business category from main dashboard
     function selectCategoryOnDashboard(categoryId) {
-        // 1. Switch to Business Tab
-        switchTab('business', document.querySelector('.sidebar a[onclick*="business"]'));
+        const directorySection = document.getElementById('directory-listings-section');
+        if (!directorySection) {
+            window.location.href = `/dashboard?browse_category_id=${categoryId}`;
+            return;
+        }
         
-        // 2. Check if user already has a business (has edit section)
-        const isRegistered = @json($user->is_business ?? false);
-        if (!isRegistered) {
-            // Go to Setup Form
-            toggleBusinessSection('setup');
-            
-            // Set setup form select category_id
-            const selectEl = document.querySelector('#business-setup-section select[name="category_id"]');
-            if (selectEl) {
-                selectEl.value = categoryId;
-            }
-        } else {
-            // User has a business, go to Edit Form
-            toggleBusinessSection('edit');
-            
-            // Set edit form select category_id
-            const selectEl = document.querySelector('#business-edit-section select[name="category_id"]');
-            if (selectEl) {
-                selectEl.value = categoryId;
-            }
+        if (typeof fetchCategoryBusinesses === 'function') {
+            fetchCategoryBusinesses(categoryId);
         }
     }
 

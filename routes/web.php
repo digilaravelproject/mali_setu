@@ -31,6 +31,7 @@ Route::get('/test-mail', function () {
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\WebAuthController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\BusinessController;
 
 // Public route
 Route::get('/', function () {
@@ -67,28 +68,35 @@ Route::middleware('auth')->group(function () {
     Route::post('/dashboard/change-password', [DashboardController::class, 'changePassword'])->name('dashboard.password.change');
     Route::delete('/dashboard/delete-account', [DashboardController::class, 'deleteAccount'])->name('dashboard.account.delete');
 
+    // AJAX directory search / browse
+    Route::get('/dashboard/businesses/search', [DashboardController::class, 'searchDirectoryBusinesses'])->name('dashboard.businesses.search');
+    Route::get('/dashboard/businesses/category/{id}', [DashboardController::class, 'getCategoryBusinesses'])->name('dashboard.businesses.category');
+
+    // Dedicated Business Management Console Route
+    Route::get('/dashboard/business', [BusinessController::class, 'index'])->name('dashboard.business.index');
+
     // Business Enterprise & Dependent Modules (Products, Services, Jobs, Razorpay Subscriptions)
     Route::prefix('dashboard/business')->name('dashboard.business.')->group(function () {
-        Route::post('register', [DashboardController::class, 'registerBusiness'])->name('register');
-        Route::post('update', [DashboardController::class, 'updateBusiness'])->name('update');
-        Route::delete('delete', [DashboardController::class, 'deleteBusiness'])->name('delete');
-        Route::post('subscribe', [DashboardController::class, 'createBusinessOrder'])->name('subscribe');
-        Route::post('verify-payment', [DashboardController::class, 'verifyBusinessPayment'])->name('verify-payment');
+        Route::post('register', [BusinessController::class, 'registerBusiness'])->name('register');
+        Route::post('update', [BusinessController::class, 'updateBusiness'])->name('update');
+        Route::delete('delete', [BusinessController::class, 'deleteBusiness'])->name('delete');
+        Route::post('subscribe', [BusinessController::class, 'createBusinessOrder'])->name('subscribe');
+        Route::post('verify-payment', [BusinessController::class, 'verifyBusinessPayment'])->name('verify-payment');
 
         // Products Catalog CRUD
-        Route::post('products', [DashboardController::class, 'addProduct'])->name('products.add');
-        Route::delete('products/{id}', [DashboardController::class, 'deleteProduct'])->name('products.delete');
+        Route::post('products', [BusinessController::class, 'addProduct'])->name('products.add');
+        Route::delete('products/{id}', [BusinessController::class, 'deleteProduct'])->name('products.delete');
 
         // Services Catalog CRUD
-        Route::post('services', [DashboardController::class, 'addService'])->name('services.add');
-        Route::delete('services/{id}', [DashboardController::class, 'deleteService'])->name('services.delete');
+        Route::post('services', [BusinessController::class, 'addService'])->name('services.add');
+        Route::delete('services/{id}', [BusinessController::class, 'deleteService'])->name('services.delete');
 
         // Jobs Hub CRUD & Applicant tracking
-        Route::post('jobs', [DashboardController::class, 'addJob'])->name('jobs.add');
-        Route::post('jobs/{id}/update', [DashboardController::class, 'updateJob'])->name('jobs.update');
-        Route::delete('jobs/{id}', [DashboardController::class, 'deleteJob'])->name('jobs.delete');
-        Route::post('jobs/{id}/toggle', [DashboardController::class, 'toggleJob'])->name('jobs.toggle');
-        Route::post('applications/{id}/status', [DashboardController::class, 'updateApplicationStatus'])->name('applications.status');
+        Route::post('jobs', [BusinessController::class, 'addJob'])->name('jobs.add');
+        Route::post('jobs/{id}/update', [BusinessController::class, 'updateJob'])->name('jobs.update');
+        Route::delete('jobs/{id}', [BusinessController::class, 'deleteJob'])->name('jobs.delete');
+        Route::post('jobs/{id}/toggle', [BusinessController::class, 'toggleJob'])->name('jobs.toggle');
+        Route::post('applications/{id}/status', [BusinessController::class, 'updateApplicationStatus'])->name('applications.status');
     });
 });
 

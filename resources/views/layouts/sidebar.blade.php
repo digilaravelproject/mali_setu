@@ -8,12 +8,12 @@
 
         <ul class="nav-menu">
             <li class="nav-item">
-                <a class="nav-link-custom active" onclick="switchTab('overview', this)">
+                <a href="{{ route('dashboard') }}" class="nav-link-custom {{ Request::routeIs('dashboard') ? 'active' : '' }}">
                     <i class="fa-solid fa-chart-line"></i> Dashboard
                 </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link-custom" onclick="switchTab('business', this)">
+                <a href="{{ route('dashboard.business.index') }}" class="nav-link-custom {{ Request::routeIs('dashboard.business.index') ? 'active' : '' }}">
                     <i class="fa-solid fa-briefcase"></i> Manage Business
                 </a>
             </li>
