@@ -45,6 +45,25 @@
                     <i class="fa-solid fa-magnifying-glass text-primary"></i> Total Businesses
                 </a>
             </li>
+
+            <!-- Subscription Module -->
+            <li class="nav-item">
+                <a href="{{ route('subscriptions.index') }}" class="nav-link-custom {{ Request::routeIs('subscriptions.*') ? 'active' : '' }}">
+                    <i class="fa-solid fa-credit-card"></i> My Subscriptions
+                </a>
+            </li>
+
+            <!-- Volunteer Module -->
+            <li class="nav-item">
+                <a href="{{ route('volunteers.index') }}" class="nav-link-custom {{ Request::routeIs('volunteers.index') ? 'active' : '' }}">
+                    <i class="fa-solid fa-hands-holding"></i> Volunteer Portal
+                </a>
+            </li>
+            <li class="nav-item ps-3">
+                <a href="{{ route('volunteers.browse') }}" class="nav-link-custom small {{ Request::routeIs('volunteers.browse') || Request::routeIs('volunteers.opportunity.*') ? 'active' : '' }}" style="font-size:0.82rem; padding: 8px 16px;">
+                    <i class="fa-solid fa-magnifying-glass text-primary"></i> Browse Opportunities
+                </a>
+            </li>
         </ul>
     </div>
 

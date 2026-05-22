@@ -32,6 +32,8 @@ use App\Http\Controllers\PageController;
 use App\Http\Controllers\WebAuthController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\BusinessController;
+use App\Http\Controllers\SubscriptionController;
+use App\Http\Controllers\VolunteerController;
 
 // Public route
 Route::get('/', function () {
@@ -121,6 +123,23 @@ Route::middleware('auth')->group(function () {
         Route::get('/chat/{conversationId}/fetch', [\App\Http\Controllers\MatrimonyController::class, 'fetchMessages'])->name('chat.fetch');
         Route::post('/subscribe',                [\App\Http\Controllers\MatrimonyController::class, 'createOrder'])->name('subscribe');
         Route::post('/verify-payment',           [\App\Http\Controllers\MatrimonyController::class, 'verifyPayment'])->name('verify-payment');
+    });
+
+    // ── Subscription Module ───────────────────────────────────────────────
+    Route::prefix('dashboard/subscriptions')->name('subscriptions.')->group(function () {
+        Route::get('/', [SubscriptionController::class, 'index'])->name('index');
+        Route::get('/{id}', [SubscriptionController::class, 'show'])->name('show');
+        Route::get('/{id}/invoice', [SubscriptionController::class, 'invoice'])->name('invoice');
+    });
+
+    // ── Volunteers Module ─────────────────────────────────────────────────
+    Route::prefix('dashboard/volunteers')->name('volunteers.')->group(function () {
+        Route::get('/', [VolunteerController::class, 'index'])->name('index');
+        Route::post('/profile', [VolunteerController::class, 'updateProfile'])->name('profile.update');
+        Route::get('/browse', [VolunteerController::class, 'browse'])->name('browse');
+        Route::get('/opportunity/{id}', [VolunteerController::class, 'show'])->name('opportunity.show');
+        Route::post('/opportunity/apply', [VolunteerController::class, 'apply'])->name('opportunity.apply');
+        Route::post('/application/{id}/withdraw', [VolunteerController::class, 'withdraw'])->name('application.withdraw');
     });
 });
 
