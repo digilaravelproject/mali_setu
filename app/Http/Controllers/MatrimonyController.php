@@ -69,61 +69,71 @@ class MatrimonyController extends Controller
             return redirect()->route('matrimony.index')->with('success', 'Profile already exists.');
         }
 
+        // Calculate age automatically from Date of Birth
+        $age = null;
+        if ($request->filled('date_of_birth')) {
+            try {
+                $dob = \Carbon\Carbon::parse($request->date_of_birth);
+                $age = $dob->age;
+            } catch (\Exception $e) {
+                // Ignore parsing errors, let validation handle it
+            }
+        }
+        $request->merge(['age' => $age]);
+
         $request->validate([
+            'first_name'                   => 'required|string|max:100',
+            'middle_name'                  => 'nullable|string|max:100',
+            'last_name'                    => 'required|string|max:100',
+            'profile_created_by'           => 'required|string|max:100',
+            'gender'                       => 'required|in:male,female',
+            'date_of_birth'                => 'required|date',
             'age'                          => 'required|integer|min:18|max:100',
             'height'                       => 'nullable|string|max:10',
             'weight'                       => 'nullable|string|max:10',
             'complexion'                   => 'nullable|string|max:50',
+            'marital_status'               => 'nullable|string|max:100',
             'physical_status'              => 'nullable|string|max:50',
-            // personal_details fields
-            'gender'                       => 'required|in:male,female,other',
-            'date_of_birth'                => 'required|date',
-            'marital_status'               => 'required|string',
-            'mother_tongue'                => 'required|string|max:100',
-            'religion'                     => 'required|string|max:100',
+            'mother_tongue'                => 'nullable|string|max:100',
+            'citizenship'                  => 'nullable|string|max:100',
+            'blood_group'                  => 'nullable|string|max:20',
+            'referral_name'                => 'nullable|string|max:200',
+            
+            // religious horoscope
             'caste'                        => 'required|string|max:100',
-            'sub_caste'                    => 'nullable|string|max:100',
-            'profile_created_by'           => 'required|string|max:100',
-            // family_details
-            'father_name'                  => 'nullable|string|max:200',
-            'father_occupation'            => 'nullable|string|max:200',
-            'mother_name'                  => 'nullable|string|max:200',
-            'mother_occupation'            => 'nullable|string|max:200',
-            'no_of_brothers'               => 'nullable|integer|min:0',
-            'no_of_sisters'                => 'nullable|integer|min:0',
-            'family_type'                  => 'nullable|string|max:100',
+            'sub_caste'                    => 'required|string|max:100',
+            'star'                         => 'nullable|string|max:100',
+            'raasi'                        => 'nullable|string|max:100',
+            'manglik'                      => 'nullable|string|max:50',
+            'dosh'                         => 'nullable|string|max:50',
+
+            // family_details & Lifestyle
+            'family_type'                  => 'required|string|max:100',
             'family_status'                => 'nullable|string|max:100',
             'family_values'                => 'nullable|string|max:100',
-            'about_family'                 => 'nullable|string|max:1000',
-            // education_details
-            'highest_qualification'        => 'required|string|max:200',
-            'college_name'                 => 'nullable|string|max:300',
-            'passing_year'                 => 'nullable|integer|min:1980|max:2030',
-            // professional_details
-            'occupation'                   => 'required|string|max:200',
-            'company_name'                 => 'nullable|string|max:300',
-            'annual_income'                => 'nullable|string|max:100',
-            'employment_type'              => 'nullable|string|max:100',
-            // location_details
-            'country'                      => 'required|string|max:100',
-            'state'                        => 'required|string|max:100',
-            'city'                         => 'required|string|max:100',
-            'pincode'                      => 'nullable|digits:6',
-            // lifestyle_details
+            'father_occupation'            => 'nullable|string|max:200',
+            'mother_occupation'            => 'nullable|string|max:200',
             'diet'                         => 'nullable|string|max:50',
             'smoking'                      => 'nullable|string|max:50',
             'drinking'                     => 'nullable|string|max:50',
-            'hobbies'                      => 'nullable|string|max:500',
-            // partner_preferences
-            'pref_age_min'                 => 'nullable|integer|min:18',
-            'pref_age_max'                 => 'nullable|integer|max:100',
-            'pref_height_min'              => 'nullable|string|max:10',
-            'pref_religion'                => 'nullable|string|max:100',
-            'pref_caste'                   => 'nullable|string|max:100',
-            'pref_education'               => 'nullable|string|max:200',
-            'pref_income'                  => 'nullable|string|max:100',
-            'pref_location'                => 'nullable|string|max:200',
-            'about_partner'                => 'nullable|string|max:1000',
+
+            // education_details & Career
+            'highest_qualification'        => 'required|string|max:200',
+            'college_name'                 => 'nullable|string|max:300',
+            'occupation'                   => 'nullable|string|max:200',
+            'employment_type'              => 'required|string|max:100',
+            'company_name'                 => 'nullable|string|max:300',
+            'annual_income'                => 'nullable|string|max:100',
+
+            // location_details
+            'address'                      => 'nullable|string|max:500',
+            'pincode'                      => 'required|digits:6',
+            'country'                      => 'required|string|max:100',
+            'state'                        => 'required|string|max:100',
+            'city'                         => 'required|string|max:100',
+            'taluka'                       => 'nullable|string|max:100',
+            'village'                      => 'nullable|string|max:100',
+
             // photos
             'photos'                       => 'nullable|array',
             'photos.*'                     => 'image|mimes:jpeg,png,jpg|max:2048',
@@ -138,26 +148,46 @@ class MatrimonyController extends Controller
             }
         }
 
+        $fullName = trim($request->first_name . ' ' . ($request->middle_name ? $request->middle_name . ' ' : '') . $request->last_name);
+
         $personalDetails = [
-            'gender'            => $request->gender,
-            'date_of_birth'     => $request->date_of_birth,
-            'marital_status'    => $request->marital_status,
-            'mother_tongue'     => $request->mother_tongue,
-            'religion'          => $request->religion,
-            'caste'             => $request->caste,
-            'sub_caste'         => $request->sub_caste,
-            'profile_created_by'=> $request->profile_created_by,
-            'about_me'          => $request->about_me,
-            'photos'            => $photoPaths,
+            'first_name'         => $request->first_name,
+            'middle_name'        => $request->middle_name,
+            'last_name'          => $request->last_name,
+            'name'               => $fullName,
+            'gender'             => $request->gender,
+            'dob'                => $request->date_of_birth,
+            'marital_status'     => $request->marital_status,
+            'language'           => $request->mother_tongue,
+            'mother_tongue'      => $request->mother_tongue,
+            'religion'           => ['Hindu', $request->caste],
+            'caste'              => $request->caste,
+            'sub_caste'          => $request->sub_caste,
+            'profile_created_by' => $request->profile_created_by,
+            'citizenship'        => $request->citizenship ?? 'Indian',
+            'blood_group'        => $request->blood_group,
+            'refferal_name'      => $request->referral_name,
+            'referral_name'      => $request->referral_name,
+            'star_details'       => [
+                $request->star,
+                $request->raasi,
+                'manglik-' . strtolower($request->manglik ?? 'no')
+            ],
+            'dosh'               => $request->dosh ?? 'No',
+            'about_me'           => $request->about_me,
+            'photos'             => $photoPaths,
         ];
 
         $familyDetails = [
+            'father'            => $request->father_occupation,
+            'mother'            => $request->mother_occupation,
             'father_name'       => $request->father_name,
             'father_occupation' => $request->father_occupation,
             'mother_name'       => $request->mother_name,
             'mother_occupation' => $request->mother_occupation,
-            'no_of_brothers'    => $request->no_of_brothers,
-            'no_of_sisters'     => $request->no_of_sisters,
+            'no_of_brothers'    => 0,
+            'no_of_sisters'     => 0,
+            'siblings'          => 0,
             'family_type'       => $request->family_type,
             'family_class'      => $request->family_status,
             'family_value'      => $request->family_values,
@@ -166,8 +196,9 @@ class MatrimonyController extends Controller
 
         $educationDetails = [
             'highest_qualification' => $request->highest_qualification,
+            'college'               => $request->college_name,
             'college_name'          => $request->college_name,
-            'passing_year'          => $request->passing_year,
+            'passing_year'          => null,
         ];
 
         $professionalDetails = [
@@ -178,29 +209,32 @@ class MatrimonyController extends Controller
         ];
 
         $locationDetails = [
+            'address' => $request->address,
             'country' => $request->country,
             'state'   => $request->state,
             'city'    => $request->city,
             'pincode' => $request->pincode,
+            'taluka'  => $request->taluka,
+            'village' => $request->village,
         ];
 
         $lifestyleDetails = [
             'diet'    => $request->diet,
             'smoking' => $request->smoking,
             'drinking'=> $request->drinking,
-            'hobbies' => $request->hobbies,
+            'hobbies' => null,
         ];
 
         $partnerPreferences = [
-            'age_min'   => $request->pref_age_min,
-            'age_max'   => $request->pref_age_max,
-            'height_min'=> $request->pref_height_min,
-            'religion'  => $request->pref_religion,
-            'caste'     => $request->pref_caste,
-            'education' => $request->pref_education,
-            'income'    => $request->pref_income,
-            'location'  => $request->pref_location,
-            'about_partner' => $request->about_partner,
+            'age_min'   => 18,
+            'age_max'   => 40,
+            'height_min'=> null,
+            'religion'  => 'Hindu',
+            'caste'     => null,
+            'education' => null,
+            'income'    => null,
+            'location'  => null,
+            'about_partner' => null,
         ];
 
         $profile = MatrimonyProfile::create([
@@ -223,7 +257,7 @@ class MatrimonyController extends Controller
 
         $user->update(['user_type' => 'matrimony']);
 
-        return redirect()->route('matrimony.index')
+        return redirect()->to(route('matrimony.index') . '#plans-section')
             ->with('success', 'Matrimony profile created! Please subscribe to a plan to activate it.');
     }
 
@@ -242,87 +276,170 @@ class MatrimonyController extends Controller
         $user = Auth::user();
         $profile = MatrimonyProfile::where('user_id', $user->id)->firstOrFail();
 
+        // Calculate age automatically from Date of Birth
+        $age = null;
+        if ($request->filled('date_of_birth')) {
+            try {
+                $dob = \Carbon\Carbon::parse($request->date_of_birth);
+                $age = $dob->age;
+            } catch (\Exception $e) {
+                // Ignore parsing errors, let validation handle it
+            }
+        }
+        $request->merge(['age' => $age]);
+
         $request->validate([
-            'age'                   => 'required|integer|min:18|max:100',
-            'height'                => 'nullable|string|max:10',
-            'weight'                => 'nullable|string|max:10',
-            'highest_qualification' => 'required|string|max:200',
-            'occupation'            => 'required|string|max:200',
-            'country'               => 'required|string|max:100',
-            'state'                 => 'required|string|max:100',
-            'city'                  => 'required|string|max:100',
-            'photos'                => 'nullable|array',
-            'photos.*'              => 'image|mimes:jpeg,png,jpg|max:2048',
+            'first_name'                   => 'required|string|max:100',
+            'middle_name'                  => 'nullable|string|max:100',
+            'last_name'                    => 'required|string|max:100',
+            'profile_created_by'           => 'required|string|max:100',
+            'gender'                       => 'required|in:male,female',
+            'date_of_birth'                => 'required|date',
+            'age'                          => 'required|integer|min:18|max:100',
+            'height'                       => 'nullable|string|max:10',
+            'weight'                       => 'nullable|string|max:10',
+            'complexion'                   => 'nullable|string|max:50',
+            'marital_status'               => 'nullable|string|max:100',
+            'physical_status'              => 'nullable|string|max:50',
+            'mother_tongue'                => 'nullable|string|max:100',
+            'citizenship'                  => 'nullable|string|max:100',
+            'blood_group'                  => 'nullable|string|max:20',
+            'referral_name'                => 'nullable|string|max:200',
+            
+            // religious horoscope
+            'caste'                        => 'required|string|max:100',
+            'sub_caste'                    => 'required|string|max:100',
+            'star'                         => 'nullable|string|max:100',
+            'raasi'                        => 'nullable|string|max:100',
+            'manglik'                      => 'nullable|string|max:50',
+            'dosh'                         => 'nullable|string|max:50',
+
+            // family_details & Lifestyle
+            'family_type'                  => 'required|string|max:100',
+            'family_status'                => 'nullable|string|max:100',
+            'family_values'                => 'nullable|string|max:100',
+            'father_occupation'            => 'nullable|string|max:200',
+            'mother_occupation'            => 'nullable|string|max:200',
+            'diet'                         => 'nullable|string|max:50',
+            'smoking'                      => 'nullable|string|max:50',
+            'drinking'                     => 'nullable|string|max:50',
+
+            // education_details & Career
+            'highest_qualification'        => 'required|string|max:200',
+            'college_name'                 => 'nullable|string|max:300',
+            'occupation'                   => 'nullable|string|max:200',
+            'employment_type'              => 'required|string|max:100',
+            'company_name'                 => 'nullable|string|max:300',
+            'annual_income'                => 'nullable|string|max:100',
+
+            // location_details
+            'address'                      => 'nullable|string|max:500',
+            'pincode'                      => 'required|digits:6',
+            'country'                      => 'required|string|max:100',
+            'state'                        => 'required|string|max:100',
+            'city'                         => 'required|string|max:100',
+            'taluka'                       => 'nullable|string|max:100',
+            'village'                      => 'nullable|string|max:100',
+
+            // photos
+            'photos'                       => 'nullable|array',
+            'photos.*'                     => 'image|mimes:jpeg,png,jpg|max:2048',
         ]);
 
-        $photoPaths = $profile->personal_details['photos'] ?? [];
+        $photoPaths = $request->existing_photos ?? [];
         if ($request->hasFile('photos')) {
             foreach ($request->file('photos') as $photo) {
                 $photoPaths[] = $photo->store('matrimony/photos', 'public');
             }
         }
+        $photoPaths = array_slice($photoPaths, 0, 5);
+
+        $fullName = trim($request->first_name . ' ' . ($request->middle_name ? $request->middle_name . ' ' : '') . $request->last_name);
+
+        $personalDetails = [
+            'first_name'         => $request->first_name,
+            'middle_name'        => $request->middle_name,
+            'last_name'          => $request->last_name,
+            'name'               => $fullName,
+            'gender'             => $request->gender,
+            'dob'                => $request->date_of_birth,
+            'marital_status'     => $request->marital_status,
+            'language'           => $request->mother_tongue,
+            'mother_tongue'      => $request->mother_tongue,
+            'religion'           => ['Hindu', $request->caste],
+            'caste'              => $request->caste,
+            'sub_caste'          => $request->sub_caste,
+            'profile_created_by' => $request->profile_created_by,
+            'citizenship'        => $request->citizenship ?? 'Indian',
+            'blood_group'        => $request->blood_group,
+            'referral_name'      => $request->referral_name,
+            'star_details'       => [
+                $request->star,
+                $request->raasi,
+                'manglik-' . strtolower($request->manglik ?? 'no')
+            ],
+            'dosh'               => $request->dosh ?? 'No',
+            'about_me'           => $request->about_me,
+            'photos'             => $photoPaths,
+        ];
+
+        $familyDetails = [
+            'father'            => $request->father_occupation,
+            'mother'            => $request->mother_occupation,
+            'father_occupation' => $request->father_occupation,
+            'mother_occupation' => $request->mother_occupation,
+            'no_of_brothers'    => 0,
+            'no_of_sisters'     => 0,
+            'siblings'          => 0,
+            'family_type'       => $request->family_type,
+            'family_class'      => $request->family_status,
+            'family_value'      => $request->family_values,
+        ];
+
+        $educationDetails = [
+            'highest_qualification' => $request->highest_qualification,
+            'college'               => $request->college_name,
+            'college_name'          => $request->college_name,
+            'passing_year'          => null,
+        ];
+
+        $professionalDetails = [
+            'occupation'       => $request->occupation,
+            'company_name'     => $request->company_name,
+            'annual_income'    => $request->annual_income,
+            'employment_type'  => $request->employment_type,
+        ];
+
+        $locationDetails = [
+            'address' => $request->address,
+            'country' => $request->country,
+            'state'   => $request->state,
+            'city'    => $request->city,
+            'pincode' => $request->pincode,
+            'taluka'  => $request->taluka,
+            'village' => $request->village,
+        ];
+
+        $lifestyleDetails = [
+            'diet'    => $request->diet,
+            'smoking' => $request->smoking,
+            'drinking'=> $request->drinking,
+            'hobbies' => null,
+        ];
 
         $profile->update([
-            'age'              => $request->age,
-            'height'           => $request->height,
-            'weight'           => $request->weight,
-            'complexion'       => $request->complexion,
-            'physical_status'  => $request->physical_status,
-            'personal_details' => array_merge($profile->personal_details ?? [], [
-                'marital_status'    => $request->marital_status,
-                'mother_tongue'     => $request->mother_tongue,
-                'religion'          => $request->religion,
-                'caste'             => $request->caste,
-                'sub_caste'         => $request->sub_caste,
-                'about_me'          => $request->about_me,
-                'photos'            => $photoPaths,
-            ]),
-            'family_details' => array_merge($profile->family_details ?? [], [
-                'father_name'       => $request->father_name,
-                'father_occupation' => $request->father_occupation,
-                'mother_name'       => $request->mother_name,
-                'mother_occupation' => $request->mother_occupation,
-                'no_of_brothers'    => $request->no_of_brothers,
-                'no_of_sisters'     => $request->no_of_sisters,
-                'family_type'       => $request->family_type,
-                'family_class'      => $request->family_status,
-                'family_value'      => $request->family_values,
-                'about_family'      => $request->about_family,
-            ]),
-            'education_details' => array_merge($profile->education_details ?? [], [
-                'highest_qualification' => $request->highest_qualification,
-                'college_name'          => $request->college_name,
-                'passing_year'          => $request->passing_year,
-            ]),
-            'professional_details' => array_merge($profile->professional_details ?? [], [
-                'occupation'      => $request->occupation,
-                'company_name'    => $request->company_name,
-                'annual_income'   => $request->annual_income,
-                'employment_type' => $request->employment_type,
-            ]),
-            'location_details' => [
-                'country' => $request->country,
-                'state'   => $request->state,
-                'city'    => $request->city,
-                'pincode' => $request->pincode,
-            ],
-            'lifestyle_details' => [
-                'diet'    => $request->diet,
-                'smoking' => $request->smoking,
-                'drinking'=> $request->drinking,
-                'hobbies' => $request->hobbies,
-            ],
-            'partner_preferences' => [
-                'age_min'      => $request->pref_age_min,
-                'age_max'      => $request->pref_age_max,
-                'height_min'   => $request->pref_height_min,
-                'religion'     => $request->pref_religion,
-                'caste'        => $request->pref_caste,
-                'education'    => $request->pref_education,
-                'income'       => $request->pref_income,
-                'location'     => $request->pref_location,
-                'about_partner'=> $request->about_partner,
-            ],
+            'age'                  => $age,
+            'height'               => $request->height,
+            'weight'               => $request->weight,
+            'complexion'           => $request->complexion,
+            'physical_status'      => $request->physical_status,
+            'personal_details'     => $personalDetails,
+            'family_details'       => $familyDetails,
+            'education_details'    => $educationDetails,
+            'professional_details' => $professionalDetails,
+            'lifestyle_details'    => $lifestyleDetails,
+            'location_details'     => $locationDetails,
+            'partner_preferences'  => $profile->partner_preferences ?? [],
         ]);
 
         return redirect()->route('matrimony.index')->with('success', 'Profile updated successfully!');
@@ -351,15 +468,107 @@ class MatrimonyController extends Controller
             ->where('user_id', '!=', $user->id)
             ->with('user');
 
-        if ($request->filled('age_min')) $query->where('age', '>=', $request->age_min);
-        if ($request->filled('age_max')) $query->where('age', '<=', $request->age_max);
-        if ($request->filled('gender')) $query->where('personal_details->gender', $request->gender);
-        if ($request->filled('religion')) $query->where('personal_details->religion', $request->religion);
-        if ($request->filled('caste')) $query->where('personal_details->caste', $request->caste);
-        if ($request->filled('city')) $query->where('location_details->city', $request->city);
-        if ($request->filled('state')) $query->where('location_details->state', $request->state);
-        if ($request->filled('marital_status')) $query->where('personal_details->marital_status', $request->marital_status);
-        if ($request->filled('education')) $query->where('education_details->highest_qualification', $request->education);
+        // 1. Basic Details
+        if ($request->filled('gender')) {
+            $query->where('personal_details->gender', $request->gender);
+        }
+        if ($request->filled('age_min') || $request->filled('age_max')) {
+            $query->whereBetween('age', [$request->age_min ?? 18, $request->age_max ?? 100]);
+        }
+        if ($request->filled('height_min') || $request->filled('height_max')) {
+            $min = $request->filled('height_min') ? floatval($request->height_min) : 4.0;
+            $max = $request->filled('height_max') ? floatval($request->height_max) : 7.0;
+            $query->where(function($q) use ($min, $max) {
+                $q->whereRaw('CAST(height AS DECIMAL(3,1)) BETWEEN ? AND ?', [$min, $max]);
+            });
+        }
+        if ($request->filled('profile_created_by') && $request->profile_created_by !== 'Any') {
+            $query->where('personal_details->profile_created_by', $request->profile_created_by);
+        }
+        if ($request->filled('marital_status') && $request->marital_status !== 'Any') {
+            $query->where('personal_details->marital_status', $request->marital_status);
+        }
+        if ($request->filled('language') && $request->language !== 'Any') {
+            $query->where('personal_details->mother_tongue', $request->language);
+        }
+        if ($request->filled('physical_status') && $request->physical_status !== "Doesn't Matter") {
+            $query->where('personal_details->physical_status', $request->physical_status);
+        }
+
+        // 2. Professional Details
+        if ($request->filled('employment_type') && $request->employment_type !== 'Any') {
+            $query->where('professional_details->employment_type', $request->employment_type);
+        }
+        if ($request->filled('occupation') && $request->occupation !== 'Any') {
+            $query->where('professional_details->occupation', $request->occupation);
+        }
+
+        // 3. Religion Details
+        if ($request->filled('manglik') && $request->manglik !== "Doesn't Matter") {
+            $query->whereJsonContains('personal_details->star_details', 'manglik-' . strtolower($request->manglik));
+        }
+        if ($request->filled('dosh') && $request->dosh !== "Doesn't Matter") {
+            $query->where('personal_details->dosh', $request->dosh);
+        }
+
+        // 4. Family Details
+        if ($request->filled('family_type') && $request->family_type !== "Doesn't Matter") {
+            $query->where('family_details->family_type', $request->family_type);
+        }
+        if ($request->filled('family_value') && $request->family_value !== "Doesn't Matter") {
+            $query->where('family_details->family_value', $request->family_value);
+        }
+        if ($request->filled('family_class') && $request->family_class !== "Doesn't Matter") {
+            $query->where('family_details->family_class', $request->family_class);
+        }
+
+        // 5. Location Details
+        if ($request->filled('country') && $request->country !== 'Any') {
+            $query->where('location_details->country', $request->country);
+        }
+        if ($request->filled('state') && $request->state !== 'Any') {
+            $query->where('location_details->state', $request->state);
+        }
+        if ($request->filled('city') && $request->city !== 'Any') {
+            $query->where('location_details->city', $request->city);
+        }
+
+        // 6. Lifestyle Details
+        if ($request->filled('diet') && $request->diet !== 'Any') {
+            $query->where('lifestyle_details->diet', $request->diet);
+        }
+        if ($request->filled('smoking') && $request->smoking !== 'Any') {
+            $query->where('lifestyle_details->smoking', $request->smoking);
+        }
+        if ($request->filled('drinking') && $request->drinking !== 'Any') {
+            $query->where('lifestyle_details->drinking', $request->drinking);
+        }
+
+        // 7. Profile Type
+        if ($request->filled('photo') && $request->photo === 'yes') {
+            $query->whereJsonLength('personal_details->photos', '>', 0);
+        }
+
+        // 8. Recently Created
+        if ($request->filled('created_at')) {
+            switch ($request->created_at) {
+                case 'today':
+                    $query->whereDate('created_at', today());
+                    break;
+                case 'last_7_days':
+                    $query->where('created_at', '>=', now()->subDays(7));
+                    break;
+                case 'last_30_days':
+                    $query->where('created_at', '>=', now()->subDays(30));
+                    break;
+                case 'one_week':
+                    $query->whereBetween('created_at', [now()->subWeek(), now()]);
+                    break;
+                case 'one_month':
+                    $query->whereBetween('created_at', [now()->subMonth(), now()]);
+                    break;
+            }
+        }
 
         $profiles = $query->latest()->paginate(12)->withQueryString();
 
@@ -623,11 +832,12 @@ class MatrimonyController extends Controller
                 'status'              => 'completed',
             ]);
 
-            // Activate matrimony profile expiry
+            // Activate matrimony profile expiry & auto-approve
             $profile = MatrimonyProfile::where('user_id', Auth::id())->first();
             if ($profile) {
                 $profile->update([
                     'profile_expires_at' => now()->addMonths($transaction->subscription_period ?? 12),
+                    'approval_status'    => 'approved',
                 ]);
             }
 

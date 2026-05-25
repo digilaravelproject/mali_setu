@@ -1,300 +1,1226 @@
 @extends('layouts.app')
 
+@section('title', 'Edit Matrimony Profile')
+
 @section('content')
 <style>
-.tab-nav-pill { border-radius: 50px; padding: 10px 24px; font-weight: 600; font-size: 0.9rem; border: none; background: transparent; color: #6c757d; cursor: pointer; transition: all 0.3s; }
-.tab-nav-pill.active, .tab-nav-pill:hover { background: var(--primary); color: #fff; }
-.tab-section { display: none; }
-.tab-section.active { display: block; }
+    /* Brand Color Overrides & Step Wizard Styles */
+    :root {
+        --brand-primary: #ad1457;
+        --brand-light: #fff5f8;
+        --text-muted: #8898aa;
+    }
+    
+    .wizard-card {
+        background: #ffffff;
+        border: 1px solid rgba(173, 20, 87, 0.08);
+        border-radius: 24px;
+        box-shadow: 0 15px 35px rgba(173, 20, 87, 0.04);
+        padding: 35px;
+        transition: all 0.3s ease;
+    }
+
+    /* Mobile-like Header */
+    .wizard-header {
+        border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        padding-bottom: 20px;
+        margin-bottom: 30px;
+    }
+    
+    .wizard-title {
+        color: #2d3748;
+        font-weight: 800;
+        font-size: 1.5rem;
+        margin: 0;
+        text-align: center;
+    }
+
+    /* Step Circles */
+    .steps-container {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        position: relative;
+        max-width: 500px;
+        margin: 0 auto 40px auto;
+        padding: 0 10px;
+    }
+
+    .steps-progress-bar {
+        position: absolute;
+        top: 20px;
+        left: 20px;
+        right: 20px;
+        height: 3px;
+        background: #e2e8f0;
+        z-index: 1;
+    }
+
+    .steps-progress-line {
+        position: absolute;
+        top: 0;
+        left: 0;
+        height: 100%;
+        width: 0%;
+        background: var(--brand-primary);
+        transition: width 0.4s ease;
+    }
+
+    .step-circle-wrapper {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        z-index: 2;
+        position: relative;
+    }
+
+    .step-circle {
+        width: 42px;
+        height: 42px;
+        border-radius: 50%;
+        background: #f8fafc;
+        border: 3px solid #e2e8f0;
+        color: #94a3b8;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 0.95rem;
+        transition: all 0.4s ease;
+    }
+
+    .step-circle-wrapper.active .step-circle {
+        border-color: var(--brand-primary);
+        background: #ffffff;
+        color: var(--brand-primary);
+        box-shadow: 0 0 0 5px rgba(173, 20, 87, 0.1);
+    }
+
+    .step-circle-wrapper.completed .step-circle {
+        border-color: var(--brand-primary);
+        background: var(--brand-primary);
+        color: #ffffff;
+    }
+
+    .step-label {
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: #94a3b8;
+        margin-top: 8px;
+        transition: all 0.4s ease;
+        text-align: center;
+    }
+
+    .step-circle-wrapper.active .step-label {
+        color: var(--brand-primary);
+    }
+
+    .step-circle-wrapper.completed .step-label {
+        color: #475569;
+    }
+
+    /* Form Fields & Custom Styling */
+    .form-section {
+        display: none;
+    }
+
+    .form-section.active {
+        display: block;
+        animation: slideIn 0.4s ease;
+    }
+
+    @keyframes slideIn {
+        from { opacity: 0; transform: translateY(15px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .section-subtitle {
+        color: #718096;
+        font-size: 0.9rem;
+        margin-bottom: 25px;
+    }
+
+    .required-star {
+        color: #dc3545;
+        font-weight: bold;
+        margin-left: 2px;
+    }
+
+    .form-control, .form-select {
+        border-radius: 12px;
+        padding: 12px 16px;
+        border: 1.5px solid #cbd5e1;
+        transition: all 0.3s ease;
+        font-size: 0.95rem;
+    }
+
+    .form-control:focus, .form-select:focus {
+        border-color: var(--brand-primary);
+        box-shadow: 0 0 0 4px rgba(173, 20, 87, 0.08);
+    }
+
+    .invalid-feedback {
+        display: none;
+        color: #dc3545;
+        font-size: 0.82rem;
+        font-weight: 600;
+        margin-top: 5px;
+    }
+
+    .is-invalid {
+        border-color: #dc3545 !important;
+    }
+
+    .is-invalid:focus {
+        box-shadow: 0 0 0 4px rgba(220, 53, 69, 0.08) !important;
+    }
+
+    /* Section Headers */
+    .pink-section-header {
+        color: var(--brand-primary);
+        font-size: 0.85rem;
+        font-weight: 800;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        border-bottom: 1.5px solid rgba(173, 20, 87, 0.1);
+        padding-bottom: 6px;
+        margin-top: 30px;
+        margin-bottom: 20px;
+    }
+
+    /* Pincode Location Icon Wrapper */
+    .pincode-input-wrapper {
+        position: relative;
+    }
+
+    .pincode-input-wrapper .location-icon {
+        position: absolute;
+        right: 15px;
+        top: 15px;
+        color: var(--brand-primary);
+        font-size: 1.1rem;
+    }
+
+    /* Pink Photo Upload Styles */
+    .upload-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 15px;
+        margin-top: 15px;
+    }
+
+    .photo-upload-box {
+        width: 100px;
+        height: 100px;
+        border: 2px dashed rgba(173, 20, 87, 0.3);
+        background: #fff5f8;
+        border-radius: 16px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .photo-upload-box:hover {
+        background: #ffe3ec;
+        border-color: var(--brand-primary);
+    }
+
+    .photo-upload-box i {
+        color: var(--brand-primary);
+        font-size: 1.5rem;
+        margin-bottom: 5px;
+    }
+
+    .photo-upload-box span {
+        font-size: 0.72rem;
+        font-weight: 700;
+        color: var(--brand-primary);
+    }
+
+    .preview-thumbnail {
+        width: 100px;
+        height: 100px;
+        border-radius: 16px;
+        position: relative;
+        overflow: hidden;
+        border: 2px solid #e2e8f0;
+        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+    }
+
+    .preview-thumbnail img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .delete-thumb-btn {
+        position: absolute;
+        top: 5px;
+        right: 5px;
+        background: rgba(220, 53, 69, 0.95);
+        color: #fff;
+        border: none;
+        border-radius: 50%;
+        width: 22px;
+        height: 22px;
+        font-size: 0.7rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .delete-thumb-btn:hover {
+        background: #dc3545;
+        transform: scale(1.1);
+    }
+
+    /* Dynamic Dropdown Loader */
+    .caste-loader {
+        position: absolute;
+        right: 35px;
+        top: 45px;
+        display: none;
+    }
+
+    /* Buttons */
+    .btn-brand {
+        background: var(--brand-primary);
+        border: none;
+        color: #ffffff;
+        padding: 12px 30px;
+        border-radius: 12px;
+        font-weight: 700;
+        font-size: 0.95rem;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 12px rgba(173, 20, 87, 0.15);
+    }
+
+    .btn-brand:hover {
+        background: #900c43;
+        transform: translateY(-1px);
+        box-shadow: 0 6px 15px rgba(173, 20, 87, 0.25);
+    }
+
+    .btn-brand-outline {
+        background: transparent;
+        border: 1.5px solid var(--brand-primary);
+        color: var(--brand-primary);
+        padding: 12px 30px;
+        border-radius: 12px;
+        font-weight: 700;
+        font-size: 0.95rem;
+        transition: all 0.3s ease;
+    }
+
+    .btn-brand-outline:hover {
+        background: var(--brand-light);
+        color: var(--brand-primary);
+    }
 </style>
 
+@php
+    $pd = $profile->personal_details ?? [];
+    $fd = $profile->family_details ?? [];
+    $ed = $profile->education_details ?? [];
+    $pro = $profile->professional_details ?? [];
+    $ld = $profile->location_details ?? [];
+    $lf = $profile->lifestyle_details ?? [];
+
+    // Parse Manglik status
+    $manglikRaw = $pd['star_details'][2] ?? 'manglik-no';
+    $savedManglik = 'No';
+    if (strpos($manglikRaw, 'yes') !== false) $savedManglik = 'Yes';
+    elseif (strpos($manglikRaw, 'anshik') !== false) $savedManglik = 'Anshik (Partial)';
+    elseif (strpos($manglikRaw, 'know') !== false) $savedManglik = "Don't Know";
+@endphp
+
 <div class="py-4">
-    <div class="d-flex align-items-center gap-3 mb-4">
-        <a href="{{ route('matrimony.index') }}" class="btn btn-light btn-sm rounded-3"><i class="fa-solid fa-arrow-left"></i></a>
-        <div>
-            <h4 class="fw-bold mb-0">Edit Matrimony Profile</h4>
-            <p class="text-secondary small mb-0">Update your information and save changes.</p>
+    <div class="wizard-card">
+        
+        {{-- Custom Mobile-Styled Header --}}
+        <div class="wizard-header d-flex justify-content-between align-items-center mb-4">
+            <a href="{{ route('matrimony.index') }}" class="btn btn-light btn-sm rounded-3 shadow-sm px-3 py-2"><i class="fa-solid fa-arrow-left me-1"></i> Back</a>
+            <h4 class="wizard-title text-center flex-grow-1">Edit Matrimony Profile</h4>
+            <div style="width: 78px;"></div> {{-- Spacer --}}
         </div>
-    </div>
 
-    @if($errors->any())
-        <div class="alert alert-danger border-0 rounded-4 mb-4"><i class="fa-solid fa-triangle-exclamation me-2"></i> {{ $errors->first() }}</div>
-    @endif
-
-    @php
-        $pd = $profile->personal_details ?? [];
-        $fd = $profile->family_details ?? [];
-        $ed = $profile->education_details ?? [];
-        $pro = $profile->professional_details ?? [];
-        $ld = $profile->location_details ?? [];
-        $lf = $profile->lifestyle_details ?? [];
-        $pp = $profile->partner_preferences ?? [];
-    @endphp
-
-    <div class="glass-card p-3 mb-4">
-        <div class="d-flex flex-wrap gap-2">
-            <button class="tab-nav-pill active" onclick="showTab('personal', this)"><i class="fa-solid fa-user me-1"></i> 1. Personal</button>
-            <button class="tab-nav-pill" onclick="showTab('family', this)"><i class="fa-solid fa-people-roof me-1"></i> 2. Family</button>
-            <button class="tab-nav-pill" onclick="showTab('education', this)"><i class="fa-solid fa-graduation-cap me-1"></i> 3. Education</button>
-            <button class="tab-nav-pill" onclick="showTab('location', this)"><i class="fa-solid fa-location-dot me-1"></i> 4. Location</button>
-            <button class="tab-nav-pill" onclick="showTab('preferences', this)"><i class="fa-solid fa-heart me-1"></i> 5. Preferences</button>
+        {{-- Step Progress Indicator --}}
+        <div class="steps-container">
+            <div class="steps-progress-bar">
+                <div class="steps-progress-line" id="progressLine"></div>
+            </div>
+            
+            <div class="step-circle-wrapper active" id="stepIndicator-1">
+                <div class="step-circle">1</div>
+                <span class="step-label">Personal</span>
+            </div>
+            
+            <div class="step-circle-wrapper" id="stepIndicator-2">
+                <div class="step-circle">2</div>
+                <span class="step-label">Horoscope</span>
+            </div>
+            
+            <div class="step-circle-wrapper" id="stepIndicator-3">
+                <div class="step-circle">3</div>
+                <span class="step-label">Education</span>
+            </div>
+            
+            <div class="step-circle-wrapper" id="stepIndicator-4">
+                <div class="step-circle">4</div>
+                <span class="step-label">Lifestyle</span>
+            </div>
         </div>
-    </div>
 
-    <form action="{{ route('matrimony.update') }}" method="POST" enctype="multipart/form-data">
-        @csrf
+        {{-- Form Start --}}
+        <form action="{{ route('matrimony.update') }}" method="POST" id="matrimonyForm" enctype="multipart/form-data">
+            @csrf
 
-        {{-- TAB 1: Personal --}}
-        <div class="tab-section active glass-card mb-4" id="tab-personal">
-            <h5 class="fw-bold text-primary mb-4"><i class="fa-solid fa-user me-2"></i> Personal Details</h5>
-            <div class="row">
-                <div class="col-md-4 mb-3">
-                    <label class="form-label">Gender</label>
-                    <select name="gender" class="form-select">
-                        <option value="male" {{ ($pd['gender']??'')==='male'?'selected':'' }}>Male</option>
-                        <option value="female" {{ ($pd['gender']??'')==='female'?'selected':'' }}>Female</option>
-                        <option value="other" {{ ($pd['gender']??'')==='other'?'selected':'' }}>Other</option>
-                    </select>
-                </div>
-                <div class="col-md-4 mb-3">
-                    <label class="form-label">Date of Birth</label>
-                    <input type="date" name="date_of_birth" class="form-control" value="{{ $pd['date_of_birth'] ?? '' }}">
-                </div>
-                <div class="col-md-4 mb-3">
-                    <label class="form-label">Age *</label>
-                    <input type="number" name="age" class="form-control" min="18" max="100" value="{{ $profile->age }}" required>
-                </div>
-                <div class="col-md-4 mb-3">
-                    <label class="form-label">Marital Status</label>
-                    <select name="marital_status" class="form-select">
-                        <option value="never_married" {{ ($pd['marital_status']??'')==='never_married'?'selected':'' }}>Never Married</option>
-                        <option value="divorced" {{ ($pd['marital_status']??'')==='divorced'?'selected':'' }}>Divorced</option>
-                        <option value="widowed" {{ ($pd['marital_status']??'')==='widowed'?'selected':'' }}>Widowed</option>
-                    </select>
-                </div>
-                <div class="col-md-4 mb-3">
-                    <label class="form-label">Mother Tongue</label>
-                    <input type="text" name="mother_tongue" class="form-control" value="{{ $pd['mother_tongue'] ?? '' }}">
-                </div>
-                <div class="col-md-4 mb-3">
-                    <label class="form-label">Religion</label>
-                    <input type="text" name="religion" class="form-control" value="{{ $pd['religion'] ?? '' }}">
-                </div>
-                <div class="col-md-4 mb-3">
-                    <label class="form-label">Caste</label>
-                    <select name="caste" class="form-select">
-                        @foreach($casts as $cast)
-                            <option value="{{ $cast->name }}" {{ ($pd['caste']??'')===$cast->name?'selected':'' }}>{{ $cast->name }}</option>
-                        @endforeach
-                    </select>
-                </div>
-                <div class="col-md-4 mb-3">
-                    <label class="form-label">Sub Caste</label>
-                    <input type="text" name="sub_caste" class="form-control" value="{{ $pd['sub_caste'] ?? '' }}">
-                </div>
-                <div class="col-md-3 mb-3">
-                    <label class="form-label">Height</label>
-                    <input type="text" name="height" class="form-control" value="{{ $profile->height ?? '' }}">
-                </div>
-                <div class="col-md-3 mb-3">
-                    <label class="form-label">Weight</label>
-                    <input type="text" name="weight" class="form-control" value="{{ $profile->weight ?? '' }}">
-                </div>
-                <div class="col-md-3 mb-3">
-                    <label class="form-label">Complexion</label>
-                    <select name="complexion" class="form-select">
-                        <option value="fair" {{ ($profile->complexion??'')==='fair'?'selected':'' }}>Fair</option>
-                        <option value="wheatish" {{ ($profile->complexion??'')==='wheatish'?'selected':'' }}>Wheatish</option>
-                        <option value="dark" {{ ($profile->complexion??'')==='dark'?'selected':'' }}>Dark</option>
-                    </select>
-                </div>
-                <div class="col-md-3 mb-3">
-                    <label class="form-label">Physical Status</label>
-                    <select name="physical_status" class="form-select">
-                        <option value="normal" {{ ($profile->physical_status??'')==='normal'?'selected':'' }}>Normal</option>
-                        <option value="physically_challenged" {{ ($profile->physical_status??'')==='physically_challenged'?'selected':'' }}>Physically Challenged</option>
-                    </select>
-                </div>
-                <div class="col-12 mb-3">
-                    <label class="form-label">About Me</label>
-                    <textarea name="about_me" class="form-control" rows="3">{{ $pd['about_me'] ?? '' }}</textarea>
-                </div>
-                @if(!empty($pd['photos']))
-                <div class="col-12 mb-3">
-                    <label class="form-label">Existing Photos</label>
-                    <div class="d-flex flex-wrap gap-2">
-                        @foreach($pd['photos'] as $photo)
-                            <img src="{{ asset('storage/' . $photo) }}" style="width:80px;height:80px;border-radius:10px;object-fit:cover;">
-                        @endforeach
+            {{-- STEP 1: Personal Details --}}
+            <div class="form-section active" id="section-1">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <div>
+                        <h5 class="fw-bold text-dark mb-1">Personal Details</h5>
+                        <p class="section-subtitle">Start with your basic info</p>
                     </div>
                 </div>
-                @endif
-                <div class="col-12 mb-3">
-                    <label class="form-label">Add More Photos</label>
-                    <input type="file" name="photos[]" class="form-control" multiple accept=".jpg,.jpeg,.png">
-                </div>
-            </div>
-            <div class="text-end">
-                <button type="button" class="btn btn-primary rounded-3 px-4" onclick="showTab('family', document.querySelectorAll('.tab-nav-pill')[1])">Next <i class="fa-solid fa-arrow-right ms-1"></i></button>
-            </div>
-        </div>
 
-        {{-- TAB 2: Family --}}
-        <div class="tab-section glass-card mb-4" id="tab-family">
-            <h5 class="fw-bold text-primary mb-4"><i class="fa-solid fa-people-roof me-2"></i> Family Details</h5>
-            <div class="row">
-                <div class="col-md-6 mb-3"><label class="form-label">Father's Name</label><input type="text" name="father_name" class="form-control" value="{{ $fd['father_name'] ?? '' }}"></div>
-                <div class="col-md-6 mb-3"><label class="form-label">Father's Occupation</label><input type="text" name="father_occupation" class="form-control" value="{{ $fd['father_occupation'] ?? '' }}"></div>
-                <div class="col-md-6 mb-3"><label class="form-label">Mother's Name</label><input type="text" name="mother_name" class="form-control" value="{{ $fd['mother_name'] ?? '' }}"></div>
-                <div class="col-md-6 mb-3"><label class="form-label">Mother's Occupation</label><input type="text" name="mother_occupation" class="form-control" value="{{ $fd['mother_occupation'] ?? '' }}"></div>
-                <div class="col-md-3 mb-3"><label class="form-label">Brothers</label><input type="number" name="no_of_brothers" class="form-control" min="0" value="{{ $fd['no_of_brothers'] ?? 0 }}"></div>
-                <div class="col-md-3 mb-3"><label class="form-label">Sisters</label><input type="number" name="no_of_sisters" class="form-control" min="0" value="{{ $fd['no_of_sisters'] ?? 0 }}"></div>
-                <div class="col-md-3 mb-3">
-                    <label class="form-label">Family Type</label>
-                    <select name="family_type" class="form-select">
-                        <option value="joint" {{ ($fd['family_type']??'')==='joint'?'selected':'' }}>Joint</option>
-                        <option value="nuclear" {{ ($fd['family_type']??'')==='nuclear'?'selected':'' }}>Nuclear</option>
-                    </select>
-                </div>
-                <div class="col-md-3 mb-3">
-                    <label class="form-label">Family Status</label>
-                    <select name="family_status" class="form-select">
-                        <option value="middle_class" {{ ($fd['family_class']??'')==='middle_class'?'selected':'' }}>Middle Class</option>
-                        <option value="upper_middle_class" {{ ($fd['family_class']??'')==='upper_middle_class'?'selected':'' }}>Upper Middle Class</option>
-                        <option value="rich" {{ ($fd['family_class']??'')==='rich'?'selected':'' }}>Rich</option>
-                    </select>
-                </div>
-                <div class="col-12 mb-3"><label class="form-label">About Family</label><textarea name="about_family" class="form-control" rows="3">{{ $fd['about_family'] ?? '' }}</textarea></div>
-            </div>
-            <div class="d-flex justify-content-between">
-                <button type="button" class="btn btn-light rounded-3 px-4" onclick="showTab('personal', document.querySelectorAll('.tab-nav-pill')[0])"><i class="fa-solid fa-arrow-left me-1"></i> Back</button>
-                <button type="button" class="btn btn-primary rounded-3 px-4" onclick="showTab('education', document.querySelectorAll('.tab-nav-pill')[2])">Next <i class="fa-solid fa-arrow-right ms-1"></i></button>
-            </div>
-        </div>
+                <div class="row">
+                    <div class="col-md-4 mb-4">
+                        <label class="form-label">First Name<span class="required-star">*</span></label>
+                        <input type="text" name="first_name" class="form-control" placeholder="Enter Your first name" value="{{ old('first_name', $pd['first_name'] ?? '') }}" required>
+                        <span class="invalid-feedback">Please enter first name</span>
+                    </div>
 
-        {{-- TAB 3: Education --}}
-        <div class="tab-section glass-card mb-4" id="tab-education">
-            <h5 class="fw-bold text-primary mb-4"><i class="fa-solid fa-graduation-cap me-2"></i> Education & Career</h5>
-            <div class="row">
-                <div class="col-md-6 mb-3">
-                    <label class="form-label">Highest Qualification *</label>
-                    <select name="highest_qualification" class="form-select" required>
-                        <option value="Bachelor's Degree" {{ ($ed['highest_qualification']??'')==="Bachelor's Degree"?'selected':'' }}>Bachelor's Degree</option>
-                        <option value="Master's Degree" {{ ($ed['highest_qualification']??'')==="Master's Degree"?'selected':'' }}>Master's Degree</option>
-                        <option value="Doctorate / PhD" {{ ($ed['highest_qualification']??'')==="Doctorate / PhD"?'selected':'' }}>Doctorate / PhD</option>
-                        <option value="Diploma" {{ ($ed['highest_qualification']??'')==="Diploma"?'selected':'' }}>Diploma</option>
-                        <option value="High School" {{ ($ed['highest_qualification']??'')==="High School"?'selected':'' }}>High School</option>
-                    </select>
-                </div>
-                <div class="col-md-6 mb-3"><label class="form-label">College</label><input type="text" name="college_name" class="form-control" value="{{ $ed['college_name'] ?? '' }}"></div>
-                <div class="col-md-3 mb-3"><label class="form-label">Passing Year</label><input type="number" name="passing_year" class="form-control" value="{{ $ed['passing_year'] ?? '' }}"></div>
-                <div class="col-md-5 mb-3"><label class="form-label">Occupation *</label><input type="text" name="occupation" class="form-control" value="{{ $pro['occupation'] ?? '' }}" required></div>
-                <div class="col-md-4 mb-3">
-                    <label class="form-label">Employment Type</label>
-                    <select name="employment_type" class="form-select">
-                        <option value="private" {{ ($pro['employment_type']??'')==='private'?'selected':'' }}>Private</option>
-                        <option value="government" {{ ($pro['employment_type']??'')==='government'?'selected':'' }}>Government</option>
-                        <option value="business" {{ ($pro['employment_type']??'')==='business'?'selected':'' }}>Business</option>
-                    </select>
-                </div>
-                <div class="col-md-6 mb-3"><label class="form-label">Company</label><input type="text" name="company_name" class="form-control" value="{{ $pro['company_name'] ?? '' }}"></div>
-                <div class="col-md-6 mb-3">
-                    <label class="form-label">Annual Income</label>
-                    <select name="annual_income" class="form-select">
-                        <option value="below_2lac" {{ ($pro['annual_income']??'')==='below_2lac'?'selected':'' }}>Below ₹2L</option>
-                        <option value="2_5lac" {{ ($pro['annual_income']??'')==='2_5lac'?'selected':'' }}>₹2-5L</option>
-                        <option value="5_10lac" {{ ($pro['annual_income']??'')==='5_10lac'?'selected':'' }}>₹5-10L</option>
-                        <option value="10_20lac" {{ ($pro['annual_income']??'')==='10_20lac'?'selected':'' }}>₹10-20L</option>
-                        <option value="above_20lac" {{ ($pro['annual_income']??'')==='above_20lac'?'selected':'' }}>Above ₹20L</option>
-                    </select>
-                </div>
-            </div>
-            <div class="d-flex justify-content-between">
-                <button type="button" class="btn btn-light rounded-3 px-4" onclick="showTab('family', document.querySelectorAll('.tab-nav-pill')[1])"><i class="fa-solid fa-arrow-left me-1"></i> Back</button>
-                <button type="button" class="btn btn-primary rounded-3 px-4" onclick="showTab('location', document.querySelectorAll('.tab-nav-pill')[3])">Next <i class="fa-solid fa-arrow-right ms-1"></i></button>
-            </div>
-        </div>
+                    <div class="col-md-4 mb-4">
+                        <label class="form-label">Middle Name</label>
+                        <input type="text" name="middle_name" class="form-control" placeholder="Enter Your Middle name" value="{{ old('middle_name', $pd['middle_name'] ?? '') }}">
+                    </div>
 
-        {{-- TAB 4: Location --}}
-        <div class="tab-section glass-card mb-4" id="tab-location">
-            <h5 class="fw-bold text-primary mb-4"><i class="fa-solid fa-location-dot me-2"></i> Location & Lifestyle</h5>
-            <div class="row">
-                <div class="col-md-4 mb-3"><label class="form-label">Pincode</label><input type="text" name="pincode" class="form-control" id="edit-pincode" maxlength="6" value="{{ $ld['pincode'] ?? '' }}"></div>
-                <div class="col-md-4 mb-3"><label class="form-label">Country *</label><input type="text" name="country" class="form-control" id="e-country" value="{{ $ld['country'] ?? 'India' }}" required></div>
-                <div class="col-md-4 mb-3"><label class="form-label">State *</label><input type="text" name="state" class="form-control" id="e-state" value="{{ $ld['state'] ?? '' }}" required></div>
-                <div class="col-md-4 mb-3"><label class="form-label">City *</label><input type="text" name="city" class="form-control" id="e-city" value="{{ $ld['city'] ?? '' }}" required></div>
-                <div class="col-md-4 mb-3">
-                    <label class="form-label">Diet</label>
-                    <select name="diet" class="form-select">
-                        <option value="vegetarian" {{ ($lf['diet']??'')==='vegetarian'?'selected':'' }}>Vegetarian</option>
-                        <option value="non_vegetarian" {{ ($lf['diet']??'')==='non_vegetarian'?'selected':'' }}>Non-Vegetarian</option>
-                        <option value="eggetarian" {{ ($lf['diet']??'')==='eggetarian'?'selected':'' }}>Eggetarian</option>
-                    </select>
-                </div>
-                <div class="col-md-4 mb-3">
-                    <label class="form-label">Smoking</label>
-                    <select name="smoking" class="form-select">
-                        <option value="no" {{ ($lf['smoking']??'')==='no'?'selected':'' }}>No</option>
-                        <option value="occasionally" {{ ($lf['smoking']??'')==='occasionally'?'selected':'' }}>Occasionally</option>
-                        <option value="yes" {{ ($lf['smoking']??'')==='yes'?'selected':'' }}>Yes</option>
-                    </select>
-                </div>
-                <div class="col-md-4 mb-3">
-                    <label class="form-label">Drinking</label>
-                    <select name="drinking" class="form-select">
-                        <option value="no" {{ ($lf['drinking']??'')==='no'?'selected':'' }}>No</option>
-                        <option value="occasionally" {{ ($lf['drinking']??'')==='occasionally'?'selected':'' }}>Occasionally</option>
-                        <option value="yes" {{ ($lf['drinking']??'')==='yes'?'selected':'' }}>Yes</option>
-                    </select>
-                </div>
-                <div class="col-md-8 mb-3"><label class="form-label">Hobbies</label><input type="text" name="hobbies" class="form-control" value="{{ $lf['hobbies'] ?? '' }}"></div>
-            </div>
-            <div class="d-flex justify-content-between">
-                <button type="button" class="btn btn-light rounded-3 px-4" onclick="showTab('education', document.querySelectorAll('.tab-nav-pill')[2])"><i class="fa-solid fa-arrow-left me-1"></i> Back</button>
-                <button type="button" class="btn btn-primary rounded-3 px-4" onclick="showTab('preferences', document.querySelectorAll('.tab-nav-pill')[4])">Next <i class="fa-solid fa-arrow-right ms-1"></i></button>
-            </div>
-        </div>
+                    <div class="col-md-4 mb-4">
+                        <label class="form-label">Last Name<span class="required-star">*</span></label>
+                        <input type="text" name="last_name" class="form-control" placeholder="Enter Your Last name" value="{{ old('last_name', $pd['last_name'] ?? '') }}" required>
+                        <span class="invalid-feedback">Please enter last name</span>
+                    </div>
 
-        {{-- TAB 5: Preferences --}}
-        <div class="tab-section glass-card mb-4" id="tab-preferences">
-            <h5 class="fw-bold text-primary mb-4"><i class="fa-solid fa-heart me-2"></i> Partner Preferences</h5>
-            <div class="row">
-                <div class="col-md-3 mb-3"><label class="form-label">Age Min</label><input type="number" name="pref_age_min" class="form-control" value="{{ $pp['age_min'] ?? '' }}"></div>
-                <div class="col-md-3 mb-3"><label class="form-label">Age Max</label><input type="number" name="pref_age_max" class="form-control" value="{{ $pp['age_max'] ?? '' }}"></div>
-                <div class="col-md-3 mb-3"><label class="form-label">Min Height</label><input type="text" name="pref_height_min" class="form-control" value="{{ $pp['height_min'] ?? '' }}"></div>
-                <div class="col-md-3 mb-3"><label class="form-label">Religion</label><input type="text" name="pref_religion" class="form-control" value="{{ $pp['religion'] ?? '' }}"></div>
-                <div class="col-md-4 mb-3"><label class="form-label">Caste</label><input type="text" name="pref_caste" class="form-control" value="{{ $pp['caste'] ?? '' }}"></div>
-                <div class="col-md-4 mb-3"><label class="form-label">Education</label><input type="text" name="pref_education" class="form-control" value="{{ $pp['education'] ?? '' }}"></div>
-                <div class="col-md-4 mb-3"><label class="form-label">Income</label><input type="text" name="pref_income" class="form-control" value="{{ $pp['income'] ?? '' }}"></div>
-                <div class="col-12 mb-3"><label class="form-label">Preferred Location</label><input type="text" name="pref_location" class="form-control" value="{{ $pp['location'] ?? '' }}"></div>
-                <div class="col-12 mb-3"><label class="form-label">About Ideal Partner</label><textarea name="about_partner" class="form-control" rows="4">{{ $pp['about_partner'] ?? '' }}</textarea></div>
-            </div>
-            <div class="d-flex justify-content-between">
-                <button type="button" class="btn btn-light rounded-3 px-4" onclick="showTab('location', document.querySelectorAll('.tab-nav-pill')[3])"><i class="fa-solid fa-arrow-left me-1"></i> Back</button>
-                <button type="submit" class="btn btn-primary btn-lg rounded-3 px-5 fw-bold shadow-sm"><i class="fa-solid fa-floppy-disk me-2"></i> Save Changes</button>
-            </div>
-        </div>
+                    <div class="col-md-6 mb-4">
+                        <label class="form-label">Profile Created By<span class="required-star">*</span></label>
+                        <select name="profile_created_by" class="form-select" required>
+                            <option value="">Select Profile Created by</option>
+                            <option value="Self" {{ old('profile_created_by', $pd['profile_created_by'] ?? '') == 'Self' ? 'selected' : '' }}>Self</option>
+                            <option value="Parent" {{ old('profile_created_by', $pd['profile_created_by'] ?? '') == 'Parent' ? 'selected' : '' }}>Parent</option>
+                            <option value="Sibling" {{ old('profile_created_by', $pd['profile_created_by'] ?? '') == 'Sibling' ? 'selected' : '' }}>Sibling</option>
+                            <option value="Relative" {{ old('profile_created_by', $pd['profile_created_by'] ?? '') == 'Relative' ? 'selected' : '' }}>Relative</option>
+                            <option value="Friend" {{ old('profile_created_by', $pd['profile_created_by'] ?? '') == 'Friend' ? 'selected' : '' }}>Friend</option>
+                        </select>
+                        <span class="invalid-feedback">Please select profile creator</span>
+                    </div>
 
-    </form>
+                    <div class="col-md-6 mb-4">
+                        <label class="form-label">Gender<span class="required-star">*</span></label>
+                        <select name="gender" class="form-select" required>
+                            <option value="">Select Gender</option>
+                            <option value="male" {{ old('gender', $pd['gender'] ?? '') == 'male' ? 'selected' : '' }}>Male</option>
+                            <option value="female" {{ old('gender', $pd['gender'] ?? '') == 'female' ? 'selected' : '' }}>Female</option>
+                        </select>
+                        <span class="invalid-feedback">Please select gender</span>
+                    </div>
+
+                    <div class="col-md-4 mb-4">
+                        <label class="form-label">Date of Birth<span class="required-star">*</span></label>
+                        <input type="date" name="date_of_birth" class="form-control" value="{{ old('date_of_birth', $pd['dob'] ?? $pd['date_of_birth'] ?? '') }}" required>
+                        <span class="invalid-feedback">Please select date of birth</span>
+                    </div>
+
+                    <div class="col-md-4 mb-4">
+                        <label class="form-label">Height (Feet)</label>
+                        <select name="height" class="form-select">
+                            <option value="">Select Height</option>
+                            @for ($ft = 4.0; $ft <= 7.0; $ft += 0.1)
+                                <option value="{{ sprintf('%.1f', $ft) }}" {{ old('height', $profile->height ?? '') == sprintf('%.1f', $ft) ? 'selected' : '' }}>{{ sprintf('%.1f', $ft) }} ft</option>
+                            @endfor
+                        </select>
+                    </div>
+
+                    <div class="col-md-4 mb-4">
+                        <label class="form-label">Weight (kg)</label>
+                        <input type="number" name="weight" class="form-control" placeholder="Enter weight" min="30" max="150" value="{{ old('weight', $profile->weight ?? '') }}">
+                    </div>
+
+                    <div class="col-md-4 mb-4">
+                        <label class="form-label">Complexion</label>
+                        <select name="complexion" class="form-select">
+                            <option value="">Select Complexion</option>
+                            <option value="Fair" {{ old('complexion', $profile->complexion ?? '') == 'Fair' ? 'selected' : '' }}>Fair</option>
+                            <option value="Wheatish" {{ old('complexion', $profile->complexion ?? '') == 'Wheatish' ? 'selected' : '' }}>Wheatish</option>
+                            <option value="Dark" {{ old('complexion', $profile->complexion ?? '') == 'Dark' ? 'selected' : '' }}>Dark</option>
+                            <option value="Very Fair" {{ old('complexion', $profile->complexion ?? '') == 'Very Fair' ? 'selected' : '' }}>Very Fair</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-4 mb-4">
+                        <label class="form-label">Marital Status</label>
+                        <select name="marital_status" class="form-select">
+                            <option value="">Select Marital Status</option>
+                            <option value="Never Married" {{ old('marital_status', $pd['marital_status'] ?? '') == 'Never Married' ? 'selected' : '' }}>Never Married</option>
+                            <option value="Divorced" {{ old('marital_status', $pd['marital_status'] ?? '') == 'Divorced' ? 'selected' : '' }}>Divorced</option>
+                            <option value="Widowed" {{ old('marital_status', $pd['marital_status'] ?? '') == 'Widowed' ? 'selected' : '' }}>Widowed</option>
+                            <option value="Awaiting Divorce" {{ old('marital_status', $pd['marital_status'] ?? '') == 'Awaiting Divorce' ? 'selected' : '' }}>Awaiting Divorce</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-4 mb-4">
+                        <label class="form-label">Physical Status</label>
+                        <select name="physical_status" class="form-select">
+                            <option value="">Select Physical Status</option>
+                            <option value="Normal" {{ old('physical_status', $profile->physical_status ?? 'Normal') == 'Normal' ? 'selected' : '' }}>Normal</option>
+                            <option value="Physically Challenged" {{ old('physical_status', $profile->physical_status ?? '') == 'Physically Challenged' ? 'selected' : '' }}>Physically Challenged</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-4 mb-4">
+                        <label class="form-label">Mother Tongue</label>
+                        <select name="mother_tongue" class="form-select">
+                            <option value="">Select Mother Tongue</option>
+                            <option value="Marathi" {{ old('mother_tongue', $pd['mother_tongue'] ?? 'Marathi') == 'Marathi' ? 'selected' : '' }}>Marathi</option>
+                            <option value="Hindi" {{ old('mother_tongue', $pd['mother_tongue'] ?? '') == 'Hindi' ? 'selected' : '' }}>Hindi</option>
+                            <option value="English" {{ old('mother_tongue', $pd['mother_tongue'] ?? '') == 'English' ? 'selected' : '' }}>English</option>
+                            <option value="Gujarati" {{ old('mother_tongue', $pd['mother_tongue'] ?? '') == 'Gujarati' ? 'selected' : '' }}>Gujarati</option>
+                            <option value="Kannada" {{ old('mother_tongue', $pd['mother_tongue'] ?? '') == 'Kannada' ? 'selected' : '' }}>Kannada</option>
+                            <option value="Telugu" {{ old('mother_tongue', $pd['mother_tongue'] ?? '') == 'Telugu' ? 'selected' : '' }}>Telugu</option>
+                            <option value="Tamil" {{ old('mother_tongue', $pd['mother_tongue'] ?? '') == 'Tamil' ? 'selected' : '' }}>Tamil</option>
+                            <option value="Other" {{ old('mother_tongue', $pd['mother_tongue'] ?? '') == 'Other' ? 'selected' : '' }}>Other</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-4 mb-4">
+                        <label class="form-label">Citizenship</label>
+                        <select name="citizenship" class="form-select">
+                            <option value="">Select Citizenship</option>
+                            <option value="Indian" {{ old('citizenship', $pd['citizenship'] ?? 'Indian') == 'Indian' ? 'selected' : '' }}>Indian</option>
+                            <option value="Other" {{ old('citizenship', $pd['citizenship'] ?? '') == 'Other' ? 'selected' : '' }}>Other</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-4 mb-4">
+                        <label class="form-label">Blood Group</label>
+                        <select name="blood_group" class="form-select">
+                            <option value="">Select Blood Group</option>
+                            <option value="A+" {{ old('blood_group', $pd['blood_group'] ?? '') == 'A+' ? 'selected' : '' }}>A+</option>
+                            <option value="A-" {{ old('blood_group', $pd['blood_group'] ?? '') == 'A-' ? 'selected' : '' }}>A-</option>
+                            <option value="B+" {{ old('blood_group', $pd['blood_group'] ?? '') == 'B+' ? 'selected' : '' }}>B+</option>
+                            <option value="B-" {{ old('blood_group', $pd['blood_group'] ?? '') == 'B-' ? 'selected' : '' }}>B-</option>
+                            <option value="O+" {{ old('blood_group', $pd['blood_group'] ?? '') == 'O+' ? 'selected' : '' }}>O+</option>
+                            <option value="O-" {{ old('blood_group', $pd['blood_group'] ?? '') == 'O-' ? 'selected' : '' }}>O-</option>
+                            <option value="AB+" {{ old('blood_group', $pd['blood_group'] ?? '') == 'AB+' ? 'selected' : '' }}>AB+</option>
+                            <option value="AB-" {{ old('blood_group', $pd['blood_group'] ?? '') == 'AB-' ? 'selected' : '' }}>AB-</option>
+                        </select>
+                    </div>
+
+                    <div class="col-12 mb-4">
+                        <label class="form-label">Referral Name</label>
+                        <input type="text" name="referral_name" class="form-control" placeholder="Enter Your Referral name" value="{{ old('referral_name', $pd['referral_name'] ?? $pd['refferal_name'] ?? '') }}">
+                    </div>
+
+                    <div class="col-12 mb-4">
+                        <label class="form-label">About Me</label>
+                        <textarea name="about_me" class="form-control" rows="3" placeholder="Describe yourself, your interests, and personality...">{{ old('about_me', $pd['about_me'] ?? '') }}</textarea>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-end mt-4">
+                    <button type="button" class="btn btn-brand px-5 py-2.5" onclick="nextSection(1)">Next <i class="fa-solid fa-arrow-right ms-2"></i></button>
+                </div>
+            </div>
+
+            {{-- STEP 2: Religious Horoscope --}}
+            <div class="form-section" id="section-2">
+                <div>
+                    <h5 class="fw-bold text-dark mb-1">Religious Horoscope</h5>
+                    <p class="section-subtitle">Your Astrological Details</p>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-4 position-relative">
+                        <label class="form-label">Caste<span class="required-star">*</span></label>
+                        <select name="caste" class="form-select" id="casteSelect" required>
+                            <option value="">Select Caste</option>
+                        </select>
+                        <div class="spinner-border text-primary spinner-border-sm caste-loader" id="casteLoader"></div>
+                        <span class="invalid-feedback" id="casteFeedback">Please select caste</span>
+                    </div>
+
+                    <div class="col-md-6 mb-4 position-relative">
+                        <label class="form-label">Sub-Caste<span class="required-star">*</span></label>
+                        <select name="sub_caste" class="form-select" id="subCasteSelect" required disabled>
+                            <option value="">Select Sub-Caste</option>
+                        </select>
+                        <div class="spinner-border text-primary spinner-border-sm caste-loader" id="subCasteLoader"></div>
+                        <span class="invalid-feedback" id="subCasteFeedback">Please select sub-caste</span>
+                    </div>
+
+                    <div class="col-md-6 mb-4">
+                        <label class="form-label">Star</label>
+                        <select name="star" class="form-select">
+                            <option value="">Select Star</option>
+                            @php
+                                $starsList = ['Ashwini', 'Bharani', 'Krittika', 'Rohini', 'Mrigashirsha', 'Ardra', 'Punarvasu', 'Pushya', 'Ashlesha', 'Magha', 'Purva Phalguni', 'Uttara Phalguni', 'Hasta', 'Chitra', 'Svati', 'Vishakha', 'Anuradha', 'Jyeshtha', 'Mula', 'Purva Ashadha', 'Uttara Ashadha', 'Shravana', 'Dhanishta', 'Shatabhisha', 'Purva Bhadrapada', 'Uttara Bhadrapada', 'Revati'];
+                                $savedStar = $pd['star_details'][0] ?? '';
+                            @endphp
+                            @foreach($starsList as $st)
+                                <option value="{{ $st }}" {{ old('star', $savedStar) == $st ? 'selected' : '' }}>{{ $st }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <div class="col-md-6 mb-4">
+                        <label class="form-label">Raasi</label>
+                        <select name="raasi" class="form-select">
+                            <option value="">Select Raasi</option>
+                            @php
+                                $raasiList = ['Mesha (Aries)', 'Vrishabha (Taurus)', 'Mithuna (Gemini)', 'Karka (Cancer)', 'Simha (Leo)', 'Kanya (Virgo)', 'Tula (Libra)', 'Vrischika (Scorpio)', 'Dhanu (Sagittarius)', 'Makara (Capricorn)', 'Kumbha (Aquarius)', 'Meena (Pisces)'];
+                                $savedRaasi = $pd['star_details'][1] ?? '';
+                            @endphp
+                            @foreach($raasiList as $rs)
+                                <option value="{{ $rs }}" {{ old('raasi', $savedRaasi) == $rs ? 'selected' : '' }}>{{ $rs }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <div class="col-md-6 mb-4">
+                        <label class="form-label">Manglik</label>
+                        <select name="manglik" class="form-select">
+                            <option value="No" {{ old('manglik', $savedManglik) == 'No' ? 'selected' : '' }}>No</option>
+                            <option value="Yes" {{ old('manglik', $savedManglik) == 'Yes' ? 'selected' : '' }}>Yes</option>
+                            <option value="Anshik (Partial)" {{ old('manglik', $savedManglik) == 'Anshik (Partial)' ? 'selected' : '' }}>Anshik (Partial)</option>
+                            <option value="Don\'t Know" {{ old('manglik', $savedManglik) == "Don't Know" ? 'selected' : '' }}>Don't Know</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-6 mb-4">
+                        <label class="form-label">Dosh</label>
+                        <select name="dosh" class="form-select">
+                            <option value="No" {{ old('dosh', $pd['dosh'] ?? 'No') == 'No' ? 'selected' : '' }}>No</option>
+                            <option value="Yes" {{ old('dosh', $pd['dosh'] ?? '') == 'Yes' ? 'selected' : '' }}>Yes</option>
+                            <option value="Don't Know" {{ old('dosh', $pd['dosh'] ?? '') == "Don't Know" ? 'selected' : '' }}>Don't Know</option>
+                        </select>
+                    </div>
+
+                    <div class="col-12 mb-4">
+                        <label class="form-label">PHOTOS (UP TO 5)</label>
+                        <input type="file" id="fileInput" name="photos[]" multiple accept="image/*" class="d-none">
+                        
+                        <div class="upload-container" id="uploadContainer">
+                            {{-- Render Existing Saved Photos --}}
+                            @if(!empty($pd['photos']))
+                                @foreach($pd['photos'] as $photo)
+                                    <div class="preview-thumbnail existing-photo-item">
+                                        <img src="{{ asset('storage/' . $photo) }}" alt="Existing Photo">
+                                        <button type="button" class="delete-thumb-btn" onclick="removeExistingPhoto(this)">
+                                            <i class="fa-solid fa-xmark"></i>
+                                        </button>
+                                        <input type="hidden" name="existing_photos[]" value="{{ $photo }}">
+                                    </div>
+                                @endforeach
+                            @endif
+
+                            {{-- Interactive upload button --}}
+                            <div class="photo-upload-box" onclick="document.getElementById('fileInput').click()">
+                                <i class="fa-solid fa-camera"></i>
+                                <span>Add Photo</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-between mt-4">
+                    <button type="button" class="btn btn-brand-outline px-5 py-2.5" onclick="backSection(2)"><i class="fa-solid fa-arrow-left me-2"></i> Back</button>
+                    <button type="button" class="btn btn-brand px-5 py-2.5" onclick="nextSection(2)">Next <i class="fa-solid fa-arrow-right ms-2"></i></button>
+                </div>
+            </div>
+
+            {{-- STEP 3: Education & Career --}}
+            <div class="form-section" id="section-3">
+                <div>
+                    <h5 class="fw-bold text-dark mb-1">Education Career</h5>
+                    <p class="section-subtitle">Qualification & Occupation</p>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-4">
+                        <label class="form-label">Highest Qualification<span class="required-star">*</span></label>
+                        <select name="highest_qualification" class="form-select" required>
+                            <option value="">Select Highest Qualification</option>
+                            @php
+                                $qualifications = ['PhD', 'M.Com', 'M.Sc', 'M.Tech / M.E.', 'MBA / PGDM', 'MCA', 'M.Pharm', "Bachelor's Degree", 'Diploma', 'High School', 'Other'];
+                                $savedQualification = $ed['highest_qualification'] ?? '';
+                            @endphp
+                            @foreach($qualifications as $qf)
+                                <option value="{{ $qf }}" {{ old('highest_qualification', $savedQualification) == $qf ? 'selected' : '' }}>{{ $qf }}</option>
+                            @endforeach
+                        </select>
+                        <span class="invalid-feedback">Please select highest qualification</span>
+                    </div>
+
+                    <div class="col-md-6 mb-4">
+                        <label class="form-label">College</label>
+                        <input type="text" name="college_name" class="form-control" placeholder="Enter Your College" value="{{ old('college_name', $ed['college_name'] ?? $ed['college'] ?? '') }}">
+                    </div>
+
+                    <div class="col-md-6 mb-4">
+                        <label class="form-label">Employment Type<span class="required-star">*</span></label>
+                        <select name="employment_type" class="form-select" required>
+                            <option value="">Select Employment Type</option>
+                            <option value="Private Sector" {{ old('employment_type', $pro['employment_type'] ?? '') == 'Private Sector' ? 'selected' : '' }}>Private Sector</option>
+                            <option value="Government/Public Sector" {{ old('employment_type', $pro['employment_type'] ?? '') == 'Government/Public Sector' ? 'selected' : '' }}>Government/Public Sector</option>
+                            <option value="Civil Service" {{ old('employment_type', $pro['employment_type'] ?? '') == 'Civil Service' ? 'selected' : '' }}>Civil Service</option>
+                            <option value="Defense" {{ old('employment_type', $pro['employment_type'] ?? '') == 'Defense' ? 'selected' : '' }}>Defense</option>
+                            <option value="Owner" {{ old('employment_type', $pro['employment_type'] ?? '') == 'Owner' ? 'selected' : '' }}>Owner</option>
+                            <option value="Self Employed" {{ old('employment_type', $pro['employment_type'] ?? '') == 'Self Employed' ? 'selected' : '' }}>Self Employed</option>
+                            <option value="Not Working" {{ old('employment_type', $pro['employment_type'] ?? '') == 'Not Working' ? 'selected' : '' }}>Not Working</option>
+                        </select>
+                        <span class="invalid-feedback">Please select employment type</span>
+                    </div>
+
+                    <div class="col-md-6 mb-4">
+                        <label class="form-label">Job Title</label>
+                        <input type="text" name="occupation" class="form-control" placeholder="Enter Your Job title" value="{{ old('occupation', $pro['occupation'] ?? '') }}">
+                    </div>
+
+                    <div class="col-md-6 mb-4">
+                        <label class="form-label">Company Name</label>
+                        <input type="text" name="company_name" class="form-control" placeholder="Enter Your Company name" value="{{ old('company_name', $pro['company_name'] ?? '') }}">
+                    </div>
+
+                    <div class="col-md-6 mb-4">
+                        <label class="form-label">Annual Income (Lac)</label>
+                        <input type="text" name="annual_income" class="form-control" placeholder="e.g. 4 Lakh" value="{{ old('annual_income', $pro['annual_income'] ?? '') }}">
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-between mt-4">
+                    <button type="button" class="btn btn-brand-outline px-5 py-2.5" onclick="backSection(3)"><i class="fa-solid fa-arrow-left me-2"></i> Back</button>
+                    <button type="button" class="btn btn-brand px-5 py-2.5" onclick="nextSection(3)">Next <i class="fa-solid fa-arrow-right ms-2"></i></button>
+                </div>
+            </div>
+
+            {{-- STEP 4: Family, Lifestyle & Location --}}
+            <div class="form-section" id="section-4">
+                <div>
+                    <h5 class="fw-bold text-dark mb-1">Family & Lifestyle</h5>
+                    <p class="section-subtitle">Family background & habits</p>
+                </div>
+
+                <div class="row">
+                    {{-- Family Details --}}
+                    <div class="col-md-6 mb-4">
+                        <label class="form-label">Family Type<span class="required-star">*</span></label>
+                        <select name="family_type" class="form-select" required>
+                            <option value="">Select Family Type</option>
+                            <option value="Nuclear" {{ old('family_type', $fd['family_type'] ?? '') == 'Nuclear' ? 'selected' : '' }}>Nuclear</option>
+                            <option value="Joint" {{ old('family_type', $fd['family_type'] ?? '') == 'Joint' ? 'selected' : '' }}>Joint</option>
+                        </select>
+                        <span class="invalid-feedback">Please select family type</span>
+                    </div>
+
+                    <div class="col-md-6 mb-4">
+                        <label class="form-label">Family Class</label>
+                        <select name="family_status" class="form-select">
+                            <option value="">Select Family Class</option>
+                            <option value="Rich" {{ old('family_status', $fd['family_class'] ?? $fd['family_status'] ?? '') == 'Rich' ? 'selected' : '' }}>Rich</option>
+                            <option value="Upper Middle Class" {{ old('family_status', $fd['family_class'] ?? $fd['family_status'] ?? '') == 'Upper Middle Class' ? 'selected' : '' }}>Upper Middle Class</option>
+                            <option value="Middle Class" {{ old('family_status', $fd['family_class'] ?? $fd['family_status'] ?? '') == 'Middle Class' ? 'selected' : '' }}>Middle Class</option>
+                            <option value="Lower Middle Class" {{ old('family_status', $fd['family_class'] ?? $fd['family_status'] ?? '') == 'Lower Middle Class' ? 'selected' : '' }}>Lower Middle Class</option>
+                            <option value="Lower Class" {{ old('family_status', $fd['family_class'] ?? $fd['family_status'] ?? '') == 'Lower Class' ? 'selected' : '' }}>Lower Class</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-4 mb-4">
+                        <label class="form-label">Family Value</label>
+                        <select name="family_values" class="form-select">
+                            <option value="">Select Family Value</option>
+                            <option value="Orthodox" {{ old('family_values', $fd['family_value'] ?? $fd['family_values'] ?? '') == 'Orthodox' ? 'selected' : '' }}>Orthodox</option>
+                            <option value="Traditional" {{ old('family_values', $fd['family_value'] ?? $fd['family_values'] ?? '') == 'Traditional' ? 'selected' : '' }}>Traditional</option>
+                            <option value="Moderate" {{ old('family_values', $fd['family_value'] ?? $fd['family_values'] ?? '') == 'Moderate' ? 'selected' : '' }}>Moderate</option>
+                            <option value="Liberal" {{ old('family_values', $fd['family_value'] ?? $fd['family_values'] ?? '') == 'Liberal' ? 'selected' : '' }}>Liberal</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-4 mb-4">
+                        <label class="form-label">Father's Occupation</label>
+                        <input type="text" name="father_occupation" class="form-control" placeholder="Enter Your Father's occupation" value="{{ old('father_occupation', $fd['father_occupation'] ?? $fd['father'] ?? '') }}">
+                    </div>
+
+                    <div class="col-md-4 mb-4">
+                        <label class="form-label">Mother Occupation</label>
+                        <input type="text" name="mother_occupation" class="form-control" placeholder="Enter Your Mother occupation" value="{{ old('mother_occupation', $fd['mother_occupation'] ?? $fd['mother'] ?? '') }}">
+                    </div>
+
+                    {{-- Lifestyle Section --}}
+                    <div class="col-12">
+                        <div class="pink-section-header">Lifestyle</div>
+                    </div>
+
+                    <div class="col-md-4 mb-4">
+                        <label class="form-label">Diet</label>
+                        <select name="diet" class="form-select">
+                            <option value="">Select Diet</option>
+                            <option value="Vegetarian" {{ old('diet', $lf['diet'] ?? '') == 'Vegetarian' ? 'selected' : '' }}>Vegetarian</option>
+                            <option value="Non-Vegetarian" {{ old('diet', $lf['diet'] ?? '') == 'Non-Vegetarian' ? 'selected' : '' }}>Non-Vegetarian</option>
+                            <option value="Eggetarian" {{ old('diet', $lf['diet'] ?? '') == 'Eggetarian' ? 'selected' : '' }}>Eggetarian</option>
+                            <option value="Vegan" {{ old('diet', $lf['diet'] ?? '') == 'Vegan' ? 'selected' : '' }}>Vegan</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-4 mb-4">
+                        <label class="form-label">Smoking</label>
+                        <select name="smoking" class="form-select">
+                            <option value="">Select Smoking</option>
+                            <option value="No" {{ old('smoking', $lf['smoking'] ?? '') == 'No' ? 'selected' : '' }}>No</option>
+                            <option value="Yes" {{ old('smoking', $lf['smoking'] ?? '') == 'Yes' ? 'selected' : '' }}>Yes</option>
+                            <option value="Occasionally" {{ old('smoking', $lf['smoking'] ?? '') == 'Occasionally' ? 'selected' : '' }}>Occasionally</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-4 mb-4">
+                        <label class="form-label">Drinking</label>
+                        <select name="drinking" class="form-select">
+                            <option value="">Select Drinking</option>
+                            <option value="No" {{ old('drinking', $lf['drinking'] ?? '') == 'No' ? 'selected' : '' }}>No</option>
+                            <option value="Yes" {{ old('drinking', $lf['drinking'] ?? '') == 'Yes' ? 'selected' : '' }}>Yes</option>
+                            <option value="Occasionally" {{ old('drinking', $lf['drinking'] ?? '') == 'Occasionally' ? 'selected' : '' }}>Occasionally</option>
+                        </select>
+                    </div>
+
+                    {{-- Location Section --}}
+                    <div class="col-12">
+                        <div class="pink-section-header">Location</div>
+                    </div>
+
+                    <div class="col-12 mb-4">
+                        <label class="form-label">Address</label>
+                        <input type="text" name="address" class="form-control" placeholder="Enter Your Address" value="{{ old('address', $ld['address'] ?? '') }}">
+                    </div>
+
+                    <div class="col-md-6 mb-4">
+                        <label class="form-label">Pincode<span class="required-star">*</span></label>
+                        <div class="pincode-input-wrapper">
+                            <input type="text" name="pincode" class="form-control" id="pincodeInput" placeholder="Enter Your Pincode" maxlength="6" value="{{ old('pincode', $ld['pincode'] ?? '') }}" required>
+                            <i class="fa-solid fa-location-dot location-icon"></i>
+                            <span class="invalid-feedback">Please enter pincode</span>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6 mb-4">
+                        <label class="form-label">Country<span class="required-star">*</span></label>
+                        <select name="country" class="form-select" id="countryInput" required>
+                            <option value="">Select Country</option>
+                            <option value="India" {{ old('country', $ld['country'] ?? 'India') == 'India' ? 'selected' : '' }}>India</option>
+                            <option value="USA" {{ old('country', $ld['country'] ?? '') == 'USA' ? 'selected' : '' }}>USA</option>
+                            <option value="UK" {{ old('country', $ld['country'] ?? '') == 'UK' ? 'selected' : '' }}>UK</option>
+                            <option value="Canada" {{ old('country', $ld['country'] ?? '') == 'Canada' ? 'selected' : '' }}>Canada</option>
+                            <option value="Australia" {{ old('country', $ld['country'] ?? '') == 'Australia' ? 'selected' : '' }}>Australia</option>
+                            <option value="Other" {{ old('country', $ld['country'] ?? '') == 'Other' ? 'selected' : '' }}>Other</option>
+                        </select>
+                        <span class="invalid-feedback">Please select country</span>
+                    </div>
+
+                    <div class="col-md-4 mb-4">
+                        <label class="form-label">State<span class="required-star">*</span></label>
+                        <select name="state" class="form-select" id="stateInput" required>
+                            <option value="">Select State</option>
+                            <option value="Maharashtra" {{ old('state', $ld['state'] ?? '') == 'Maharashtra' ? 'selected' : '' }}>Maharashtra</option>
+                            <option value="Gujarat" {{ old('state', $ld['state'] ?? '') == 'Gujarat' ? 'selected' : '' }}>Gujarat</option>
+                            <option value="Karnataka" {{ old('state', $ld['state'] ?? '') == 'Karnataka' ? 'selected' : '' }}>Karnataka</option>
+                            <option value="Punjab" {{ old('state', $ld['state'] ?? '') == 'Punjab' ? 'selected' : '' }}>Punjab</option>
+                            <option value="Delhi" {{ old('state', $ld['state'] ?? '') == 'Delhi' ? 'selected' : '' }}>Delhi</option>
+                        </select>
+                        <span class="invalid-feedback">Please select state</span>
+                    </div>
+
+                    <div class="col-md-4 mb-4">
+                        <label class="form-label">City<span class="required-star">*</span></label>
+                        <input type="text" name="city" class="form-control" id="cityInput" placeholder="Enter Your City" value="{{ old('city', $ld['city'] ?? '') }}" required>
+                        <span class="invalid-feedback">Please enter city</span>
+                    </div>
+
+                    <div class="col-md-2 mb-4">
+                        <label class="form-label">Taluka</label>
+                        <input type="text" name="taluka" class="form-control" id="talukaInput" placeholder="Enter Your Taluka" value="{{ old('taluka', $ld['taluka'] ?? '') }}">
+                    </div>
+
+                    <div class="col-md-2 mb-4">
+                        <label class="form-label">Village</label>
+                        <input type="text" name="village" class="form-control" id="villageInput" placeholder="Enter Your Village" value="{{ old('village', $ld['village'] ?? '') }}">
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-between mt-4">
+                    <button type="button" class="btn btn-brand-outline px-5 py-2.5" onclick="backSection(4)"><i class="fa-solid fa-arrow-left me-2"></i> Back</button>
+                    <button type="submit" class="btn btn-brand px-5 py-2.5"><i class="fa-solid fa-check-circle me-2"></i> Save Changes</button>
+                </div>
+            </div>
+
+        </form>
+    </div>
 </div>
+
 <script>
-function showTab(tabId, btn) {
-    document.querySelectorAll('.tab-section').forEach(s => s.classList.remove('active'));
-    document.querySelectorAll('.tab-nav-pill').forEach(b => b.classList.remove('active'));
-    document.getElementById('tab-' + tabId).classList.add('active');
-    if (btn) btn.classList.add('active');
-}
-document.getElementById('edit-pincode').addEventListener('input', function() {
-    const pin = this.value.trim();
-    if (pin.length === 6 && /^\d+$/.test(pin)) {
-        fetch(`https://api.postalpincode.in/pincode/${pin}`).then(r => r.json()).then(data => {
-            if (data?.[0]?.Status === 'Success') {
-                const po = data[0].PostOffice[0];
-                document.getElementById('e-state').value = po.State;
-                document.getElementById('e-city').value = po.District;
+    const savedCaste = @json($pd['caste'] ?? '');
+    const savedSubCaste = @json($pd['sub_caste'] ?? '');
+    const savedState = @json($ld['state'] ?? '');
+
+    let selectedFiles = [];
+    const fileInput = document.getElementById('fileInput');
+    const uploadContainer = document.getElementById('uploadContainer');
+
+    function updatePhotoCount() {
+        const total = document.querySelectorAll('.preview-thumbnail').length;
+        if (total >= 5) {
+            document.querySelector('.photo-upload-box').style.display = 'none';
+        } else {
+            document.querySelector('.photo-upload-box').style.display = 'flex';
+        }
+    }
+
+    fileInput.addEventListener('change', function(e) {
+        const files = Array.from(e.target.files);
+        const currentTotal = document.querySelectorAll('.preview-thumbnail').length;
+        
+        // Cap total photos to 5
+        if (currentTotal + files.length > 5) {
+            alert('You can upload up to 5 photos only.');
+            return;
+        }
+
+        files.forEach(file => {
+            selectedFiles.push(file);
+            
+            // Create preview card
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const div = document.createElement('div');
+                div.className = 'preview-thumbnail';
+                div.innerHTML = `
+                    <img src="${event.target.result}" alt="Preview">
+                    <button type="button" class="delete-thumb-btn" onclick="removeSelectedPhoto(this, '${file.name}')">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                `;
+                uploadContainer.insertBefore(div, document.querySelector('.photo-upload-box'));
+                updatePhotoCount();
+            };
+            reader.readAsDataURL(file);
+        });
+
+        updateFileInput();
+    });
+
+    function removeSelectedPhoto(btnElement, fileName) {
+        selectedFiles = selectedFiles.filter(file => file.name !== fileName);
+        btnElement.closest('.preview-thumbnail').remove();
+        updateFileInput();
+        updatePhotoCount();
+    }
+
+    function removeExistingPhoto(btnElement) {
+        btnElement.closest('.preview-thumbnail').remove();
+        updatePhotoCount();
+    }
+
+    function updateFileInput() {
+        const dataTransfer = new DataTransfer();
+        selectedFiles.forEach(file => dataTransfer.items.add(file));
+        fileInput.files = dataTransfer.files;
+    }
+
+    // Dynamic AJAX Caste & Sub-Caste loading from DB API
+    const casteSelect = document.getElementById('casteSelect');
+    const subCasteSelect = document.getElementById('subCasteSelect');
+    const casteLoader = document.getElementById('casteLoader');
+    const subCasteLoader = document.getElementById('subCasteLoader');
+
+    document.addEventListener('DOMContentLoaded', function() {
+        loadCastes();
+        
+        // Dynamic State Select Option injection if saved state is not in defaults
+        const stateInput = document.getElementById('stateInput');
+        if (stateInput && savedState) {
+            let stateExists = false;
+            for (let i = 0; i < stateInput.options.length; i++) {
+                if (stateInput.options[i].value === savedState) {
+                    stateExists = true;
+                    break;
+                }
             }
+            if (!stateExists) {
+                const opt = document.createElement('option');
+                opt.value = savedState;
+                opt.textContent = savedState;
+                opt.selected = true;
+                stateInput.appendChild(opt);
+            }
+        }
+        
+        updatePhotoCount();
+    });
+
+    function loadCastes() {
+        casteLoader.style.display = 'block';
+        casteSelect.disabled = true;
+
+        fetch('/api/matrimony/casts')
+            .then(res => res.json())
+            .then(res => {
+                casteLoader.style.display = 'none';
+                casteSelect.disabled = false;
+                
+                if (res.success && res.data && res.data.casts) {
+                    res.data.casts.forEach(cast => {
+                        const opt = document.createElement('option');
+                        opt.value = cast.name;
+                        opt.dataset.id = cast.id;
+                        opt.textContent = cast.name;
+                        if (cast.name === savedCaste) {
+                            opt.selected = true;
+                        }
+                        casteSelect.appendChild(opt);
+                    });
+                    
+                    // Trigger subcaste load if caste is saved
+                    if (savedCaste) {
+                        casteSelect.dispatchEvent(new Event('change'));
+                    }
+                }
+            })
+            .catch(err => {
+                casteLoader.style.display = 'none';
+                casteSelect.disabled = false;
+                console.error('Failed to load castes:', err);
+            });
+    }
+
+    casteSelect.addEventListener('change', function() {
+        const selectedOption = casteSelect.options[casteSelect.selectedIndex];
+        const castId = selectedOption.dataset.id;
+
+        // Reset subcaste list
+        subCasteSelect.innerHTML = '<option value="">Select Sub-Caste</option>';
+        subCasteSelect.disabled = true;
+
+        if (!castId) {
+            return;
+        }
+
+        subCasteLoader.style.display = 'block';
+
+        fetch(`/api/matrimony/casts/${castId}/subcasts`)
+            .then(res => res.json())
+            .then(res => {
+                subCasteLoader.style.display = 'none';
+                subCasteSelect.disabled = false;
+
+                if (res.success && res.data && res.data.sub_casts) {
+                    res.data.sub_casts.forEach(sc => {
+                        const opt = document.createElement('option');
+                        opt.value = sc.name;
+                        opt.textContent = sc.name;
+                        if (sc.name === savedSubCaste) {
+                            opt.selected = true;
+                        }
+                        subCasteSelect.appendChild(opt);
+                    });
+                } else {
+                    const opt = document.createElement('option');
+                    opt.value = casteSelect.value;
+                    opt.textContent = casteSelect.value;
+                    if (casteSelect.value === savedSubCaste) {
+                        opt.selected = true;
+                    }
+                    subCasteSelect.appendChild(opt);
+                }
+            })
+            .catch(err => {
+                subCasteLoader.style.display = 'none';
+                subCasteSelect.disabled = false;
+                console.error('Failed to load subcastes:', err);
+                
+                const opt = document.createElement('option');
+                opt.value = casteSelect.value;
+                opt.textContent = casteSelect.value;
+                if (casteSelect.value === savedSubCaste) {
+                    opt.selected = true;
+                }
+                subCasteSelect.appendChild(opt);
+            });
+    });
+
+    // Pincode dynamic lookup (Country, State, City, Taluka, Village, Address)
+    function lookupPincode(isClick = false) {
+        const pinInput = document.getElementById('pincodeInput');
+        const pin = pinInput.value.trim();
+        if (pin.length === 6 && /^\d+$/.test(pin)) {
+            const icon = document.querySelector('.location-icon');
+            icon.classList.remove('fa-location-dot');
+            icon.classList.add('fa-spinner', 'fa-spin');
+            
+            fetch(`https://api.postalpincode.in/pincode/${pin}`)
+                .then(res => res.json())
+                .then(data => {
+                    icon.classList.remove('fa-spinner', 'fa-spin');
+                    icon.classList.add('fa-location-dot');
+                    
+                    if (data && data[0] && data[0].Status === 'Success') {
+                        const po = data[0].PostOffice[0];
+                        
+                        // Select India
+                        const countryInput = document.getElementById('countryInput');
+                        if (countryInput) countryInput.value = "India";
+                        
+                        // Dynamic State Select Option injection if not present
+                        const stateInput = document.getElementById('stateInput');
+                        if (stateInput) {
+                            let stateExists = false;
+                            for (let i = 0; i < stateInput.options.length; i++) {
+                                if (stateInput.options[i].value === po.State) {
+                                    stateExists = true;
+                                    break;
+                                }
+                            }
+                            if (!stateExists && po.State) {
+                                const opt = document.createElement('option');
+                                opt.value = po.State;
+                                opt.textContent = po.State;
+                                stateInput.appendChild(opt);
+                            }
+                            stateInput.value = po.State;
+                        }
+                        
+                        // Set City district
+                        const cityInput = document.getElementById('cityInput');
+                        if (cityInput) cityInput.value = po.District || '';
+
+                        // Set Taluka (Block)
+                        const talukaInput = document.getElementById('talukaInput');
+                        if (talukaInput) talukaInput.value = (po.Block && po.Block !== 'N.A.') ? po.Block : '';
+
+                        // Set Village (Name)
+                        const villageInput = document.getElementById('villageInput');
+                        if (villageInput) villageInput.value = po.Name || '';
+
+                        // Set Address to po.Name + po.District (E.g. Pisoli, Pune)
+                        const addressInput = document.querySelector('input[name="address"]');
+                        if (addressInput && po.Name && po.District) {
+                            addressInput.value = po.Name + ", " + po.District;
+                        }
+                    } else {
+                        if (isClick === true) {
+                            alert("Invalid Pincode or no records found.");
+                        }
+                    }
+                })
+                .catch(err => {
+                    icon.classList.remove('fa-spinner', 'fa-spin');
+                    icon.classList.add('fa-location-dot');
+                    console.error('Pincode lookup error:', err);
+                    if (isClick === true) {
+                        alert("Error searching pincode. Please try again.");
+                    }
+                });
+        } else {
+            if (isClick === true) {
+                alert("Please enter a valid 6-digit Pincode first.");
+            }
+        }
+    }
+
+    document.getElementById('pincodeInput').addEventListener('input', function() {
+        lookupPincode(false);
+    });
+    const locIcon = document.querySelector('.location-icon');
+    if (locIcon) {
+        locIcon.style.cursor = 'pointer';
+        locIcon.addEventListener('click', function() {
+            lookupPincode(true);
         });
     }
-});
+
+    // Wizard Step Navigation & Same-Page Validation
+    function updateProgress(step) {
+        const percentage = ((step - 1) / 3) * 100;
+        document.getElementById('progressLine').style.width = `${percentage}%`;
+
+        for (let i = 1; i <= 4; i++) {
+            const wrapper = document.getElementById(`stepIndicator-${i}`);
+            if (i < step) {
+                wrapper.className = 'step-circle-wrapper completed';
+            } else if (i === step) {
+                wrapper.className = 'step-circle-wrapper active';
+            } else {
+                wrapper.className = 'step-circle-wrapper';
+            }
+        }
+    }
+
+    function validateSection(step) {
+        let isValid = true;
+        const section = document.getElementById(`section-${step}`);
+        const requiredFields = section.querySelectorAll('[required]');
+        
+        requiredFields.forEach(field => {
+            const errorSpan = field.parentNode.querySelector('.invalid-feedback');
+            
+            if (!field.value.trim()) {
+                field.classList.add('is-invalid');
+                if (errorSpan) errorSpan.style.display = 'block';
+                isValid = false;
+            } else {
+                field.classList.remove('is-invalid');
+                if (errorSpan) errorSpan.style.display = 'none';
+            }
+        });
+
+        return isValid;
+    }
+
+    function nextSection(currentStep) {
+        if (!validateSection(currentStep)) {
+            const firstError = document.getElementById(`section-${currentStep}`).querySelector('.is-invalid');
+            if (firstError) {
+                firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                firstError.focus();
+            }
+            return;
+        }
+
+        document.getElementById(`section-${currentStep}`).classList.remove('active');
+        document.getElementById(`section-${currentStep + 1}`).classList.add('active');
+        
+        updateProgress(currentStep + 1);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function backSection(currentStep) {
+        document.getElementById(`section-${currentStep}`).classList.remove('active');
+        document.getElementById(`section-${currentStep - 1}`).classList.add('active');
+        
+        updateProgress(currentStep - 1);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    document.getElementById('matrimonyForm').addEventListener('submit', function(e) {
+        if (!validateSection(4)) {
+            e.preventDefault();
+            const firstError = document.getElementById('section-4').querySelector('.is-invalid');
+            if (firstError) {
+                firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                firstError.focus();
+            }
+        }
+    });
 </script>
 @endsection

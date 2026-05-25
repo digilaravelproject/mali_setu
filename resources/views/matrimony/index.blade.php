@@ -7,8 +7,11 @@
 .quick-action-card { border-radius: 16px; padding: 20px; text-align: center; background: rgba(255,255,255,0.7); border: 1px solid rgba(173,20,87,0.08); transition: all 0.3s ease; cursor: pointer; }
 .quick-action-card:hover { transform: translateY(-4px); box-shadow: 0 12px 24px rgba(173,20,87,0.1); }
 .photo-thumb { width: 70px; height: 70px; border-radius: 12px; object-fit: cover; }
+.photo-thumb-placeholder { width: 70px; height: 70px; border-radius: 12px; background: #fff5f8; border: 1px solid rgba(173, 20, 87, 0.1); color: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 1.8rem; }
 .plan-card { border-radius: 20px; padding: 28px; background: rgba(255,255,255,0.8); border: 2px solid rgba(173,20,87,0.1); text-align: center; }
 .plan-card:hover { border-color: var(--primary); }
+.profile-action-btn { border-radius: 12px; font-weight: 700; font-size: 0.82rem; padding: 8px 18px; transition: all 0.3s ease; display: inline-flex; align-items: center; gap: 6px; }
+.profile-action-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 12px rgba(173, 20, 87, 0.15); }
 </style>
 
 <div class="py-4">
@@ -114,12 +117,12 @@
 
     {{-- Profile Summary --}}
     <div class="glass-card mb-4">
-        <div class="row align-items-start">
+        <div class="row align-items-center">
             <div class="col-auto">
                 @if(!empty($profile->personal_details['photos'][0]))
                     <img src="{{ asset('storage/' . $profile->personal_details['photos'][0]) }}" class="photo-thumb">
                 @else
-                    <div class="photo-thumb bg-primary bg-opacity-10 d-flex align-items-center justify-content-center text-primary fs-3">
+                    <div class="photo-thumb-placeholder">
                         <i class="fa-solid fa-user"></i>
                     </div>
                 @endif
@@ -128,15 +131,23 @@
                 <h5 class="fw-bold mb-1">{{ $user->name }}</h5>
                 <div class="d-flex flex-wrap gap-3 text-secondary small mb-2">
                     <span><i class="fa-solid fa-cake-candles me-1 text-primary"></i> {{ $profile->age }} yrs</span>
-                    <span><i class="fa-solid fa-ruler me-1 text-primary"></i> {{ $profile->height ?? 'N/A' }}</span>
-                    <span><i class="fa-solid fa-location-dot me-1 text-primary"></i> {{ $profile->location_details['city'] ?? '' }}, {{ $profile->location_details['state'] ?? '' }}</span>
-                    <span><i class="fa-solid fa-graduation-cap me-1 text-primary"></i> {{ $profile->education_details['highest_qualification'] ?? 'N/A' }}</span>
-                    <span><i class="fa-solid fa-briefcase me-1 text-primary"></i> {{ $profile->professional_details['occupation'] ?? 'N/A' }}</span>
+                    @if($profile->height)
+                        <span><i class="fa-solid fa-ruler me-1 text-primary"></i> {{ $profile->height }} ft</span>
+                    @endif
+                    @if(!empty($profile->location_details['city']) || !empty($profile->location_details['state']))
+                        <span><i class="fa-solid fa-location-dot me-1 text-primary"></i> {{ $profile->location_details['city'] ?? '' }}{{ !empty($profile->location_details['city']) && !empty($profile->location_details['state']) ? ', ' : '' }}{{ $profile->location_details['state'] ?? '' }}</span>
+                    @endif
+                    @if(!empty($profile->education_details['highest_qualification']))
+                        <span><i class="fa-solid fa-graduation-cap me-1 text-primary"></i> {{ $profile->education_details['highest_qualification'] }}</span>
+                    @endif
+                    @if(!empty($profile->professional_details['occupation']))
+                        <span><i class="fa-solid fa-briefcase me-1 text-primary"></i> {{ $profile->professional_details['occupation'] }}</span>
+                    @endif
                 </div>
-                <div class="d-flex gap-2 flex-wrap mt-2">
-                    <a href="{{ route('matrimony.browse') }}" class="btn btn-primary btn-sm rounded-3 px-3"><i class="fa-solid fa-magnifying-glass me-1"></i> Browse Profiles</a>
-                    <a href="{{ route('matrimony.requests') }}" class="btn btn-outline-primary btn-sm rounded-3 px-3"><i class="fa-solid fa-paper-plane me-1"></i> Requests</a>
-                    <a href="{{ route('matrimony.conversations') }}" class="btn btn-outline-secondary btn-sm rounded-3 px-3"><i class="fa-solid fa-comments me-1"></i> Messages</a>
+                <div class="d-flex gap-2 flex-wrap mt-3">
+                    <a href="{{ route('matrimony.browse') }}" class="btn btn-primary btn-sm profile-action-btn"><i class="fa-solid fa-magnifying-glass me-1"></i> Browse Profiles</a>
+                    <a href="{{ route('matrimony.requests') }}" class="btn btn-outline-primary btn-sm profile-action-btn"><i class="fa-solid fa-paper-plane me-1"></i> Requests</a>
+                    <a href="{{ route('matrimony.conversations') }}" class="btn btn-outline-secondary btn-sm profile-action-btn"><i class="fa-solid fa-comments me-1"></i> Messages</a>
                 </div>
             </div>
         </div>
@@ -180,7 +191,7 @@
 
     {{-- Subscription Plans (show if not paid) --}}
     @if(!$hasPaid && $plans->count() > 0)
-    <div class="glass-card mb-4">
+    <div class="glass-card mb-4" id="plans-section">
         <h5 class="fw-bold mb-2 text-primary"><i class="fa-solid fa-crown me-2"></i> Subscribe to a Premium Plan</h5>
         <p class="text-secondary small mb-4">Upgrade to a premium plan to get your profile approved faster, access advanced filters, and send unlimited connection requests.</p>
         <div class="row g-4">
