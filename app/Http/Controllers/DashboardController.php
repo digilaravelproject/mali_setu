@@ -281,4 +281,59 @@ class DashboardController extends Controller
             return back()->withErrors(['error' => 'Failed to delete account. ' . $e->getMessage()]);
         }
     }
+
+    /**
+     * Display Privacy Policy inside authenticated layout
+     */
+    public function privacyPolicy()
+    {
+        $page = \App\Models\Page::where('page_type', 'privacy_policy')
+                    ->where('status', 1)
+                    ->first();
+
+        return view('dashboard.page', compact('page'));
+    }
+
+    /**
+     * Display Terms & Conditions inside authenticated layout
+     */
+    public function termsConditions()
+    {
+        $page = \App\Models\Page::where('page_type', 'terms_condition')
+                    ->where('status', 1)
+                    ->first();
+
+        return view('dashboard.page', compact('page'));
+    }
+
+    /**
+     * Display Contact Support / Us inside authenticated layout
+     */
+    public function contactSupport()
+    {
+        $page = \App\Models\Page::where('page_type', 'contact_us')
+                    ->where('status', 1)
+                    ->first();
+
+        return view('dashboard.page', compact('page'));
+    }
+
+    /**
+     * Display User's Applied Jobs catalog
+     */
+    public function appliedJobs(Request $request)
+    {
+        $applications = \App\Models\JobApplication::where('user_id', Auth::id())
+            ->with(['jobPosting.business'])
+            ->latest('applied_at')
+            ->paginate(10, ['*'], 'applications_page');
+
+        $allJobs = \App\Models\JobPosting::where('is_active', true)
+            ->where('status', 'approved')
+            ->with('business')
+            ->latest()
+            ->paginate(10, ['*'], 'jobs_page');
+
+        return view('dashboard.applied_jobs', compact('applications', 'allJobs'));
+    }
 }

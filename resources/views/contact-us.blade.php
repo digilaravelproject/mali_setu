@@ -28,6 +28,6 @@
 </head>
 <body>
     <h1>{{ $page->page_name ?? 'Privacy Policy' }}</h1>
-    {!! $page->description ?? '' !!}
+    {!! $page->clean_description ?? '' !!}
 </body>
 </html>

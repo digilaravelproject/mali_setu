@@ -45,16 +45,14 @@
                     <i class="fa-solid fa-magnifying-glass text-primary"></i> Total Businesses
                 </a>
             </li>
-
-            <!-- Subscription Module -->
-            <li class="nav-item">
-                <a href="{{ route('subscriptions.index') }}" class="nav-link-custom {{ Request::routeIs('subscriptions.*') ? 'active' : '' }}">
-                    <i class="fa-solid fa-credit-card"></i> My Subscriptions
+            <li class="nav-item ps-3">
+                <a href="{{ route('dashboard.jobs.applied') }}" class="nav-link-custom small {{ Request::routeIs('dashboard.jobs.applied') ? 'active' : '' }}" style="font-size:0.82rem; padding: 8px 16px;">
+                    <i class="fa-solid fa-briefcase text-primary"></i> Total Jobs
                 </a>
             </li>
 
             <!-- Volunteer Module -->
-            <li class="nav-item">
+            <?php /*<li class="nav-item">
                 <a href="{{ route('volunteers.index') }}" class="nav-link-custom {{ Request::routeIs('volunteers.index') ? 'active' : '' }}">
                     <i class="fa-solid fa-hands-holding"></i> Volunteer Portal
                 </a>
@@ -63,12 +61,42 @@
                 <a href="{{ route('volunteers.browse') }}" class="nav-link-custom small {{ Request::routeIs('volunteers.browse') || Request::routeIs('volunteers.opportunity.*') ? 'active' : '' }}" style="font-size:0.82rem; padding: 8px 16px;">
                     <i class="fa-solid fa-magnifying-glass text-primary"></i> Browse Opportunities
                 </a>
-            </li>
+            </li> */?>
 
             <!-- Blog Module -->
             <li class="nav-item">
                 <a href="{{ route('blogs.index') }}" class="nav-link-custom {{ Request::routeIs('blogs.*') ? 'active' : '' }}">
                     <i class="fa-solid fa-blog"></i> Blog Portal
+                </a>
+            </li>
+
+            <!-- Subscription Module -->
+            <li class="nav-item">
+                <a href="{{ route('subscriptions.index') }}" class="nav-link-custom {{ Request::routeIs('subscriptions.*') ? 'active' : '' }}">
+                    <i class="fa-solid fa-credit-card"></i> My Subscriptions
+                </a>
+            </li>
+
+
+
+            <!-- Privacy Policy -->
+            <li class="nav-item">
+                <a href="{{ route('dashboard.privacy-policy') }}" class="nav-link-custom {{ Request::routeIs('dashboard.privacy-policy') ? 'active' : '' }}">
+                    <i class="fa-solid fa-shield-halved"></i> Privacy Policy
+                </a>
+            </li>
+
+            <!-- Terms & Conditions -->
+            <li class="nav-item">
+                <a href="{{ route('dashboard.terms-conditions') }}" class="nav-link-custom {{ Request::routeIs('dashboard.terms-conditions') ? 'active' : '' }}">
+                    <i class="fa-solid fa-file-contract"></i> Terms & Conditions
+                </a>
+            </li>
+
+            <!-- Contact Support -->
+            <li class="nav-item">
+                <a href="{{ route('dashboard.contact-support') }}" class="nav-link-custom {{ Request::routeIs('dashboard.contact-support') ? 'active' : '' }}">
+                    <i class="fa-solid fa-headset"></i> Contact Support
                 </a>
             </li>
         </ul>

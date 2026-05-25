@@ -98,6 +98,7 @@ Route::middleware('auth')->group(function () {
 
         // Jobs Hub CRUD & Applicant tracking
         Route::post('jobs', [BusinessController::class, 'addJob'])->name('jobs.add');
+        Route::post('jobs/apply', [BusinessController::class, 'applyJob'])->name('jobs.apply');
         Route::post('jobs/{id}/update', [BusinessController::class, 'updateJob'])->name('jobs.update');
         Route::delete('jobs/{id}', [BusinessController::class, 'deleteJob'])->name('jobs.delete');
         Route::post('jobs/{id}/toggle', [BusinessController::class, 'toggleJob'])->name('jobs.toggle');
@@ -131,6 +132,17 @@ Route::middleware('auth')->group(function () {
         Route::get('/{id}', [SubscriptionController::class, 'show'])->name('show');
         Route::get('/{id}/invoice', [SubscriptionController::class, 'invoice'])->name('invoice');
     });
+
+    // ── Pages & Applied Jobs Utilities ────────────────────────────────────
+    Route::get('/dashboard/privacy-policy', [DashboardController::class, 'privacyPolicy'])->name('dashboard.privacy-policy');
+    Route::get('/dashboard/terms-conditions', [DashboardController::class, 'termsConditions'])->name('dashboard.terms-conditions');
+    Route::get('/dashboard/contact-support', [DashboardController::class, 'contactSupport'])->name('dashboard.contact-support');
+    Route::get('/dashboard/jobs/applied', [DashboardController::class, 'appliedJobs'])->name('dashboard.jobs.applied');
+
+    // ── Donation Intent Checkout ──────────────────────────────────────────
+    Route::get('/dashboard/donations/suggest', [\App\Http\Controllers\DonationController::class, 'suggestCause'])->name('dashboard.donations.suggest');
+    Route::post('/dashboard/donations/checkout', [\App\Http\Controllers\DonationController::class, 'createOrder'])->name('dashboard.donations.checkout');
+    Route::post('/dashboard/donations/verify', [\App\Http\Controllers\DonationController::class, 'verifyPayment'])->name('dashboard.donations.verify');
 
     // ── Volunteers Module ─────────────────────────────────────────────────
     Route::prefix('dashboard/volunteers')->name('volunteers.')->group(function () {

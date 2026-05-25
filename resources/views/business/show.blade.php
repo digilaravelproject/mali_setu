@@ -179,7 +179,11 @@
                                             </div>
                                             <div>
                                                 @if(Auth::check() && Auth::id() !== $business->user_id)
-                                                    <a href="#" class="btn btn-primary btn-sm rounded-3 py-2 px-3 fw-bold">Apply Now</a>
+                                                    @if($j->hasUserApplied(Auth::id()))
+                                                        <button class="btn btn-secondary btn-sm rounded-3 py-2 px-3 fw-bold" disabled><i class="fa-solid fa-circle-check me-1"></i> Applied</button>
+                                                    @else
+                                                        <button type="button" class="btn btn-primary btn-sm rounded-3 py-2 px-3 fw-bold" onclick="openApplyJobModal({{ $j->id }}, '{{ addslashes($j->title) }}')">Apply Now</button>
+                                                    @endif
                                                 @endif
                                             </div>
                                         </div>
@@ -293,4 +297,58 @@
 
     </div>
 </div>
+
+<!-- Apply Job Modal -->
+<div class="modal fade" id="applyJobModal" tabindex="-1" aria-labelledby="applyJobModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0 shadow-lg p-3">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="fw-bold mb-0" id="applyJobModalLabel">Apply for Job</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{{ route('dashboard.business.jobs.apply') }}" method="POST" enctype="multipart/form-data">
+                @csrf
+                <input type="hidden" name="job_posting_id" id="apply_job_posting_id">
+                
+                <div class="modal-body py-3">
+                    <div class="mb-3 text-start">
+                        <label class="form-label">Job Title</label>
+                        <input type="text" id="apply_job_title" class="form-control bg-light" readonly style="border: 1.5px solid #e2e8f0; pointer-events: none;">
+                    </div>
+                    
+                    <div class="mb-3 text-start">
+                        <label class="form-label">Cover Letter <span class="text-danger">*</span></label>
+                        <textarea name="cover_letter" class="form-control" rows="4" placeholder="Briefly describe why you are a good fit for this role..." required></textarea>
+                    </div>
+                    
+                    <div class="mb-3 text-start">
+                        <label class="form-label">Upload Resume <span class="text-secondary small">(Optional, PDF/DOCX/JPG/PNG up to 5MB)</span></label>
+                        <input type="file" name="resume" class="form-control">
+                    </div>
+                    
+                    <div class="mb-3 text-start">
+                        <label class="form-label">Additional Info <span class="text-secondary small">(Optional)</span></label>
+                        <textarea name="additional_info" class="form-control" rows="2" placeholder="Any additional links or notes..."></textarea>
+                    </div>
+                </div>
+                
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary px-4">Submit Application</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section('scripts')
+<script>
+    function openApplyJobModal(jobId, jobTitle) {
+        document.getElementById('apply_job_posting_id').value = jobId;
+        document.getElementById('apply_job_title').value = jobTitle;
+        const modal = new bootstrap.Modal(document.getElementById('applyJobModal'));
+        modal.show();
+    }
+</script>
+@endsection
 @endsection

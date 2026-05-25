@@ -124,7 +124,7 @@
                                     <td class="text-center">
                                         <div class="d-flex gap-2 justify-content-center">
                                             <button class="btn btn-outline-success btn-sm rounded-3 cursor-pointer" onclick="toggleBusinessSection('console')" title="View Details">
-                                                <i class="fa-solid fa-eye me-1"></i> View Console
+                                                <i class="fa-solid fa-eye me-1"></i> View
                                             </button>
                                             <button class="btn btn-outline-primary btn-sm rounded-3 cursor-pointer" onclick="toggleBusinessSection('edit')" title="Edit Profile">
                                                 <i class="fa-solid fa-pen-to-square me-1"></i> Edit
