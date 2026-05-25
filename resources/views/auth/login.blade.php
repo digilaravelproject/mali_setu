@@ -231,7 +231,7 @@
                 
                 <!-- Email Input -->
                 <div class="mb-4">
-                    <label class="form-label small fw-bold text-secondary">Email Address</label>
+                    <label class="form-label small fw-bold text-secondary">Email Address<span class="text-danger">*</span></label>
                     <div class="position-relative">
                         <input 
                             type="email" 
@@ -248,7 +248,7 @@
                 <!-- Password Input -->
                 <div class="mb-3">
                     <div class="d-flex justify-content-between align-items-center mb-2">
-                        <label class="form-label small fw-bold text-secondary mb-0">Password</label>
+                        <label class="form-label small fw-bold text-secondary mb-0">Password<span class="text-danger">*</span></label>
                         <a href="{{ route('password.request') }}" class="small text-primary text-decoration-none fw-bold">Forgot password?</a>
                     </div>
                     <div class="position-relative">

@@ -141,6 +141,18 @@ Route::middleware('auth')->group(function () {
         Route::post('/opportunity/apply', [VolunteerController::class, 'apply'])->name('opportunity.apply');
         Route::post('/application/{id}/withdraw', [VolunteerController::class, 'withdraw'])->name('application.withdraw');
     });
+
+    // ── Blog Module ───────────────────────────────────────────────────────
+    Route::prefix('dashboard/blogs')->name('blogs.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\BlogController::class, 'index'])->name('index');
+        Route::get('/create', [\App\Http\Controllers\BlogController::class, 'create'])->name('create');
+        Route::post('/', [\App\Http\Controllers\BlogController::class, 'store'])->name('store');
+        Route::get('/{id}', [\App\Http\Controllers\BlogController::class, 'show'])->name('show');
+        Route::get('/{id}/edit', [\App\Http\Controllers\BlogController::class, 'edit'])->name('edit');
+        Route::post('/{id}/update', [\App\Http\Controllers\BlogController::class, 'update'])->name('update');
+        Route::delete('/{id}', [\App\Http\Controllers\BlogController::class, 'destroy'])->name('destroy');
+        Route::post('/{id}/like', [\App\Http\Controllers\BlogController::class, 'like'])->name('like');
+    });
 });
 
 Route::resource('heroes', HomepageHeroController::class);

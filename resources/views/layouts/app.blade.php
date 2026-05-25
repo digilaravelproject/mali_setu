@@ -10,6 +10,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
 
     <style>
         :root {
@@ -21,6 +22,21 @@
             --glass: rgba(255, 255, 255, 0.95);
             --border-glow: rgba(173, 20, 87, 0.15);
             --sidebar-width: 280px;
+        }
+
+        /* Custom scrollbar for scrollable menus */
+        .sidebar-menu-wrapper::-webkit-scrollbar {
+            width: 4px;
+        }
+        .sidebar-menu-wrapper::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .sidebar-menu-wrapper::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.25);
+            border-radius: 4px;
+        }
+        .sidebar-menu-wrapper::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.4);
         }
 
         body {
@@ -289,7 +305,74 @@
             }
             .main-content {
                 margin-left: 0;
+                padding: 20px 15px;
+            }
+            .dashboard-navbar {
+                padding: 12px 18px;
+                margin-bottom: 25px;
+                border-radius: 12px;
+            }
+            .navbar-brand-title {
+                font-size: 1.1rem;
+            }
+            .welcome-banner {
+                padding: 25px 20px;
+                border-radius: 18px;
+                margin-bottom: 25px;
+            }
+            .welcome-banner h1 {
+                font-size: 1.6rem !important;
+            }
+            .profile-photo-circle {
+                width: 90px;
+                height: 90px;
+            }
+            .glass-card {
                 padding: 20px;
+                border-radius: 16px;
+                margin-bottom: 20px;
+            }
+            .metric-icon {
+                width: 45px;
+                height: 45px;
+                font-size: 18px;
+                margin-bottom: 12px;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .dashboard-navbar {
+                padding: 10px 12px;
+            }
+            .navbar-brand-title {
+                font-size: 0.95rem;
+            }
+            .navbar-dropdown-btn span {
+                display: none; /* Hide name on super small screens to prevent overflow */
+            }
+            .navbar-dropdown-btn {
+                padding: 8px;
+                border-radius: 50%;
+                width: 38px;
+                height: 38px;
+                justify-content: center;
+            }
+            .navbar-dropdown-btn i.fa-chevron-down {
+                display: none;
+            }
+            .welcome-banner {
+                padding: 20px 15px;
+                border-radius: 14px;
+            }
+            .welcome-banner h1 {
+                font-size: 1.4rem !important;
+            }
+            .welcome-banner p {
+                font-size: 0.85rem !important;
+            }
+            .profile-photo-circle {
+                width: 70px;
+                height: 70px;
             }
         }
 
@@ -417,7 +500,47 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
+    // Global Confirmation Dialog for Deletions
+    document.addEventListener('submit', function (event) {
+        const form = event.target;
+        const methodInput = form.querySelector('input[name="_method"]');
+        if (methodInput && methodInput.value.toUpperCase() === 'DELETE') {
+            event.preventDefault();
+
+            if (form.dataset.confirmed === 'true') {
+                form.submit();
+                return;
+            }
+
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    title: 'Are you sure?',
+                    text: "You won't be able to revert this deletion!",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#ad1457',
+                    cancelButtonColor: '#6c757d',
+                    confirmButtonText: 'Yes, delete it!',
+                    cancelButtonText: 'Cancel',
+                    background: 'rgba(255, 255, 255, 0.95)',
+                    backdrop: `rgba(92, 5, 41, 0.2)`
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        form.dataset.confirmed = 'true';
+                        form.submit();
+                    }
+                });
+            } else {
+                if (confirm('Are you sure you want to delete this record?')) {
+                    form.dataset.confirmed = 'true';
+                    form.submit();
+                }
+            }
+        }
+    });
+
     // Toggle Navbar Dropdown
     function toggleNavbarDropdown(event) {
         event.stopPropagation();
@@ -558,6 +681,29 @@
         const modal = new bootstrap.Modal(document.getElementById('moderateModal'));
         modal.show();
     }
+
+    // Toggle Sidebar on mobile
+    function toggleSidebarMenu(event) {
+        if (event) {
+            event.stopPropagation();
+        }
+        const sidebar = document.getElementById('sidebarMenu');
+        if (sidebar) {
+            sidebar.classList.toggle('active');
+        }
+    }
+
+    // Close sidebar when clicking outside on mobile
+    document.addEventListener('click', function(event) {
+        const sidebar = document.getElementById('sidebarMenu');
+        const toggleBtn = document.getElementById('sidebarToggle');
+        if (window.innerWidth <= 991 && sidebar && sidebar.classList.contains('active')) {
+            const isClickInside = sidebar.contains(event.target) || (toggleBtn && toggleBtn.contains(event.target));
+            if (!isClickInside) {
+                sidebar.classList.remove('active');
+            }
+        }
+    });
 </script>
 @yield('scripts')
 </body>

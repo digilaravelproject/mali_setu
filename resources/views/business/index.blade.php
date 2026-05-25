@@ -179,8 +179,26 @@
                         </div>
 
                         <h5 class="fw-bold mb-4 text-center">Select Your Subscription Plan</h5>
+                        @php
+                            $displayPlans = collect($plans ?? []);
+                            if ($user->business && $user->business->business_type) {
+                                $businessType = trim(str_replace(' ', '', $user->business->business_type));
+                                $displayPlans = $displayPlans->filter(function($p) use ($businessType) {
+                                    $planType = trim(str_replace(' ', '', $p->company_type ?? ''));
+                                    return $planType === $businessType;
+                                });
+                            } elseif (request()->has('type') && request('type')) {
+                                $displayPlans = $displayPlans->filter(function($p) { return ($p->company_type ?? null) == request('type'); });
+                            }
+                        @endphp
+
                         <div class="row g-4 justify-content-center">
-                            @foreach($plans as $plan)
+                            @if($displayPlans->isEmpty())
+                                <div class="col-12 text-center">
+                                    <p class="text-muted">No plans available for the selected business type.</p>
+                                </div>
+                            @endif
+                            @foreach($displayPlans as $plan)
                                 <div class="col-md-4">
                                     <div class="card h-100 border-0 rounded-4 shadow-sm text-center p-4 relative bg-white border" style="border: 2px solid rgba(13, 148, 136, 0.1) !important;">
                                         <div class="card-body">

@@ -29,18 +29,22 @@
                 @csrf
                 <div class="row">
                     <div class="col-md-6 mb-3">
-                        <label class="form-label fw-semibold text-secondary small">Business Name *</label>
-                        <input type="text" name="business_name" class="form-control" value="{{ old('business_name', $business->business_name) }}" required>
+                        <label class="form-label fw-semibold text-secondary small">Business Name <span class="text-danger">*</span></label>
+                        <input type="text" name="business_name" class="form-control @error('business_name') is-invalid @enderror" value="{{ old('business_name', $business->business_name) }}" required>
+                        @error('business_name')
+                            <div class="text-danger small mt-1">{{ $message }}</div>
+                        @enderror
                     </div>
                     <div class="col-md-6 mb-3">
-                        <label class="form-label fw-semibold text-secondary small">Business Type *</label>
-                        <select name="business_type" class="form-select" required>
-                            <option value="Retailer" {{ old('business_type', $business->business_type) === 'Retailer' ? 'selected' : '' }}>Retailer</option>
-                            <option value="Wholesaler" {{ old('business_type', $business->business_type) === 'Wholesaler' ? 'selected' : '' }}>Wholesaler</option>
-                            <option value="Manufacturer" {{ old('business_type', $business->business_type) === 'Manufacturer' ? 'selected' : '' }}>Manufacturer</option>
-                            <option value="Service Provider" {{ old('business_type', $business->business_type) === 'Service Provider' ? 'selected' : '' }}>Service Provider</option>
-                            <option value="Distributor" {{ old('business_type', $business->business_type) === 'Distributor' ? 'selected' : '' }}>Distributor</option>
+                        <label class="form-label fw-semibold text-secondary small">Business Type <span class="text-danger">*</span></label>
+                        <select id="business_type_select" name="business_type" class="form-select @error('business_type') is-invalid @enderror" required>
+                            <option value="Proprietary /Partnership - LLP" {{ old('business_type', $business->business_type) === 'Proprietary /Partnership - LLP' ? 'selected' : '' }}>Proprietary /Partnership - LLP</option>
+                            <option value="Private Ltd" {{ old('business_type', $business->business_type) === 'Private Ltd' ? 'selected' : '' }}>Private Ltd</option>
+                            <option value="Public Ltd" {{ old('business_type', $business->business_type) === 'Public Ltd' ? 'selected' : '' }}>Public Ltd</option>
                         </select>
+                        @error('business_type')
+                            <div class="text-danger small mt-1">{{ $message }}</div>
+                        @enderror
                     </div>
                 </div>
 
@@ -84,18 +88,24 @@
                 <h6 class="fw-bold text-primary mt-4 mb-3 border-bottom pb-2">Business Address Details</h6>
 
                 <div class="mb-3">
-                    <label class="form-label fw-semibold text-secondary small">Address Line *</label>
-                    <input type="text" name="address" class="form-control" value="{{ old('address', $business->address) }}" required>
+                    <label class="form-label fw-semibold text-secondary small">Address Line <span class="text-danger">*</span></label>
+                    <input type="text" name="address" class="form-control @error('address') is-invalid @enderror" value="{{ old('address', $business->address) }}" required>
+                    @error('address')
+                        <div class="text-danger small mt-1">{{ $message }}</div>
+                    @enderror
                 </div>
 
                 <div class="row">
                     <div class="col-md-6 mb-3">
-                        <label class="form-label fw-semibold text-secondary small">Pincode *</label>
+                        <label class="form-label fw-semibold text-secondary small">Pincode <span class="text-danger">*</span></label>
                         <div class="input-group">
                             <span class="input-group-text bg-light text-secondary"><i class="fa-solid fa-map-pin"></i></span>
                             <input type="text" name="pincode" id="pincode_field" class="form-control" value="{{ old('pincode', $business->pincode) }}" required maxlength="6">
                             <button class="btn btn-outline-secondary" type="button" id="lookup_pincode_btn">Verify</button>
                         </div>
+                        @error('pincode')
+                            <div class="text-danger small mt-1">{{ $message }}</div>
+                        @enderror
                         <div id="pincode_spinner" class="spinner-border spinner-border-sm text-primary mt-2" role="status" style="display: none;">
                             <span class="visually-hidden">Loading...</span>
                         </div>
@@ -108,12 +118,18 @@
 
                 <div class="row">
                     <div class="col-md-6 mb-3">
-                        <label class="form-label fw-semibold text-secondary small">State *</label>
-                        <input type="text" name="state" id="state_field" class="form-control" value="{{ old('state', $business->state) }}" required>
+                        <label class="form-label fw-semibold text-secondary small">State <span class="text-danger">*</span></label>
+                        <input type="text" name="state" id="state_field" class="form-control @error('state') is-invalid @enderror" value="{{ old('state', $business->state) }}" required>
+                        @error('state')
+                            <div class="text-danger small mt-1">{{ $message }}</div>
+                        @enderror
                     </div>
                     <div class="col-md-6 mb-3">
-                        <label class="form-label fw-semibold text-secondary small">City *</label>
-                        <input type="text" name="city" id="city_field" class="form-control" value="{{ old('city', $business->city) }}" required>
+                        <label class="form-label fw-semibold text-secondary small">City <span class="text-danger">*</span></label>
+                        <input type="text" name="city" id="city_field" class="form-control @error('city') is-invalid @enderror" value="{{ old('city', $business->city) }}" required>
+                        @error('city')
+                            <div class="text-danger small mt-1">{{ $message }}</div>
+                        @enderror
                     </div>
                 </div>
 
@@ -214,5 +230,7 @@
             }
         });
     });
+
 </script>
+
 @endsection

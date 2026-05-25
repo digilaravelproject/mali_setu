@@ -1,11 +1,11 @@
 <!-- Sidebar -->
 <aside class="sidebar" id="sidebarMenu">
-    <div>
-        <a href="{{ url('/') }}" class="sidebar-brand">
-            <img src="{{ asset('landing_page_logo.jpeg') }}" alt="MaliSetu Logo" class="sidebar-logo">
-            <h5 class="fw-bold mb-0">Mali Setu</h5>
-        </a>
+    <a href="{{ url('/') }}" class="sidebar-brand">
+        <img src="{{ asset('landing_page_logo.jpeg') }}" alt="MaliSetu Logo" class="sidebar-logo">
+        <h5 class="fw-bold mb-0">Mali Setu</h5>
+    </a>
 
+    <div class="sidebar-menu-wrapper" style="flex-grow: 1; overflow-y: auto; margin-bottom: 20px; padding-right: 5px;">
         <ul class="nav-menu">
             <li class="nav-item">
                 <a href="{{ route('dashboard') }}" class="nav-link-custom {{ Request::routeIs('dashboard') ? 'active' : '' }}">
@@ -62,6 +62,13 @@
             <li class="nav-item ps-3">
                 <a href="{{ route('volunteers.browse') }}" class="nav-link-custom small {{ Request::routeIs('volunteers.browse') || Request::routeIs('volunteers.opportunity.*') ? 'active' : '' }}" style="font-size:0.82rem; padding: 8px 16px;">
                     <i class="fa-solid fa-magnifying-glass text-primary"></i> Browse Opportunities
+                </a>
+            </li>
+
+            <!-- Blog Module -->
+            <li class="nav-item">
+                <a href="{{ route('blogs.index') }}" class="nav-link-custom {{ Request::routeIs('blogs.*') ? 'active' : '' }}">
+                    <i class="fa-solid fa-blog"></i> Blog Portal
                 </a>
             </li>
         </ul>

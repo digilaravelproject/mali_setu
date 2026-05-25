@@ -164,7 +164,7 @@
                         <h5 class="fw-bold mb-0 text-dark">Initial Business Setup</h5>
                     </div>
                 </div>
-                <form action="{{ route('dashboard.business.register') }}" method="POST" enctype="multipart/form-data" class="text-start">
+                <form id="dashboardBusinessCreateForm" action="{{ route('dashboard.business.register') }}" method="POST" enctype="multipart/form-data" class="text-start">
                     @csrf
                     <div class="row">
                         <div class="col-md-6 mb-3">
@@ -173,12 +173,10 @@
                         </div>
                         <div class="col-md-6 mb-3">
                             <label class="form-label">Business Type *</label>
-                            <select name="business_type" class="form-select" required>
-                                <option value="Retailer">Retailer</option>
-                                <option value="Wholesaler">Wholesaler</option>
-                                <option value="Manufacturer">Manufacturer</option>
-                                <option value="Service Provider">Service Provider</option>
-                                <option value="Distributor">Distributor</option>
+                            <select id="business_type_select" name="business_type" class="form-select" required>
+                                <option value="Proprietary /Partnership - LLP">Proprietary /Partnership - LLP</option>
+                                <option value="Private Ltd">Private Ltd</option>
+                                <option value="Public Ltd">Public Ltd</option>
                             </select>
                         </div>
                     </div>
@@ -302,8 +300,26 @@
                         </div>
 
                         <h5 class="fw-bold mb-4 text-center">Select Your Subscription Plan</h5>
+                        @php
+                            $displayPlans = collect($plans ?? []);
+                            if ($user->business && $user->business->business_type) {
+                                $businessType = trim(str_replace(' ', '', $user->business->business_type));
+                                $displayPlans = $displayPlans->filter(function($p) use ($businessType) {
+                                    $planType = trim(str_replace(' ', '', $p->company_type ?? ''));
+                                    return $planType === $businessType;
+                                });
+                            } elseif (request()->has('type') && request('type')) {
+                                $displayPlans = $displayPlans->filter(function($p) { return ($p->company_type ?? null) == request('type'); });
+                            }
+                        @endphp
+
                         <div class="row g-4 justify-content-center">
-                            @foreach($plans as $plan)
+                            @if($displayPlans->isEmpty())
+                                <div class="col-12 text-center">
+                                    <p class="text-muted">No plans available for the selected business type.</p>
+                                </div>
+                            @endif
+                            @foreach($displayPlans as $plan)
                                 <div class="col-md-4">
                                     <div class="card h-100 border-0 rounded-4 shadow-sm text-center p-4 relative" style="background: rgba(255,255,255,0.7); backdrop-filter:blur(5px); border: 2px solid rgba(173, 20, 87, 0.1) !important;">
                                         <div class="card-body">
@@ -656,7 +672,7 @@
                             <h5 class="fw-bold mb-0 text-dark">Edit Business Profile Info</h5>
                         </div>
                     </div>
-                    <form action="{{ route('dashboard.business.update') }}" method="POST" enctype="multipart/form-data" class="text-start">
+                    <form id="dashboardBusinessEditForm" action="{{ route('dashboard.business.update') }}" method="POST" enctype="multipart/form-data" class="text-start">
                         @csrf
                         <div class="row">
                             <div class="col-md-6 mb-3">
@@ -665,12 +681,10 @@
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Business Type *</label>
-                                <select name="business_type" class="form-select" required>
-                                    <option value="Retailer" {{ $user->business->business_type == 'Retailer' ? 'selected' : '' }}>Retailer</option>
-                                    <option value="Wholesaler" {{ $user->business->business_type == 'Wholesaler' ? 'selected' : '' }}>Wholesaler</option>
-                                    <option value="Manufacturer" {{ $user->business->business_type == 'Manufacturer' ? 'selected' : '' }}>Manufacturer</option>
-                                    <option value="Service Provider" {{ $user->business->business_type == 'Service Provider' ? 'selected' : '' }}>Service Provider</option>
-                                    <option value="Distributor" {{ $user->business->business_type == 'Distributor' ? 'selected' : '' }}>Distributor</option>
+                                <select id="business_type_select" name="business_type" class="form-select" required>
+                                    <option value="Proprietary /Partnership - LLP" {{ $user->business->business_type == 'Proprietary /Partnership - LLP' ? 'selected' : '' }}>Proprietary /Partnership - LLP</option>
+                                    <option value="Private Ltd" {{ $user->business->business_type == 'Private Ltd' ? 'selected' : '' }}>Private Ltd</option>
+                                    <option value="Public Ltd" {{ $user->business->business_type == 'Public Ltd' ? 'selected' : '' }}>Public Ltd</option>
                                 </select>
                             </div>
                         </div>
@@ -819,6 +833,7 @@
                     <button type="submit" class="btn btn-primary">Save Product</button>
                 </div>
             </form>
+            
         </div>
     </div>
 </div>

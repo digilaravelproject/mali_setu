@@ -42,7 +42,7 @@
                 </li>
             </ul>
 
-            <form action="{{ route('dashboard.business.register') }}" method="POST" enctype="multipart/form-data">
+            <form id="businessCreateForm" action="{{ route('dashboard.business.register') }}" method="POST" enctype="multipart/form-data">
                 @csrf
                 <div class="tab-content" id="setupFormContent">
                     
@@ -50,38 +50,48 @@
                     <div class="tab-pane fade show active" id="step1" role="tabpanel">
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label class="form-label fw-semibold text-secondary small">Business Name *</label>
-                                <input type="text" name="business_name" class="form-control" placeholder="E.g. Mali Agri Services" required value="{{ old('business_name') }}">
+                                <label class="form-label fw-semibold text-secondary small">Business Name <span class="text-danger">*</span></label>
+                                <input type="text" name="business_name" class="form-control @error('business_name') is-invalid @enderror" placeholder="E.g. Mali Agri Services" required value="{{ old('business_name') }}">
+                                @error('business_name')
+                                    <div class="text-danger small mt-1">{{ $message }}</div>
+                                @enderror
                             </div>
                             <div class="col-md-6 mb-3">
-                                <label class="form-label fw-semibold text-secondary small">Business Type *</label>
-                                <select name="business_type" class="form-select" required>
-                                    <option value="Retailer" {{ old('business_type') === 'Retailer' ? 'selected' : '' }}>Retailer</option>
-                                    <option value="Wholesaler" {{ old('business_type') === 'Wholesaler' ? 'selected' : '' }}>Wholesaler</option>
-                                    <option value="Manufacturer" {{ old('business_type') === 'Manufacturer' ? 'selected' : '' }}>Manufacturer</option>
-                                    <option value="Service Provider" {{ old('business_type') === 'Service Provider' ? 'selected' : '' }}>Service Provider</option>
-                                    <option value="Distributor" {{ old('business_type') === 'Distributor' ? 'selected' : '' }}>Distributor</option>
+                                <label class="form-label fw-semibold text-secondary small">Business Type <span class="text-danger">*</span></label>
+                                <select id="business_type_select" name="business_type" class="form-select @error('business_type') is-invalid @enderror" required>
+                                    <option value="Proprietary /Partnership - LLP" {{ old('business_type') === 'Proprietary /Partnership - LLP' ? 'selected' : '' }}>Proprietary /Partnership - LLP</option>
+                                    <option value="Private Ltd" {{ old('business_type') === 'Private Ltd' ? 'selected' : '' }}>Private Ltd</option>
+                                    <option value="Public Ltd" {{ old('business_type') === 'Public Ltd' ? 'selected' : '' }}>Public Ltd</option>
                                 </select>
+                                @error('business_type')
+                                    <div class="text-danger small mt-1">{{ $message }}</div>
+                                @enderror
                             </div>
                         </div>
 
                         <div class="mb-3">
-                            <label class="form-label fw-semibold text-secondary small">Business Category *</label>
-                            <select name="category_id" class="form-select" required>
+                            <label class="form-label fw-semibold text-secondary small">Business Category <span class="text-danger">*</span></label>
+                            <select name="category_id" class="form-select @error('category_id') is-invalid @enderror" required>
                                 <option value="" disabled selected>Select business category...</option>
                                 @foreach($categories as $cat)
                                     <option value="{{ $cat->id }}" {{ old('category_id') == $cat->id ? 'selected' : '' }}>{{ $cat->name }}</option>
                                 @endforeach
                             </select>
+                            @error('category_id')
+                                <div class="text-danger small mt-1">{{ $message }}</div>
+                            @enderror
                         </div>
 
                         <div class="mb-4">
-                            <label class="form-label fw-semibold text-secondary small">Description *</label>
-                            <textarea name="description" class="form-control" rows="5" placeholder="Describe your business operations, products, and specialties..." required>{{ old('description') }}</textarea>
+                            <label class="form-label fw-semibold text-secondary small">Description <span class="text-danger">*</span></label>
+                            <textarea name="description" class="form-control @error('description') is-invalid @enderror" rows="5" placeholder="Describe your business operations, products, and specialties..." required>{{ old('description') }}</textarea>
+                            @error('description')
+                                <div class="text-danger small mt-1">{{ $message }}</div>
+                            @enderror
                         </div>
 
                         <div class="d-flex justify-content-end">
-                            <button type="button" class="btn btn-primary rounded-3 px-4 py-2.5" onclick="nextTab('step2-tab')">Next Step <i class="fa-solid fa-arrow-right ms-1"></i></button>
+                            <button type="button" class="btn btn-primary rounded-3 px-4 py-2.5" onclick="guardedNext('step2-tab')">Next Step <i class="fa-solid fa-arrow-right ms-1"></i></button>
                         </div>
                     </div>
 
@@ -90,33 +100,48 @@
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label class="form-label fw-semibold text-secondary small">Contact Email</label>
-                                <input type="email" name="contact_email" class="form-control" placeholder="business@example.com" value="{{ old('contact_email', Auth::user()->email) }}">
+                                <input type="email" name="contact_email" class="form-control @error('contact_email') is-invalid @enderror" placeholder="business@example.com" value="{{ old('contact_email', Auth::user()->email) }}">
+                                @error('contact_email')
+                                    <div class="text-danger small mt-1">{{ $message }}</div>
+                                @enderror
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label class="form-label fw-semibold text-secondary small">Contact Phone</label>
-                                <input type="text" name="contact_phone" class="form-control" placeholder="10-digit number" value="{{ old('contact_phone', Auth::user()->phone) }}">
+                                <input type="text" name="contact_phone" class="form-control @error('contact_phone') is-invalid @enderror" placeholder="10-digit number" value="{{ old('contact_phone', Auth::user()->phone) }}">
+                                @error('contact_phone')
+                                    <div class="text-danger small mt-1">{{ $message }}</div>
+                                @enderror
                             </div>
                         </div>
 
                         <div class="mb-3">
                             <label class="form-label fw-semibold text-secondary small">Website URL</label>
-                            <input type="url" name="website" class="form-control" placeholder="https://example.com" value="{{ old('website') }}">
+                            <input type="url" name="website" class="form-control @error('website') is-invalid @enderror" placeholder="https://example.com" value="{{ old('website') }}">
+                            @error('website')
+                                <div class="text-danger small mt-1">{{ $message }}</div>
+                            @enderror
                         </div>
 
                         <div class="row mb-4">
                             <div class="col-md-6 mb-3">
                                 <label class="form-label fw-semibold text-secondary small">Opening Time</label>
-                                <input type="time" name="opening_time" class="form-control" value="{{ old('opening_time', '09:00') }}">
+                                <input type="time" name="opening_time" class="form-control @error('opening_time') is-invalid @enderror" value="{{ old('opening_time', '09:00') }}">
+                                @error('opening_time')
+                                    <div class="text-danger small mt-1">{{ $message }}</div>
+                                @enderror
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label class="form-label fw-semibold text-secondary small">Closing Time</label>
-                                <input type="time" name="closing_time" class="form-control" value="{{ old('closing_time', '21:00') }}">
+                                <input type="time" name="closing_time" class="form-control @error('closing_time') is-invalid @enderror" value="{{ old('closing_time', '21:00') }}">
+                                @error('closing_time')
+                                    <div class="text-danger small mt-1">{{ $message }}</div>
+                                @enderror
                             </div>
                         </div>
 
                         <div class="d-flex justify-content-between">
                             <button type="button" class="btn btn-light rounded-3 px-4 py-2.5" onclick="prevTab('step1-tab')"><i class="fa-solid fa-arrow-left me-1"></i> Back</button>
-                            <button type="button" class="btn btn-primary rounded-3 px-4 py-2.5" onclick="nextTab('step3-tab')">Next Step <i class="fa-solid fa-arrow-right ms-1"></i></button>
+                            <button type="button" class="btn btn-primary rounded-3 px-4 py-2.5" onclick="guardedNext('step3-tab')">Next Step <i class="fa-solid fa-arrow-right ms-1"></i></button>
                         </div>
                     </div>
 
@@ -124,35 +149,50 @@
                     <div class="tab-pane fade" id="step3" role="tabpanel">
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label class="form-label fw-semibold text-secondary small">Pincode *</label>
+                                <label class="form-label fw-semibold text-secondary small">Pincode <span class="text-danger">*</span></label>
                                 <div class="input-group">
                                     <span class="input-group-text bg-light text-secondary"><i class="fa-solid fa-map-pin"></i></span>
-                                    <input type="text" name="pincode" id="pincode_field" class="form-control" placeholder="6-digit pincode" maxlength="6" required value="{{ old('pincode') }}">
+                                    <input type="text" name="pincode" id="pincode_field" class="form-control @error('pincode') is-invalid @enderror" placeholder="6-digit pincode" maxlength="6" required value="{{ old('pincode') }}">
                                     <button class="btn btn-outline-secondary" type="button" id="lookup_pincode_btn">Verify</button>
                                 </div>
                                 <div id="pincode_spinner" class="spinner-border spinner-border-sm text-primary mt-2" role="status" style="display: none;">
                                     <span class="visually-hidden">Loading...</span>
                                 </div>
+                                @error('pincode')
+                                    <div class="text-danger small mt-1">{{ $message }}</div>
+                                @enderror
                             </div>
                             <div class="col-md-6 mb-3">
-                                <label class="form-label fw-semibold text-secondary small">Country *</label>
-                                <input type="text" name="country" value="India" class="form-control" required readonly>
+                                <label class="form-label fw-semibold text-secondary small">Country <span class="text-danger">*</span></label>
+                                <input type="text" name="country" value="India" class="form-control @error('country') is-invalid @enderror" required readonly>
+                                @error('country')
+                                    <div class="text-danger small mt-1">{{ $message }}</div>
+                                @enderror
                             </div>
                         </div>
 
                         <div class="mb-3">
-                            <label class="form-label fw-semibold text-secondary small">Address Line *</label>
-                            <input type="text" name="address" class="form-control" placeholder="Building, Street, Landmark" required value="{{ old('address') }}">
+                            <label class="form-label fw-semibold text-secondary small">Address Line <span class="text-danger">*</span></label>
+                            <input type="text" name="address" class="form-control @error('address') is-invalid @enderror" placeholder="Building, Street, Landmark" required value="{{ old('address') }}">
+                            @error('address')
+                                <div class="text-danger small mt-1">{{ $message }}</div>
+                            @enderror
                         </div>
 
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label class="form-label fw-semibold text-secondary small">State *</label>
-                                <input type="text" name="state" id="state_field" class="form-control" placeholder="State" required value="{{ old('state') }}">
+                                <label class="form-label fw-semibold text-secondary small">State <span class="text-danger">*</span></label>
+                                <input type="text" name="state" id="state_field" class="form-control @error('state') is-invalid @enderror" placeholder="State" required value="{{ old('state') }}">
+                                @error('state')
+                                    <div class="text-danger small mt-1">{{ $message }}</div>
+                                @enderror
                             </div>
                             <div class="col-md-6 mb-3">
-                                <label class="form-label fw-semibold text-secondary small">City *</label>
-                                <input type="text" name="city" id="city_field" class="form-control" placeholder="City" required value="{{ old('city') }}">
+                                <label class="form-label fw-semibold text-secondary small">City <span class="text-danger">*</span></label>
+                                <input type="text" name="city" id="city_field" class="form-control @error('city') is-invalid @enderror" placeholder="City" required value="{{ old('city') }}">
+                                @error('city')
+                                    <div class="text-danger small mt-1">{{ $message }}</div>
+                                @enderror
                             </div>
                         </div>
 
@@ -173,7 +213,7 @@
 
                         <div class="d-flex justify-content-between">
                             <button type="button" class="btn btn-light rounded-3 px-4 py-2.5" onclick="prevTab('step2-tab')"><i class="fa-solid fa-arrow-left me-1"></i> Back</button>
-                            <button type="button" class="btn btn-primary rounded-3 px-4 py-2.5" onclick="nextTab('step4-tab')">Next Step <i class="fa-solid fa-arrow-right ms-1"></i></button>
+                            <button type="button" class="btn btn-primary rounded-3 px-4 py-2.5" onclick="guardedNext('step4-tab')">Next Step <i class="fa-solid fa-arrow-right ms-1"></i></button>
                         </div>
                     </div>
 
@@ -181,9 +221,15 @@
                     <div class="tab-pane fade" id="step4" role="tabpanel">
                         <div class="p-4 rounded-4 bg-light text-center mb-4 border">
                             <div class="fs-1 text-primary mb-3"><i class="fa-solid fa-images"></i></div>
-                            <h6 class="fw-bold mb-2">Upload Enterprise Gallery Photos</h6>
+                            <h6 class="fw-bold mb-2">Upload Enterprise Gallery Photos <span class="text-danger">*</span></h6>
                             <p class="text-secondary small mb-4">Add visual catalog storefront photos. High quality JPG/PNG images work best.</p>
-                            <input type="file" name="photos[]" class="form-control" multiple accept="image/*">
+                            <input type="file" name="photos[]" class="form-control @error('photos') is-invalid @enderror" multiple accept="image/*" required>
+                            @error('photos')
+                                <div class="text-danger small mt-1">{{ $message }}</div>
+                            @enderror
+                            @if($errors->first('photos.*'))
+                                <div class="text-danger small mt-1">{{ $errors->first('photos.*') }}</div>
+                            @endif
                             <small class="text-muted d-block mt-2">You can select multiple photos at once.</small>
                         </div>
 
@@ -214,6 +260,60 @@
             const tab = new bootstrap.Tab(tabEl);
             tab.show();
         }
+    }
+
+    // Validate required fields in the current tab before moving
+    function guardedNext(targetTabId) {
+        const current = document.querySelector('.tab-pane.show.active') || document.querySelector('.tab-pane.active');
+        if (!current) { nextTab(targetTabId); return; }
+
+        // remove existing client-error elements in current tab
+        current.querySelectorAll('.client-error').forEach(el => el.remove());
+
+        const elements = Array.from(current.querySelectorAll('input, select, textarea'));
+        const invalids = [];
+
+        elements.forEach(el => {
+            if (el.disabled) return;
+            if (!el.hasAttribute('required')) return;
+
+            let valid = true;
+            if (el.type === 'file') {
+                valid = el.files && el.files.length > 0;
+            } else if (el.tagName.toLowerCase() === 'select') {
+                valid = el.value !== '' && !el.querySelector('option:checked[disabled]');
+            } else {
+                valid = el.checkValidity ? el.checkValidity() : !!el.value;
+            }
+
+            if (!valid) {
+                invalids.push(el);
+                el.classList.add('is-invalid');
+                // insert error message after element
+                const err = document.createElement('div');
+                err.className = 'text-danger small mt-1 client-error';
+                err.innerText = el.validationMessage || 'Please complete this field';
+                el.insertAdjacentElement('afterend', err);
+                // add listener to clear error when user types
+                const clear = () => {
+                    el.classList.remove('is-invalid');
+                    if (err) err.remove();
+                    el.removeEventListener('input', clear);
+                    el.removeEventListener('change', clear);
+                };
+                el.addEventListener('input', clear);
+                el.addEventListener('change', clear);
+            } else {
+                el.classList.remove('is-invalid');
+            }
+        });
+
+        if (invalids.length > 0) {
+            invalids[0].focus();
+            return; // don't move tabs
+        }
+
+        nextTab(targetTabId);
     }
 
     document.addEventListener('DOMContentLoaded', () => {

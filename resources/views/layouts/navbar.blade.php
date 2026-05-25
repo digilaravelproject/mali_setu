@@ -1,7 +1,12 @@
 <!-- Top Navbar -->
 <nav class="dashboard-navbar">
-    <div class="navbar-brand-title">
-        <i class="fa-solid fa-briefcase text-primary me-2"></i> Mali Setu Workspace
+    <div class="d-flex align-items-center">
+        <button class="btn btn-outline-primary d-lg-none me-3 py-1.5 px-2.5 rounded-3" id="sidebarToggle" onclick="toggleSidebarMenu(event)" style="border-width: 1.5px;">
+            <i class="fa-solid fa-bars"></i>
+        </button>
+        <div class="navbar-brand-title">
+            <i class="fa-solid fa-briefcase text-primary me-2"></i> Mali Setu Workspace
+        </div>
     </div>
     
     <div class="navbar-user-dropdown">

@@ -243,18 +243,24 @@
                         <div class="row">
                             <!-- Title select -->
                             <div class="col-md-3 mb-3">
-                                <label class="form-label small fw-bold text-secondary">Title *</label>
+                                <label class="form-label small fw-bold text-secondary">Title <span class="text-danger">*</span></label>
                                 <select name="title" class="form-select form-select-lg @error('title') is-invalid @enderror" required>
                                     <option value="Mr." {{ old('title') == 'Mr.' ? 'selected' : '' }}>Mr.</option>
                                     <option value="Mrs." {{ old('title') == 'Mrs.' ? 'selected' : '' }}>Mrs.</option>
                                     <option value="Ms." {{ old('title') == 'Ms.' ? 'selected' : '' }}>Ms.</option>
                                     <option value="Dr." {{ old('title') == 'Dr.' ? 'selected' : '' }}>Dr.</option>
                                 </select>
+                                @error('title')
+                                    <div class="text-danger small mt-1">{{ $message }}</div>
+                                @enderror
                             </div>
                             <!-- First Name -->
                             <div class="col-md-9 mb-3">
-                                <label class="form-label small fw-bold text-secondary">First Name *</label>
+                                <label class="form-label small fw-bold text-secondary">First Name <span class="text-danger">*</span></label>
                                 <input type="text" name="first_name" value="{{ old('first_name') }}" class="form-control form-control-lg @error('first_name') is-invalid @enderror" placeholder="Enter first name" required>
+                                @error('first_name')
+                                    <div class="text-danger small mt-1">{{ $message }}</div>
+                                @enderror
                             </div>
                         </div>
 
@@ -263,34 +269,49 @@
                             <div class="col-md-6 mb-3">
                                 <label class="form-label small fw-bold text-secondary">Middle Name</label>
                                 <input type="text" name="middle_name" value="{{ old('middle_name') }}" class="form-control form-control-lg @error('middle_name') is-invalid @enderror" placeholder="Enter middle name (optional)">
+                                @error('middle_name')
+                                    <div class="text-danger small mt-1">{{ $message }}</div>
+                                @enderror
                             </div>
                             <!-- Last Name -->
                             <div class="col-md-6 mb-3">
-                                <label class="form-label small fw-bold text-secondary">Last Name *</label>
+                                <label class="form-label small fw-bold text-secondary">Last Name <span class="text-danger">*</span></label>
                                 <input type="text" name="last_name" value="{{ old('last_name') }}" class="form-control form-control-lg @error('last_name') is-invalid @enderror" placeholder="Enter last name" required>
+                                @error('last_name')
+                                    <div class="text-danger small mt-1">{{ $message }}</div>
+                                @enderror
                             </div>
                         </div>
 
                         <div class="row">
                             <!-- Email -->
                             <div class="col-md-6 mb-3">
-                                <label class="form-label small fw-bold text-secondary">Email Address *</label>
+                                <label class="form-label small fw-bold text-secondary">Email Address <span class="text-danger">*</span></label>
                                 <input type="email" name="email" value="{{ old('email') }}" class="form-control form-control-lg @error('email') is-invalid @enderror" placeholder="name@example.com" required>
+                                @error('email')
+                                    <div class="text-danger small mt-1">{{ $message }}</div>
+                                @enderror
                             </div>
                             <!-- Date of Birth -->
                             <div class="col-md-6 mb-3">
-                                <label class="form-label small fw-bold text-secondary">Date of Birth *</label>
+                                <label class="form-label small fw-bold text-secondary">Date of Birth <span class="text-danger">*</span></label>
                                 <input type="date" name="dob" value="{{ old('dob') }}" class="form-control form-control-lg @error('dob') is-invalid @enderror" required>
+                                @error('dob')
+                                    <div class="text-danger small mt-1">{{ $message }}</div>
+                                @enderror
                             </div>
                         </div>
 
                         <!-- Phone Number with +91 code prefix -->
                         <div class="mb-2">
-                            <label class="form-label small fw-bold text-secondary">Mobile Number *</label>
+                            <label class="form-label small fw-bold text-secondary">Mobile Number <span class="text-danger">*</span></label>
                             <div class="input-group">
                                 <span class="input-group-text bg-light fw-bold text-secondary border-end-0 rounded-start-3" style="padding: 14px 20px;">+91</span>
                                 <input type="tel" name="phone" value="{{ old('phone') }}" class="form-control form-control-lg border-start-0 rounded-end-3 @error('phone') is-invalid @enderror" placeholder="10-digit mobile number" pattern="[0-9]{10}" required>
                             </div>
+                            @error('phone')
+                                <div class="text-danger small mt-1">{{ $message }}</div>
+                            @enderror
                         </div>
                     </div>
                 </div>
@@ -302,8 +323,11 @@
                         <p class="small text-secondary mb-4">Please upload a valid Caste Certificate or other proof (Father's Caste Document) to verify community authenticity. Supported: JPG, JPEG, PNG, PDF (Max: 5MB).</p>
                         
                         <div class="mb-2">
-                            <label class="form-label small fw-bold text-secondary">Caste Certificate File *</label>
+                            <label class="form-label small fw-bold text-secondary">Caste Certificate File <span class="text-danger">*</span></label>
                             <input type="file" name="cast_certificate" class="form-control form-control-lg @error('cast_certificate') is-invalid @enderror" accept=".jpg,.jpeg,.png,.pdf" required>
+                            @error('cast_certificate')
+                                <div class="text-danger small mt-1">{{ $message }}</div>
+                            @enderror
                         </div>
                     </div>
                 </div>
@@ -314,29 +338,44 @@
                         <h5 class="fw-bold mb-4 text-primary"><i class="fa-solid fa-location-dot me-2"></i> 3. Address Details</h5>
                         
                         <div class="mb-3">
-                            <label class="form-label small fw-bold text-secondary">Address Line *</label>
+                            <label class="form-label small fw-bold text-secondary">Address Line <span class="text-danger">*</span></label>
                             <input type="text" name="address" value="{{ old('address') }}" class="form-control form-control-lg @error('address') is-invalid @enderror" placeholder="House/Flat No, Apartment, Street" required>
+                            @error('address')
+                                <div class="text-danger small mt-1">{{ $message }}</div>
+                            @enderror
                         </div>
 
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label class="form-label small fw-bold text-secondary">Pincode *</label>
+                                <label class="form-label small fw-bold text-secondary">Pincode <span class="text-danger">*</span></label>
                                 <input type="text" name="pincode" value="{{ old('pincode') }}" class="form-control form-control-lg @error('pincode') is-invalid @enderror" placeholder="6-digit pincode" maxlength="6" required>
+                                @error('pincode')
+                                    <div class="text-danger small mt-1">{{ $message }}</div>
+                                @enderror
                             </div>
                             <div class="col-md-6 mb-3">
-                                <label class="form-label small fw-bold text-secondary">Country *</label>
+                                <label class="form-label small fw-bold text-secondary">Country <span class="text-danger">*</span></label>
                                 <input type="text" name="country" value="{{ old('country', 'India') }}" class="form-control form-control-lg @error('country') is-invalid @enderror" required>
+                                @error('country')
+                                    <div class="text-danger small mt-1">{{ $message }}</div>
+                                @enderror
                             </div>
                         </div>
 
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label class="form-label small fw-bold text-secondary">State *</label>
+                                <label class="form-label small fw-bold text-secondary">State <span class="text-danger">*</span></label>
                                 <input type="text" name="state" value="{{ old('state') }}" class="form-control form-control-lg @error('state') is-invalid @enderror" placeholder="Enter state" required>
+                                @error('state')
+                                    <div class="text-danger small mt-1">{{ $message }}</div>
+                                @enderror
                             </div>
                             <div class="col-md-6 mb-3">
-                                <label class="form-label small fw-bold text-secondary">City *</label>
+                                <label class="form-label small fw-bold text-secondary">City <span class="text-danger">*</span></label>
                                 <input type="text" name="city" value="{{ old('city') }}" class="form-control form-control-lg @error('city') is-invalid @enderror" placeholder="Enter city" required>
+                                @error('city')
+                                    <div class="text-danger small mt-1">{{ $message }}</div>
+                                @enderror
                             </div>
                         </div>
 
@@ -344,10 +383,16 @@
                             <div class="col-md-6 mb-3">
                                 <label class="form-label small fw-bold text-secondary">Taluka</label>
                                 <input type="text" name="taluka" value="{{ old('taluka') }}" class="form-control form-control-lg @error('taluka') is-invalid @enderror" placeholder="Enter taluka (optional)">
+                                @error('taluka')
+                                    <div class="text-danger small mt-1">{{ $message }}</div>
+                                @enderror
                             </div>
                             <div class="col-md-6 mb-2">
-                                <label class="form-label small fw-bold text-secondary">Village *</label>
+                                <label class="form-label small fw-bold text-secondary">Village <span class="text-danger">*</span></label>
                                 <input type="text" name="village" value="{{ old('village') }}" class="form-control form-control-lg @error('village') is-invalid @enderror" placeholder="Enter village" required>
+                                @error('village')
+                                    <div class="text-danger small mt-1">{{ $message }}</div>
+                                @enderror
                             </div>
                         </div>
                     </div>
@@ -394,12 +439,18 @@
                         <!-- Occupation & Company -->
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label class="form-label small fw-bold text-secondary">Occupation *</label>
+                                <label class="form-label small fw-bold text-secondary">Occupation <span class="text-danger">*</span></label>
                                 <input type="text" name="occupation" value="{{ old('occupation') }}" class="form-control form-control-lg @error('occupation') is-invalid @enderror" placeholder="E.g., Engineer, Farmer, Shopkeeper" required>
+                                @error('occupation')
+                                    <div class="text-danger small mt-1">{{ $message }}</div>
+                                @enderror
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label class="form-label small fw-bold text-secondary">Company Name</label>
                                 <input type="text" name="company_name" value="{{ old('company_name') }}" class="form-control form-control-lg @error('company_name') is-invalid @enderror" placeholder="Enter company (optional)">
+                                @error('company_name')
+                                    <div class="text-danger small mt-1">{{ $message }}</div>
+                                @enderror
                             </div>
                         </div>
 
@@ -408,10 +459,16 @@
                             <div class="col-md-6 mb-3">
                                 <label class="form-label small fw-bold text-secondary">Department Name</label>
                                 <input type="text" name="dept_name" value="{{ old('dept_name') }}" class="form-control form-control-lg @error('dept_name') is-invalid @enderror" placeholder="Enter department (optional)">
+                                @error('dept_name')
+                                    <div class="text-danger small mt-1">{{ $message }}</div>
+                                @enderror
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label class="form-label small fw-bold text-secondary">Designation</label>
                                 <input type="text" name="designation" value="{{ old('designation') }}" class="form-control form-control-lg @error('designation') is-invalid @enderror" placeholder="Enter designation (optional)">
+                                @error('designation')
+                                    <div class="text-danger small mt-1">{{ $message }}</div>
+                                @enderror
                             </div>
                         </div>
 
@@ -431,6 +488,9 @@
                                     <button type="button" class="btn btn-outline-secondary border-start-0 bg-white" onclick="togglePasswordVisibility('reg-password', this)" style="border-top-right-radius: 8px; border-bottom-right-radius: 8px;">
                                         <i class="fa-solid fa-eye text-secondary"></i>
                                     </button>
+                                    @error('password')
+                                        <div class="text-danger small mt-1">{{ $message }}</div>
+                                    @enderror
                                 </div>
                             </div>
 
@@ -449,6 +509,9 @@
                                     <button type="button" class="btn btn-outline-secondary border-start-0 bg-white" onclick="togglePasswordVisibility('reg-confirm-password', this)" style="border-top-right-radius: 8px; border-bottom-right-radius: 8px;">
                                         <i class="fa-solid fa-eye text-secondary"></i>
                                     </button>
+                                    @error('password_confirmation')
+                                        <div class="text-danger small mt-1">{{ $message }}</div>
+                                    @enderror
                                 </div>
                             </div>
                         </div>

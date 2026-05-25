@@ -140,6 +140,41 @@ class Business extends Model
     }
 
     /**
+     * Set the photo attribute (stores as a JSON array string to comply with the CHECK constraint)
+     */
+    public function setPhotoAttribute($value)
+    {
+        if (is_array($value)) {
+            $this->attributes['photo'] = json_encode($value);
+        } elseif (is_string($value)) {
+            $decoded = json_decode($value, true);
+            if (json_last_error() === JSON_ERROR_NONE) {
+                $this->attributes['photo'] = $value;
+            } else {
+                $paths = array_filter(array_map('trim', explode(',', $value)));
+                $this->attributes['photo'] = json_encode(array_values($paths));
+            }
+        } else {
+            $this->attributes['photo'] = null;
+        }
+    }
+
+    /**
+     * Get the photo attribute (decodes the JSON array and formats as comma-separated string)
+     */
+    public function getPhotoAttribute($value)
+    {
+        if (empty($value)) {
+            return null;
+        }
+        $decoded = json_decode($value, true);
+        if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+            return implode(', ', $decoded);
+        }
+        return $value;
+    }
+
+    /**
      * Scope for approved businesses
      */
     public function scopeApproved($query)
