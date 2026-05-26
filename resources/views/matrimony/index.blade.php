@@ -74,7 +74,7 @@
             <a href="{{ route('matrimony.edit') }}" class="btn btn-outline-primary btn-sm rounded-3 px-3">
                 <i class="fa-solid fa-pen-to-square me-1"></i> Edit Profile
             </a>
-            <form action="{{ route('matrimony.delete') }}" method="POST" onsubmit="return confirm('Delete your matrimony profile permanently?')">
+            <form action="{{ route('matrimony.delete') }}" method="POST">
                 @csrf @method('DELETE')
                 <button class="btn btn-outline-danger btn-sm rounded-3 px-3">
                     <i class="fa-solid fa-trash-can me-1"></i> Delete

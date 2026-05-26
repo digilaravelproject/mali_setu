@@ -260,9 +260,33 @@ document.addEventListener('DOMContentLoaded', function() {
             const btn = this;
             const blogId = btn.getAttribute('data-id');
             
-            // Disable button briefly to prevent double clicks
-            btn.disabled = true;
-
+            // Check if already processing a request for this button
+            if (btn.isProcessing) return;
+            
+            const icon = btn.querySelector('i');
+            const countSpan = btn.querySelector('.likes-count');
+            
+            // Optimistic UI updates
+            const isCurrentlyLiked = icon.classList.contains('fa-solid');
+            let currentCount = parseInt(countSpan.textContent) || 0;
+            
+            if (isCurrentlyLiked) {
+                // Optimistically Unlike
+                icon.classList.remove('fa-solid', 'text-danger');
+                icon.classList.add('fa-regular');
+                countSpan.textContent = Math.max(0, currentCount - 1);
+            } else {
+                // Optimistically Like
+                icon.classList.remove('fa-regular');
+                icon.classList.add('fa-solid', 'text-danger');
+                // Micro-animation trigger
+                btn.style.transform = 'scale(1.25)';
+                setTimeout(() => { btn.style.transform = ''; }, 200);
+                countSpan.textContent = currentCount + 1;
+            }
+            
+            btn.isProcessing = true;
+            
             fetch(`/dashboard/blogs/${blogId}/like`, {
                 method: 'POST',
                 headers: {
@@ -274,9 +298,8 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    const icon = btn.querySelector('i');
-                    const countSpan = btn.querySelector('.likes-count');
-                    
+                    // Sync count and final state from server
+                    countSpan.textContent = data.likes_count;
                     if (data.liked) {
                         icon.classList.remove('fa-regular');
                         icon.classList.add('fa-solid', 'text-danger');
@@ -284,14 +307,33 @@ document.addEventListener('DOMContentLoaded', function() {
                         icon.classList.remove('fa-solid', 'text-danger');
                         icon.classList.add('fa-regular');
                     }
-                    
-                    countSpan.textContent = data.likes_count;
+                } else {
+                    // Revert optimistic changes on failure
+                    if (isCurrentlyLiked) {
+                        icon.classList.remove('fa-regular');
+                        icon.classList.add('fa-solid', 'text-danger');
+                        countSpan.textContent = currentCount;
+                    } else {
+                        icon.classList.remove('fa-solid', 'text-danger');
+                        icon.classList.add('fa-regular');
+                        countSpan.textContent = currentCount;
+                    }
                 }
-                btn.disabled = false;
+                btn.isProcessing = false;
             })
             .catch(err => {
                 console.error(err);
-                btn.disabled = false;
+                // Revert optimistic changes on error
+                if (isCurrentlyLiked) {
+                    icon.classList.remove('fa-regular');
+                    icon.classList.add('fa-solid', 'text-danger');
+                    countSpan.textContent = currentCount;
+                } else {
+                    icon.classList.remove('fa-solid', 'text-danger');
+                    icon.classList.add('fa-regular');
+                    countSpan.textContent = currentCount;
+                }
+                btn.isProcessing = false;
             });
         });
     });

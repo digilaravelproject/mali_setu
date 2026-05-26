@@ -279,7 +279,7 @@
                                     
                                     <div class="mt-3 pt-3 border-top d-flex gap-2">
                                         @if($biz->contact_phone)
-                                            <a href="tel:{{ $biz->contact_phone }}" class="btn btn-light btn-sm flex-fill rounded-3 text-dark small fw-semibold"><i class="fa-solid fa-phone me-1 text-success"></i> Call</a>
+                                            <button onclick="showCallModal('{{ $biz->contact_phone }}', '{{ addslashes($biz->business_name) }}')" class="btn btn-light btn-sm flex-fill rounded-3 text-dark small fw-semibold"><i class="fa-solid fa-phone me-1 text-success"></i> Call</button>
                                         @endif
                                         @if($biz->contact_email)
                                             <a href="mailto:{{ $biz->contact_email }}" class="btn btn-light btn-sm flex-fill rounded-3 text-dark small fw-semibold"><i class="fa-solid fa-envelope me-1 text-primary"></i> Mail</a>
@@ -665,6 +665,32 @@
     </div>
 </div>
 
+<!-- Modal for displaying business phone number -->
+<div class="modal fade" id="callBusinessModal" tabindex="-1" aria-labelledby="callBusinessModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0 shadow-lg text-center p-3" style="background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px);">
+            <div class="modal-header border-0 pb-0">
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="text-success mb-4 d-inline-flex align-items-center justify-content-center" style="width: 80px; height: 80px; background: rgba(25, 135, 84, 0.1); border-radius: 50%; font-size: 2.2rem;">
+                    <i class="fa-solid fa-phone text-success"></i>
+                </div>
+                <h3 class="fw-bold text-dark mb-1" id="modal-business-name">Business Name</h3>
+                <p class="text-secondary small mb-4">Contact Phone Number</p>
+                <div class="p-3 bg-light rounded-3 mb-4">
+                    <h2 class="fw-bold text-success mb-0 font-monospace" id="modal-business-phone">+91 00000 00000</h2>
+                </div>
+                
+                <div class="d-flex gap-2">
+                    <button onclick="copyToClipboard()" class="btn btn-outline-secondary py-2.5 rounded-3 fw-semibold flex-fill"><i class="fa-solid fa-copy me-1"></i> Copy Number</button>
+                    <a id="modal-business-phone-link" href="#" class="btn btn-success py-2.5 rounded-3 fw-bold flex-fill"><i class="fa-solid fa-phone me-1"></i> Call Now</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Modal: Premium business setup creation invite popup (Screenshot 4 style) -->
 @if(!$user->is_business)
 <div class="modal fade" id="businessSetupInviteModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
@@ -745,6 +771,31 @@
         `;
     }
 
+    function showCallModal(phone, name) {
+        document.getElementById('modal-business-name').innerText = name;
+        document.getElementById('modal-business-phone').innerText = phone;
+        document.getElementById('modal-business-phone-link').setAttribute('href', 'tel:' + phone);
+        const modal = new bootstrap.Modal(document.getElementById('callBusinessModal'));
+        modal.show();
+    }
+
+    function copyToClipboard() {
+        const phone = document.getElementById('modal-business-phone').innerText;
+        navigator.clipboard.writeText(phone).then(() => {
+            Swal.fire({
+                toast: true,
+                position: 'top-end',
+                icon: 'success',
+                title: 'Phone number copied to clipboard!',
+                showConfirmButton: false,
+                timer: 3000,
+                background: 'rgba(255, 255, 255, 0.95)'
+            });
+        }).catch(err => {
+            console.error("Copy failed", err);
+        });
+    }
+
     function renderDirectoryBusinesses(businesses) {
         const grid = document.getElementById('directory-listings-grid');
         if (!businesses || businesses.length === 0) {
@@ -763,7 +814,7 @@
                 : `<div class="biz-placeholder"><i class="fa-solid fa-store"></i></div>`;
             
             const callBtn = biz.contact_phone 
-                ? `<a href="tel:${biz.contact_phone}" class="btn btn-light btn-sm flex-fill rounded-3 text-dark small fw-semibold"><i class="fa-solid fa-phone me-1 text-success"></i> Call</a>` 
+                ? `<button onclick="showCallModal('${biz.contact_phone}', '${biz.business_name.replace(/'/g, "\\'")}')" class="btn btn-light btn-sm flex-fill rounded-3 text-dark small fw-semibold"><i class="fa-solid fa-phone me-1 text-success"></i> Call</button>` 
                 : '';
                 
             const mailBtn = biz.contact_email 

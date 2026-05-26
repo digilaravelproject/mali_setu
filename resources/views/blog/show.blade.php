@@ -158,8 +158,36 @@ document.addEventListener('DOMContentLoaded', function() {
             const btn = this;
             const blogId = btn.getAttribute('data-id');
             
-            btn.disabled = true;
-
+            if (btn.isProcessing) return;
+            
+            const icon = btn.querySelector('i');
+            const countSpan = btn.querySelector('.likes-count');
+            
+            // Optimistic UI updates
+            const isCurrentlyLiked = icon.classList.contains('fa-solid');
+            let currentCount = parseInt(countSpan.textContent) || 0;
+            
+            if (isCurrentlyLiked) {
+                // Optimistically Unlike
+                icon.classList.remove('fa-solid');
+                icon.classList.add('fa-regular');
+                btn.style.background = 'rgba(220, 53, 69, 0.1)';
+                btn.style.color = '#dc3545';
+                countSpan.textContent = Math.max(0, currentCount - 1);
+            } else {
+                // Optimistically Like
+                icon.classList.remove('fa-regular');
+                icon.classList.add('fa-solid');
+                btn.style.background = '#dc3545';
+                btn.style.color = '#fff';
+                // Trigger micro-animation scale
+                btn.style.transform = 'scale(1.1)';
+                setTimeout(() => { btn.style.transform = ''; }, 200);
+                countSpan.textContent = currentCount + 1;
+            }
+            
+            btn.isProcessing = true;
+            
             fetch(`/dashboard/blogs/${blogId}/like`, {
                 method: 'POST',
                 headers: {
@@ -171,9 +199,7 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    const icon = btn.querySelector('i');
-                    const countSpan = btn.querySelector('.likes-count');
-                    
+                    countSpan.textContent = data.likes_count;
                     if (data.liked) {
                         icon.classList.remove('fa-regular');
                         icon.classList.add('fa-solid');
@@ -185,14 +211,41 @@ document.addEventListener('DOMContentLoaded', function() {
                         btn.style.background = 'rgba(220, 53, 69, 0.1)';
                         btn.style.color = '#dc3545';
                     }
-                    
-                    countSpan.textContent = data.likes_count;
+                } else {
+                    // Revert optimistic changes
+                    if (isCurrentlyLiked) {
+                        icon.classList.remove('fa-regular');
+                        icon.classList.add('fa-solid');
+                        btn.style.background = '#dc3545';
+                        btn.style.color = '#fff';
+                        countSpan.textContent = currentCount;
+                    } else {
+                        icon.classList.remove('fa-solid');
+                        icon.classList.add('fa-regular');
+                        btn.style.background = 'rgba(220, 53, 69, 0.1)';
+                        btn.style.color = '#dc3545';
+                        countSpan.textContent = currentCount;
+                    }
                 }
-                btn.disabled = false;
+                btn.isProcessing = false;
             })
             .catch(err => {
                 console.error(err);
-                btn.disabled = false;
+                // Revert optimistic changes
+                if (isCurrentlyLiked) {
+                    icon.classList.remove('fa-regular');
+                    icon.classList.add('fa-solid');
+                    btn.style.background = '#dc3545';
+                    btn.style.color = '#fff';
+                    countSpan.textContent = currentCount;
+                } else {
+                    icon.classList.remove('fa-solid');
+                    icon.classList.add('fa-regular');
+                    btn.style.background = 'rgba(220, 53, 69, 0.1)';
+                    btn.style.color = '#dc3545';
+                    countSpan.textContent = currentCount;
+                }
+                btn.isProcessing = false;
             });
         });
     }
