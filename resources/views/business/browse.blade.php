@@ -92,11 +92,14 @@
                         <!-- Card Body -->
                         <div class="card-body p-4 text-start">
                             <h5 class="fw-bold text-dark mb-1">{{ $b->business_name }}</h5>
-                            <div class="d-flex align-items-center gap-2 mb-3 text-secondary small">
-                                <span><i class="fa-solid fa-location-dot me-1 text-primary"></i> {{ $b->city }}, {{ $b->state }}</span>
-                                <span class="text-muted">•</span>
-                                <span><i class="fa-solid fa-briefcase me-1 text-primary"></i> {{ $b->business_type }}</span>
-                            </div>
+                            <div class="d-flex align-items-center gap-2 mb-3 text-secondary small flex-wrap">
+                                 <span><i class="fa-solid fa-location-dot me-1 text-primary"></i> {{ $b->city }}, {{ $b->state }}</span>
+                                 @if(isset($b->distance))
+                                     <span class="badge bg-light text-secondary border small"><i class="fa-solid fa-route text-danger me-1"></i> {{ $b->distance }} km away</span>
+                                 @endif
+                                 <span class="text-muted">•</span>
+                                 <span><i class="fa-solid fa-briefcase me-1 text-primary"></i> {{ $b->business_type }}</span>
+                             </div>
 
                             <p class="small text-secondary mb-4" style="display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; height: 4.5em;">
                                 {{ $b->description }}

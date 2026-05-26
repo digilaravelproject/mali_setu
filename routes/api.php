@@ -46,11 +46,11 @@ Route::prefix('auth')->group(function () {
 
     Route::post('apple-login', [AppleAuthController::class, 'login']);
 
-    Route::get('google', [SocialAuthController::class, 'redirectToGoogle']);
-    Route::get('google/callback', [SocialAuthController::class, 'handleGoogleCallback']);
+    Route::get('google', [SocialAuthController::class, 'redirectToGoogle'])->middleware('web');
+    Route::get('google/callback', [SocialAuthController::class, 'handleGoogleCallback'])->middleware('web');
 
-    Route::get('facebook', [SocialAuthController::class, 'redirectToFacebook']);
-    Route::get('facebook/callback', [SocialAuthController::class, 'handleFacebookCallback']);
+    Route::get('facebook', [SocialAuthController::class, 'redirectToFacebook'])->middleware('web');
+    Route::get('facebook/callback', [SocialAuthController::class, 'handleFacebookCallback'])->middleware('web');
     
     // Forgot password (OTP) APIs
     Route::post('password/forgot', [PasswordResetController::class, 'sendOtp']);

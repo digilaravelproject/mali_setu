@@ -133,6 +133,8 @@ class MatrimonyController extends Controller
             'city'                         => 'required|string|max:100',
             'taluka'                       => 'nullable|string|max:100',
             'village'                      => 'nullable|string|max:100',
+            'latitude'                     => 'nullable|numeric|between:-90,90',
+            'longitude'                    => 'nullable|numeric|between:-180,180',
 
             // photos
             'photos'                       => 'nullable|array',
@@ -209,13 +211,15 @@ class MatrimonyController extends Controller
         ];
 
         $locationDetails = [
-            'address' => $request->address,
-            'country' => $request->country,
-            'state'   => $request->state,
-            'city'    => $request->city,
-            'pincode' => $request->pincode,
-            'taluka'  => $request->taluka,
-            'village' => $request->village,
+            'address'   => $request->address,
+            'country'   => $request->country,
+            'state'     => $request->state,
+            'city'      => $request->city,
+            'pincode'   => $request->pincode,
+            'taluka'    => $request->taluka,
+            'village'   => $request->village,
+            'latitude'  => $request->latitude,
+            'longitude' => $request->longitude,
         ];
 
         $lifestyleDetails = [
@@ -255,7 +259,11 @@ class MatrimonyController extends Controller
             'approval_status'     => 'pending',
         ]);
 
-        $user->update(['user_type' => 'matrimony']);
+        $user->update([
+            'user_type' => 'matrimony',
+            'latitude'  => $request->latitude,
+            'longitude' => $request->longitude,
+        ]);
 
         return redirect()->to(route('matrimony.index') . '#plans-section')
             ->with('success', 'Matrimony profile created! Please subscribe to a plan to activate it.');
@@ -340,6 +348,8 @@ class MatrimonyController extends Controller
             'city'                         => 'required|string|max:100',
             'taluka'                       => 'nullable|string|max:100',
             'village'                      => 'nullable|string|max:100',
+            'latitude'                     => 'nullable|numeric|between:-90,90',
+            'longitude'                    => 'nullable|numeric|between:-180,180',
 
             // photos
             'photos'                       => 'nullable|array',
@@ -411,13 +421,15 @@ class MatrimonyController extends Controller
         ];
 
         $locationDetails = [
-            'address' => $request->address,
-            'country' => $request->country,
-            'state'   => $request->state,
-            'city'    => $request->city,
-            'pincode' => $request->pincode,
-            'taluka'  => $request->taluka,
-            'village' => $request->village,
+            'address'   => $request->address,
+            'country'   => $request->country,
+            'state'     => $request->state,
+            'city'      => $request->city,
+            'pincode'   => $request->pincode,
+            'taluka'    => $request->taluka,
+            'village'   => $request->village,
+            'latitude'  => $request->latitude,
+            'longitude' => $request->longitude,
         ];
 
         $lifestyleDetails = [
@@ -440,6 +452,11 @@ class MatrimonyController extends Controller
             'lifestyle_details'    => $lifestyleDetails,
             'location_details'     => $locationDetails,
             'partner_preferences'  => $profile->partner_preferences ?? [],
+        ]);
+
+        $user->update([
+            'latitude'  => $request->latitude,
+            'longitude' => $request->longitude,
         ]);
 
         return redirect()->route('matrimony.index')->with('success', 'Profile updated successfully!');

@@ -19,7 +19,7 @@ class SocialAuthController extends Controller
     }
 
     // Handle Google callback
-    public function handleGoogleCallback()
+    public function handleGoogleCallback(Request $request)
     {
         try {
             $googleUser = Socialite::driver('google')->stateless()->user();
@@ -44,14 +44,21 @@ class SocialAuthController extends Controller
 
             $token = $user->createToken('auth_token')->plainTextToken;
 
-            return response()->json([
-                'status' => true,
-                'message' => 'Google login successful',
-                'user' => $user,
-                'token' => $token,
-            ]);
+            if ($request->expectsJson() || $request->wantsJson()) {
+                return response()->json([
+                    'status' => true,
+                    'message' => 'Google login successful',
+                    'user' => $user,
+                    'token' => $token,
+                ]);
+            }
+
+            return redirect()->route('dashboard')->with('success', 'Google login successful');
         } catch (Exception $e) {
-            return response()->json(['error' => $e->getMessage()], 500);
+            if ($request->expectsJson() || $request->wantsJson()) {
+                return response()->json(['error' => $e->getMessage()], 500);
+            }
+            return redirect()->route('login')->withErrors(['error' => 'Google Authentication failed: ' . $e->getMessage()]);
         }
     }
 
@@ -62,7 +69,7 @@ class SocialAuthController extends Controller
     }
 
     // Handle Facebook callback
-    public function handleFacebookCallback()
+    public function handleFacebookCallback(Request $request)
     {
         try {
             $fbUser = Socialite::driver('facebook')->stateless()->user();
@@ -79,14 +86,21 @@ class SocialAuthController extends Controller
 
             $token = $user->createToken('auth_token')->plainTextToken;
 
-            return response()->json([
-                'status' => true,
-                'message' => 'Facebook login successful',
-                'user' => $user,
-                'token' => $token,
-            ]);
+            if ($request->expectsJson() || $request->wantsJson()) {
+                return response()->json([
+                    'status' => true,
+                    'message' => 'Facebook login successful',
+                    'user' => $user,
+                    'token' => $token,
+                ]);
+            }
+
+            return redirect()->route('dashboard')->with('success', 'Facebook login successful');
         } catch (Exception $e) {
-            return response()->json(['error' => $e->getMessage()], 500);
+            if ($request->expectsJson() || $request->wantsJson()) {
+                return response()->json(['error' => $e->getMessage()], 500);
+            }
+            return redirect()->route('login')->withErrors(['error' => 'Facebook Authentication failed: ' . $e->getMessage()]);
         }
     }
 }

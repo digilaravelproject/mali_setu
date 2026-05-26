@@ -25,54 +25,78 @@
                 </div>
 
                 <div class="card-body p-4 p-md-5">
-                    @if($errors->any())
-                        <div class="alert alert-danger border-0 shadow-sm mb-4" style="border-radius: 12px;">
-                            <ul class="mb-0 ps-3">
-                                @foreach($errors->all() as $error)
-                                    <li>{{ $error }}</li>
-                                @endforeach
-                            </ul>
-                        </div>
-                    @endif
-
                     <form action="{{ route('blogs.update', $blog->id) }}" method="POST" enctype="multipart/form-data" id="blogEditForm">
                         @csrf
 
-                        <!-- Article Title -->
+                        <!-- Blog Title -->
                         <div class="mb-4">
-                            <label for="title" class="form-label fw-semibold text-secondary">Article Title <span class="text-danger">*</span></label>
-                            <input type="text" name="title" id="title" class="form-control form-control-lg border-2" placeholder="e.g. My Experience Visiting the Community Cultural Center" value="{{ old('title', $blog->title) }}" required style="border-radius: 12px;">
-                            <div class="form-text small">Create an engaging title for your article. Keep it concise.</div>
+                            <label for="title" class="form-label fw-bold text-dark fs-5">Blog Title <span class="text-danger">*</span></label>
+                            <input type="text" name="title" id="title" class="form-control form-control-lg border-2 @error('title') is-invalid @enderror" placeholder="Enter Your Blog title" value="{{ old('title', $blog->title) }}" style="border-radius: 12px; height: 52px; border-color: #e5cbd6;">
+                            @error('title')
+                                <div class="text-danger small mt-1 fw-semibold" style="color: #c92f54 !important;">{{ $message }}</div>
+                            @enderror
                         </div>
 
-                        <!-- Article Content Description -->
+                        <!-- Blog Type -->
                         <div class="mb-4">
-                            <label for="description" class="form-label fw-semibold text-secondary">Article Content <span class="text-danger">*</span></label>
-                            <textarea name="description" id="description" rows="10" class="form-control border-2" placeholder="Start writing your article here..." required style="border-radius: 12px; resize: vertical;">{{ old('description', $blog->description) }}</textarea>
-                            <div class="form-text small d-flex justify-content-between">
+                            <label for="blog_type" class="form-label fw-bold text-dark fs-5">Blog Type <span class="text-danger">*</span></label>
+                            <select name="blog_type" id="blog_type" class="form-select form-select-lg border-2 @error('blog_type') is-invalid @enderror" style="border-radius: 12px; height: 52px; border-color: #e5cbd6; appearance: none; background-image: url('data:image/svg+xml;utf8,<svg xmlns=&quot;http://www.w3.org/2000/svg&quot; width=&quot;24&quot; height=&quot;24&quot; viewBox=&quot;0 0 24 24&quot; fill=&quot;none&quot; stroke=&quot;%23ad1457&quot; stroke-width=&quot;2&quot; stroke-linecap=&quot;round&quot; stroke-linejoin=&quot;round&quot;><polyline points=&quot;6 9 12 15 18 9&quot;></polyline></svg>'); background-repeat: no-repeat; background-position: right 15px center; background-size: 16px;">
+                                <option value="" disabled {{ old('blog_type', $blog->blog_type) ? '' : 'selected' }}>Enter Your Blog type</option>
+                                <option value="News" {{ old('blog_type', $blog->blog_type) === 'News' ? 'selected' : '' }}>News</option>
+                                <option value="Success Story" {{ old('blog_type', $blog->blog_type) === 'Success Story' ? 'selected' : '' }}>Success Story</option>
+                                <option value="Event" {{ old('blog_type', $blog->blog_type) === 'Event' ? 'selected' : '' }}>Event</option>
+                                <option value="Opinion" {{ old('blog_type', $blog->blog_type) === 'Opinion' ? 'selected' : '' }}>Opinion</option>
+                                <option value="Other" {{ old('blog_type', $blog->blog_type) === 'Other' ? 'selected' : '' }}>Other</option>
+                            </select>
+                            @error('blog_type')
+                                <div class="text-danger small mt-1 fw-semibold" style="color: #c92f54 !important;">{{ $message }}</div>
+                            @enderror
+                        </div>
+
+                        <!-- Blog Description -->
+                        <div class="mb-4">
+                            <label for="description" class="form-label fw-bold text-dark fs-5">Blog Description <span class="text-danger">*</span></label>
+                            <textarea name="description" id="description" rows="8" class="form-control border-2 @error('description') is-invalid @enderror" placeholder="Enter Your Blog description" style="border-radius: 12px; resize: vertical; border-color: #e5cbd6;">{{ old('description', $blog->description) }}</textarea>
+                            <div class="form-text small d-flex justify-content-between mt-1 text-muted">
                                 <span>Write in detail about your topic. Plain text with line breaks is supported.</span>
                                 <span id="charCount" class="fw-semibold">0 characters</span>
                             </div>
+                            @error('description')
+                                <div class="text-danger small mt-1 fw-semibold" style="color: #c92f54 !important;">{{ $message }}</div>
+                            @enderror
                         </div>
 
                         <!-- Tags -->
                         <div class="mb-4">
-                            <label for="tags" class="form-label fw-semibold text-secondary">Tags</label>
-                            <input type="text" name="tags" id="tags" class="form-control border-2" placeholder="e.g. cultural, event, community, stories" value="{{ old('tags', $blog->tags ? implode(', ', $blog->tags) : '') }}" style="border-radius: 12px;">
-                            <div class="form-text small">Enter comma-separated values (e.g. news, events, guides). Tags help users filter articles.</div>
+                            <label class="form-label fw-bold text-dark fs-5">Tags <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <input type="text" id="tagInput" class="form-control form-control-lg border-2 @error('tags') is-invalid @enderror" placeholder="Add a tag" style="border-top-left-radius: 12px; border-bottom-left-radius: 12px; border-right: none; height: 52px; border-color: #e5cbd6;">
+                                <button class="btn btn-primary d-flex align-items-center justify-content-center" type="button" id="addTagBtn" style="border-top-right-radius: 12px; border-bottom-right-radius: 12px; background-color: #ad1457; color: white; border-color: #ad1457; border-left: none; width: 60px; height: 52px; font-size: 1.5rem;">
+                                    <i class="fa-solid fa-plus"></i>
+                                </button>
+                            </div>
+                            <input type="hidden" name="tags" id="tags" value="{{ old('tags', $blog->tags ? implode(', ', $blog->tags) : '') }}">
+                            <div id="tagsList" class="mt-2 d-flex flex-wrap gap-2"></div>
+                            @error('tags')
+                                <div class="text-danger small mt-1 fw-semibold" style="color: #c92f54 !important;">{{ $message }}</div>
+                            @enderror
                         </div>
 
-                        <!-- Media File -->
+                        <!-- Media (Image/Video) -->
                         <div class="mb-4">
-                            <label for="media" class="form-label fw-semibold text-secondary font-weight-bold">Update Media (Image / Video)</label>
-                            <div class="media-upload-dropzone border-2 border-dashed p-4 text-center bg-light rounded-4 position-relative" style="cursor: pointer; border-color: rgba(var(--primary-rgb), 0.3) !important;">
+                            <label for="media" class="form-label fw-bold text-dark fs-5">Media (Image/Video)</label>
+                            <div class="media-upload-dropzone border-2 border-dashed p-4 text-center rounded-4 position-relative" style="cursor: pointer; border-color: #ad1457 !important; background-color: #fff9fa; transition: all 0.3s ease;">
                                 <input type="file" name="media" id="media" class="position-absolute top-0 start-0 opacity-0 w-100 h-100" style="cursor: pointer;" accept="image/*,video/*" onchange="previewMedia(this)">
                                 
                                 <!-- No current media or media removed -->
                                 <div id="dropzoneContent" class="{{ $blog->media_path ? 'd-none' : '' }}">
-                                    <i class="fa-solid fa-cloud-arrow-up fa-3x text-primary opacity-50 mb-3"></i>
-                                    <h6 class="fw-bold mb-1">Drag & drop or click to replace file</h6>
-                                    <p class="text-muted small mb-0">Supported files: JPG, PNG, GIF, MP4, MOV (Max size: 10MB)</p>
+                                    <div class="mb-3 text-center">
+                                        <div class="d-inline-flex align-items-center justify-content-center" style="width: 64px; height: 64px; background-color: rgba(173, 20, 87, 0.08); border-radius: 16px; color: #ad1457;">
+                                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-folder-plus"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path><line x1="12" y1="11" x2="12" y2="17"></line><line x1="9" y1="14" x2="15" y2="14"></line></svg>
+                                        </div>
+                                    </div>
+                                    <h6 class="fw-bold mb-1" style="color: #ad1457;">Tap to upload media</h6>
+                                    <p class="text-muted small mb-0">Image (Max 2MB) | Video (Max 10MB)</p>
                                 </div>
                                 
                                 <!-- Show current media OR new uploaded file preview -->
@@ -191,5 +215,72 @@ function removeMedia(e) {
         mediaHint.classList.add('d-none');
     }
 }
+
+// Dynamic Tags System
+document.addEventListener("DOMContentLoaded", function() {
+    const tagInput = document.getElementById('tagInput');
+    const addTagBtn = document.getElementById('addTagBtn');
+    const tagsHiddenInput = document.getElementById('tags');
+    const tagsListDiv = document.getElementById('tagsList');
+
+    let tagsArr = [];
+
+    // Load old tags if any
+    if (tagsHiddenInput && tagsHiddenInput.value) {
+        tagsArr = tagsHiddenInput.value.split(',').map(t => t.trim()).filter(t => t.length > 0);
+        renderTags();
+    }
+
+    function renderTags() {
+        tagsListDiv.innerHTML = '';
+        tagsArr.forEach((tag, idx) => {
+            const chip = document.createElement('span');
+            chip.className = 'badge d-inline-flex align-items-center gap-2 px-3 py-2 rounded-pill';
+            chip.style.backgroundColor = 'rgba(173,20,87,0.08)';
+            chip.style.color = '#ad1457';
+            chip.style.border = '1px solid rgba(173,20,87,0.2)';
+            chip.style.fontWeight = '600';
+            chip.style.fontSize = '0.9rem';
+            
+            chip.innerHTML = `
+                ${tag}
+                <i class="fa-solid fa-xmark text-danger cursor-pointer" style="cursor: pointer;" onclick="removeTag(${idx})"></i>
+            `;
+            tagsListDiv.appendChild(chip);
+        });
+        tagsHiddenInput.value = tagsArr.join(',');
+    }
+
+    window.removeTag = function(idx) {
+        tagsArr.splice(idx, 1);
+        renderTags();
+    };
+
+    function addTag() {
+        const val = tagInput.value.trim();
+        if (val) {
+            const parts = val.split(',').map(t => t.trim()).filter(t => t.length > 0 && !tagsArr.includes(t));
+            tagsArr.push(...parts);
+            tagInput.value = '';
+            renderTags();
+        }
+    }
+
+    if (addTagBtn) {
+        addTagBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            addTag();
+        });
+    }
+
+    if (tagInput) {
+        tagInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                addTag();
+            }
+        });
+    }
+});
 </script>
 @endsection

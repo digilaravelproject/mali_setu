@@ -240,11 +240,47 @@
             background-color: var(--primary) !important;
             border-color: var(--primary) !important;
             color: #fff !important;
+            transition: all 0.2s ease-in-out !important;
         }
 
-        .btn-outline-primary {
+        .btn-primary:hover, .btn-primary:focus, .btn-primary:active {
+            background-color: var(--primary-dark) !important;
+            border-color: var(--primary-dark) !important;
+            color: #fff !important;
+        }
+
+        .btn-outline-primary, .btn-outline-teal, .btn-outline-secondary {
             color: var(--primary) !important;
             border-color: var(--primary) !important;
+            background-color: transparent !important;
+            transition: all 0.2s ease-in-out !important;
+        }
+
+        .btn-outline-primary:hover, .btn-outline-primary:focus, .btn-outline-primary:active,
+        .btn-outline-teal:hover, .btn-outline-teal:focus, .btn-outline-teal:active,
+        .btn-outline-secondary:hover, .btn-outline-secondary:focus, .btn-outline-secondary:active {
+            background-color: var(--primary) !important;
+            border-color: var(--primary) !important;
+            color: #fff !important;
+        }
+
+        .btn-teal {
+            background-color: var(--primary) !important;
+            border-color: var(--primary) !important;
+            color: #fff !important;
+            transition: all 0.2s ease-in-out !important;
+        }
+
+        .btn-teal:hover, .btn-teal:focus, .btn-teal:active {
+            background-color: var(--primary-dark) !important;
+            border-color: var(--primary-dark) !important;
+            color: #fff !important;
+        }
+
+        /* Active Tab Pills */
+        .nav-pills .nav-link.active, .nav-pills .show > .nav-link {
+            background-color: var(--primary) !important;
+            color: #fff !important;
         }
 
         /* Pagination styling (Bootstrap-compatible) */
@@ -1110,6 +1146,29 @@
                 triggerDonationSuggestionModal(false);
             }
         });
+
+        // Sidebar Scroll Position Preservation
+        const sidebarWrapper = document.querySelector('.sidebar-menu-wrapper');
+        if (sidebarWrapper) {
+            // Restore scroll position
+            const savedScroll = localStorage.getItem('sidebarScrollPosition');
+            if (savedScroll !== null) {
+                sidebarWrapper.scrollTop = parseFloat(savedScroll);
+            }
+
+            // Save scroll position on scroll
+            sidebarWrapper.addEventListener('scroll', function() {
+                localStorage.setItem('sidebarScrollPosition', sidebarWrapper.scrollTop);
+            });
+
+            // Save scroll position when any link inside sidebar is clicked
+            const navLinks = sidebarWrapper.querySelectorAll('.nav-link-custom');
+            navLinks.forEach(link => {
+                link.addEventListener('click', function() {
+                    localStorage.setItem('sidebarScrollPosition', sidebarWrapper.scrollTop);
+                });
+            });
+        }
     });
 </script>
 @yield('scripts')

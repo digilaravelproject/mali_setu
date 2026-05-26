@@ -27,18 +27,18 @@
             @endif
 
             <!-- Multi-step Navigation tabs -->
-            <ul class="nav nav-tabs nav-fill mb-4 border-0 bg-light p-1 rounded-3" id="setupFormTabs" role="tablist">
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link active fw-bold small py-2.5 rounded-3" id="step1-tab" data-bs-toggle="tab" data-bs-target="#step1" type="button" role="tab"><span class="badge bg-secondary me-1">1</span> Basic Profile</button>
+            <ul class="nav nav-tabs nav-fill mb-4 border-0 bg-light p-1 rounded-3" id="setupFormTabs" role="tablist" style="flex-wrap: nowrap !important; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none;">
+                <li class="nav-item" role="presentation" style="flex-shrink: 0;">
+                    <button class="nav-link active fw-bold small py-2.5 rounded-3" id="step1-tab" data-bs-toggle="tab" data-bs-target="#step1" type="button" role="tab" style="white-space: nowrap;"><span class="badge bg-secondary me-1">1</span> Basic Profile</button>
                 </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link fw-bold small py-2.5 rounded-3" id="step2-tab" data-bs-toggle="tab" data-bs-target="#step2" type="button" role="tab"><span class="badge bg-secondary me-1">2</span> Contact Info</button>
+                <li class="nav-item" role="presentation" style="flex-shrink: 0;">
+                    <button class="nav-link fw-bold small py-2.5 rounded-3" id="step2-tab" data-bs-toggle="tab" data-bs-target="#step2" type="button" role="tab" style="white-space: nowrap;"><span class="badge bg-secondary me-1">2</span> Contact Info</button>
                 </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link fw-bold small py-2.5 rounded-3" id="step3-tab" data-bs-toggle="tab" data-bs-target="#step3" type="button" role="tab"><span class="badge bg-secondary me-1">3</span> Address & Location</button>
+                <li class="nav-item" role="presentation" style="flex-shrink: 0;">
+                    <button class="nav-link fw-bold small py-2.5 rounded-3" id="step3-tab" data-bs-toggle="tab" data-bs-target="#step3" type="button" role="tab" style="white-space: nowrap;"><span class="badge bg-secondary me-1">3</span> Address & Location</button>
                 </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link fw-bold small py-2.5 rounded-3" id="step4-tab" data-bs-toggle="tab" data-bs-target="#step4" type="button" role="tab"><span class="badge bg-secondary me-1">4</span> Photos & Finish</button>
+                <li class="nav-item" role="presentation" style="flex-shrink: 0;">
+                    <button class="nav-link fw-bold small py-2.5 rounded-3" id="step4-tab" data-bs-toggle="tab" data-bs-target="#step4" type="button" role="tab" style="white-space: nowrap;"><span class="badge bg-secondary me-1">4</span> Photos & Finish</button>
                 </li>
             </ul>
 
@@ -154,7 +154,10 @@
                                     <span class="input-group-text bg-light text-secondary"><i class="fa-solid fa-map-pin"></i></span>
                                     <input type="text" name="pincode" id="pincode_field" class="form-control @error('pincode') is-invalid @enderror" placeholder="6-digit pincode" maxlength="6" required value="{{ old('pincode') }}">
                                     <button class="btn btn-outline-secondary" type="button" id="lookup_pincode_btn">Verify</button>
+                                    <button class="btn btn-outline-secondary" type="button" id="get_business_location_btn" title="Fetch My Current Coordinates"><i class="fa-solid fa-location-dot text-primary"></i></button>
                                 </div>
+                                <input type="hidden" name="latitude" id="businessLatitudeInput" value="{{ old('latitude') }}">
+                                <input type="hidden" name="longitude" id="businessLongitudeInput" value="{{ old('longitude') }}">
                                 <div id="pincode_spinner" class="spinner-border spinner-border-sm text-primary mt-2" role="status" style="display: none;">
                                     <span class="visually-hidden">Loading...</span>
                                 </div>
@@ -367,6 +370,29 @@
                 lookupPincode();
             }
         });
+
+        const getBizLocBtn = document.getElementById('get_business_location_btn');
+        if (getBizLocBtn) {
+            getBizLocBtn.addEventListener('click', function() {
+                const icon = getBizLocBtn.querySelector('i');
+                const oldClass = icon.className;
+                icon.className = 'fa-solid fa-spinner fa-spin text-primary';
+                
+                navigator.geolocation.getCurrentPosition(function(position) {
+                    icon.className = 'fa-solid fa-circle-check text-success';
+                    document.getElementById('businessLatitudeInput').value = position.coords.latitude;
+                    document.getElementById('businessLongitudeInput').value = position.coords.longitude;
+                    alert('GPS Coordinates fetched successfully: ' + position.coords.latitude.toFixed(4) + ', ' + position.coords.longitude.toFixed(4));
+                }, function(error) {
+                    icon.className = oldClass;
+                    alert('Geolocation Error: ' + error.message);
+                }, {
+                    enableHighAccuracy: true,
+                    timeout: 10000,
+                    maximumAge: 0
+                });
+            });
+        }
     });
 </script>
 @endsection

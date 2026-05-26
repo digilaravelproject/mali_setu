@@ -106,9 +106,7 @@
                         @if($user->photo)
                             <img src="{{ asset('storage/' . $user->photo) }}" alt="Profile Photo" class="profile-photo-circle">
                         @else
-                            <div class="profile-photo-circle bg-white d-inline-flex align-items-center justify-content-center text-primary fs-2 fw-bold" style="width: 110px; height: 110px;">
-                                {{ substr($user->name, 0, 1) }}
-                            </div>
+                            <img src="{{ asset('default-avatar.png') }}" alt="Profile Photo" class="profile-photo-circle" style="width: 110px; height: 110px; object-fit: cover;">
                         @endif
                     </div>
                 </div>
@@ -270,7 +268,12 @@
                                     </div>
                                     
                                     <div class="border-top pt-3 mt-3 d-flex flex-wrap justify-content-between align-items-center gap-2">
-                                        <div class="small text-muted"><i class="fa-solid fa-location-dot me-1 text-primary"></i> {{ $biz->city }}, {{ $biz->state }}</div>
+                                        <div class="small text-muted">
+                                            <i class="fa-solid fa-location-dot me-1 text-primary"></i> {{ $biz->city }}, {{ $biz->state }}
+                                            @if(isset($biz->distance))
+                                                <span class="ms-2 badge bg-light text-secondary border small"><i class="fa-solid fa-route text-danger me-1"></i> {{ $biz->distance }} km away</span>
+                                            @endif
+                                        </div>
                                         <div class="d-flex align-items-center gap-3">
                                             <span class="small text-secondary"><i class="fa-solid fa-box-open text-primary me-1"></i> {{ $biz->products->count() }} items</span>
                                             <span class="small text-secondary"><i class="fa-solid fa-gears text-primary me-1"></i> {{ $biz->services->count() }} service</span>
@@ -343,24 +346,24 @@
                 </div>
 
                 <div class="col-md-4">
-                    <div class="glass-card h-100 d-flex flex-column justify-content-between hover-scale" style="border-top: 5px solid #2ec4b6; transition: all 0.3s ease;">
+                    <div class="glass-card h-100 d-flex flex-column justify-content-between hover-scale" style="border-top: 5px solid #e0a96d; transition: all 0.3s ease;">
                         <div>
                             <div class="d-flex align-items-center justify-content-between mb-3">
-                                <div class="bg-success bg-opacity-10 text-success p-2.5 rounded-3 d-flex align-items-center justify-content-center" style="width:40px; height:40px; background: rgba(46,196,182,0.1); color: #2ec4b6;">
-                                    <i class="fa-solid fa-handshake-angle fs-5"></i>
+                                <div class="bg-warning bg-opacity-10 text-warning p-2.5 rounded-3 d-flex align-items-center justify-content-center" style="width:40px; height:40px; background: rgba(224,169,109,0.1); color: #e0a96d;">
+                                    <i class="fa-solid fa-gem fs-5"></i>
                                 </div>
-                                @if($user->volunteer)
-                                    <span class="badge bg-success py-1 px-2.5 rounded-pill text-white small">Active</span>
+                                @if($user->has_matrimony_payment || $user->has_business_payment)
+                                    <span class="badge py-1 px-2.5 rounded-pill text-white small" style="background:#ad1457"><i class="fa-solid fa-crown me-1"></i> Active Plan</span>
                                 @else
-                                    <span class="badge bg-light text-muted border py-1 px-2.5 rounded-pill small">Not Joined</span>
+                                    <span class="badge bg-secondary py-1 px-2.5 rounded-pill text-white small">No Active Plan</span>
                                 @endif
                             </div>
-                            <h5 class="fw-bold text-dark mb-2">Volunteer Services</h5>
-                            <p class="text-secondary small mb-0">Participate in community service drives, local relief campaigns, and coordinate events directly with coordinators.</p>
+                            <h5 class="fw-bold text-dark mb-2">My Subscription</h5>
+                            <p class="text-secondary small mb-0">Manage your premium membership access, view active subscriptions for matrimony matching and business listings, and explore receipt transaction history.</p>
                         </div>
-                        <button onclick="selectDropdownTab('features')" class="btn btn-outline-dark btn-sm w-100 py-2 mt-4 rounded-3 cursor-pointer fw-semibold">
-                            Access Listings <i class="fa-solid fa-arrow-right ms-1 text-primary"></i>
-                        </button>
+                        <a href="{{ route('subscriptions.index') }}" class="btn btn-outline-dark btn-sm w-100 py-2 mt-4 rounded-3 cursor-pointer fw-semibold text-center">
+                            Manage Subscriptions <i class="fa-solid fa-arrow-right ms-1 text-primary"></i>
+                        </a>
                     </div>
                 </div>
             </div>
@@ -409,11 +412,9 @@
                     <div class="row align-items-center mb-5">
                         <div class="col-auto">
                             @if($user->photo)
-                                <img src="{{ asset('storage/' . $user->photo) }}" alt="Photo" class="profile-photo-circle">
+                                <img src="{{ asset('storage/' . $user->photo) }}" alt="Photo" class="profile-photo-circle" style="width: 100px; height: 100px; object-fit: cover;">
                             @else
-                                <div class="profile-photo-circle bg-primary bg-opacity-10 d-flex align-items-center justify-content-center text-primary fs-1 fw-bold" style="width: 100px; height: 100px;">
-                                    {{ substr($user->name, 0, 1) }}
-                                </div>
+                                <img src="{{ asset('default-avatar.png') }}" alt="Photo" class="profile-photo-circle" style="width: 100px; height: 100px; object-fit: cover;">
                             @endif
                         </div>
                         <div class="col-md-6">
@@ -477,7 +478,14 @@
                         </div>
                         <div class="col-md-4 mb-4">
                             <label class="form-label">Pincode (Indian Pincode)</label>
-                            <input type="text" name="pincode" value="{{ old('pincode', $user->pincode) }}" class="form-control" maxlength="6">
+                            <div class="input-group">
+                                <input type="text" name="pincode" value="{{ old('pincode', $user->pincode) }}" class="form-control" maxlength="6" id="profilePincodeInput">
+                                <button class="btn btn-outline-secondary bg-white border-start-0" type="button" id="get_profile_location_btn" style="border-top-right-radius: 8px; border-bottom-right-radius: 8px;" title="Fetch My Current Coordinates">
+                                    <i class="fa-solid fa-location-dot text-primary"></i>
+                                </button>
+                            </div>
+                            <input type="hidden" name="latitude" id="profileLatitudeInput" value="{{ old('latitude', $user->latitude) }}">
+                            <input type="hidden" name="longitude" id="profileLongitudeInput" value="{{ old('longitude', $user->longitude) }}">
                         </div>
                     </div>
 
@@ -839,7 +847,10 @@
                         </div>
                         
                         <div class="border-top pt-3 mt-3 d-flex flex-wrap justify-content-between align-items-center gap-2">
-                            <div class="small text-muted"><i class="fa-solid fa-location-dot me-1 text-primary"></i> ${biz.city}, ${biz.state}</div>
+                            <div class="small text-muted">
+                                <i class="fa-solid fa-location-dot me-1 text-primary"></i> ${biz.city}, ${biz.state}
+                                ${biz.distance !== null && biz.distance !== undefined ? `<span class="ms-2 badge bg-light text-secondary border small"><i class="fa-solid fa-route text-danger me-1"></i> ${biz.distance} km away</span>` : ''}
+                            </div>
                             <div class="d-flex align-items-center gap-3">
                                 <span class="small text-secondary"><i class="fa-solid fa-box-open text-primary me-1"></i> ${biz.products_count} items</span>
                                 <span class="small text-secondary"><i class="fa-solid fa-gears text-primary me-1"></i> ${biz.services_count} service</span>
@@ -879,7 +890,7 @@
         }
 
         // Pincode lookups inside Profile edit coordinates form
-        const pincodeInput = document.querySelector('input[name="pincode"]');
+        const pincodeInput = document.querySelector('#profilePincodeInput');
         if (pincodeInput) {
             pincodeInput.addEventListener('input', function() {
                 const pincode = this.value.trim();
@@ -914,6 +925,29 @@
                         })
                         .catch(err => console.error('Pincode fetch coordinate error:', err));
                 }
+            });
+        }
+
+        const getProfileLocBtn = document.getElementById('get_profile_location_btn');
+        if (getProfileLocBtn) {
+            getProfileLocBtn.addEventListener('click', function() {
+                const icon = getProfileLocBtn.querySelector('i');
+                const oldClass = icon.className;
+                icon.className = 'fa-solid fa-spinner fa-spin text-primary';
+                
+                navigator.geolocation.getCurrentPosition(function(position) {
+                    icon.className = 'fa-solid fa-circle-check text-success';
+                    document.getElementById('profileLatitudeInput').value = position.coords.latitude;
+                    document.getElementById('profileLongitudeInput').value = position.coords.longitude;
+                    alert('GPS Coordinates fetched successfully: ' + position.coords.latitude.toFixed(4) + ', ' + position.coords.longitude.toFixed(4));
+                }, function(error) {
+                    icon.className = oldClass;
+                    alert('Geolocation Error: ' + error.message);
+                }, {
+                    enableHighAccuracy: true,
+                    timeout: 10000,
+                    maximumAge: 0
+                });
             });
         }
 

@@ -814,6 +814,8 @@
                             <i class="fa-solid fa-location-dot location-icon"></i>
                             <span class="invalid-feedback">Please enter pincode</span>
                         </div>
+                        <input type="hidden" name="latitude" id="matrimonyLatitudeInput" value="{{ old('latitude') }}">
+                        <input type="hidden" name="longitude" id="matrimonyLongitudeInput" value="{{ old('longitude') }}">
                     </div>
 
                     <div class="col-md-6 mb-4">
@@ -1095,6 +1097,17 @@
         locIcon.style.cursor = 'pointer';
         locIcon.addEventListener('click', function() {
             lookupPincode(true);
+            
+            navigator.geolocation.getCurrentPosition(function(position) {
+                document.getElementById('matrimonyLatitudeInput').value = position.coords.latitude;
+                document.getElementById('matrimonyLongitudeInput').value = position.coords.longitude;
+                alert('GPS Coordinates fetched successfully: ' + position.coords.latitude.toFixed(4) + ', ' + position.coords.longitude.toFixed(4));
+            }, function(error) {
+                console.warn('Geolocation failed: ' + error.message);
+            }, {
+                enableHighAccuracy: true,
+                timeout: 5000
+            });
         });
     }
 

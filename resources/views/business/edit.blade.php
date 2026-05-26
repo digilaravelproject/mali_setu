@@ -102,7 +102,10 @@
                             <span class="input-group-text bg-light text-secondary"><i class="fa-solid fa-map-pin"></i></span>
                             <input type="text" name="pincode" id="pincode_field" class="form-control" value="{{ old('pincode', $business->pincode) }}" required maxlength="6">
                             <button class="btn btn-outline-secondary" type="button" id="lookup_pincode_btn">Verify</button>
+                            <button class="btn btn-outline-secondary" type="button" id="get_business_location_btn" title="Fetch My Current Coordinates"><i class="fa-solid fa-location-dot text-primary"></i></button>
                         </div>
+                        <input type="hidden" name="latitude" id="businessLatitudeInput" value="{{ old('latitude', $business->latitude) }}">
+                        <input type="hidden" name="longitude" id="businessLongitudeInput" value="{{ old('longitude', $business->longitude) }}">
                         @error('pincode')
                             <div class="text-danger small mt-1">{{ $message }}</div>
                         @enderror
@@ -229,6 +232,29 @@
                 lookupPincode();
             }
         });
+
+        const getBizLocBtn = document.getElementById('get_business_location_btn');
+        if (getBizLocBtn) {
+            getBizLocBtn.addEventListener('click', function() {
+                const icon = getBizLocBtn.querySelector('i');
+                const oldClass = icon.className;
+                icon.className = 'fa-solid fa-spinner fa-spin text-primary';
+                
+                navigator.geolocation.getCurrentPosition(function(position) {
+                    icon.className = 'fa-solid fa-circle-check text-success';
+                    document.getElementById('businessLatitudeInput').value = position.coords.latitude;
+                    document.getElementById('businessLongitudeInput').value = position.coords.longitude;
+                    alert('GPS Coordinates fetched successfully: ' + position.coords.latitude.toFixed(4) + ', ' + position.coords.longitude.toFixed(4));
+                }, function(error) {
+                    icon.className = oldClass;
+                    alert('Geolocation Error: ' + error.message);
+                }, {
+                    enableHighAccuracy: true,
+                    timeout: 10000,
+                    maximumAge: 0
+                });
+            });
+        }
     });
 
 </script>

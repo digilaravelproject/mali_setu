@@ -348,7 +348,14 @@
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label class="form-label small fw-bold text-secondary">Pincode <span class="text-danger">*</span></label>
-                                <input type="text" name="pincode" value="{{ old('pincode') }}" class="form-control form-control-lg @error('pincode') is-invalid @enderror" placeholder="6-digit pincode" maxlength="6" required>
+                                <div class="input-group">
+                                    <input type="text" name="pincode" value="{{ old('pincode') }}" class="form-control form-control-lg @error('pincode') is-invalid @enderror" placeholder="6-digit pincode" id="pincodeInput" maxlength="6" required>
+                                    <button class="btn btn-outline-secondary bg-white border-start-0" type="button" id="get_location_btn" style="border-top-right-radius: 12px; border-bottom-right-radius: 12px;" title="Fetch My Current Coordinates">
+                                        <i class="fa-solid fa-location-dot text-primary"></i>
+                                    </button>
+                                </div>
+                                <input type="hidden" name="latitude" id="latitudeInput" value="{{ old('latitude') }}">
+                                <input type="hidden" name="longitude" id="longitudeInput" value="{{ old('longitude') }}">
                                 @error('pincode')
                                     <div class="text-danger small mt-1">{{ $message }}</div>
                                 @enderror
@@ -622,6 +629,29 @@
                         })
                         .catch(err => console.error('Error fetching pincode details:', err));
                 }
+            });
+        }
+
+        const getLocBtn = document.getElementById('get_location_btn');
+        if (getLocBtn) {
+            getLocBtn.addEventListener('click', function() {
+                const icon = getLocBtn.querySelector('i');
+                const oldClass = icon.className;
+                icon.className = 'fa-solid fa-spinner fa-spin text-primary';
+                
+                navigator.geolocation.getCurrentPosition(function(position) {
+                    icon.className = 'fa-solid fa-circle-check text-success';
+                    document.getElementById('latitudeInput').value = position.coords.latitude;
+                    document.getElementById('longitudeInput').value = position.coords.longitude;
+                    alert('GPS Coordinates fetched successfully: ' + position.coords.latitude.toFixed(4) + ', ' + position.coords.longitude.toFixed(4));
+                }, function(error) {
+                    icon.className = oldClass;
+                    alert('Geolocation Error: ' + error.message);
+                }, {
+                    enableHighAccuracy: true,
+                    timeout: 10000,
+                    maximumAge: 0
+                });
             });
         }
     });

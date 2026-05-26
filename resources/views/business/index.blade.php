@@ -16,9 +16,7 @@
                     @if($user->photo)
                         <img src="{{ asset('storage/' . $user->photo) }}" alt="Profile Photo" class="profile-photo-circle">
                     @else
-                        <div class="profile-photo-circle bg-white d-inline-flex align-items-center justify-content-center text-primary fs-2 fw-bold" style="width: 110px; height: 110px;">
-                            {{ substr($user->name, 0, 1) }}
-                        </div>
+                        <img src="{{ asset('default-avatar.png') }}" alt="Profile Photo" class="profile-photo-circle" style="width: 110px; height: 110px; object-fit: cover;">
                     @endif
                 </div>
             </div>

@@ -96,6 +96,8 @@ class WebAuthController extends Controller
             'designation'      => 'nullable|string|max:255',
             'password'         => 'required|string|min:8|confirmed',
             'term_condition'   => 'accepted',
+            'latitude'         => 'nullable|numeric|between:-90,90',
+            'longitude'        => 'nullable|numeric|between:-180,180',
         ]);
 
         if ($validator->fails()) {
@@ -138,6 +140,8 @@ class WebAuthController extends Controller
                 'password'               => Hash::make($request->password),
                 'user_type'              => $request->user_type,
                 'caste_verification_status' => 'approved', // mirror the API default
+                'latitude'               => $request->latitude,
+                'longitude'              => $request->longitude,
             ]);
 
             // Fire the Welcome Email (do not crash registration on fail)

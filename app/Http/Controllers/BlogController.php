@@ -74,9 +74,15 @@ class BlogController extends Controller
 
         $request->validate([
             'title' => 'required|string|max:255',
+            'blog_type' => 'required|string|max:255',
             'description' => 'required|string|max:10000',
-            'tags' => 'nullable|string',
+            'tags' => 'required|string',
             'media' => 'nullable|file|mimes:jpg,jpeg,png,gif,mp4,mov,avi,webm|max:10240', // Max 10MB
+        ], [
+            'title.required' => 'Please enter blog title',
+            'blog_type.required' => 'Please select a blog type',
+            'description.required' => 'Please enter blog description',
+            'tags.required' => 'Please add at least one tag',
         ]);
 
         try {
@@ -98,6 +104,7 @@ class BlogController extends Controller
             Blog::create([
                 'user_id' => $user->id,
                 'title' => $request->title,
+                'blog_type' => $request->blog_type,
                 'description' => $request->description,
                 'tags' => array_values($tags),
                 'media_path' => $mediaPath,
@@ -181,9 +188,15 @@ class BlogController extends Controller
 
         $request->validate([
             'title' => 'required|string|max:255',
+            'blog_type' => 'required|string|max:255',
             'description' => 'required|string|max:10000',
-            'tags' => 'nullable|string',
+            'tags' => 'required|string',
             'media' => 'nullable|file|mimes:jpg,jpeg,png,gif,mp4,mov,avi,webm|max:10240',
+        ], [
+            'title.required' => 'Please enter blog title',
+            'blog_type.required' => 'Please select a blog type',
+            'description.required' => 'Please enter blog description',
+            'tags.required' => 'Please add at least one tag',
         ]);
 
         try {
@@ -205,6 +218,7 @@ class BlogController extends Controller
             }
 
             $blog->title = $request->title;
+            $blog->blog_type = $request->blog_type;
             $blog->description = $request->description;
             $blog->tags = array_values($tags);
             $blog->save();

@@ -251,14 +251,19 @@
                         <label class="form-label small fw-bold text-secondary mb-0">Password<span class="text-danger">*</span></label>
                         <a href="{{ route('password.request') }}" class="small text-primary text-decoration-none fw-bold">Forgot password?</a>
                     </div>
-                    <div class="position-relative">
+                    <div class="input-group">
                         <input 
                             type="password" 
                             name="password" 
-                            class="form-control form-control-lg @error('password') is-invalid @enderror" 
+                            id="login-password"
+                            class="form-control form-control-lg @error('password') is-invalid @enderror border-end-0" 
                             placeholder="Min 8 characters" 
+                            style="border-top-right-radius: 0; border-bottom-right-radius: 0;"
                             required
                         >
+                        <button type="button" class="btn btn-outline-secondary border-start-0 bg-white" onclick="togglePasswordVisibility('login-password', this)" style="border-top-right-radius: 12px; border-bottom-right-radius: 12px; border-color: #e2e8f0; border-width: 1.5px; border-left: none;">
+                            <i class="fa-solid fa-eye text-primary"></i>
+                        </button>
                     </div>
                 </div>
 
@@ -293,5 +298,20 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    function togglePasswordVisibility(inputId, button) {
+        const input = document.getElementById(inputId);
+        const icon = button.querySelector('i');
+        if (input.type === 'password') {
+            input.type = 'text';
+            icon.classList.remove('fa-eye');
+            icon.classList.add('fa-eye-slash');
+        } else {
+            input.type = 'password';
+            icon.classList.remove('fa-eye-slash');
+            icon.classList.add('fa-eye');
+        }
+    }
+</script>
 </body>
 </html>

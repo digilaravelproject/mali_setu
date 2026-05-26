@@ -142,6 +142,8 @@ class BusinessController extends Controller
             'closing_time' => 'nullable',
             'photos' => 'nullable|array',
             'photos.*' => 'image|mimes:jpeg,png,jpg,gif|max:5120',
+            'latitude' => 'nullable|numeric|between:-90,90',
+            'longitude' => 'nullable|numeric|between:-180,180',
         ]);
 
         try {
@@ -179,6 +181,8 @@ class BusinessController extends Controller
                 'verification_status' => 'pending',
                 'subscription_status' => 'trial',
                 'photo' => !empty($photoPaths) ? implode(', ', $photoPaths) : null,
+                'latitude' => $request->latitude,
+                'longitude' => $request->longitude,
             ]);
 
             if (empty($user->user_type) || $user->user_type != 'business') {
@@ -258,6 +262,8 @@ class BusinessController extends Controller
             'closing_time' => 'nullable',
             'photos' => 'nullable|array',
             'photos.*' => 'image|mimes:jpeg,png,jpg,gif|max:5120',
+            'latitude' => 'nullable|numeric|between:-90,90',
+            'longitude' => 'nullable|numeric|between:-180,180',
         ]);
 
         try {
@@ -293,7 +299,7 @@ class BusinessController extends Controller
                 'business_name', 'business_type', 'category_id', 'description',
                 'contact_phone', 'contact_email', 'country', 'state', 'district',
                 'village', 'taluka', 'address', 'city', 'pincode', 'website',
-                'opening_time', 'closing_time'
+                'opening_time', 'closing_time', 'latitude', 'longitude'
             ]));
 
             return redirect()->route('dashboard.business.index')->with('success', 'Business profile updated successfully!');
@@ -340,6 +346,13 @@ class BusinessController extends Controller
         }
 
         $businesses = $query->latest()->paginate(12)->withQueryString();
+
+        $user = Auth::user();
+        if ($user) {
+            foreach ($businesses as $b) {
+                $b->distance = $this->calculateDistance($user->latitude, $user->longitude, $b->latitude, $b->longitude);
+            }
+        }
 
         return view('business.browse', compact('businesses', 'categories'));
     }
@@ -972,5 +985,27 @@ class BusinessController extends Controller
             \Log::error('Web Business deletion failure: ' . $e->getMessage());
             return back()->withErrors(['error' => 'Failed to delete business: ' . $e->getMessage()]);
         }
+    }
+
+    private function calculateDistance($lat1, $lon1, $lat2, $lon2)
+    {
+        if (is_null($lat1) || is_null($lon1) || is_null($lat2) || is_null($lon2)) {
+            return null;
+        }
+
+        $earthRadius = 6371; // km
+
+        $dLat = deg2rad($lat2 - $lat1);
+        $dLon = deg2rad($lon2 - $lon1);
+
+        $a = sin($dLat / 2) * sin($dLat / 2) +
+             cos(deg2rad($lat1)) * cos(deg2rad($lat2)) *
+             sin($dLon / 2) * sin($dLon / 2);
+
+        $c = 2 * atan2(sqrt($a), sqrt(1 - $a));
+
+        $distance = $earthRadius * $c;
+
+        return round($distance, 1); // 1 decimal place e.g. 5.4 km
     }
 }

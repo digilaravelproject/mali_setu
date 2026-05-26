@@ -70,6 +70,10 @@ class DashboardController extends Controller
             ->take(10)
             ->get();
 
+        foreach ($featuredBusinesses as $b) {
+            $b->distance = $this->calculateDistance($user->latitude, $user->longitude, $b->latitude, $b->longitude);
+        }
+
         return view('dashboard.dashboard', compact('user', 'stats', 'categories', 'banners', 'featuredBusinesses'));
     }
 
@@ -79,6 +83,7 @@ class DashboardController extends Controller
     public function searchDirectoryBusinesses(Request $request)
     {
         $query = $request->query('q');
+        $user = Auth::user();
         
         $businesses = \App\Models\Business::where('verification_status', 'approved')
             ->where(function($q) use ($query) {
@@ -90,7 +95,7 @@ class DashboardController extends Controller
             ->with(['category', 'products', 'services'])
             ->latest()
             ->get()
-            ->map(function($b) {
+            ->map(function($b) use ($user) {
                 return [
                     'id' => $b->id,
                     'business_name' => $b->business_name,
@@ -107,6 +112,7 @@ class DashboardController extends Controller
                     'services_count' => $b->services->count(),
                     'opening_time' => $b->opening_time,
                     'closing_time' => $b->closing_time,
+                    'distance' => $this->calculateDistance($user->latitude, $user->longitude, $b->latitude, $b->longitude),
                 ];
             });
 
@@ -121,12 +127,13 @@ class DashboardController extends Controller
      */
     public function getCategoryBusinesses($id)
     {
+        $user = Auth::user();
         $businesses = \App\Models\Business::where('verification_status', 'approved')
             ->where('category_id', $id)
             ->with(['category', 'products', 'services'])
             ->latest()
             ->get()
-            ->map(function($b) {
+            ->map(function($b) use ($user) {
                 return [
                     'id' => $b->id,
                     'business_name' => $b->business_name,
@@ -143,6 +150,7 @@ class DashboardController extends Controller
                     'services_count' => $b->services->count(),
                     'opening_time' => $b->opening_time,
                     'closing_time' => $b->closing_time,
+                    'distance' => $this->calculateDistance($user->latitude, $user->longitude, $b->latitude, $b->longitude),
                 ];
             });
 
@@ -180,13 +188,15 @@ class DashboardController extends Controller
             'village'          => 'nullable|string|max:100',
             'destination'      => 'nullable|string|max:255',
             'photo'            => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
+            'latitude'         => 'nullable|numeric|between:-90,90',
+            'longitude'        => 'nullable|numeric|between:-180,180',
         ]);
 
         $data = $request->only([
             'name', 'email', 'phone', 'age', 'occupation', 'company_name',
             'dept_name', 'dob', 'designation', 'address', 'nearby_location',
             'pincode', 'road_number', 'state', 'city', 'sector', 'district',
-            'village', 'destination'
+            'village', 'destination', 'latitude', 'longitude'
         ]);
 
         if ($request->hasFile('photo')) {
@@ -335,5 +345,27 @@ class DashboardController extends Controller
             ->paginate(10, ['*'], 'jobs_page');
 
         return view('dashboard.applied_jobs', compact('applications', 'allJobs'));
+    }
+
+    private function calculateDistance($lat1, $lon1, $lat2, $lon2)
+    {
+        if (is_null($lat1) || is_null($lon1) || is_null($lat2) || is_null($lon2)) {
+            return null;
+        }
+
+        $earthRadius = 6371; // km
+
+        $dLat = deg2rad($lat2 - $lat1);
+        $dLon = deg2rad($lon2 - $lon1);
+
+        $a = sin($dLat / 2) * sin($dLat / 2) +
+             cos(deg2rad($lat1)) * cos(deg2rad($lat2)) *
+             sin($dLon / 2) * sin($dLon / 2);
+
+        $c = 2 * atan2(sqrt($a), sqrt(1 - $a));
+
+        $distance = $earthRadius * $c;
+
+        return round($distance, 1); // 1 decimal place e.g. 5.4 km
     }
 }

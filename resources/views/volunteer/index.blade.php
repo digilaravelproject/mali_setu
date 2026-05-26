@@ -115,9 +115,7 @@
                             @if(Auth::user()->photo)
                                 <img src="{{ asset('storage/' . Auth::user()->photo) }}" class="profile-photo-circle mb-3 mx-auto d-block" alt="Avatar">
                             @else
-                                <div class="metric-icon mx-auto mb-3" style="width: 80px; height: 80px; border-radius: 50%;">
-                                    <i class="fa-solid fa-user fs-2"></i>
-                                </div>
+                                <img src="{{ asset('default-avatar.png') }}" class="profile-photo-circle mb-3 mx-auto d-block" alt="Avatar" style="width: 80px; height: 80px; object-fit: cover; border-radius: 50%;">
                             @endif
                             <span class="position-absolute bottom-0 end-0 badge rounded-circle p-2 bg-success border border-white border-3" title="Registered Volunteer"></span>
                         </div>
