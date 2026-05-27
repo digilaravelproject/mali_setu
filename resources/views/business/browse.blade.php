@@ -8,7 +8,7 @@
         <div class="welcome-banner mb-4">
             <div class="row align-items-center">
                 <div class="col-md-8">
-                    <span class="badge-type mb-3 bg-white text-teal shadow-sm">Enterprise Finder</span>
+                    <span class="badge-type mb-3 bg-white text-black text-teal shadow-sm">Enterprise Finder</span>
                     <h1 class="fw-bold mb-2">Community Business Directory</h1>
                     <p class="opacity-75 mb-0">Browse caste-verified manufacturers, agricultural distributors, retailers, medical practitioners, and service providers.</p>
                 </div>
@@ -72,7 +72,7 @@
                             @if($cover)
                                 <img src="{{ asset('storage/' . $cover) }}" class="w-100 h-100" style="object-fit: cover;">
                             @else
-                                <div class="w-100 h-100 d-flex align-items-center justify-content-center text-white" style="background: linear-gradient(135deg, rgba(173,20,87,0.12), rgba(173,20,87,0.06));">
+                                <div class="w-100 h-100 d-flex align-items-center justify-content-center text-white" style="background: linear-gradient(135deg, rgba(255,71,87,0.12), rgba(255,71,87,0.06));">
                                     <i class="fa-solid fa-store"></i>
                                 </div>
                             @endif
@@ -92,10 +92,15 @@
                         <!-- Card Body -->
                         <div class="card-body p-4 text-start">
                             <h5 class="fw-bold text-dark mb-1">{{ $b->business_name }}</h5>
-                            <div class="d-flex align-items-center gap-2 mb-3 text-secondary small flex-wrap">
-                                 <span><i class="fa-solid fa-location-dot me-1 text-primary"></i> {{ $b->city }}, {{ $b->state }}</span>
+                            <div class="d-flex align-items-center gap-2 mb-3 text-secondary small flex-wrap" style="max-width: 100%;">
+                                 @php
+                                     $fullAddress = trim(($b->address ? $b->address . ', ' : '') . $b->city . ', ' . $b->state . ($b->pincode ? ' - ' . $b->pincode : ''));
+                                 @endphp
+                                 <span data-bs-toggle="tooltip" data-bs-placement="top" title="{{ $fullAddress }}" style="cursor: help;">
+                                     <i class="fa-solid fa-location-dot me-1 text-primary"></i> {{ Str::limit($fullAddress, 40, '...') }}
+                                 </span>
                                  @if(isset($b->distance))
-                                     <span class="badge bg-light text-secondary border small"><i class="fa-solid fa-route text-danger me-1"></i> {{ $b->distance }} km away</span>
+                                     <span class="badge bg-light text-secondary border small text-nowrap"><i class="fa-solid fa-route text-danger me-1"></i> {{ $b->distance }} km away</span>
                                  @endif
                                  <span class="text-muted">•</span>
                                  <span><i class="fa-solid fa-briefcase me-1 text-primary"></i> {{ $b->business_type }}</span>

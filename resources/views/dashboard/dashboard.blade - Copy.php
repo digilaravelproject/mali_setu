@@ -21,12 +21,8 @@
         flex-direction: column;
         justify-content: space-between;
         border: 1px solid rgba(0,0,0,0.03);
-        transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.28s ease;
-        box-shadow: 0 10px 30px rgba(18,38,63,0.06);
-    }
-    .category-grid-card:hover {
-        transform: translateY(-6px);
-        box-shadow: 0 20px 50px rgba(18,38,63,0.12);
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.02);
     }
     .category-icon {
         font-size: 1.8rem;
@@ -46,7 +42,7 @@
  
     /* Slick Directory Business Cards */
     .directory-biz-card {
-        background: #ffffff;
+        background: var(--glass);
         border: 1px solid rgba(255, 71, 87, 0.08);
         border-radius: 20px;
         padding: 22px;
@@ -54,12 +50,7 @@
         display: flex;
         flex-direction: column;
         justify-content: space-between;
-        box-shadow: 0 12px 36px rgba(0, 0, 0, 0.07);
-        transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.28s ease;
-    }
-    .directory-biz-card:hover {
-        transform: translateY(-8px);
-        box-shadow: 0 20px 50px rgba(255, 71, 87, 0.12);
+        box-shadow: 0 6px 15px rgba(0,0,0,0.02);
     }
     .biz-thumbnail {
         width: 60px;
@@ -111,16 +102,16 @@
         border-radius: 50%;
         background: var(--cat-bg, #ffffff);
         border: 1px solid rgba(0, 0, 0, 0.04);
-        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
         display: flex;
         align-items: center;
         justify-content: center;
-        transition: transform 0.32s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.32s ease, background 0.25s ease;
+        transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
     }
     .justdial-cat-item:hover .justdial-cat-circle {
-        transform: translateY(-6px) scale(1.06);
+        transform: translateY(-5px) scale(1.05);
         border-color: var(--primary) !important;
-        box-shadow: 0 14px 36px rgba(255, 71, 87, 0.14);
+        box-shadow: 0 8px 20px rgba(255, 71, 87, 0.2);
         background: var(--primary) !important;
     }
     .justdial-cat-item:hover .justdial-cat-icon {
@@ -143,12 +134,6 @@
         overflow: hidden;
         text-overflow: ellipsis;
         height: 2.6em;
-    }
-    @media (min-width: 992px) {
-        .row-cols-lg-8 > * {
-            flex: 0 0 auto !important;
-            width: 12.5% !important;
-        }
     }
 </style>
 
@@ -178,7 +163,7 @@
             </div>
 
             <!-- Platform Stats Grid -->
-            <?php /*<div class="row g-3 mb-4 text-start">
+            <div class="row g-3 mb-4 text-start">
                 <div class="col-md-3 col-sm-6 col-12">
                     <div class="glass-card p-4 h-100 d-flex align-items-center gap-3 hover-scale" style="border-left: 5px solid #2563eb; background: #ffffff;">
                         <div class="rounded-4 d-flex align-items-center justify-content-center shrink-0" style="width:50px; height:50px; background: rgba(37,99,235,0.08); color: #2563eb; font-size: 20px;">
@@ -223,7 +208,7 @@
                         </div>
                     </div>
                 </div>
-            </div> */?>
+            </div>
 
             <!-- Autoplay Promotional Banners Carousel -->
             @if($banners && $banners->count() > 0)
@@ -259,11 +244,11 @@
             <!-- Search Business input bar -->
             <div class="glass-card mb-4 text-start">
                 <div class="row align-items-center">
-                    <div class="col-md-6">
+                    <div class="col-md-7">
                         <h5 class="fw-bold mb-1 text-dark"><i class="fa-solid fa-magnifying-glass text-primary me-2"></i> Search Verified Business Directory</h5>
                         <p class="text-secondary small mb-0">Browse through active directories, verify services or look up agricultural vendors.</p>
                     </div>
-                    <div class="col-md-6 mt-3 mt-md-0">
+                    <div class="col-md-5 mt-3 mt-md-0">
                         <div class="input-group">
                             <span class="input-group-text bg-white border-end-0"><i class="fa-solid fa-magnifying-glass text-muted"></i></span>
                             <input type="text" id="business-search-input" class="form-control border-start-0" placeholder="Search by name, city, state or keywords...">
@@ -406,15 +391,10 @@
                                     </div>
                                     
                                     <div class="border-top pt-3 mt-3 d-flex flex-wrap justify-content-between align-items-center gap-2">
-                                        <div class="small text-muted d-flex align-items-center gap-1 flex-wrap" style="max-width: 100%;">
-                                            @php
-                                                $fullAddress = trim(($biz->address ? $biz->address . ', ' : '') . $biz->city . ', ' . $biz->state . ($biz->pincode ? ' - ' . $biz->pincode : ''));
-                                            @endphp
-                                            <span data-bs-toggle="tooltip" data-bs-placement="top" title="{{ $fullAddress }}" style="cursor: help;">
-                                                <i class="fa-solid fa-location-dot me-1 text-primary"></i> {{ Str::limit($fullAddress, 40, '...') }}
-                                            </span>
+                                        <div class="small text-muted">
+                                            <i class="fa-solid fa-location-dot me-1 text-primary"></i> {{ $biz->city }}, {{ $biz->state }}
                                             @if(isset($biz->distance))
-                                                <span class="badge bg-light text-secondary border small text-nowrap"><i class="fa-solid fa-route text-danger me-1"></i> {{ $biz->distance }} km away</span>
+                                                <span class="ms-2 badge bg-light text-secondary border small"><i class="fa-solid fa-route text-danger me-1"></i> {{ $biz->distance }} km away</span>
                                             @endif
                                         </div>
                                         <div class="d-flex align-items-center gap-3">
@@ -771,50 +751,21 @@
 
 <!-- Modal: View All Business Categories -->
 <div class="modal fade" id="allCategoriesModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-xl">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content rounded-4 border-0 shadow-lg p-3">
             <div class="modal-header border-0">
                 <h5 class="fw-bold mb-0">All Business Categories</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body text-center">
-                <p class="text-secondary small mb-4 text-start">Click any sector below to filter directory listings immediately.</p>
-                <div class="row row-cols-3 row-cols-sm-4 row-cols-md-6 row-cols-lg-8 g-4 pt-2 justify-content-center">
+            <div class="modal-body">
+                <p class="text-secondary small mb-4">Click any sector below to filter directory listings immediately.</p>
+                <div class="row g-2">
                     @foreach($categories as $index => $cat)
-                        @php
-                            $matchedIcon = 'fa-tags';
-                            $matchedColor = 'text-primary';
-                            foreach($iconMap as $key => $val) {
-                                if (stripos($cat->name, $key) !== false) {
-                                    $parts = explode(' ', $val);
-                                    $matchedIcon = $parts[0];
-                                    $matchedColor = $parts[1] ?? 'text-primary';
-                                    break;
-                                }
-                            }
-                            if ($matchedIcon === 'fa-tags') {
-                                $colors = ['text-primary', 'text-success', 'text-warning', 'text-danger', 'text-info', 'text-purple'];
-                                $matchedColor = $colors[$index % count($colors)];
-                            }
-
-                            $bgMap = [
-                                'text-danger' => 'rgba(220, 53, 69, 0.06)',
-                                'text-purple' => 'rgba(111, 66, 193, 0.06)',
-                                'text-warning' => 'rgba(255, 193, 7, 0.06)',
-                                'text-secondary' => 'rgba(108, 117, 125, 0.06)',
-                                'text-primary' => 'rgba(255, 71, 87, 0.06)',
-                                'text-success' => 'rgba(40, 167, 69, 0.06)',
-                                'text-info' => 'rgba(13, 202, 240, 0.06)',
-                            ];
-                            $matchedBg = $bgMap[$matchedColor] ?? 'rgba(255, 71, 87, 0.06)';
-                        @endphp
-                        <div class="col">
-                            <div onclick="selectCategoryOnDashboard({{ $cat->id }}); bootstrap.Modal.getInstance(document.getElementById('allCategoriesModal')).hide();" class="justdial-cat-item">
-                                <div class="justdial-cat-circle" style="--cat-bg: {{ $matchedBg }};">
-                                    <i class="fa-solid {{ $matchedIcon }} {{ $matchedColor }} justdial-cat-icon"></i>
-                                </div>
-                                <div class="justdial-cat-label">{{ $cat->name }}</div>
-                            </div>
+                        <div class="col-md-4 col-6">
+                            <button onclick="selectCategoryOnDashboard({{ $cat->id }}); bootstrap.Modal.getInstance(document.getElementById('allCategoriesModal')).hide();" class="btn btn-outline-primary w-100 py-2.5 rounded-3 text-start d-flex align-items-center justify-content-between px-3" style="border-color: rgba(255,71,87,0.15); color: #2d3436;">
+                                <span class="small fw-semibold text-truncate"><i class="fa-solid fa-tag text-primary me-2"></i> {{ $cat->name }}</span>
+                                <i class="fa-solid fa-chevron-right text-primary opacity-50"></i>
+                            </button>
                         </div>
                     @endforeach
                 </div>
@@ -979,9 +930,6 @@
                 ? `<a href="mailto:${biz.contact_email}" class="btn btn-light btn-sm flex-fill rounded-3 text-dark small fw-semibold"><i class="fa-solid fa-envelope me-1 text-primary"></i> Mail</a>` 
                 : '';
 
-            const fullAddress = [biz.address, biz.city, biz.state].filter(Boolean).join(', ') + (biz.pincode ? ' - ' + biz.pincode : '');
-            const shortAddress = fullAddress.length > 40 ? fullAddress.substring(0, 40) + '...' : fullAddress;
-
             html += `
                 <div class="col-md-6 col-12">
                     <div class="directory-biz-card text-start">
@@ -1000,11 +948,9 @@
                         </div>
                         
                         <div class="border-top pt-3 mt-3 d-flex flex-wrap justify-content-between align-items-center gap-2">
-                            <div class="small text-muted d-flex align-items-center gap-1 flex-wrap" style="max-width: 100%;">
-                                <span data-bs-toggle="tooltip" data-bs-placement="top" title="${fullAddress}" style="cursor: help;">
-                                    <i class="fa-solid fa-location-dot me-1 text-primary"></i> ${shortAddress}
-                                </span>
-                                ${biz.distance !== null && biz.distance !== undefined ? `<span class="badge bg-light text-secondary border small text-nowrap"><i class="fa-solid fa-route text-danger me-1"></i> ${biz.distance} km away</span>` : ''}
+                            <div class="small text-muted">
+                                <i class="fa-solid fa-location-dot me-1 text-primary"></i> ${biz.city}, ${biz.state}
+                                ${biz.distance !== null && biz.distance !== undefined ? `<span class="ms-2 badge bg-light text-secondary border small"><i class="fa-solid fa-route text-danger me-1"></i> ${biz.distance} km away</span>` : ''}
                             </div>
                             <div class="d-flex align-items-center gap-3">
                                 <span class="small text-secondary"><i class="fa-solid fa-box-open text-primary me-1"></i> ${biz.products_count} items</span>
@@ -1021,14 +967,6 @@
             `;
         });
         grid.innerHTML = html;
-
-        // Re-initialize tooltips for newly rendered elements
-        setTimeout(() => {
-            var tooltipTriggerList = [].slice.call(grid.querySelectorAll('[data-bs-toggle="tooltip"]'));
-            tooltipTriggerList.map(function (tooltipTriggerEl) {
-                return new bootstrap.Tooltip(tooltipTriggerEl);
-            });
-        }, 150);
     }
 
     function clearDirectorySearch() {

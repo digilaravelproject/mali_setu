@@ -69,6 +69,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/dashboard/profile', [DashboardController::class, 'updateProfile'])->name('dashboard.profile.update');
     Route::post('/dashboard/change-password', [DashboardController::class, 'changePassword'])->name('dashboard.password.change');
     Route::delete('/dashboard/delete-account', [DashboardController::class, 'deleteAccount'])->name('dashboard.account.delete');
+    Route::post('/dashboard/update-location', [DashboardController::class, 'updateLocation'])->name('dashboard.update-location');
 
     // Dedicated Business Management & Directory Routes (Decoupled & Standard MVC)
     Route::get('/dashboard/business/browse', [BusinessController::class, 'browse'])->name('dashboard.business.browse');

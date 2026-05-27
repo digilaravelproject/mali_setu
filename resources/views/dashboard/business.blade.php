@@ -6,51 +6,67 @@
     <main class="col-12 px-md-4 py-4">
         
         <!-- Welcome banner -->
-        <div class="welcome-banner mb-4">
+        <div class="welcome-banner mb-4 text-start shadow-sm border border-white border-opacity-10" style="background: linear-gradient(135deg, #ff4757 0%, #ff7a59 100%);">
             <div class="row align-items-center">
                 <div class="col-md-8">
-                    <span class="badge-type mb-3">Enterprise Dashboard</span>
-                    <h1 class="fw-bold mb-2">Manage Your Business Portal</h1>
-                    <p class="opacity-75 mb-0">List and edit your enterprise, showcase your inventory catalog, advertise premium service packages, and publish active job postings.</p>
+                    <span class="badge bg-white bg-opacity-20 text-black mb-3 px-3 py-1.5 rounded-pill fw-bold text-uppercase small"><i class="fa-solid fa-store me-1 text-warning"></i> Enterprise Dashboard</span>
+                    <h1 class="fw-extrabold text-white mb-2 fs-2">Manage Your Business Portal</h1>
+                    <p class="opacity-90 mb-0 font-medium small" style="line-height:1.6;">List and edit your enterprise, showcase your inventory catalog, advertise premium service packages, and publish active job postings.</p>
                 </div>
                 <div class="col-md-4 text-md-end mt-4 mt-md-0">
                     @if($user->photo)
-                        <img src="{{ asset('storage/' . $user->photo) }}" alt="Profile Photo" class="profile-photo-circle">
+                        <img src="{{ asset('storage/' . $user->photo) }}" alt="Profile Photo" class="profile-photo-circle" style="border: 4px solid rgba(255,255,255,0.25); box-shadow: 0 10px 25px rgba(0,0,0,0.15);">
                     @else
-                        <img src="{{ asset('default-avatar.png') }}" alt="Profile Photo" class="profile-photo-circle" style="width: 110px; height: 110px; object-fit: cover;">
+                        <img src="{{ asset('default-avatar.png') }}" alt="Profile Photo" class="profile-photo-circle" style="width: 110px; height: 110px; object-fit: cover; border: 4px solid rgba(255,255,255,0.25); box-shadow: 0 10px 25px rgba(0,0,0,0.15);">
                     @endif
                 </div>
             </div>
         </div>
 
-        <!-- Metric Stats Grid (Isolated to Logged-in User Only) -->
+        <!-- Metric Stats Grid -->
         <div class="row g-3 mb-4 text-start">
-            <div class="col-md col-sm-6 col-12">
-                <div class="glass-card text-center p-3 h-100 d-flex flex-column justify-content-center" style="border-left: 4px solid var(--primary);">
-                    <div class="metric-icon mx-auto text-primary mb-2" style="width:36px; height:36px; line-height:36px; font-size: 14px;"><i class="fa-solid fa-briefcase"></i></div>
-                    <h6 class="text-secondary fw-semibold mb-1 small">Your Business</h6>
-                    <h4 class="fw-bold mb-0 text-dark font-monospace">{{ $stats['businesses_count'] }}</h4>
+            <div class="col-md-3 col-sm-6 col-12">
+                <div class="glass-card p-4 h-100 d-flex align-items-center gap-3 hover-scale" style="border-left: 5px solid #2563eb; background: #ffffff;">
+                    <div class="rounded-4 d-flex align-items-center justify-content-center shrink-0" style="width:50px; height:50px; background: rgba(37,99,235,0.08); color: #2563eb; font-size: 20px;">
+                        <i class="fa-solid fa-store"></i>
+                    </div>
+                    <div>
+                        <h6 class="text-secondary fw-semibold mb-1 small" style="font-size:0.75rem; text-transform: uppercase; letter-spacing: 0.5px;">Your Business</h6>
+                        <h4 class="fw-extrabold mb-0 text-dark font-monospace" style="font-size:1.6rem;">{{ $stats['businesses_count'] }}</h4>
+                    </div>
                 </div>
             </div>
-            <div class="col-md col-sm-6 col-12">
-                <div class="glass-card text-center p-3 h-100 d-flex flex-column justify-content-center" style="border-left: 4px solid var(--primary);">
-                    <div class="metric-icon mx-auto text-primary mb-2" style="width:36px; height:36px; line-height:36px; font-size: 14px;"><i class="fa-solid fa-box-open"></i></div>
-                    <h6 class="text-secondary fw-semibold mb-1 small">Products Listed</h6>
-                    <h4 class="fw-bold mb-0 text-dark font-monospace">{{ $stats['products_count'] }}</h4>
+            <div class="col-md-3 col-sm-6 col-12">
+                <div class="glass-card p-4 h-100 d-flex align-items-center gap-3 hover-scale" style="border-left: 5px solid #ea580c; background: #ffffff;">
+                    <div class="rounded-4 d-flex align-items-center justify-content-center shrink-0" style="width:50px; height:50px; background: rgba(234,88,12,0.08); color: #ea580c; font-size: 20px;">
+                        <i class="fa-solid fa-box-open"></i>
+                    </div>
+                    <div>
+                        <h6 class="text-secondary fw-semibold mb-1 small" style="font-size:0.75rem; text-transform: uppercase; letter-spacing: 0.5px;">Products Listed</h6>
+                        <h4 class="fw-extrabold mb-0 text-dark font-monospace" style="font-size:1.6rem;">{{ $stats['products_count'] }}</h4>
+                    </div>
                 </div>
             </div>
-            <div class="col-md col-sm-6 col-12">
-                <div class="glass-card text-center p-3 h-100 d-flex flex-column justify-content-center" style="border-left: 4px solid var(--primary);">
-                    <div class="metric-icon mx-auto text-primary mb-2" style="width:36px; height:36px; line-height:36px; font-size: 14px;"><i class="fa-solid fa-gears"></i></div>
-                    <h6 class="text-secondary fw-semibold mb-1 small">Services Suites</h6>
-                    <h4 class="fw-bold mb-0 text-dark font-monospace">{{ $stats['services_count'] }}</h4>
+            <div class="col-md-3 col-sm-6 col-12">
+                <div class="glass-card p-4 h-100 d-flex align-items-center gap-3 hover-scale" style="border-left: 5px solid #16a34a; background: #ffffff;">
+                    <div class="rounded-4 d-flex align-items-center justify-content-center shrink-0" style="width:50px; height:50px; background: rgba(22,163,74,0.08); color: #16a34a; font-size: 20px;">
+                        <i class="fa-solid fa-screwdriver-wrench"></i>
+                    </div>
+                    <div>
+                        <h6 class="text-secondary fw-semibold mb-1 small" style="font-size:0.75rem; text-transform: uppercase; letter-spacing: 0.5px;">Services Suites</h6>
+                        <h4 class="fw-extrabold mb-0 text-dark font-monospace" style="font-size:1.6rem;">{{ $stats['services_count'] }}</h4>
+                    </div>
                 </div>
             </div>
-            <div class="col-md col-sm-6 col-12">
-                <div class="glass-card text-center p-3 h-100 d-flex flex-column justify-content-center" style="border-left: 4px solid var(--primary);">
-                    <div class="metric-icon mx-auto text-primary mb-2" style="width:36px; height:36px; line-height:36px; font-size: 14px;"><i class="fa-solid fa-user-tie"></i></div>
-                    <h6 class="text-secondary fw-semibold mb-1 small">Jobs Published</h6>
-                    <h4 class="fw-bold mb-0 text-dark font-monospace">{{ $stats['jobs_count'] }}</h4>
+            <div class="col-md-3 col-sm-6 col-12">
+                <div class="glass-card p-4 h-100 d-flex align-items-center gap-3 hover-scale" style="border-left: 5px solid #0d9488; background: #ffffff;">
+                    <div class="rounded-4 d-flex align-items-center justify-content-center shrink-0" style="width:50px; height:50px; background: rgba(13,148,136,0.08); color: #0d9488; font-size: 20px;">
+                        <i class="fa-solid fa-briefcase"></i>
+                    </div>
+                    <div>
+                        <h6 class="text-secondary fw-semibold mb-1 small" style="font-size:0.75rem; text-transform: uppercase; letter-spacing: 0.5px;">Jobs Published</h6>
+                        <h4 class="fw-extrabold mb-0 text-dark font-monospace" style="font-size:1.6rem;">{{ $stats['jobs_count'] }}</h4>
+                    </div>
                 </div>
             </div>
         </div>
@@ -122,16 +138,16 @@
                                     <td class="text-center">
                                         <div class="d-flex gap-2 justify-content-center">
                                             <button class="btn btn-outline-success btn-sm rounded-3 cursor-pointer" onclick="toggleBusinessSection('console')" title="View Details">
-                                                <i class="fa-solid fa-eye me-1"></i> View
+                                                <i class="fa-solid fa-eye"></i>
                                             </button>
                                             <button class="btn btn-outline-primary btn-sm rounded-3 cursor-pointer" onclick="toggleBusinessSection('edit')" title="Edit Profile">
-                                                <i class="fa-solid fa-pen-to-square me-1"></i> Edit
+                                                <i class="fa-solid fa-pen-to-square"></i>
                                             </button>
                                             <form action="{{ route('dashboard.business.delete') }}" method="POST" class="d-inline" onsubmit="return confirm('Are you absolutely sure you want to permanently delete this business? All products, services, jobs, and applicants will be lost forever.');">
                                                 @csrf
                                                 @method('DELETE')
                                                 <button type="submit" class="btn btn-outline-danger btn-sm rounded-3 cursor-pointer" title="Delete Business">
-                                                    <i class="fa-solid fa-trash-can me-1"></i> Delete
+                                                    <i class="fa-solid fa-trash-can"></i>
                                                 </button>
                                             </form>
                                         </div>
@@ -319,7 +335,7 @@
                             @endif
                             @foreach($displayPlans as $plan)
                                 <div class="col-md-4">
-                                    <div class="card h-100 border-0 rounded-4 shadow-sm text-center p-4 relative" style="background: rgba(255,255,255,0.7); backdrop-filter:blur(5px); border: 2px solid rgba(173, 20, 87, 0.1) !important;">
+                                    <div class="card h-100 border-0 rounded-4 shadow-sm text-center p-4 relative" style="background: rgba(255,255,255,0.7); backdrop-filter:blur(5px); border: 2px solid rgba(255, 71, 87, 0.1) !important;">
                                         <div class="card-body">
                                             <h5 class="fw-bold mb-3">{{ $plan->company_type }}</h5>
                                             <div class="my-4">
@@ -399,7 +415,7 @@
                                             contact: "{{ $user->phone }}"
                                         },
                                         theme: {
-                                            color: "#ad1457"
+                                            color: "#ff4757"
                                         }
                                     };
 

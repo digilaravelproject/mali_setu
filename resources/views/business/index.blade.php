@@ -120,17 +120,17 @@
                                         <td class="text-center">
                                             <div class="d-flex gap-2 justify-content-center">
                                                 <a href="{{ route('dashboard.business.index', ['business_id' => $biz->id]) }}" class="btn btn-outline-success btn-sm rounded-3 @if($activeBusiness && $activeBusiness->id == $biz->id) active bg-success text-white @endif">
-                                                    <i class="fa-solid fa-eye me-1"></i> View
+                                                    <i class="fa-solid fa-eye"></i>
                                                 </a>
                                                 <a href="{{ route('dashboard.business.edit', ['business_id' => $biz->id]) }}" class="btn btn-outline-primary btn-sm rounded-3">
-                                                    <i class="fa-solid fa-pen-to-square me-1"></i> Edit
+                                                    <i class="fa-solid fa-pen-to-square"></i>
                                                 </a>
                                                 <form action="{{ route('dashboard.business.delete') }}" method="POST" class="d-inline" onsubmit="return confirm('Are you absolutely sure you want to permanently delete this business? All products, services, jobs, and applicants will be lost forever.');">
                                                     @csrf
                                                     @method('DELETE')
                                                     <input type="hidden" name="business_id" value="{{ $biz->id }}">
                                                     <button type="submit" class="btn btn-outline-danger btn-sm rounded-3">
-                                                        <i class="fa-solid fa-trash-can me-1"></i> Delete
+                                                        <i class="fa-solid fa-trash-can"></i>
                                                     </button>
                                                 </form>
                                             </div>
@@ -990,7 +990,7 @@
                                 $quickBenefits = ['Health insurance', 'Flexible working hours', 'Paid time off', 'Remote work options', 'Professional development', 'Stock options', 'Performance Bonus', 'Gym Membership', 'Free Meals'];
                             @endphp
                             @foreach($quickBenefits as $qb)
-                                <button type="button" class="btn btn-sm py-1.5 px-3 rounded-pill" style="background: rgba(173, 20, 87, 0.05); color: var(--primary); border: 1px solid rgba(173,20,87,0.15); font-size: 0.82rem; font-weight: 600;" onclick="selectQuickBenefit('{{ addslashes($qb) }}')">
+                                <button type="button" class="btn btn-sm py-1.5 px-3 rounded-pill" style="background: rgba(255, 71, 87, 0.05); color: var(--primary); border: 1px solid rgba(255,71,87,0.15); font-size: 0.82rem; font-weight: 600;" onclick="selectQuickBenefit('{{ addslashes($qb) }}')">
                                     {{ $qb }}
                                 </button>
                             @endforeach
@@ -1021,7 +1021,7 @@
                                 $quickSkills = ['PHP', 'Laravel', 'MySQL', 'REST API', 'Flutter', 'Dart', 'Android', 'React Native', 'Java', 'Python', 'Node.js', 'UI/UX Design'];
                             @endphp
                             @foreach($quickSkills as $qs)
-                                <button type="button" class="btn btn-sm py-1.5 px-3 rounded-pill" style="background: rgba(173, 20, 87, 0.05); color: var(--primary); border: 1px solid rgba(173,20,87,0.15); font-size: 0.82rem; font-weight: 600;" onclick="selectQuickSkill('{{ addslashes($qs) }}')">
+                                <button type="button" class="btn btn-sm py-1.5 px-3 rounded-pill" style="background: rgba(255, 71, 87, 0.05); color: var(--primary); border: 1px solid rgba(255,71,87,0.15); font-size: 0.82rem; font-weight: 600;" onclick="selectQuickSkill('{{ addslashes($qs) }}')">
                                     {{ $qs }}
                                 </button>
                             @endforeach

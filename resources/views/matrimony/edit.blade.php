@@ -6,16 +6,16 @@
 <style>
     /* Brand Color Overrides & Step Wizard Styles */
     :root {
-        --brand-primary: #ad1457;
-        --brand-light: #fff5f8;
+        --brand-primary: #ff4757;
+        --brand-light: #fff5f6;
         --text-muted: #8898aa;
     }
     
     .wizard-card {
         background: #ffffff;
-        border: 1px solid rgba(173, 20, 87, 0.08);
+        border: 1px solid rgba(255, 71, 87, 0.08);
         border-radius: 24px;
-        box-shadow: 0 15px 35px rgba(173, 20, 87, 0.04);
+        box-shadow: 0 15px 35px rgba(255, 71, 87, 0.04);
         padding: 35px;
         transition: all 0.3s ease;
     }
@@ -93,7 +93,7 @@
         border-color: var(--brand-primary);
         background: #ffffff;
         color: var(--brand-primary);
-        box-shadow: 0 0 0 5px rgba(173, 20, 87, 0.1);
+        box-shadow: 0 0 0 5px rgba(255, 71, 87, 0.1);
     }
 
     .step-circle-wrapper.completed .step-circle {
@@ -156,7 +156,7 @@
 
     .form-control:focus, .form-select:focus {
         border-color: var(--brand-primary);
-        box-shadow: 0 0 0 4px rgba(173, 20, 87, 0.08);
+        box-shadow: 0 0 0 4px rgba(255, 71, 87, 0.08);
     }
 
     .invalid-feedback {
@@ -182,7 +182,7 @@
         font-weight: 800;
         letter-spacing: 1.5px;
         text-transform: uppercase;
-        border-bottom: 1.5px solid rgba(173, 20, 87, 0.1);
+        border-bottom: 1.5px solid rgba(255, 71, 87, 0.1);
         padding-bottom: 6px;
         margin-top: 30px;
         margin-bottom: 20px;
@@ -212,8 +212,8 @@
     .photo-upload-box {
         width: 100px;
         height: 100px;
-        border: 2px dashed rgba(173, 20, 87, 0.3);
-        background: #fff5f8;
+        border: 2px dashed rgba(255, 71, 87, 0.3);
+        background: #fff5f6;
         border-radius: 16px;
         display: flex;
         flex-direction: column;
@@ -224,7 +224,7 @@
     }
 
     .photo-upload-box:hover {
-        background: #ffe3ec;
+        background: #ffe5e7;
         border-color: var(--brand-primary);
     }
 
@@ -297,13 +297,13 @@
         font-weight: 700;
         font-size: 0.95rem;
         transition: all 0.3s ease;
-        box-shadow: 0 4px 12px rgba(173, 20, 87, 0.15);
+        box-shadow: 0 4px 12px rgba(255, 71, 87, 0.15);
     }
 
     .btn-brand:hover {
-        background: #900c43;
+        background: #ff2a3b;
         transform: translateY(-1px);
-        box-shadow: 0 6px 15px rgba(173, 20, 87, 0.25);
+        box-shadow: 0 6px 15px rgba(255, 71, 87, 0.25);
     }
 
     .btn-brand-outline {

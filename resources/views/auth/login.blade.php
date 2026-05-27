@@ -13,17 +13,17 @@
 
     <style>
         :root {
-            --primary: #ad1457;
-            --primary-dark: #7f0037;
+            --primary: #ff4757;
+            --primary-dark: #ff2a3b;
             --accent: #ff7a59;
-            --light-bg: #fff5f8;
-            --glass: rgba(255, 255, 255, 0.85);
-            --border-glow: rgba(173, 20, 87, 0.15);
+            --light-bg: #f4f3f0;
+            --glass: rgba(255, 255, 255, 0.95);
+            --border-glow: rgba(255, 71, 87, 0.15);
         }
 
         body {
             font-family: 'Plus Jakarta Sans', sans-serif;
-            background: linear-gradient(135deg, #fff0f5 0%, #ffe4e1 100%);
+            background: linear-gradient(135deg, #f4f3f0 0%, #e9e8e4 100%);
             min-height: 100vh;
             display: flex;
             align-items: center;
@@ -43,13 +43,13 @@
             backdrop-filter: blur(20px);
             border: 1px solid rgba(255, 255, 255, 0.4);
             border-radius: 30px;
-            box-shadow: 0 30px 60px rgba(173, 20, 87, 0.1);
+            box-shadow: 0 30px 60px rgba(255, 71, 87, 0.1);
             overflow: hidden;
             transition: all 0.4s ease;
         }
 
         .auth-banner {
-            background: linear-gradient(135deg, #ad1457, #5c0529);
+            background: linear-gradient(135deg, #ff4757, #ff2a3b);
             color: #fff;
             padding: 50px;
             display: flex;
@@ -113,7 +113,7 @@
         .btn-primary:hover {
             background: var(--primary-dark) !important;
             transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(173, 20, 87, 0.2);
+            box-shadow: 0 10px 20px rgba(255, 71, 87, 0.2);
         }
 
         .btn-primary:active {
@@ -297,6 +297,7 @@
     </div>
 </div>
 
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <script>
     function togglePasswordVisibility(inputId, button) {
@@ -312,6 +313,156 @@
             icon.classList.add('fa-eye');
         }
     }
+
+    // Global jQuery Form Validation Script
+    $(document).ready(function() {
+        // Disable native browser validation tooltips (bubbles)
+        $('form').attr('novalidate', 'novalidate');
+
+        // Monitor all form submits
+        $(document).on('submit', 'form', function(e) {
+            let form = $(this);
+
+            // Bypass validation for delete confirmation forms or clear/reset filter forms
+            const methodInput = form.find('input[name="_method"]');
+            if (methodInput.length && methodInput.val().toUpperCase() === 'DELETE') {
+                return;
+            }
+            if (form.attr('id') === 'logout-form') {
+                return;
+            }
+
+            // Remove existing error states
+            form.find('.invalid-feedback-custom').remove();
+            form.find('.is-invalid-custom').removeClass('is-invalid-custom').css('border-color', '');
+
+            let isValid = true;
+            let firstInvalidEl = null;
+
+            // Loop over all required fields
+            form.find('input[required], textarea[required], select[required]').each(function() {
+                let el = $(this);
+                let val = el.val();
+
+                // Check if empty or is unchecked checkbox/radio
+                let isFieldInvalid = false;
+                if (el.is(':checkbox') || el.is(':radio')) {
+                    let name = el.attr('name');
+                    if (name && form.find(`input[name="${name}"]:checked`).length === 0) {
+                        isFieldInvalid = true;
+                    }
+                } else if (!val || val.toString().trim() === '') {
+                    isFieldInvalid = true;
+                }
+
+                // If input type is email, check email format
+                if (!isFieldInvalid && el.attr('type') === 'email') {
+                    let emailReg = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                    if (!emailReg.test(val.toString().trim())) {
+                        isValid = false;
+                        el.addClass('is-invalid-custom').css('border-color', '#dc3545');
+                        let container = el;
+                        if (el.parent('.input-group').length) {
+                            container = el.parent('.input-group');
+                        }
+                        if (!container.siblings('.invalid-feedback-custom').length) {
+                            $('<div class="invalid-feedback-custom text-danger small mt-1 fw-bold"><i class="fa-solid fa-circle-exclamation me-1"></i> Please enter a valid email address.</div>').insertAfter(container);
+                        }
+                        if (!firstInvalidEl) {
+                            firstInvalidEl = el;
+                        }
+                    }
+                }
+
+                if (isFieldInvalid) {
+                    isValid = false;
+                    el.addClass('is-invalid-custom').css('border-color', '#dc3545');
+
+                    if (!firstInvalidEl) {
+                        firstInvalidEl = el;
+                    }
+
+                    // Find a user-friendly label name
+                    let fieldLabel = '';
+                    let placeholder = el.attr('placeholder');
+                    
+                    // Try to find matching label using "for" or sibling
+                    let id = el.attr('id');
+                    let labelEl = id ? form.find(`label[for="${id}"]`) : [];
+                    if (!labelEl.length) {
+                        labelEl = el.closest('.mb-3, .mb-4, .form-group').find('label');
+                    }
+                    if (labelEl.length) {
+                        fieldLabel = labelEl.first().text().replace('*', '').trim();
+                    } else if (placeholder) {
+                        fieldLabel = placeholder.trim();
+                    } else {
+                        fieldLabel = el.attr('name') ? el.attr('name').replace('_', ' ').trim() : 'This field';
+                    }
+
+                    // Clean label value
+                    if (fieldLabel.toLowerCase().endsWith('optional')) {
+                        fieldLabel = fieldLabel.replace(/optional/gi, '').replace(/[()]/g, '').trim();
+                    }
+                    if (fieldLabel.length > 30) {
+                        fieldLabel = 'This field';
+                    }
+
+                    let container = el;
+                    if (el.parent('.input-group').length) {
+                        container = el.parent('.input-group');
+                    }
+
+                    // Append error message below the field if it doesn't already exist
+                    if (!container.siblings('.invalid-feedback-custom').length) {
+                        $('<div class="invalid-feedback-custom text-danger small mt-1 fw-bold"><i class="fa-solid fa-circle-exclamation me-1"></i> ' + fieldLabel + ' is required.</div>').insertAfter(container);
+                    }
+                }
+            });
+
+            // Prevent form submit if invalid
+            if (!isValid) {
+                e.preventDefault();
+                e.stopPropagation();
+
+                // Focus/scroll to first invalid element
+                if (firstInvalidEl) {
+                    $('html, body').animate({
+                        scrollTop: firstInvalidEl.offset().top - 120
+                    }, 200);
+                    firstInvalidEl.focus();
+                }
+            }
+        });
+
+        // Real-time clearance of error messages on value input
+        $(document).on('input change keyup', 'form input, form textarea, form select', function() {
+            let el = $(this);
+            let val = el.val();
+            let isCheckboxOrRadio = el.is(':checkbox') || el.is(':radio');
+            
+            let isValOk = true;
+            if (isCheckboxOrRadio) {
+                let name = el.attr('name');
+                if (name && el.closest('form').find(`input[name="${name}"]:checked`).length > 0) {
+                    isValOk = true;
+                } else {
+                    isValOk = false;
+                }
+            } else if (!val || val.toString().trim() === '') {
+                isValOk = false;
+            }
+
+            if (isValOk) {
+                el.removeClass('is-invalid-custom').css('border-color', '');
+                let container = el;
+                if (el.parent('.input-group').length) {
+                    container = el.parent('.input-group');
+                }
+                container.siblings('.invalid-feedback-custom').remove();
+            }
+        });
+    });
 </script>
 </body>
 </html>

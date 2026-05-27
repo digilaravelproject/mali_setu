@@ -8,14 +8,14 @@
     .profile-card { 
         border-radius: 20px; 
         background: #ffffff; 
-        border: 1px solid rgba(173, 20, 87, 0.06); 
+        border: 1px solid rgba(255, 71, 87, 0.06); 
         overflow: hidden; 
         transition: all 0.3s ease; 
-        box-shadow: 0 10px 25px rgba(173, 20, 87, 0.02);
+        box-shadow: 0 10px 25px rgba(255, 71, 87, 0.02);
     }
     .profile-card:hover { 
         transform: translateY(-4px); 
-        box-shadow: 0 16px 32px rgba(173, 20, 87, 0.08); 
+        box-shadow: 0 16px 32px rgba(255, 71, 87, 0.08); 
     }
     .profile-photo { 
         width: 100%; 
@@ -43,18 +43,18 @@
     /* Premium Collapsible Accordion Filter Panel */
     .discover-container {
         background: #ffffff;
-        border: 1px solid rgba(173, 20, 87, 0.08);
+        border: 1px solid rgba(255, 71, 87, 0.08);
         border-radius: 24px;
-        box-shadow: 0 15px 35px rgba(173, 20, 87, 0.03);
+        box-shadow: 0 15px 35px rgba(255, 71, 87, 0.03);
         overflow: hidden;
     }
     .discover-header {
-        border-bottom: 1.5px solid rgba(173, 20, 87, 0.08);
+        border-bottom: 1.5px solid rgba(255, 71, 87, 0.08);
         padding: 20px 24px;
         background: #ffffff;
     }
     .discover-title {
-        color: #ad1457;
+        color: #ff4757;
         font-weight: 800;
         font-size: 1.15rem;
         letter-spacing: 1px;
@@ -63,7 +63,7 @@
     }
     
     .discover-reset-btn {
-        color: #ad1457;
+        color: #ff4757;
         background: none;
         border: none;
         font-weight: 700;
@@ -78,7 +78,7 @@
     /* Accordion Custom Styling */
     .accordion-item {
         border: none !important;
-        border-bottom: 1px solid rgba(173, 20, 87, 0.08) !important;
+        border-bottom: 1px solid rgba(255, 71, 87, 0.08) !important;
     }
     .accordion-item:last-child {
         border-bottom: none !important;
@@ -93,7 +93,7 @@
     }
     .accordion-button:not(.collapsed) {
         color: var(--primary) !important;
-        background-color: rgba(173, 20, 87, 0.02) !important;
+        background-color: rgba(255, 71, 87, 0.02) !important;
         box-shadow: none !important;
     }
     .accordion-button::after {
@@ -102,7 +102,7 @@
     }
     .accordion-button:focus {
         box-shadow: none !important;
-        border-color: rgba(173, 20, 87, 0.1) !important;
+        border-color: rgba(255, 71, 87, 0.1) !important;
     }
     .accordion-body {
         padding: 20px !important;
@@ -132,9 +132,9 @@
         border-color: #94a3b8;
     }
     .filter-tag-btn.active {
-        background: #fff5f8;
-        border-color: #ad1457;
-        color: #ad1457;
+        background: #fff5f6;
+        border-color: #ff4757;
+        color: #ff4757;
     }
 
     /* Premium fields layout */
@@ -164,11 +164,11 @@
     .discover-container .form-control:focus, 
     .discover-container .form-select:focus {
         border-color: var(--primary) !important;
-        box-shadow: 0 0 0 3px rgba(173, 20, 87, 0.12) !important;
+        box-shadow: 0 0 0 3px rgba(255, 71, 87, 0.12) !important;
     }
 
     .apply-filter-btn {
-        background: #ad1457;
+        background: #ff4757;
         border: none;
         color: #ffffff;
         font-weight: 700;
@@ -177,11 +177,11 @@
         border-radius: 12px;
         width: 100%;
         transition: all 0.3s ease;
-        box-shadow: 0 4px 12px rgba(173, 20, 87, 0.15);
+        box-shadow: 0 4px 12px rgba(255, 71, 87, 0.15);
     }
     .apply-filter-btn:hover {
-        background: #8e0b44;
-        box-shadow: 0 6px 15px rgba(173, 20, 87, 0.25);
+        background: #ff2a3b;
+        box-shadow: 0 6px 15px rgba(255, 71, 87, 0.25);
     }
 
     /* Horizontal list elements */
@@ -677,6 +677,11 @@
                                                     <i class="fa-solid fa-paper-plane"></i>
                                                 </button>
                                             </form>
+                                        @endif
+                                        @if($profile->my_connection_status === 'accepted' && isset($profile->my_conversation_id))
+                                            <a href="{{ route('matrimony.chat', $profile->my_conversation_id) }}" class="btn btn-success btn-sm rounded-3 px-2" style="background-color: #2ecc71 !important; border-color: #2ecc71 !important; color: #fff !important;" title="Chat Now">
+                                                <i class="fa-solid fa-comments"></i>
+                                            </a>
                                         @endif
                                     </div>
                                 </div>

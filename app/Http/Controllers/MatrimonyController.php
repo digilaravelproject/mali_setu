@@ -598,6 +598,14 @@ class MatrimonyController extends Controller
                 $q->where('sender_id', $p->user_id)->where('receiver_id', $myId);
             })->orderBy('id', 'desc')->first();
             $p->my_connection_status = $conn ? $conn->status : 'none';
+            
+            if ($p->my_connection_status === 'accepted') {
+                $conv = ChatConversation::where(function($q) use ($myId, $p) {
+                    $q->where('user1_id', min($myId, $p->user_id))
+                      ->where('user2_id', max($myId, $p->user_id));
+                })->first();
+                $p->my_conversation_id = $conv ? $conv->id : null;
+            }
         }
 
         return view('matrimony.browse', compact('profiles', 'user'));
@@ -666,7 +674,32 @@ class MatrimonyController extends Controller
         $receivedRequests = ConnectionRequest::where('receiver_id', $user->id)
             ->with(['sender.matrimonyProfile'])->latest()->get();
 
-        return view('matrimony.requests', compact('sentRequests', 'receivedRequests'));
+        // Let's ensure conversations exist for all accepted requests!
+        $acceptedSent = $sentRequests->where('status', 'accepted');
+        $acceptedReceived = $receivedRequests->where('status', 'accepted');
+        
+        foreach ($acceptedSent as $req) {
+            ChatConversation::firstOrCreate([
+                'user1_id' => min($user->id, $req->receiver_id),
+                'user2_id' => max($user->id, $req->receiver_id),
+            ]);
+        }
+        foreach ($acceptedReceived as $req) {
+            ChatConversation::firstOrCreate([
+                'user1_id' => min($user->id, $req->sender_id),
+                'user2_id' => max($user->id, $req->sender_id),
+            ]);
+        }
+
+        // Fetch conversations to link directly to chat
+        $conversations = ChatConversation::where('user1_id', $user->id)
+            ->orWhere('user2_id', $user->id)
+            ->get()
+            ->keyBy(function($conv) use ($user) {
+                return (int)$conv->user1_id === (int)$user->id ? (int)$conv->user2_id : (int)$conv->user1_id;
+            });
+
+        return view('matrimony.requests', compact('sentRequests', 'receivedRequests', 'conversations'));
     }
 
     /** Accept or Reject a connection request */

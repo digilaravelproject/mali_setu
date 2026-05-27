@@ -106,6 +106,8 @@ class DashboardController extends Controller
                     'contact_email' => $b->contact_email,
                     'city' => $b->city,
                     'state' => $b->state,
+                    'address' => $b->address,
+                    'pincode' => $b->pincode,
                     'website' => $b->website,
                     'photo' => $b->photo ? asset('storage/' . trim(explode(',', $b->photo)[0])) : null,
                     'products_count' => $b->products->count(),
@@ -144,6 +146,8 @@ class DashboardController extends Controller
                     'contact_email' => $b->contact_email,
                     'city' => $b->city,
                     'state' => $b->state,
+                    'address' => $b->address,
+                    'pincode' => $b->pincode,
                     'website' => $b->website,
                     'photo' => $b->photo ? asset('storage/' . trim(explode(',', $b->photo)[0])) : null,
                     'products_count' => $b->products->count(),
@@ -223,6 +227,50 @@ class DashboardController extends Controller
         $user->update($data);
 
         return redirect()->route('dashboard')->with('success', 'Profile updated successfully!');
+    }
+
+    /**
+     * AJAX Update User Geolocation Coordinates
+     */
+    public function updateLocation(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'latitude' => 'required|numeric|between:-90,90',
+            'longitude' => 'required|numeric|between:-180,180',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        $user = Auth::user();
+        
+        $lat = round(floatval($request->latitude), 6);
+        $lon = round(floatval($request->longitude), 6);
+        
+        $oldLat = $user->latitude ? round(floatval($user->latitude), 6) : null;
+        $oldLon = $user->longitude ? round(floatval($user->longitude), 6) : null;
+        
+        $updated = false;
+        if (is_null($oldLat) || is_null($oldLon) || abs($oldLat - $lat) > 0.0001 || abs($oldLon - $lon) > 0.0001) {
+            $user->update([
+                'latitude' => $lat,
+                'longitude' => $lon,
+            ]);
+            $updated = true;
+        }
+
+        session(['current_location_fetched' => true]);
+
+        return response()->json([
+            'success' => true,
+            'updated' => $updated,
+            'latitude' => $lat,
+            'longitude' => $lon,
+        ]);
     }
 
     /**

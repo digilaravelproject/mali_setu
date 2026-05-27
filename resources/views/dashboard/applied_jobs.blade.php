@@ -8,12 +8,13 @@
 @endphp
 
 <div class="row justify-content-center text-start">
-    <div class="col-xl-10 col-12">
+    <div class="col-xl-12 col-12">
         
         <!-- Header Banner -->
-        <div class="welcome-banner mb-4">
-            <h1 class="fw-extrabold mb-2 text-white">Total Jobs Center</h1>
-            <p class="lead mb-0 text-white-50">Browse available career postings or track your submitted applications</p>
+        <div class="welcome-banner mb-4 text-start shadow-sm border border-white border-opacity-10" style="background: linear-gradient(135deg, #ff4757 0%, #ff7a59 100%);">
+            <span class="badge bg-white bg-opacity-20 text-black mb-3 px-3 py-1.5 rounded-pill fw-bold text-uppercase small"><i class="fa-solid fa-briefcase me-1 text-warning"></i> Careers Hub</span>
+            <h1 class="fw-extrabold text-white mb-2 fs-2">Total Jobs Center</h1>
+            <p class="opacity-90 mb-0 font-medium small" style="line-height:1.6;">Browse active career opportunities published by verified local businesses or track your submitted job applications.</p>
         </div>
 
         <!-- Tab Toggle buttons -->
@@ -230,9 +231,9 @@
             title: `Feedback: ${jobTitle}`,
             text: feedback,
             icon: 'info',
-            confirmButtonColor: '#ad1457',
+            confirmButtonColor: '#ff4757',
             background: 'rgba(255, 255, 255, 0.95)',
-            backdrop: `rgba(92, 5, 41, 0.2)`
+            backdrop: `rgba(255, 71, 87, 0.2)`
         });
     }
 </script>

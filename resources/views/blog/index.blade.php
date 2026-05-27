@@ -217,12 +217,12 @@
                                         </h5>
 
                                         <div class="mt-auto pt-3 border-top d-flex gap-2">
-                                            <a href="{{ route('blogs.show', $blog->id) }}" class="btn btn-sm btn-outline-primary flex-grow-1 rounded-pill"><i class="fa-solid fa-eye me-1"></i>View</a>
-                                            <a href="{{ route('blogs.edit', $blog->id) }}" class="btn btn-sm btn-outline-secondary flex-grow-1 rounded-pill"><i class="fa-solid fa-pen me-1"></i>Edit</a>
+                                            <a href="{{ route('blogs.show', $blog->id) }}" class="btn btn-sm btn-outline-primary flex-grow-1 rounded-pill"><i class="fa-solid fa-eye"></i></a>
+                                            <a href="{{ route('blogs.edit', $blog->id) }}" class="btn btn-sm btn-outline-secondary flex-grow-1 rounded-pill"><i class="fa-solid fa-pen"></i></a>
                                             <form action="{{ route('blogs.destroy', $blog->id) }}" method="POST" class="flex-grow-1 m-0">
                                                 @csrf
                                                 @method('DELETE')
-                                                <button type="submit" class="btn btn-sm btn-outline-danger w-100 rounded-pill"><i class="fa-solid fa-trash me-1"></i>Delete</button>
+                                                <button type="submit" class="btn btn-sm btn-outline-danger w-100 rounded-pill"><i class="fa-solid fa-trash"></i></button>
                                             </form>
                                         </div>
                                     </div>
@@ -239,7 +239,7 @@
 <style>
     .blog-card:hover {
         transform: translateY(-8px);
-        box-shadow: 0 15px 35px rgba(173, 20, 87, 0.1) !important;
+        box-shadow: 0 15px 35px rgba(255, 71, 87, 0.1) !important;
     }
     .hover-primary:hover {
         color: var(--primary) !important;

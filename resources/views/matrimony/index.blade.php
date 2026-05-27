@@ -4,14 +4,14 @@
 <style>
 .matri-stat-card { border-radius: 16px; padding: 20px; border-left: 4px solid var(--primary); background: rgba(255,255,255,0.7); }
 .profile-status-badge { padding: 6px 16px; border-radius: 50px; font-size: 0.78rem; font-weight: 700; }
-.quick-action-card { border-radius: 16px; padding: 20px; text-align: center; background: rgba(255,255,255,0.7); border: 1px solid rgba(173,20,87,0.08); transition: all 0.3s ease; cursor: pointer; }
-.quick-action-card:hover { transform: translateY(-4px); box-shadow: 0 12px 24px rgba(173,20,87,0.1); }
+.quick-action-card { border-radius: 16px; padding: 20px; text-align: center; background: rgba(255,255,255,0.7); border: 1px solid rgba(255,71,87,0.08); transition: all 0.3s ease; cursor: pointer; }
+.quick-action-card:hover { transform: translateY(-4px); box-shadow: 0 12px 24px rgba(255,71,87,0.1); }
 .photo-thumb { width: 70px; height: 70px; border-radius: 12px; object-fit: cover; }
 .photo-thumb-placeholder { width: 70px; height: 70px; border-radius: 12px; background: #f8fafc; border: 1px solid rgba(0, 0, 0, 0.08); color: #cbd5e1; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; }
-.plan-card { border-radius: 20px; padding: 28px; background: rgba(255,255,255,0.8); border: 2px solid rgba(173,20,87,0.1); text-align: center; }
+.plan-card { border-radius: 20px; padding: 28px; background: rgba(255,255,255,0.8); border: 2px solid rgba(255,71,87,0.1); text-align: center; }
 .plan-card:hover { border-color: var(--primary); }
 .profile-action-btn { border-radius: 12px; font-weight: 700; font-size: 0.82rem; padding: 8px 18px; transition: all 0.3s ease; display: inline-flex; align-items: center; gap: 6px; }
-.profile-action-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 12px rgba(173, 20, 87, 0.15); }
+.profile-action-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 12px rgba(255, 71, 87, 0.15); }
 </style>
 
 <div class="py-4">
@@ -236,7 +236,7 @@ function startMatrimonyPayment(planId, price) {
                 });
             },
             prefill: { name: "{{ $user->name }}", email: "{{ $user->email }}", contact: "{{ $user->phone }}" },
-            theme: { color: "#ad1457" }
+            theme: { color: "#ff4757" }
         });
         rzp.open();
     }).catch(() => alert("Payment initialization failed."));

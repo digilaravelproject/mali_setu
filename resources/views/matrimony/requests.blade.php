@@ -2,7 +2,7 @@
 
 @section('content')
 <style>
-.req-card { border-radius: 16px; background: rgba(255,255,255,0.8); border: 1px solid rgba(173,20,87,0.08); padding: 16px; }
+.req-card { border-radius: 16px; background: rgba(255,255,255,0.8); border: 1px solid rgba(255,71,87,0.08); padding: 16px; }
 .req-photo { width: 52px; height: 52px; border-radius: 12px; object-fit: cover; }
 .status-pill { font-size: 0.72rem; padding: 4px 12px; border-radius: 50px; font-weight: 700; }
 </style>
@@ -54,6 +54,14 @@
                             @endif
                             <div class="d-flex gap-2 mt-2 flex-wrap">
                                 @if($sp)<a href="{{ route('matrimony.show', $sp->id) }}" class="btn btn-outline-secondary btn-sm rounded-3 py-1 px-3" style="font-size:0.78rem;">View</a>@endif
+                                @if($req->status === 'accepted')
+                                    @php $conv = $conversations->get($req->sender_id) ?? $conversations->get((string)$req->sender_id) ?? $conversations->get((int)$req->sender_id); @endphp
+                                    @if($conv)
+                                        <a href="{{ route('matrimony.chat', $conv->id) }}" class="btn btn-primary btn-sm rounded-3 py-1 px-3" style="font-size:0.78rem; background: var(--primary) !important; border-color: var(--primary) !important; color: #fff !important;">
+                                            <i class="fa-solid fa-comments me-1"></i> Chat
+                                        </a>
+                                    @endif
+                                @endif
                                 @if($req->status === 'pending')
                                     <form action="{{ route('matrimony.request.respond', $req->id) }}" method="POST" class="d-inline">
                                         @csrf <input type="hidden" name="status" value="accepted">
@@ -109,6 +117,14 @@
                             @endif
                             <div class="d-flex gap-2 mt-2 flex-wrap">
                                 @if($rp)<a href="{{ route('matrimony.show', $rp->id) }}" class="btn btn-outline-secondary btn-sm rounded-3 py-1 px-3" style="font-size:0.78rem;">View Profile</a>@endif
+                                @if($req->status === 'accepted')
+                                    @php $conv = $conversations->get($req->receiver_id) ?? $conversations->get((string)$req->receiver_id) ?? $conversations->get((int)$req->receiver_id); @endphp
+                                    @if($conv)
+                                        <a href="{{ route('matrimony.chat', $conv->id) }}" class="btn btn-primary btn-sm rounded-3 py-1 px-3" style="font-size:0.78rem; background: var(--primary) !important; border-color: var(--primary) !important; color: #fff !important;">
+                                            <i class="fa-solid fa-comments me-1"></i> Chat
+                                        </a>
+                                    @endif
+                                @endif
                             </div>
                         </div>
                     </div>

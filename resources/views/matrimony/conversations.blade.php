@@ -2,10 +2,10 @@
 
 @section('content')
 <style>
-.convo-card { border-radius: 16px; background: rgba(255,255,255,0.8); border: 1px solid rgba(173,20,87,0.08); padding: 14px 18px; transition: all 0.3s ease; cursor: pointer; text-decoration: none; color: inherit; display: block; }
+.convo-card { border-radius: 16px; background: rgba(255,255,255,0.8); border: 1px solid rgba(255,71,87,0.08); padding: 14px 18px; transition: all 0.3s ease; cursor: pointer; text-decoration: none; color: inherit; display: block; }
 .convo-card:hover { transform: translateX(4px); border-color: var(--primary); color: inherit; }
 .convo-avatar { width: 52px; height: 52px; border-radius: 14px; object-fit: cover; }
-.convo-avatar-placeholder { width: 52px; height: 52px; border-radius: 14px; background: linear-gradient(135deg,#fce4ec,#f8bbd0); display: flex; align-items: center; justify-content: center; color: var(--primary); font-size: 1.3rem; }
+.convo-avatar-placeholder { width: 52px; height: 52px; border-radius: 14px; background: linear-gradient(135deg,#ffe3e5,#ffcbd1); display: flex; align-items: center; justify-content: center; color: var(--primary); font-size: 1.3rem; }
 .unread-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--primary); }
 </style>
 
@@ -44,9 +44,11 @@
                         <img src="{{ asset('default-avatar.png') }}" class="convo-avatar">
                     @endif
                     <div class="flex-grow-1 min-width-0">
-                        <div class="d-flex align-items-center justify-content-between">
+                        <div class="d-flex align-items-center justify-content-between flex-wrap gap-1">
                             <h6 class="fw-bold mb-0 text-truncate">{{ $otherUser->name ?? 'Unknown' }}</h6>
-                            <small class="text-muted ms-2 text-nowrap">{{ $convo->last_message_at ? $convo->last_message_at->diffForHumans() : '' }}</small>
+                            <small class="text-muted text-nowrap" style="font-size:0.75rem;">
+                                <i class="fa-regular fa-clock me-1" style="font-size: 0.7rem;"></i>{{ $convo->last_message_at ? $convo->last_message_at->format('M d, Y h:i A') . ' (' . $convo->last_message_at->diffForHumans() . ')' : ($convo->created_at ? $convo->created_at->format('M d, Y h:i A') . ' (' . $convo->created_at->diffForHumans() . ')' : '') }}
+                            </small>
                         </div>
                         <p class="text-secondary small mb-0 text-truncate">
                             {{ $lastMsg ? ($lastMsg->sender_id == $user->id ? 'You: ' : '') . $lastMsg->message_text : 'Say hello! 👋' }}

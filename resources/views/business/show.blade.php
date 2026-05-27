@@ -2,7 +2,7 @@
 
 @section('content')
 <div class="row g-4 justify-content-center text-start">
-    <div class="col-xl-10 col-12">
+    <div class="col-xl-12 col-12">
         
         <!-- Header Actions -->
         <div class="d-flex align-items-center justify-content-between mb-4">

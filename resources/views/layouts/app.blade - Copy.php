@@ -344,7 +344,7 @@
             }
             .dashboard-navbar {
                 padding: 12px 18px;
-                /* margin-bottom: 25px; */
+                margin-bottom: 25px;
                 border-radius: 12px;
             }
             .navbar-brand-title {
@@ -422,7 +422,7 @@
             border: 1px solid rgba(255, 71, 87, 0.08);
             border-radius: 16px;
             padding: 15px 30px;
-            /* margin-bottom: 35px; */
+            margin-bottom: 35px;
             box-shadow: 0 10px 30px rgba(255, 71, 87, 0.03);
         }
 
@@ -492,10 +492,6 @@
         .navbar-dropdown-item:hover {
             background: rgba(var(--primary-rgb), 0.04);
             color: var(--primary);
-        }
-
-        .nav-link {
-            color: #000000 !important;
         }
     </style>
     @yield('styles')
@@ -1317,53 +1313,6 @@
                 });
             });
         }
-
-        // Initialize Bootstrap Tooltips Globally
-        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
-        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-            return new bootstrap.Tooltip(tooltipTriggerEl)
-        });
-
-        // Background Geolocation Tracking for Authenticated Users
-        @auth
-            @if(!session('current_location_fetched'))
-                if (navigator.geolocation) {
-                    navigator.geolocation.getCurrentPosition(function(position) {
-                        const lat = position.coords.latitude;
-                        const lon = position.coords.longitude;
-                        
-                        fetch('{{ route('dashboard.update-location') }}', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                            },
-                            body: JSON.stringify({
-                                latitude: lat,
-                                longitude: lon
-                            })
-                        })
-                        .then(res => res.json())
-                        .then(data => {
-                            if (data.success && data.updated) {
-                                // Reload page to update calculated business distances on relevant pages
-                                const currentUrl = window.location.href;
-                                if (currentUrl.includes('dashboard') || currentUrl.includes('business')) {
-                                    window.location.reload();
-                                }
-                            }
-                        })
-                        .catch(err => console.error('Error updating location:', err));
-                    }, function(error) {
-                        console.warn('Geolocation error:', error.message);
-                    }, {
-                        enableHighAccuracy: true,
-                        timeout: 8000,
-                        maximumAge: 0
-                    });
-                }
-            @endif
-        @endauth
     });
 </script>
 @yield('scripts')
