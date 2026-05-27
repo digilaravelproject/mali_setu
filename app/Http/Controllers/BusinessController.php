@@ -374,6 +374,11 @@ class BusinessController extends Controller
             }
         ])->findOrFail($id);
 
+        $user = Auth::user();
+        if ($user) {
+            $business->distance = $this->calculateDistance($user->latitude, $user->longitude, $business->latitude, $business->longitude);
+        }
+
         // Calculate average rating
         $avgRating = $business->reviews->avg('rating') ?? 0;
 

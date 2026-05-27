@@ -30,7 +30,7 @@
                         @if($sp && !empty($sp->personal_details['photos'][0]))
                             <img src="{{ asset('storage/' . $sp->personal_details['photos'][0]) }}" class="req-photo">
                         @else
-                            <div class="req-photo bg-primary bg-opacity-10 d-flex align-items-center justify-content-center text-primary"><i class="fa-solid fa-user"></i></div>
+                            <img src="{{ asset('default-avatar.png') }}" class="req-photo">
                         @endif
                         <div class="flex-grow-1">
                             <div class="d-flex align-items-center justify-content-between mb-1">
@@ -89,7 +89,7 @@
                         @if($rp && !empty($rp->personal_details['photos'][0]))
                             <img src="{{ asset('storage/' . $rp->personal_details['photos'][0]) }}" class="req-photo">
                         @else
-                            <div class="req-photo bg-primary bg-opacity-10 d-flex align-items-center justify-content-center text-primary"><i class="fa-solid fa-user"></i></div>
+                            <img src="{{ asset('default-avatar.png') }}" class="req-photo">
                         @endif
                         <div class="flex-grow-1">
                             <div class="d-flex align-items-center justify-content-between mb-1">

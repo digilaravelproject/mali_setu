@@ -7,7 +7,7 @@
 .quick-action-card { border-radius: 16px; padding: 20px; text-align: center; background: rgba(255,255,255,0.7); border: 1px solid rgba(173,20,87,0.08); transition: all 0.3s ease; cursor: pointer; }
 .quick-action-card:hover { transform: translateY(-4px); box-shadow: 0 12px 24px rgba(173,20,87,0.1); }
 .photo-thumb { width: 70px; height: 70px; border-radius: 12px; object-fit: cover; }
-.photo-thumb-placeholder { width: 70px; height: 70px; border-radius: 12px; background: #fff5f8; border: 1px solid rgba(173, 20, 87, 0.1); color: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 1.8rem; }
+.photo-thumb-placeholder { width: 70px; height: 70px; border-radius: 12px; background: #f8fafc; border: 1px solid rgba(0, 0, 0, 0.08); color: #cbd5e1; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; }
 .plan-card { border-radius: 20px; padding: 28px; background: rgba(255,255,255,0.8); border: 2px solid rgba(173,20,87,0.1); text-align: center; }
 .plan-card:hover { border-color: var(--primary); }
 .profile-action-btn { border-radius: 12px; font-weight: 700; font-size: 0.82rem; padding: 8px 18px; transition: all 0.3s ease; display: inline-flex; align-items: center; gap: 6px; }
@@ -122,9 +122,7 @@
                 @if(!empty($profile->personal_details['photos'][0]))
                     <img src="{{ asset('storage/' . $profile->personal_details['photos'][0]) }}" class="photo-thumb">
                 @else
-                    <div class="photo-thumb-placeholder">
-                        <i class="fa-solid fa-user"></i>
-                    </div>
+                    <img src="{{ asset('default-avatar.png') }}" class="photo-thumb">
                 @endif
             </div>
             <div class="col">
@@ -164,7 +162,7 @@
                     @if($sp && !empty($sp->personal_details['photos'][0]))
                         <img src="{{ asset('storage/' . $sp->personal_details['photos'][0]) }}" style="width:45px;height:45px;border-radius:10px;object-fit:cover;">
                     @else
-                        <div class="bg-light text-primary d-flex align-items-center justify-content-center rounded-3" style="width:45px;height:45px;"><i class="fa-solid fa-user"></i></div>
+                        <img src="{{ asset('default-avatar.png') }}" style="width:45px;height:45px;border-radius:10px;object-fit:cover;">
                     @endif
                     <div>
                         <div class="fw-bold text-dark small">{{ $req->sender->name }}</div>

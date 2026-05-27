@@ -85,6 +85,51 @@
         border-radius: 24px;
         overflow: hidden;
     }
+
+    /* Premium Justdial-Style Categories Circle Grid */
+    .justdial-cat-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none !important;
+    }
+    .justdial-cat-circle {
+        width: 72px;
+        height: 72px;
+        border-radius: 50%;
+        background: #ffffff;
+        border: 1px solid rgba(0, 0, 0, 0.08);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    .justdial-cat-item:hover .justdial-cat-circle {
+        transform: translateY(-5px) scale(1.05);
+        border-color: var(--primary);
+        box-shadow: 0 8px 20px rgba(173, 20, 87, 0.15);
+    }
+    .justdial-cat-icon {
+        font-size: 1.5rem;
+    }
+    .justdial-cat-label {
+        margin-top: 8px;
+        font-size: 0.82rem;
+        font-weight: 700;
+        color: #2d3436;
+        line-height: 1.3;
+        max-width: 110px;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        height: 2.6em;
+    }
 </style>
 
 <div class="row g-4">
@@ -194,7 +239,7 @@
 
             <!-- Attractive Dynamic HSL Categories Grid -->
             <div class="glass-card mb-4 text-start">
-                <div class="d-flex align-items-center gap-2 mb-3">
+                <div class="d-flex align-items-center gap-2 mb-4">
                     <div class="bg-primary bg-opacity-10 text-primary p-2.5 rounded-3 d-flex align-items-center justify-content-center" style="width:42px; height:42px;">
                         <i class="fa-solid fa-tags fs-5"></i>
                     </div>
@@ -203,25 +248,70 @@
                         <p class="text-secondary small mb-0">Select any industry below to display active businesses and products.</p>
                     </div>
                 </div>
-                <div class="row g-3 pt-2">
-                    @foreach($categories->take(10) as $index => $cat)
-                        <div class="col-6 col-sm-4 col-md-3">
-                            <div onclick="selectCategoryOnDashboard({{ $cat->id }})" class="category-grid-card hover-scale cursor-pointer" style="background: linear-gradient(135deg, hsl({{ (36 * $index) % 360 }}, 80%, 96%) 0%, hsl({{ (36 * $index) % 360 }}, 80%, 91%) 100%); border-left: 5px solid hsl({{ (36 * $index) % 360 }}, 80%, 40%);">
-                                <div>
-                                    <div class="category-icon" style="color: hsl({{ (36 * $index) % 360 }}, 80%, 40%);"><i class="fa-solid fa-tag"></i></div>
-                                    <h6 class="category-title text-dark fw-bold mb-0">{{ $cat->name }}</h6>
+
+                @php
+                    $iconMap = [
+                        'Healthcare' => 'fa-user-doctor text-danger',
+                        'Beauty' => 'fa-spa text-purple',
+                        'Beauty Spa' => 'fa-spa text-purple',
+                        'Food' => 'fa-bowl-food text-warning',
+                        'Restaurants' => 'fa-bowl-food text-warning',
+                        'Repair & Service' => 'fa-screwdriver-wrench text-secondary',
+                        'Repair' => 'fa-screwdriver-wrench text-secondary',
+                        'Packers & Movers' => 'fa-truck text-primary',
+                        'Gym' => 'fa-dumbbell text-success',
+                        'Education' => 'fa-graduation-cap text-info',
+                        'AC Service' => 'fa-wind text-info',
+                        'Hotels' => 'fa-hotel text-primary',
+                        'Wedding Planning' => 'fa-heart text-danger',
+                        'Hospitals' => 'fa-hospital text-danger',
+                        'Rent & Hire' => 'fa-key text-warning',
+                        'Contractors' => 'fa-helmet-safety text-warning',
+                        'Pet Shops' => 'fa-paw text-success',
+                        'PG/Hostels' => 'fa-bed text-primary',
+                        'Dentists' => 'fa-tooth text-info',
+                        'Loans' => 'fa-money-bill-wave text-success',
+                        'Event Organisers' => 'fa-calendar-days text-danger',
+                        'Driving Schools' => 'fa-car text-secondary',
+                        'Courier Service' => 'fa-box-open text-primary',
+                    ];
+                @endphp
+
+                <div class="row row-cols-3 row-cols-sm-4 row-cols-md-6 row-cols-lg-6 g-3 pt-2 justify-content-center">
+                    @foreach($categories->take(11) as $index => $cat)
+                        @php
+                            $matchedIcon = 'fa-tags';
+                            $matchedColor = 'text-primary';
+                            foreach($iconMap as $key => $val) {
+                                if (stripos($cat->name, $key) !== false) {
+                                    $parts = explode(' ', $val);
+                                    $matchedIcon = $parts[0];
+                                    $matchedColor = $parts[1] ?? 'text-primary';
+                                    break;
+                                }
+                            }
+                            if ($matchedIcon === 'fa-tags') {
+                                $colors = ['text-primary', 'text-success', 'text-warning', 'text-danger', 'text-info', 'text-purple'];
+                                $matchedColor = $colors[$index % count($colors)];
+                            }
+                        @endphp
+                        <div class="col">
+                            <div onclick="selectCategoryOnDashboard({{ $cat->id }})" class="justdial-cat-item">
+                                <div class="justdial-cat-circle">
+                                    <i class="fa-solid {{ $matchedIcon }} {{ $matchedColor }} justdial-cat-icon"></i>
                                 </div>
-                                <span class="category-subtitle text-secondary mt-3">Browse Listings</span>
+                                <div class="justdial-cat-label">{{ $cat->name }}</div>
                             </div>
                         </div>
                     @endforeach
                     
                     <!-- View All card -->
-                    <div class="col-6 col-sm-4 col-md-3">
-                        <div data-bs-toggle="modal" data-bs-target="#allCategoriesModal" class="category-grid-card hover-scale cursor-pointer text-center justify-content-center align-items-center" style="background: linear-gradient(135deg, #f3f3f3 0%, #e9e9e9 100%); border-left: 5px solid #6c757d; min-height: 125px;">
-                            <div class="category-icon text-secondary mb-1"><i class="fa-solid fa-list-ul"></i></div>
-                            <h6 class="category-title text-dark fw-bold mb-0">View All</h6>
-                            <span class="category-subtitle text-secondary">Show All sectors</span>
+                    <div class="col">
+                        <div data-bs-toggle="modal" data-bs-target="#allCategoriesModal" class="justdial-cat-item">
+                            <div class="justdial-cat-circle" style="background: #f8fafc;">
+                                <i class="fa-solid fa-list-ul text-secondary justdial-cat-icon"></i>
+                            </div>
+                            <div class="justdial-cat-label">Popular Categories</div>
                         </div>
                     </div>
                 </div>

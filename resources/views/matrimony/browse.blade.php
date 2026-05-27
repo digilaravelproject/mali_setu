@@ -21,7 +21,7 @@
         width: 100%; 
         height: 180px; 
         object-fit: cover; 
-        background: linear-gradient(135deg, #f9d6e3, #fce4ec); 
+        background: #f8fafc; 
     }
     .profile-photo-placeholder { 
         width: 100%; 
@@ -30,8 +30,8 @@
         align-items: center; 
         justify-content: center; 
         font-size: 3.5rem; 
-        color: #fff; 
-        background: linear-gradient(135deg, rgba(173, 20, 87, 0.18), rgba(173, 20, 87, 0.10)); 
+        color: #cbd5e1; 
+        background: #f1f5f9; 
     }
     .conn-badge { 
         font-size: 0.72rem; 
@@ -637,9 +637,7 @@
                                     @if(!empty($pd['photos'][0]))
                                         <img src="{{ asset('storage/' . $pd['photos'][0]) }}" class="profile-photo">
                                     @else
-                                        <div class="profile-photo-placeholder">
-                                            <i class="fa-solid fa-{{ ($pd['gender']??'') === 'female' ? 'female' : 'male' }}"></i>
-                                        </div>
+                                        <img src="{{ asset('default-avatar.png') }}" class="profile-photo">
                                     @endif
 
                                     <div class="p-3">

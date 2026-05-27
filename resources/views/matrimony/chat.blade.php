@@ -32,7 +32,7 @@
             @if(!empty($photos[0]))
                 <img src="{{ asset('storage/' . $photos[0]) }}" class="avatar-sm">
             @else
-                <div class="avatar-sm bg-primary bg-opacity-10 d-flex align-items-center justify-content-center text-primary rounded-3"><i class="fa-solid fa-user"></i></div>
+                <img src="{{ asset('default-avatar.png') }}" class="avatar-sm">
             @endif
             <div>
                 <h6 class="fw-bold mb-0">{{ $otherUser->name }}</h6>
@@ -54,7 +54,7 @@
                     @if(!empty($photos[0]))
                         <img src="{{ asset('storage/' . $photos[0]) }}" class="avatar-sm me-2 mt-auto">
                     @else
-                        <div class="avatar-sm bg-light d-flex align-items-center justify-content-center text-secondary rounded-3 me-2 mt-auto"><i class="fa-solid fa-user small"></i></div>
+                        <img src="{{ asset('default-avatar.png') }}" class="avatar-sm me-2 mt-auto">
                     @endif
                 @endif
                 <div>

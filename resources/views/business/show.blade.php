@@ -64,6 +64,9 @@
                         <h2 class="fw-bold text-dark mb-2">{{ $business->business_name }}</h2>
                         <div class="d-flex flex-wrap gap-3 align-items-center text-secondary small">
                             <span><i class="fa-solid fa-location-dot me-1 text-primary"></i> {{ $business->address }}, {{ $business->city }}, {{ $business->state }} - {{ $business->pincode }}</span>
+                            @if(isset($business->distance))
+                                <span class="badge bg-light text-secondary border small"><i class="fa-solid fa-route text-danger me-1"></i> {{ $business->distance }} km away</span>
+                            @endif
                             @if($business->opening_time)
                                 <span><i class="fa-solid fa-clock me-1 text-primary"></i> Timings: {{ $business->opening_time }} - {{ $business->closing_time }}</span>
                             @endif

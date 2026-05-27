@@ -41,7 +41,7 @@
                     @if(!empty($photos[0]))
                         <img src="{{ asset('storage/' . $photos[0]) }}" class="convo-avatar">
                     @else
-                        <div class="convo-avatar-placeholder"><i class="fa-solid fa-user"></i></div>
+                        <img src="{{ asset('default-avatar.png') }}" class="convo-avatar">
                     @endif
                     <div class="flex-grow-1 min-width-0">
                         <div class="d-flex align-items-center justify-content-between">

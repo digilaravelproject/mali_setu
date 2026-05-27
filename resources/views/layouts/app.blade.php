@@ -536,8 +536,161 @@
     </main>
 </div>
 
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    // Global jQuery Form Validation Script
+    $(document).ready(function() {
+        // Disable native browser validation tooltips (bubbles)
+        $('form').attr('novalidate', 'novalidate');
+
+        // Monitor all form submits
+        $(document).on('submit', 'form', function(e) {
+            let form = $(this);
+
+            // Bypass validation for delete confirmation forms or clear/reset filter forms
+            const methodInput = form.find('input[name="_method"]');
+            if (methodInput.length && methodInput.val().toUpperCase() === 'DELETE') {
+                return;
+            }
+            if (form.attr('id') === 'logout-form') {
+                return;
+            }
+
+            // Remove existing error states
+            form.find('.invalid-feedback-custom').remove();
+            form.find('.is-invalid-custom').removeClass('is-invalid-custom').css('border-color', '');
+
+            let isValid = true;
+            let firstInvalidEl = null;
+
+            // Loop over all required fields
+            form.find('input[required], textarea[required], select[required]').each(function() {
+                let el = $(this);
+                let val = el.val();
+
+                // Check if empty or is unchecked checkbox/radio
+                let isFieldInvalid = false;
+                if (el.is(':checkbox') || el.is(':radio')) {
+                    let name = el.attr('name');
+                    if (name && form.find(`input[name="${name}"]:checked`).length === 0) {
+                        isFieldInvalid = true;
+                    }
+                } else if (!val || val.toString().trim() === '') {
+                    isFieldInvalid = true;
+                }
+
+                // If input type is email, check email format
+                if (!isFieldInvalid && el.attr('type') === 'email') {
+                    let emailReg = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                    if (!emailReg.test(val.toString().trim())) {
+                        isValid = false;
+                        el.addClass('is-invalid-custom').css('border-color', '#dc3545');
+                        let container = el;
+                        if (el.parent('.input-group').length) {
+                            container = el.parent('.input-group');
+                        }
+                        if (!container.siblings('.invalid-feedback-custom').length) {
+                            $('<div class="invalid-feedback-custom text-danger small mt-1 fw-bold"><i class="fa-solid fa-circle-exclamation me-1"></i> Please enter a valid email address.</div>').insertAfter(container);
+                        }
+                        if (!firstInvalidEl) {
+                            firstInvalidEl = el;
+                        }
+                    }
+                }
+
+                if (isFieldInvalid) {
+                    isValid = false;
+                    el.addClass('is-invalid-custom').css('border-color', '#dc3545');
+
+                    if (!firstInvalidEl) {
+                        firstInvalidEl = el;
+                    }
+
+                    // Find a user-friendly label name
+                    let fieldLabel = '';
+                    let placeholder = el.attr('placeholder');
+                    
+                    // Try to find matching label using "for" or sibling
+                    let id = el.attr('id');
+                    let labelEl = id ? form.find(`label[for="${id}"]`) : [];
+                    if (!labelEl.length) {
+                        labelEl = el.closest('.mb-3, .mb-4, .form-group').find('label');
+                    }
+                    
+                    if (labelEl.length) {
+                        fieldLabel = labelEl.first().text().replace('*', '').trim();
+                    } else if (placeholder) {
+                        fieldLabel = placeholder.trim();
+                    } else {
+                        fieldLabel = el.attr('name') ? el.attr('name').replace('_', ' ').trim() : 'This field';
+                    }
+
+                    // Clean label value
+                    if (fieldLabel.toLowerCase().endsWith('optional')) {
+                        fieldLabel = fieldLabel.replace(/optional/gi, '').replace(/[()]/g, '').trim();
+                    }
+                    if (fieldLabel.length > 30) {
+                        fieldLabel = 'This field';
+                    }
+
+                    let container = el;
+                    if (el.parent('.input-group').length) {
+                        container = el.parent('.input-group');
+                    }
+
+                    // Append error message below the field if it doesn't already exist
+                    if (!container.siblings('.invalid-feedback-custom').length) {
+                        $('<div class="invalid-feedback-custom text-danger small mt-1 fw-bold"><i class="fa-solid fa-circle-exclamation me-1"></i> ' + fieldLabel + ' is required.</div>').insertAfter(container);
+                    }
+                }
+            });
+
+            // Prevent form submit if invalid
+            if (!isValid) {
+                e.preventDefault();
+                e.stopPropagation();
+
+                // Focus/scroll to first invalid element
+                if (firstInvalidEl) {
+                    $('html, body').animate({
+                        scrollTop: firstInvalidEl.offset().top - 120
+                    }, 200);
+                    firstInvalidEl.focus();
+                }
+            }
+        });
+
+        // Real-time clearance of error messages on value input
+        $(document).on('input change keyup', 'form input, form textarea, form select', function() {
+            let el = $(this);
+            let val = el.val();
+            let isCheckboxOrRadio = el.is(':checkbox') || el.is(':radio');
+            
+            let isValOk = true;
+            if (isCheckboxOrRadio) {
+                let name = el.attr('name');
+                if (name && el.closest('form').find(`input[name="${name}"]:checked`).length > 0) {
+                    isValOk = true;
+                } else {
+                    isValOk = false;
+                }
+            } else if (!val || val.toString().trim() === '') {
+                isValOk = false;
+            }
+
+            if (isValOk) {
+                el.removeClass('is-invalid-custom').css('border-color', '');
+                let container = el;
+                if (el.parent('.input-group').length) {
+                    container = el.parent('.input-group');
+                }
+                container.siblings('.invalid-feedback-custom').remove();
+            }
+        });
+    });
+</script>
 <script>
     // Global Confirmation Dialog for Deletions
     document.addEventListener('submit', function (event) {
@@ -657,15 +810,7 @@
 
     // Helper to dynamically select business category from main dashboard
     function selectCategoryOnDashboard(categoryId) {
-        const directorySection = document.getElementById('directory-listings-section');
-        if (!directorySection) {
-            window.location.href = `/dashboard?browse_category_id=${categoryId}`;
-            return;
-        }
-        
-        if (typeof fetchCategoryBusinesses === 'function') {
-            fetchCategoryBusinesses(categoryId);
-        }
+        window.location.href = `/dashboard/business/browse?category_id=${categoryId}`;
     }
 
     // Business modular sub-view toggling

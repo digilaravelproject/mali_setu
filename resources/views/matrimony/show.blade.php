@@ -66,9 +66,7 @@
                 @if(!empty($pd['photos'][0]))
                     <img src="{{ asset('storage/' . $pd['photos'][0]) }}" class="profile-hero-photo mb-3">
                 @else
-                    <div class="profile-hero-photo bg-primary bg-opacity-10 d-flex align-items-center justify-content-center text-primary fs-1 mx-auto mb-3">
-                        <i class="fa-solid fa-user"></i>
-                    </div>
+                    <img src="{{ asset('default-avatar.png') }}" class="profile-hero-photo mb-3">
                 @endif
                 <h4 class="fw-bold mb-1">{{ $profile->user->name ?? 'User' }}</h4>
                 <p class="text-muted small mb-2">{{ $profile->age }} yrs • {{ ucfirst($pd['gender'] ?? 'N/A') }}</p>
