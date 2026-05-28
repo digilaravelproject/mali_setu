@@ -42,12 +42,12 @@
             </li>
             <li class="nav-item ps-3">
                 <a href="{{ route('dashboard.business.browse') }}" class="nav-link-custom small {{ Request::routeIs('dashboard.business.browse') || Request::routeIs('dashboard.business.show') ? 'active' : '' }}" style="font-size:0.82rem; padding: 8px 16px;">
-                    <i class="fa-solid fa-magnifying-glass text-primary"></i> Total Businesses
+                    <i class="fa-solid fa-magnifying-glass text-primary"></i> All Businesses
                 </a>
             </li>
             <li class="nav-item ps-3">
                 <a href="{{ route('dashboard.jobs.applied') }}" class="nav-link-custom small {{ Request::routeIs('dashboard.jobs.applied') ? 'active' : '' }}" style="font-size:0.82rem; padding: 8px 16px;">
-                    <i class="fa-solid fa-briefcase text-primary"></i> Total Jobs
+                    <i class="fa-solid fa-briefcase text-primary"></i> All Jobs
                 </a>
             </li>
 

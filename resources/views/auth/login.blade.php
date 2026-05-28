@@ -178,7 +178,7 @@
 <body>
 
 <a href="{{ url('/') }}" class="back-home">
-    <i class="fa-solid fa-arrow-left"></i> Back to Home
+    <i class="fa-solid fa-arrow-left"></i> Home
 </a>
 
 <div class="auth-container">

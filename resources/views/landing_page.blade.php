@@ -336,6 +336,312 @@
 
         /* Swiper overrides */
         .swiper-pagination-bullet-active { background: var(--primary) !important; }
+
+        /* Dynamic Dual-Mode Toggle styles */
+        .mode-toggle-container {
+            margin-top: 25px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: center;
+            position: relative;
+            z-index: 100;
+        }
+        .mode-toggle-pill {
+            background: #ffffff;
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            box-shadow: 0 10px 30px rgba(255, 71, 87, 0.08);
+            border-radius: 50px;
+            padding: 4px;
+            display: flex;
+            position: relative;
+            width: 320px;
+            height: 50px;
+        }
+        .mode-toggle-slider {
+            position: absolute;
+            top: 4px;
+            bottom: 4px;
+            left: 4px;
+            width: calc(50% - 4px);
+            background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+            border-radius: 50px;
+            transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 1;
+            box-shadow: 0 4px 15px rgba(255, 71, 87, 0.25);
+        }
+        .mode-toggle-pill.business-active .mode-toggle-slider {
+            left: calc(50% - 0px);
+        }
+        .mode-toggle-pill.matrimony-active .mode-toggle-slider {
+            left: 4px;
+        }
+        .btn-mode-toggle {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: #4a5568;
+            font-weight: 750;
+            font-size: 0.95rem;
+            cursor: pointer;
+            z-index: 2;
+            transition: color 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .btn-mode-toggle.active {
+            color: #ffffff !important;
+        }
+        .btn-mode-toggle:focus {
+            outline: none;
+        }
+
+        /* SPA Section Visibility Control */
+        .mode-section {
+            display: none;
+            opacity: 0;
+            transform: translateY(15px);
+            transition: opacity 0.4s ease, transform 0.4s ease;
+        }
+        .mode-section.active-mode {
+            display: block;
+            animation: sectionFadeIn 0.5s forwards cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        @keyframes sectionFadeIn {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Hero Swiper Carousel Styles */
+        .hero-swiper {
+            width: 100%;
+            height: auto;
+        }
+        .hero-slide {
+            width: 100%;
+        }
+        .business-hero-slide {
+            background-size: cover !important;
+            background-position: center !important;
+            position: relative;
+            border-radius: 40px;
+            overflow: hidden;
+            box-shadow: 0 20px 45px rgba(0, 0, 0, 0.08);
+            margin: 15px 0;
+            min-height: 480px;
+            display: flex;
+            align-items: center;
+        }
+        .business-hero-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, rgba(28, 0, 10, 0.9) 0%, rgba(28, 0, 10, 0.5) 100%);
+            z-index: 1;
+        }
+        .business-hero-content {
+            position: relative;
+            z-index: 2;
+            color: #ffffff;
+            padding: 60px 40px;
+            text-align: left;
+        }
+        .hero-swiper-pagination {
+            position: absolute;
+            bottom: 15px !important;
+            z-index: 10;
+        }
+        .hero-swiper-pagination .swiper-pagination-bullet {
+            width: 10px;
+            height: 10px;
+            background: rgba(255, 71, 87, 0.3);
+            opacity: 1;
+            transition: all 0.3s;
+        }
+        .hero-swiper-pagination .swiper-pagination-bullet-active {
+            width: 30px;
+            background: var(--primary) !important;
+            border-radius: 5px;
+        }
+
+        /* 8-Column Grid layout for categories */
+        @media (min-width: 992px) {
+            .row-cols-lg-8 > * {
+                flex: 0 0 auto;
+                width: 12.5% !important;
+            }
+        }
+
+        /* Plan Tabs Styles */
+        .plan-tabs .nav-link {
+            background: #ffffff;
+            color: #4a5568;
+            font-weight: 700;
+            border-radius: 50px;
+            padding: 10px 24px;
+            border: 1px solid rgba(0,0,0,0.08);
+            margin: 0 6px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.02);
+            transition: all 0.3s;
+        }
+        .plan-tabs .nav-link.active {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%) !important;
+            color: #ffffff !important;
+            box-shadow: 0 8px 20px rgba(255, 71, 87, 0.2);
+            border-color: transparent;
+        }
+
+        /* Interactive Blogs Styles */
+        .blog-card {
+            background: #ffffff;
+            border-radius: 24px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.03);
+            border: 1px solid rgba(0,0,0,0.05);
+            transition: all 0.3s ease;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+        .blog-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 40px rgba(255, 71, 87, 0.08);
+        }
+        .blog-image-wrapper {
+            position: relative;
+            height: 220px;
+            overflow: hidden;
+        }
+        .blog-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s ease;
+        }
+        .blog-card:hover .blog-image {
+            transform: scale(1.06);
+        }
+        .blog-badge {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(5px);
+            color: var(--primary);
+            font-weight: 700;
+            font-size: 0.75rem;
+            padding: 5px 12px;
+            border-radius: 50px;
+            text-transform: uppercase;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        }
+        .blog-content {
+            padding: 25px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .blog-meta {
+            font-size: 0.8rem;
+            color: #718096;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .blog-title {
+            font-size: 1.25rem;
+            font-weight: 750;
+            color: #2d3436;
+            margin-bottom: 12px;
+            line-height: 1.4;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            transition: color 0.3s;
+            text-decoration: none;
+        }
+        .blog-title:hover {
+            color: var(--primary);
+        }
+        .blog-desc {
+            font-size: 0.9rem;
+            color: #4a5568;
+            margin-bottom: 20px;
+            line-height: 1.6;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        .blog-footer {
+            border-top: 1px solid #edf2f7;
+            padding-top: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .blog-author {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .blog-author-img {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 1.5px solid var(--primary);
+        }
+        .blog-author-name {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #2d3436;
+        }
+        .blog-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .blog-action-btn {
+            background: transparent;
+            border: none;
+            color: #a0aec0;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 8px;
+            border-radius: 50px;
+        }
+        .blog-action-btn:hover {
+            background: #f7fafc;
+            color: var(--primary);
+        }
+        .blog-action-btn.liked {
+            color: var(--primary) !important;
+        }
+        .blog-action-btn.liked i {
+            animation: heartBeat 0.3s;
+        }
+
+        .rounded-pill {
+            color: #ffffff !important;
+        }
+        @keyframes heartBeat {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.3); }
+            100% { transform: scale(1); }
+        }
     </style>
 </head>
 <body>
@@ -354,6 +660,10 @@
 
     $featuredProfiles = \App\Models\MatrimonyProfile::where('approval_status', 'approved')->latest()->take(4)->get();
     $featuredBusinesses = \App\Models\Business::where('verification_status', 'approved')->latest()->take(4)->get();
+
+    // New additions
+    $banners = \App\Models\HomepageHero::all();
+    $blogs = \App\Models\Blog::with('user')->withCount('likes')->where('is_active', true)->latest()->take(3)->get();
 @endphp
 
 <!-- NAVBAR -->
@@ -372,8 +682,9 @@
         </button>
         <div class="collapse navbar-collapse" id="navbarNav">
             <ul class="navbar-nav ms-auto align-items-center">
-                <li class="nav-item"><a class="nav-link px-3" href="#directory"><i class="fa-solid fa-store text-primary me-1"></i> Directory</a></li>
-                <li class="nav-item"><a class="nav-link px-3" href="#matrimony"><i class="fa-solid fa-heart text-danger me-1"></i> Matrimony</a></li>
+                <li class="nav-item"><a class="nav-link px-3" href="#matrimony" id="nav-link-matrimony" onclick="switchLandingMode('matrimony');"><i class="fa-solid fa-heart text-danger me-1"></i> Matrimony</a></li>
+                <li class="nav-item"><a class="nav-link px-3" href="#business" id="nav-link-business" onclick="switchLandingMode('business');"><i class="fa-solid fa-store text-primary me-1"></i> Business</a></li>
+                
                 <li class="nav-item"><a class="nav-link px-3" href="#plans"><i class="fa-solid fa-gem text-warning me-1"></i> Pricing Plans</a></li>
                 <li class="nav-item"><a class="nav-link px-3" href="{{ url('contact-us') }}"><i class="fa-solid fa-envelope text-info me-1"></i> Contact Us</a></li>
                 @auth
@@ -387,83 +698,79 @@
 </nav>
 
 <!-- HERO -->
-<header class="hero">
-    <div class="floral-bg"></div>
-    <div class="container position-relative" style="z-index: 2;">
-        <div class="row align-items-center g-5">
-            <div class="col-lg-7 text-start" data-aos="fade-right">
-                <span class="badge bg-warning text-dark px-3 py-2 rounded-pill mb-3 fw-bold shadow-sm"><i class="fa-solid fa-award me-1 text-primary"></i> Premium Matrimony & Directory Platform</span>
-                <h1 class="display-4 fw-extrabold mb-4 milan-title">FIND YOUR <span class="text-primary">PERFECT</span><br>LIFE PARTNER</h1>
-                <p class="lead mb-4 text-secondary" style="font-weight: 500;">We bring people together. Love unites them...<br>Discover and connect with verified matrimony profiles and business catalogs within the Mali Community.</p>
-
-                <!-- Matrimony Search Widget -->
-                <?php /*<div class="search-widget mt-4">
-                    <div class="search-widget-title"><i class="fa-solid fa-magnifying-glass me-2"></i> Find Your Perfect Match</div>
-                    <form class="row g-3" action="{{ route('register') }}" method="GET">
-                        <div class="col-md-4 col-6">
-                            <label class="small fw-bold text-secondary mb-1">Searching for</label>
-                            <select name="user_type" class="form-select border-1 shadow-none rounded-3 py-2.5">
-                                <option value="matrimony">Bride (Women)</option>
-                                <option value="matrimony">Groom (Men)</option>
-                            </select>
-                        </div>
-                        <div class="col-md-4 col-6">
-                            <label class="small fw-bold text-secondary mb-1">Age should be</label>
-                            <div class="d-flex align-items-center gap-1">
-                                <select class="form-select border-1 shadow-none rounded-3 py-2.5" style="font-size:0.85rem;">
-                                    <option>21</option><option>23</option><option>25</option>
-                                </select>
-                                <span class="small text-muted">to</span>
-                                <select class="form-select border-1 shadow-none rounded-3 py-2.5" style="font-size:0.85rem;">
-                                    <option>28</option><option>30</option><option>35</option>
-                                </select>
+<header class="hero p-0">
+    <div class="swiper heroSwiper">
+        <div class="swiper-wrapper">
+            <!-- Slide 1: Current Matrimony Banner -->
+            <div class="swiper-slide hero-slide">
+                <div class="floral-bg"></div>
+                <div class="container position-relative" style="z-index: 2; padding: 60px 0 80px;">
+                    <div class="row align-items-center g-5">
+                        <div class="col-lg-7 text-start">
+                            <span class="badge bg-warning text-dark px-3 py-2 rounded-pill mb-3 fw-bold shadow-sm"><i class="fa-solid fa-award me-1 text-primary"></i> Premium Matrimony & Directory Platform</span>
+                            <h1 class="display-4 fw-extrabold mb-4 milan-title">FIND YOUR <span class="text-primary">PERFECT</span><br>LIFE PARTNER</h1>
+                            <p class="lead mb-4 text-secondary" style="font-weight: 500;">We bring people together. Love unites them...<br>Discover and connect with verified matrimony profiles and business catalogs within the Mali Community.</p>
+                            <div class="d-flex gap-3 mt-4">
+                                <a href="{{ route('register') }}" class="btn btn-primary btn-lg px-4 shadow-sm"><i class="fa-solid fa-heart me-2"></i> Find Match</a>
+                                <a href="#plans" class="btn btn-outline-primary btn-lg px-4"><i class="fa-solid fa-gem me-2"></i> View Plans</a>
                             </div>
                         </div>
-                        <div class="col-md-4 col-12">
-                            <label class="small fw-bold text-secondary mb-1">Location</label>
-                            <select class="form-select border-1 shadow-none rounded-3 py-2.5">
-                                <option>Rajkot</option>
-                                <option>Mumbai</option>
-                                <option>Pune</option>
-                                <option>Nashik</option>
-                            </select>
+                        
+                        <!-- Traditional couple visual frame enclosed in a gorgeous flower wreath border -->
+                        <div class="col-lg-5 text-center position-relative">
+                            <div class="couple-wrapper">
+                                <div class="flower-wreath"></div>
+                                <div class="wreath-sparkle"></div>
+                                <img src="{{ asset('couple_wedding.jpg') }}" class="couple-circle floating" alt="Traditional Indian Couple">
+                            </div>
                         </div>
-                        <div class="col-md-6 col-6">
-                            <label class="small fw-bold text-secondary mb-1">Religion</label>
-                            <select class="form-select border-1 shadow-none rounded-3 py-2.5">
-                                <option>Hindu</option>
-                                <option>Sikh</option>
-                                <option>Jain</option>
-                            </select>
-                        </div>
-                        <div class="col-md-6 col-6">
-                            <label class="small fw-bold text-secondary mb-1">Disease</label>
-                            <select class="form-select border-1 shadow-none rounded-3 py-2.5">
-                                <option>Diabetes</option>
-                                <option>None</option>
-                            </select>
-                        </div>
-                        <div class="col-12 d-grid mt-4">
-                            <button type="submit" class="btn btn-warning btn-lg fw-bold rounded-3 py-3"><i class="fa-solid fa-heart me-1"></i> Let's Start Registration</button>
-                        </div>
-                    </form>
-                </div> */?>
-            </div>
-            
-            <!-- Traditional couple visual frame enclosed in a gorgeous flower wreath border -->
-            <div class="col-lg-5 text-center position-relative" data-aos="zoom-in">
-                <div class="couple-wrapper">
-                    <div class="flower-wreath"></div>
-                    <div class="wreath-sparkle"></div>
-                    <img src="{{ asset('couple_wedding.jpg') }}" class="couple-circle floating" alt="Traditional Indian Couple">
+                    </div>
                 </div>
             </div>
+
+            <!-- Slides 2+: Dynamic Business Banners from Dashboard -->
+            @if($banners && $banners->count() > 0)
+                @foreach($banners as $banner)
+                    <div class="swiper-slide hero-slide px-4">
+                        <div class="container">
+                            <div class="business-hero-slide" style="background: url('{{ asset('storage/' . $banner->image_path) }}') no-repeat;">
+                                <div class="business-hero-overlay"></div>
+                                <div class="business-hero-content col-lg-8">
+                                    <span class="badge bg-primary px-3 py-2 rounded-pill mb-3 fw-bold text-uppercase shadow-sm"><i class="fa-solid fa-store me-1"></i> Community Enterprise Spotlight</span>
+                                    <h1 class="display-4 fw-extrabold mb-3 text-white" style="line-height: 1.2;">{{ $banner->title }}</h1>
+                                    <p class="lead mb-4 text-white text-opacity-80" style="font-weight: 500;">Empowering and connecting verified regional community vendors, trusted specialists, and agricultural entrepreneurs.</p>
+                                    <?php /*@if($banner->url)
+                                        <a href="{{ $banner->url }}" target="_blank" class="btn btn-warning btn-lg fw-bold rounded-3 px-4 shadow-sm">Explore More <i class="fa-solid fa-arrow-up-right-from-square ms-2"></i></a>
+                                    @else
+                                        <a href="#directory" onclick="switchLandingMode('business');" class="btn btn-warning btn-lg fw-bold rounded-3 px-4 shadow-sm">Explore Directory <i class="fa-solid fa-arrow-right-long ms-2"></i></a>
+                                    @endif */?>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                @endforeach
+            @endif
         </div>
+        <!-- Pagination -->
+        <div class="swiper-pagination hero-swiper-pagination"></div>
     </div>
 </header>
 
+<!-- DUAL MODE SWITCH TOGGLE -->
+<div class="mode-toggle-container">
+    <div class="mode-toggle-pill matrimony-active" id="landing-mode-toggle-pill">
+        <div class="mode-toggle-slider"></div>
+        <button class="btn-mode-toggle active" id="btn-toggle-matrimony" onclick="switchLandingMode('matrimony')">
+            <i class="fa-solid fa-heart me-1"></i> Matrimony
+        </button>
+        <button class="btn-mode-toggle" id="btn-toggle-business" onclick="switchLandingMode('business')">
+            <i class="fa-solid fa-store me-1"></i> Business
+        </button>
+    </div>
+</div>
+
 <!-- STATS -->
-<section class="py-5 bg-white" style="margin-top: -60px; position: relative; z-index: 10;">
+<section class="py-5 bg-white" style="margin-top: -30px; position: relative; z-index: 10;">
     <div class="container">
         <div class="row g-4 justify-content-center">
             <div class="col-md-2.4 col-md-3 col-6" data-aos="fade-up" data-aos-delay="100">
@@ -501,159 +808,187 @@
 </section>
 
 <!-- CATEGORIES -->
-<section class="py-5 bg-light" id="directory">
-    <div class="container py-4 text-center">
-        <div class="text-center mb-5">
-            <span class="badge bg-primary bg-opacity-10 text-primary px-3 py-2 rounded-pill mb-2 fw-bold text-uppercase">Explore Directory</span>
-            <h2 class="display-5 fw-extrabold text-dark">Popular Business Categories</h2>
-            <p class="text-secondary">Direct redirect to matching category business listing under active verified catalogs.</p>
-        </div>
+<div class="mode-section business-section">
+    <section class="py-5 bg-light" id="directory">
+        <div class="container py-4 text-center">
+            <div class="text-center mb-5">
+                <span class="badge bg-primary bg-opacity-10 text-primary px-3 py-2 rounded-pill mb-2 fw-bold text-uppercase">Explore Directory</span>
+                <h2 class="display-5 fw-extrabold text-dark">Popular Business Categories</h2>
+                <p class="text-secondary">Direct redirect to matching category business listing under active verified catalogs.</p>
+            </div>
 
-        @php
-            $iconMap = [
-                'Healthcare' => 'fa-user-doctor text-danger',
-                'Beauty' => 'fa-spa text-purple',
-                'Beauty Spa' => 'fa-spa text-purple',
-                'Food' => 'fa-bowl-food text-warning',
-                'Restaurants' => 'fa-bowl-food text-warning',
-                'Repair & Service' => 'fa-screwdriver-wrench text-secondary',
-                'Repair' => 'fa-screwdriver-wrench text-secondary',
-                'Packers & Movers' => 'fa-truck text-primary',
-                'Gym' => 'fa-dumbbell text-success',
-                'Education' => 'fa-graduation-cap text-info',
-                'AC Service' => 'fa-wind text-info',
-                'Hotels' => 'fa-hotel text-primary',
-                'Wedding Planning' => 'fa-heart text-danger',
-                'Hospitals' => 'fa-hospital text-danger',
-                'Rent & Hire' => 'fa-key text-warning',
-                'Contractors' => 'fa-helmet-safety text-warning',
-                'Pet Shops' => 'fa-paw text-success',
-                'PG/Hostels' => 'fa-bed text-primary',
-                'Dentists' => 'fa-tooth text-info',
-                'Loans' => 'fa-money-bill-wave text-success',
-                'Event Organisers' => 'fa-calendar-days text-danger',
-                'Driving Schools' => 'fa-car text-secondary',
-                'Courier Service' => 'fa-box-open text-primary',
-            ];
-        @endphp
+            @php
+                $iconMap = [
+                    'Healthcare' => 'fa-user-doctor text-danger',
+                    'Beauty' => 'fa-spa text-purple',
+                    'Beauty Spa' => 'fa-spa text-purple',
+                    'Food' => 'fa-bowl-food text-warning',
+                    'Restaurants' => 'fa-bowl-food text-warning',
+                    'Repair & Service' => 'fa-screwdriver-wrench text-secondary',
+                    'Repair' => 'fa-screwdriver-wrench text-secondary',
+                    'Packers & Movers' => 'fa-truck text-primary',
+                    'Gym' => 'fa-dumbbell text-success',
+                    'Education' => 'fa-graduation-cap text-info',
+                    'AC Service' => 'fa-wind text-info',
+                    'Hotels' => 'fa-hotel text-primary',
+                    'Wedding Planning' => 'fa-heart text-danger',
+                    'Hospitals' => 'fa-hospital text-danger',
+                    'Rent & Hire' => 'fa-key text-warning',
+                    'Contractors' => 'fa-helmet-safety text-warning',
+                    'Pet Shops' => 'fa-paw text-success',
+                    'PG/Hostels' => 'fa-bed text-primary',
+                    'Dentists' => 'fa-tooth text-info',
+                    'Loans' => 'fa-money-bill-wave text-success',
+                    'Event Organisers' => 'fa-calendar-days text-danger',
+                    'Driving Schools' => 'fa-car text-secondary',
+                    'Courier Service' => 'fa-box-open text-primary',
+                ];
 
-        <div class="row row-cols-2 row-cols-md-4 g-4 pt-3 justify-content-center">
-            @foreach($categories->take(7) as $index => $cat)
-                @php
-                    $matchedIcon = 'fa-tags';
-                    $matchedColor = 'text-primary';
-                    foreach($iconMap as $key => $val) {
-                        if (stripos($cat->name, $key) !== false) {
-                            $parts = explode(' ', $val);
-                            $matchedIcon = $parts[0];
-                            $matchedColor = $parts[1] ?? 'text-primary';
-                            break;
+                // Fetch up to 15 categories and fill up with beautiful dummies to keep the 8-8 row visually perfect!
+                $categoriesList = $categories->take(15)->all();
+                if (count($categoriesList) < 15) {
+                    $dummyCategoryNames = ['Healthcare', 'Food & Beverages', 'Beauty Spa', 'Repair & Service', 'Packers & Movers', 'Gym', 'Education', 'Wedding Planning', 'AC Service', 'Hospitals', 'Hotels', 'Pet Shops', 'Rent & Hire', 'Dentists', 'Courier Service'];
+                    $index = 0;
+                    while (count($categoriesList) < 15 && $index < count($dummyCategoryNames)) {
+                        $dummyName = $dummyCategoryNames[$index++];
+                        $exists = false;
+                        foreach ($categoriesList as $existing) {
+                            if (stripos($existing->name, $dummyName) !== false) {
+                                $exists = true;
+                                break;
+                            }
+                        }
+                        if (!$exists) {
+                            $dummyObj = new stdClass();
+                            $dummyObj->name = $dummyName;
+                            $categoriesList[] = $dummyObj;
                         }
                     }
-                    if ($matchedIcon === 'fa-tags') {
-                        $colors = ['text-primary', 'text-success', 'text-warning', 'text-danger', 'text-info', 'text-purple'];
-                        $matchedColor = $colors[$index % count($colors)];
-                    }
-                @endphp
-                <div class="col" data-aos="zoom-in" data-aos-delay="{{ 100 * ($index + 1) }}">
+                }
+            @endphp
+
+            <div class="row row-cols-2 row-cols-md-4 row-cols-lg-8 g-4 pt-3 justify-content-center">
+                @foreach($categoriesList as $idx => $cat)
+                    @php
+                        $matchedIcon = 'fa-tags';
+                        $matchedColor = 'text-primary';
+                        foreach($iconMap as $key => $val) {
+                            if (stripos($cat->name, $key) !== false) {
+                                $parts = explode(' ', $val);
+                                $matchedIcon = $parts[0];
+                                $matchedColor = $parts[1] ?? 'text-primary';
+                                break;
+                            }
+                        }
+                        if ($matchedIcon === 'fa-tags') {
+                            $colors = ['text-primary', 'text-success', 'text-warning', 'text-danger', 'text-info', 'text-purple'];
+                            $matchedColor = $colors[$idx % count($colors)];
+                        }
+                    @endphp
+                    <div class="col" data-aos="zoom-in" data-aos-delay="{{ 50 * ($idx + 1) }}">
+                        <a href="{{ route('login') }}" class="justdial-cat-item">
+                            <div class="justdial-cat-circle">
+                                <i class="fa-solid {{ $matchedIcon }} {{ $matchedColor }} justdial-cat-icon"></i>
+                            </div>
+                            <div class="justdial-cat-label">{{ $cat->name }}</div>
+                        </a>
+                    </div>
+                @endforeach
+                
+                <!-- View All Card (Item 16) -->
+                <div class="col" data-aos="zoom-in" data-aos-delay="800">
                     <a href="{{ route('login') }}" class="justdial-cat-item">
-                        <div class="justdial-cat-circle">
-                            <i class="fa-solid {{ $matchedIcon }} {{ $matchedColor }} justdial-cat-icon"></i>
+                        <div class="justdial-cat-circle" style="background: #f8fafc;">
+                            <i class="fa-solid fa-arrow-right-long text-secondary justdial-cat-icon"></i>
                         </div>
-                        <div class="justdial-cat-label">{{ $cat->name }}</div>
+                        <div class="justdial-cat-label">Explore More</div>
                     </a>
                 </div>
-            @endforeach
-            
-            <!-- View All Card -->
-            <div class="col" data-aos="zoom-in" data-aos-delay="800">
-                <a href="{{ route('login') }}" class="justdial-cat-item">
-                    <div class="justdial-cat-circle" style="background: #f8fafc;">
-                        <i class="fa-solid fa-arrow-right-long text-secondary justdial-cat-icon"></i>
-                    </div>
-                    <div class="justdial-cat-label">Explore More</div>
-                </a>
             </div>
         </div>
-    </div>
-</section>
+    </section>
+</div>
 
 <!-- FEATURED MATRIMONY PROFILES -->
-<section class="py-5 bg-white" id="matrimony">
-    <div class="container py-4 text-center">
-        <div class="text-center mb-5">
-            <span class="badge bg-primary bg-opacity-10 text-primary px-3 py-2 rounded-pill mb-2 fw-bold text-uppercase">Matrimony Featured</span>
-            <h2 class="display-5 fw-extrabold text-dark">Featured Profiles</h2>
-            <p class="text-secondary">Discover verified life partners actively looking for matrimonial matches.</p>
-        </div>
+<?php /*<div class="mode-section matrimony-section active-mode">
+    <section class="py-5 bg-white" id="matrimony">
+        <div class="container py-4 text-center">
+            <div class="text-center mb-5">
+                <span class="badge bg-primary bg-opacity-10 text-primary px-3 py-2 rounded-pill mb-2 fw-bold text-uppercase">Matrimony Featured</span>
+                <h2 class="display-5 fw-extrabold text-dark">Featured Profiles</h2>
+                <p class="text-secondary">Discover verified life partners actively looking for matrimonial matches.</p>
+            </div>
 
-        <div class="row g-4 justify-content-center">
-            @if($featuredProfiles->count() > 0)
-                @foreach($featuredProfiles as $index => $profile)
-                    @php
-                        $photo = (!empty($profile->personal_details['photos']) && !empty($profile->personal_details['photos'][0])) 
-                            ? asset('storage/' . $profile->personal_details['photos'][0]) 
-                            : asset('default-avatar.png');
-                    @endphp
-                    <div class="col-md-3 col-sm-6 text-start" data-aos="fade-up" data-aos-delay="{{ 100 * ($index + 1) }}">
-                        <div class="glass-card text-center p-3">
-                            <img src="{{ $photo }}" class="img-fluid rounded-4 mb-3 shadow-sm border" style="height: 220px; width: 100%; object-fit: cover;" alt="Member">
-                            <h6 class="fw-bold mb-1 text-dark">{{ $profile->user->name }}</h6>
-                            <p class="small text-muted mb-2">{{ $profile->age }} yrs • {{ $profile->gender }}</p>
-                            <span class="badge bg-light text-primary border small">{{ $profile->professional_details['occupation'] ?? 'Professional' }}</span>
+            <div class="row g-4 justify-content-center">
+                @if($featuredProfiles->count() > 0)
+                    @foreach($featuredProfiles as $index => $profile)
+                        @php
+                            $photo = (!empty($profile->personal_details['photos']) && !empty($profile->personal_details['photos'][0])) 
+                                ? asset('storage/' . $profile->personal_details['photos'][0]) 
+                                : asset('default-avatar.png');
+                        @endphp
+                        <div class="col-md-3 col-sm-6 text-start" data-aos="fade-up" data-aos-delay="{{ 100 * ($index + 1) }}">
+                            <div class="glass-card text-center p-3">
+                                <img src="{{ $photo }}" class="img-fluid rounded-4 mb-3 shadow-sm border" style="height: 220px; width: 100%; object-fit: cover;" alt="Member">
+                                <h6 class="fw-bold mb-1 text-dark">{{ $profile->user->name }}</h6>
+                                <p class="small text-muted mb-2">{{ $profile->age }} yrs • {{ $profile->gender }}</p>
+                                <span class="badge bg-light text-primary border small">{{ $profile->professional_details['occupation'] ?? 'Professional' }}</span>
+                            </div>
                         </div>
+                    @endforeach
+                @else
+                    <div class="col-12 text-center py-4">
+                        <p class="text-secondary">No featured matrimonial seekers active at this time.</p>
                     </div>
-                @endforeach
-            @else
-                <div class="col-12 text-center py-4">
-                    <p class="text-secondary">No featured matrimonial seekers active at this time.</p>
-                </div>
-            @endif
+                @endif
+            </div>
+            <div class="text-center mt-5">
+                <a href="{{ route('register') }}" class="btn btn-primary shadow-sm"><i class="fa-solid fa-user-plus me-1"></i> Register Free Seeker Account</a>
+            </div>
         </div>
-        <div class="text-center mt-5">
-            <a href="{{ route('register') }}" class="btn btn-primary shadow-sm"><i class="fa-solid fa-user-plus me-1"></i> Register Free Seeker Account</a>
-        </div>
-    </div>
-</section>
+    </section>
+</div> */?>
 
 <!-- FEATURED BUSINESSES -->
-<section class="py-5 bg-light">
-    <div class="container py-4 text-center">
-        <div class="text-center mb-5">
-            <span class="badge bg-primary bg-opacity-10 text-primary px-3 py-2 rounded-pill mb-2 fw-bold text-uppercase">Enterprise Spotlights</span>
-            <h2 class="display-5 fw-extrabold text-dark">Featured Businesses</h2>
-            <p class="text-secondary">Connect with active regional community vendors and trusted specialists.</p>
-        </div>
+<?php /*<div class="mode-section business-section">
+    <section class="py-5 bg-light">
+        <div class="container py-4 text-center">
+            <div class="text-center mb-5">
+                <span class="badge bg-primary bg-opacity-10 text-primary px-3 py-2 rounded-pill mb-2 fw-bold text-uppercase">Enterprise Spotlights</span>
+                <h2 class="display-5 fw-extrabold text-dark">Featured Businesses</h2>
+                <p class="text-secondary">Connect with active regional community vendors and trusted specialists.</p>
+            </div>
 
-        <div class="row g-4 justify-content-center">
-            @if($featuredBusinesses->count() > 0)
-                @foreach($featuredBusinesses as $index => $biz)
-                    @php
-                        $photo = $biz->photo 
-                            ? asset('storage/' . trim(explode(',', $biz->photo)[0])) 
-                            : null;
-                    @endphp
-                    <div class="col-md-3 col-sm-6 text-start" data-aos="fade-up" data-aos-delay="{{ 100 * ($index + 1) }}">
-                        <div class="glass-card text-center p-3">
-                            @if($photo)
-                                <img src="{{ $photo }}" class="img-fluid rounded-4 mb-3 shadow-sm border" style="height: 180px; width: 100%; object-fit: cover;" alt="Logo">
-                            @else
-                                <div class="bg-primary bg-opacity-10 text-primary rounded-4 d-flex align-items-center justify-content-center mb-3" style="height: 180px;"><i class="fa-solid fa-store fs-1"></i></div>
-                            @endif
-                            <h6 class="fw-bold mb-1 text-dark">{{ $biz->business_name }}</h6>
-                            <p class="small text-muted mb-2">{{ $biz->city }}, {{ $biz->state }}</p>
-                            <span class="badge bg-light text-primary border small">{{ $biz->category->name ?? 'Agriculture' }}</span>
+            <div class="row g-4 justify-content-center">
+                @if($featuredBusinesses->count() > 0)
+                    @foreach($featuredBusinesses as $index => $biz)
+                        @php
+                            $photo = $biz->photo 
+                                ? asset('storage/' . trim(explode(',', $biz->photo)[0])) 
+                                : null;
+                        @endphp
+                        <div class="col-md-3 col-sm-6 text-start" data-aos="fade-up" data-aos-delay="{{ 100 * ($index + 1) }}">
+                            <div class="glass-card text-center p-3">
+                                @if($photo)
+                                    <img src="{{ $photo }}" class="img-fluid rounded-4 mb-3 shadow-sm border" style="height: 180px; width: 100%; object-fit: cover;" alt="Logo">
+                                @else
+                                    <div class="bg-primary bg-opacity-10 text-primary rounded-4 d-flex align-items-center justify-content-center mb-3" style="height: 180px;"><i class="fa-solid fa-store fs-1"></i></div>
+                                @endif
+                                <h6 class="fw-bold mb-1 text-dark">{{ $biz->business_name }}</h6>
+                                <p class="small text-muted mb-2">{{ $biz->city }}, {{ $biz->state }}</p>
+                                <span class="badge bg-light text-primary border small">{{ $biz->category->name ?? 'Agriculture' }}</span>
+                            </div>
                         </div>
+                    @endforeach
+                @else
+                    <div class="col-12 text-center py-4">
+                        <p class="text-secondary">No featured verified businesses cataloged at this time.</p>
                     </div>
-                @endforeach
-            @else
-                <div class="col-12 text-center py-4">
-                    <p class="text-secondary">No featured verified businesses cataloged at this time.</p>
-                </div>
-            @endif
+                @endif
+            </div>
         </div>
-    </div>
-</section>
+    </section>
+</div> */?>
 
 <!-- WHY CHOOSE US -->
 <section class="py-5 bg-white">
@@ -695,115 +1030,234 @@
     </div>
 </section>
 
-<!-- HOW IT WORKS -->
-<section class="py-5 bg-light">
-    <div class="container py-4 text-center">
-        <div class="text-center mb-5">
-            <span class="badge bg-primary bg-opacity-10 text-primary px-3 py-2 rounded-pill mb-2 fw-bold text-uppercase">FIND SOMEONE SPECIAL</span>
-            <h2 class="display-5 fw-extrabold text-dark">How It Works</h2>
+<!-- HOW IT WORKS (MATRIMONY) -->
+<div class="mode-section matrimony-section active-mode">
+    <section class="py-5 bg-light">
+        <div class="container py-4 text-center">
+            <div class="text-center mb-5">
+                <span class="badge bg-primary bg-opacity-10 text-primary px-3 py-2 rounded-pill mb-2 fw-bold text-uppercase">Find Someone Special</span>
+                <h2 class="display-5 fw-extrabold text-dark">How Matrimony Works</h2>
+            </div>
+            <div class="row g-4 text-center">
+                <div class="col-md-3 how-it-works-step" data-aos="fade-up" data-aos-delay="100">
+                    <div class="bg-white rounded-circle shadow-sm d-flex align-items-center justify-content-center mx-auto mb-4" style="width: 80px; height: 80px; border: 2px solid var(--primary);">
+                        <i class="fa-solid fa-user-plus text-primary fs-3"></i>
+                    </div>
+                    <h5 class="fw-bold">Create Account</h5>
+                    <p class="text-secondary small">Register for free and set up your comprehensive matrimonial profile.</p>
+                </div>
+                <div class="col-md-3 how-it-works-step" data-aos="fade-up" data-aos-delay="200">
+                    <div class="bg-white rounded-circle shadow-sm d-flex align-items-center justify-content-center mx-auto mb-4" style="width: 80px; height: 80px; border: 2px solid var(--primary);">
+                        <i class="fa-solid fa-users-viewfinder text-primary fs-3"></i>
+                    </div>
+                    <h5 class="fw-bold">Browse Profiles</h5>
+                    <p class="text-secondary small">Filter verified profiles and search for your ideal life partner.</p>
+                </div>
+                <div class="col-md-3 how-it-works-step" data-aos="fade-up" data-aos-delay="300">
+                    <div class="bg-white rounded-circle shadow-sm d-flex align-items-center justify-content-center mx-auto mb-4" style="width: 80px; height: 80px; border: 2px solid var(--primary);">
+                        <i class="fa-solid fa-heart-pulse text-primary fs-3"></i>
+                    </div>
+                    <h5 class="fw-bold">Connect</h5>
+                    <p class="text-secondary small">Send private connection requests to profiles that interest you.</p>
+                </div>
+                <div class="col-md-3" data-aos="fade-up" data-aos-delay="400">
+                    <div class="bg-white rounded-circle shadow-sm d-flex align-items-center justify-content-center mx-auto mb-4" style="width: 80px; height: 80px; border: 2px solid var(--primary);">
+                        <i class="fa-solid fa-comments text-primary fs-3"></i>
+                    </div>
+                    <h5 class="fw-bold">Interact</h5>
+                    <p class="text-secondary small">Securely chat, engage families, and begin your journey together.</p>
+                </div>
+            </div>
         </div>
-        <div class="row g-4 text-center">
-            <div class="col-md-3 how-it-works-step" data-aos="fade-up" data-aos-delay="100">
-                <div class="bg-white rounded-circle shadow-sm d-flex align-items-center justify-content-center mx-auto mb-4" style="width: 80px; height: 80px; border: 2px solid var(--primary);">
-                    <i class="fa-solid fa-user-plus text-primary fs-3"></i>
-                </div>
-                <h5 class="fw-bold">Create Account</h5>
-                <p class="text-secondary small">Register for free and set up your comprehensive profile.</p>
+    </section>
+</div>
+
+<!-- HOW IT WORKS (BUSINESS & FLOW) -->
+<div class="mode-section business-section">
+    <section class="py-5 bg-light">
+        <div class="container py-4 text-center">
+            <div class="text-center mb-5">
+                <span class="badge bg-primary bg-opacity-10 text-primary px-3 py-2 rounded-pill mb-2 fw-bold text-uppercase">Empower Local Business</span>
+                <h2 class="display-5 fw-extrabold text-dark">How Business Directory Works & Its Flow</h2>
             </div>
-            <div class="col-md-3 how-it-works-step" data-aos="fade-up" data-aos-delay="200">
-                <div class="bg-white rounded-circle shadow-sm d-flex align-items-center justify-content-center mx-auto mb-4" style="width: 80px; height: 80px; border: 2px solid var(--primary);">
-                    <i class="fa-solid fa-users-viewfinder text-primary fs-3"></i>
+            <div class="row g-4 text-center">
+                <div class="col-md-3 how-it-works-step" data-aos="fade-up" data-aos-delay="100">
+                    <div class="bg-white rounded-circle shadow-sm d-flex align-items-center justify-content-center mx-auto mb-4" style="width: 80px; height: 80px; border: 2px solid var(--primary);">
+                        <i class="fa-solid fa-store text-primary fs-3"></i>
+                    </div>
+                    <h5 class="fw-bold">1. Register Store</h5>
+                    <p class="text-secondary small">Set up your business profile, upload a store logo, and add contact details.</p>
                 </div>
-                <h5 class="fw-bold">Browse Profiles</h5>
-                <p class="text-secondary small">Choose the plans and search for the perfect life partner.</p>
-            </div>
-            <div class="col-md-3 how-it-works-step" data-aos="fade-up" data-aos-delay="300">
-                <div class="bg-white rounded-circle shadow-sm d-flex align-items-center justify-content-center mx-auto mb-4" style="width: 80px; height: 80px; border: 2px solid var(--primary);">
-                    <i class="fa-solid fa-heart-pulse text-primary fs-3"></i>
+                <div class="col-md-3 how-it-works-step" data-aos="fade-up" data-aos-delay="200">
+                    <div class="bg-white rounded-circle shadow-sm d-flex align-items-center justify-content-center mx-auto mb-4" style="width: 80px; height: 80px; border: 2px solid var(--primary);">
+                        <i class="fa-solid fa-file-invoice-dollar text-primary fs-3"></i>
+                    </div>
+                    <h5 class="fw-bold">2. Choose Listing Plan</h5>
+                    <p class="text-secondary small">Subscribe to the best plan (Proprietary/LLP, Private, or Public Ltd).</p>
                 </div>
-                <h5 class="fw-bold">Connect</h5>
-                <p class="text-secondary small">Select and connect with matches that interest you.</p>
-            </div>
-            <div class="col-md-3" data-aos="fade-up" data-aos-delay="400">
-                <div class="bg-white rounded-circle shadow-sm d-flex align-items-center justify-content-center mx-auto mb-4" style="width: 80px; height: 80px; border: 2px solid var(--primary);">
-                    <i class="fa-solid fa-comments text-primary fs-3"></i>
+                <div class="col-md-3 how-it-works-step" data-aos="fade-up" data-aos-delay="300">
+                    <div class="bg-white rounded-circle shadow-sm d-flex align-items-center justify-content-center mx-auto mb-4" style="width: 80px; height: 80px; border: 2px solid var(--primary);">
+                        <i class="fa-solid fa-boxes-packing text-primary fs-3"></i>
+                    </div>
+                    <h5 class="fw-bold">3. Catalog Products & Jobs</h5>
+                    <p class="text-secondary small">Publish products, list services, and post community job opportunities.</p>
                 </div>
-                <h5 class="fw-bold">Interact</h5>
-                <p class="text-secondary small">Become a premium member and start conversations.</p>
+                <div class="col-md-3" data-aos="fade-up" data-aos-delay="400">
+                    <div class="bg-white rounded-circle shadow-sm d-flex align-items-center justify-content-center mx-auto mb-4" style="width: 80px; height: 80px; border: 2px solid var(--primary);">
+                        <i class="fa-solid fa-handshake-angle text-primary fs-3"></i>
+                    </div>
+                    <h5 class="fw-bold">4. Verification & Growth</h5>
+                    <p class="text-secondary small">Get verified using Caste Certificates and grow within the community.</p>
+                </div>
             </div>
         </div>
-    </div>
-</section>
+    </section>
+</div>
 
 <!-- SUBSCRIPTION PRICING PLANS -->
 <section class="py-5 bg-white" id="plans">
     <div class="container py-4 text-center">
         
-        <!-- Matrimony Plans -->
-        <div class="text-center mb-5">
-            <span class="badge bg-primary bg-opacity-10 text-primary px-3 py-2 rounded-pill mb-2 fw-bold text-uppercase">Premium Matrimony Plans</span>
-            <h2 class="display-5 fw-extrabold text-dark">Matrimony Plans That Suit Your Journey</h2>
-            <p class="text-secondary">Pruned glassmorphic plans loaded dynamically from the database.</p>
-        </div>
-        <div class="row g-4 justify-content-center mb-5">
-            @if($matrimonyPlans->count() > 0)
-                @foreach($matrimonyPlans as $plan)
-                    <div class="col-md-3" data-aos="fade-up" data-aos-delay="100">
-                        <div class="plan-card">
-                            <div>
-                                <h5 class="fw-bold text-dark mb-0">{{ $plan->plan_name }}</h5>
-                                <div class="plan-price">₹{{ number_format($plan->price, 0) }}</div>
-                                <p class="text-muted small">Per User / {{ $plan->duration_years }} Year(s)</p>
+        <!-- Matrimony Plans (Only in Matrimony Mode) -->
+        <div class="mode-section matrimony-section active-mode">
+            <div class="text-center mb-5">
+                <span class="badge bg-primary bg-opacity-10 text-primary px-3 py-2 rounded-pill mb-2 fw-bold text-uppercase">Premium Matrimony Plans</span>
+                <h2 class="display-5 fw-extrabold text-dark">Matrimony Plans That Suit Your Journey</h2>
+                <p class="text-secondary">Pruned glassmorphic plans loaded dynamically from the database.</p>
+            </div>
+            <div class="row g-4 justify-content-center mb-5">
+                @if($matrimonyPlans->count() > 0)
+                    @foreach($matrimonyPlans as $plan)
+                        <div class="col-md-3" data-aos="fade-up" data-aos-delay="100">
+                            <div class="plan-card">
+                                <div>
+                                    <h5 class="fw-bold text-dark mb-0">{{ $plan->plan_name }}</h5>
+                                    <div class="plan-price">₹{{ number_format($plan->price, 0) }}</div>
+                                    <p class="text-muted small">Per User / {{ $plan->duration_years }} Year(s)</p>
+                                </div>
+                                <hr class="my-4 opacity-10">
+                                <ul class="list-unstyled mb-4 small text-secondary text-start">
+                                    <li class="mb-2"><i class="fa-solid fa-check text-success me-2"></i> Fast Approvals</li>
+                                    <li class="mb-2"><i class="fa-solid fa-check text-success me-2"></i> Unlimited Messages</li>
+                                    <li class="mb-2"><i class="fa-solid fa-check text-success me-2"></i> Private Matches lookup</li>
+                                </ul>
+                                <a href="{{ route('register') }}" class="btn btn-primary btn-sm w-100 py-2.5 rounded-3 text-white">Start Now</a>
                             </div>
-                            <hr class="my-4 opacity-10">
-                            <ul class="list-unstyled mb-4 small text-secondary text-start">
-                                <li class="mb-2"><i class="fa-solid fa-check text-success me-2"></i> Fast Approvals</li>
-                                <li class="mb-2"><i class="fa-solid fa-check text-success me-2"></i> Unlimited Messages</li>
-                                <li class="mb-2"><i class="fa-solid fa-check text-success me-2"></i> Private Matches lookup</li>
-                            </ul>
-                            <a href="{{ route('register') }}" class="btn btn-primary btn-sm w-100 py-2.5 rounded-3 text-white">Start Now</a>
                         </div>
+                    @endforeach
+                @else
+                    <div class="col-12">
+                        <p class="text-secondary small">No active matrimony pricing plans found in database.</p>
                     </div>
-                @endforeach
-            @else
-                <div class="col-12">
-                    <p class="text-secondary small">No active matrimony pricing plans found in database.</p>
-                </div>
-            @endif
+                @endif
+            </div>
         </div>
 
-        <!-- Business Plans -->
-        <div class="text-center mb-5 mt-5">
-            <span class="badge bg-primary bg-opacity-10 text-primary px-3 py-2 rounded-pill mb-2 fw-bold text-uppercase">Premium Business Plans</span>
-            <h2 class="display-5 fw-extrabold text-dark">Business Listing Subscriptions</h2>
-            <p class="text-secondary">Broadcast catalogs and lists. Scale up community reaches dynamically.</p>
-        </div>
-        <div class="row g-4 justify-content-center">
+        <!-- Business Plans (Only in Business Mode) -->
+        <div class="mode-section business-section">
+            <div class="text-center mb-5">
+                <span class="badge bg-primary bg-opacity-10 text-primary px-3 py-2 rounded-pill mb-2 fw-bold text-uppercase">Premium Business Plans</span>
+                <h2 class="display-5 fw-extrabold text-dark">Business Listing Subscriptions</h2>
+                <p class="text-secondary">Broadcast catalogs and lists. Scale up community reaches dynamically.</p>
+            </div>
+
             @if($businessPlans->count() > 0)
-                @foreach($businessPlans as $plan)
-                    <div class="col-md-3" data-aos="fade-up" data-aos-delay="100">
-                        <div class="plan-card">
-                            <div>
-                                <h5 class="fw-bold text-dark mb-0">{{ $plan->company_type }} Plan</h5>
-                                <div class="plan-price">₹{{ number_format($plan->price, 0) }}</div>
-                                <p class="text-muted small">Per Store / {{ $plan->duration_years }} Year(s)</p>
-                            </div>
-                            <hr class="my-4 opacity-10">
-                            <ul class="list-unstyled mb-4 small text-secondary text-start">
-                                <li class="mb-2"><i class="fa-solid fa-check text-success me-2"></i> List Infinite Services</li>
-                                <li class="mb-2"><i class="fa-solid fa-check text-success me-2"></i> Catalog Products</li>
-                                <li class="mb-2"><i class="fa-solid fa-check text-success me-2"></i> Post Job Openings</li>
-                            </ul>
-                            <a href="{{ route('register') }}" class="btn btn-outline-primary btn-sm w-100 py-2.5 rounded-3">Register Store</a>
+                <!-- Tabs Navigation -->
+                <ul class="nav nav-pills justify-content-center mb-5 plan-tabs" id="businessPlanTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="llp-tab" data-bs-toggle="pill" data-bs-target="#llp-plans" type="button" role="tab" aria-controls="llp-plans" aria-selected="true"><i class="fa-solid fa-people-group me-2"></i> Proprietary /Partnership - LLP</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="private-tab" data-bs-toggle="pill" data-bs-target="#private-plans" type="button" role="tab" aria-controls="private-plans" aria-selected="false"><i class="fa-solid fa-building me-2"></i> Private Ltd</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="public-tab" data-bs-toggle="pill" data-bs-target="#public-plans" type="button" role="tab" aria-controls="public-plans" aria-selected="false"><i class="fa-solid fa-city me-2"></i> Public Ltd</button>
+                    </li>
+                </ul>
+
+                <!-- Tabs Content -->
+                <div class="tab-content" id="businessPlanTabContent">
+                    <!-- LLP Plans Tab -->
+                    <div class="tab-pane fade show active" id="llp-plans" role="tabpanel" aria-labelledby="llp-tab">
+                        <div class="row g-4 justify-content-center">
+                            @foreach($businessPlans->where('company_type', 'Proprietary /Partnership - LLP') as $plan)
+                                <div class="col-md-4 col-lg-3" data-aos="fade-up">
+                                    <div class="plan-card">
+                                        <div>
+                                            <h5 class="fw-bold text-dark mb-0">LLP Plan</h5>
+                                            <div class="plan-price">₹{{ number_format($plan->price, 0) }}</div>
+                                            <p class="text-muted small">Per Store / {{ $plan->duration_years }} Year(s)</p>
+                                        </div>
+                                        <hr class="my-4 opacity-10">
+                                        <ul class="list-unstyled mb-4 small text-secondary text-start">
+                                            <li class="mb-2"><i class="fa-solid fa-check text-success me-2"></i> List Infinite Services</li>
+                                            <li class="mb-2"><i class="fa-solid fa-check text-success me-2"></i> Catalog Products</li>
+                                            <li class="mb-2"><i class="fa-solid fa-check text-success me-2"></i> Post Job Openings</li>
+                                        </ul>
+                                        <a href="{{ route('register') }}" class="btn btn-outline-primary btn-sm w-100 py-2.5 rounded-3">Register Store</a>
+                                    </div>
+                                </div>
+                            @endforeach
                         </div>
                     </div>
-                @endforeach
+
+                    <!-- Private Plans Tab -->
+                    <div class="tab-pane fade" id="private-plans" role="tabpanel" aria-labelledby="private-tab">
+                        <div class="row g-4 justify-content-center">
+                            @foreach($businessPlans->where('company_type', 'Private Ltd') as $plan)
+                                <div class="col-md-4 col-lg-3" data-aos="fade-up">
+                                    <div class="plan-card">
+                                        <div>
+                                            <h5 class="fw-bold text-dark mb-0">Private Ltd Plan</h5>
+                                            <div class="plan-price">₹{{ number_format($plan->price, 0) }}</div>
+                                            <p class="text-muted small">Per Store / {{ $plan->duration_years }} Year(s)</p>
+                                        </div>
+                                        <hr class="my-4 opacity-10">
+                                        <ul class="list-unstyled mb-4 small text-secondary text-start">
+                                            <li class="mb-2"><i class="fa-solid fa-check text-success me-2"></i> List Infinite Services</li>
+                                            <li class="mb-2"><i class="fa-solid fa-check text-success me-2"></i> Catalog Products</li>
+                                            <li class="mb-2"><i class="fa-solid fa-check text-success me-2"></i> Post Job Openings</li>
+                                        </ul>
+                                        <a href="{{ route('register') }}" class="btn btn-outline-primary btn-sm w-100 py-2.5 rounded-3">Register Store</a>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+
+                    <!-- Public Plans Tab -->
+                    <div class="tab-pane fade" id="public-plans" role="tabpanel" aria-labelledby="public-tab">
+                        <div class="row g-4 justify-content-center">
+                            @foreach($businessPlans->where('company_type', 'Public Ltd') as $plan)
+                                <div class="col-md-4 col-lg-3" data-aos="fade-up">
+                                    <div class="plan-card">
+                                        <div>
+                                            <h5 class="fw-bold text-dark mb-0">Public Ltd Plan</h5>
+                                            <div class="plan-price">₹{{ number_format($plan->price, 0) }}</div>
+                                            <p class="text-muted small">Per Store / {{ $plan->duration_years }} Year(s)</p>
+                                        </div>
+                                        <hr class="my-4 opacity-10">
+                                        <ul class="list-unstyled mb-4 small text-secondary text-start">
+                                            <li class="mb-2"><i class="fa-solid fa-check text-success me-2"></i> List Infinite Services</li>
+                                            <li class="mb-2"><i class="fa-solid fa-check text-success me-2"></i> Catalog Products</li>
+                                            <li class="mb-2"><i class="fa-solid fa-check text-success me-2"></i> Post Job Openings</li>
+                                        </ul>
+                                        <a href="{{ route('register') }}" class="btn btn-outline-primary btn-sm w-100 py-2.5 rounded-3">Register Store</a>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                </div>
             @else
                 <div class="col-12">
                     <p class="text-secondary small">No active business listing plans found in database.</p>
                 </div>
             @endif
         </div>
+
+    </div>
+</section>
 
     </div>
 </section>
@@ -833,9 +1287,111 @@
                         <span class="small text-muted">Parent, Nashik</span>
                     </div>
                 </div>
+                <div class="swiper-slide">
+                    <div class="glass-card text-center p-5">
+                        <i class="fa-solid fa-quote-left fs-1 text-primary opacity-20 mb-4"></i>
+                        <p class="fs-5 text-secondary" style="font-style: italic;">"Registered my agricultural startup on the Mali Setu Business directory and gained over 200 community clients within three months. Absolutely game-changing!"</p>
+                        <h6 class="fw-bold mt-4 mb-0">Rahul Mali</h6>
+                        <span class="small text-muted">Agro-Entrepreneur, Bangalore</span>
+                    </div>
+                </div>
+                <div class="swiper-slide">
+                    <div class="glass-card text-center p-5">
+                        <i class="fa-solid fa-quote-left fs-1 text-primary opacity-20 mb-4"></i>
+                        <p class="fs-5 text-secondary" style="font-style: italic;">"We connected through Mali Setu's verified matrimony. The profile verification process is top-notch, ensuring we interacted with genuine families."</p>
+                        <h6 class="fw-bold mt-4 mb-0">Priyanka & Amit</h6>
+                        <span class="small text-muted">Happily Married, Mumbai</span>
+                    </div>
+                </div>
+                <div class="swiper-slide">
+                    <div class="glass-card text-center p-5">
+                        <i class="fa-solid fa-quote-left fs-1 text-primary opacity-20 mb-4"></i>
+                        <p class="fs-5 text-secondary" style="font-style: italic;">"Listing our logistics firm under the LLP plan has given us great exposure. We now recruit local talent and provide services within the community."</p>
+                        <h6 class="fw-bold mt-4 mb-0">Karan Solanki</h6>
+                        <span class="small text-muted">Logistics LLP Partner, Nagpur</span>
+                    </div>
+                </div>
+                <div class="swiper-slide">
+                    <div class="glass-card text-center p-5">
+                        <i class="fa-solid fa-quote-left fs-1 text-primary opacity-20 mb-4"></i>
+                        <p class="fs-5 text-secondary" style="font-style: italic;">"As a boutique designer, finding verified community wholesalers was a huge challenge until Mali Setu directory came along. A wonderful initiative!"</p>
+                        <h6 class="fw-bold mt-4 mb-0">Sneha Mali</h6>
+                        <span class="small text-muted">Boutique Owner, Indore</span>
+                    </div>
+                </div>
             </div>
             <div class="swiper-pagination mt-5 position-relative"></div>
         </div>
+    </div>
+</section>
+
+<!-- COMMUNITY BLOGS & INSIGHTS -->
+<section class="py-5 bg-white" id="blogs-section">
+    <div class="container py-4">
+        <div class="text-center mb-5">
+            <span class="badge bg-primary bg-opacity-10 text-primary px-3 py-2 rounded-pill mb-2 fw-bold text-uppercase">Community Hub</span>
+            <h2 class="display-5 fw-extrabold text-dark">Latest Blogs & Insights</h2>
+            <p class="text-secondary">Explore expert insights, success guides, and inspiring community articles.</p>
+        </div>
+
+        <div class="row g-4 justify-content-center">
+            @if($blogs && $blogs->count() > 0)
+                @foreach($blogs as $blog)
+                    @php
+                        $coverPhoto = $blog->media_path 
+                            ? asset('storage/' . $blog->media_path) 
+                            : 'https://images.unsplash.com/photo-1499750310107-5fef28a66643?auto=format&fit=crop&w=600&q=80';
+                        
+                        $isLiked = false;
+                        if (auth()->check()) {
+                            $isLiked = $blog->likedBy(auth()->id());
+                        }
+                    @endphp
+                    <div class="col-md-6 col-lg-4" data-aos="fade-up" data-aos-delay="100">
+                        <div class="blog-card">
+                            <div class="blog-image-wrapper">
+                                <span class="blog-badge">{{ $blog->blog_type }}</span>
+                                <img src="{{ $coverPhoto }}" class="blog-image" alt="{{ $blog->title }}">
+                            </div>
+                            <div class="blog-content">
+                                <div>
+                                    <div class="blog-meta">
+                                        <span><i class="fa-regular fa-calendar me-1"></i> {{ $blog->created_at->format('M d, Y') }}</span>
+                                        <span><i class="fa-regular fa-clock me-1"></i> 5 min read</span>
+                                    </div>
+                                    <a href="{{ route('blogs.show', $blog->id) }}" class="blog-title">{{ $blog->title }}</a>
+                                    <p class="blog-desc text-secondary">{{ strip_tags($blog->description) }}</p>
+                                </div>
+                                <div class="blog-footer">
+                                    <div class="blog-author">
+                                        <img src="{{ $blog->user->avatar ? asset('storage/' . $blog->user->avatar) : asset('default-avatar.png') }}" class="blog-author-img" alt="Author">
+                                        <span class="blog-author-name">{{ $blog->user->name }}</span>
+                                    </div>
+                                    <div class="blog-actions">
+                                        <button class="blog-action-btn {{ $isLiked ? 'liked' : '' }}" onclick="toggleBlogLike(this, {{ $blog->id }})">
+                                            <i class="{{ $isLiked ? 'fa-solid' : 'fa-regular' }} fa-heart"></i>
+                                            <span class="likes-count">{{ $blog->likes_count }}</span>
+                                        </button>
+                                        <a href="{{ route('blogs.show', $blog->id) }}" class="blog-action-btn text-decoration-none">
+                                            <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                @endforeach
+            @else
+                <div class="col-12 text-center py-5">
+                    <div class="text-secondary opacity-60 mb-3"><i class="fa-solid fa-note-sticky fs-1"></i></div>
+                    <p class="text-secondary">No community blogs published at this time.</p>
+                </div>
+            @endif
+        </div>
+        
+        <?php /*<div class="text-center mt-5">
+            <a href="{{ route('blogs.index') }}" class="btn btn-outline-primary px-4 py-2.5 rounded-pill shadow-sm" style="font-weight: 700;"><i class="fa-solid fa-book-open me-2"></i> Browse All Blog Articles</a>
+        </div> */?>
     </div>
 </section>
 
@@ -917,13 +1473,175 @@
 <script>
     AOS.init({ duration: 800, once: true });
 
-    // Swiper Config
+    // Hero Swiper Autoplay Config
+    const heroSwiper = new Swiper(".heroSwiper", {
+        loop: true,
+        autoplay: {
+            delay: 5000,
+            disableOnInteraction: false,
+        },
+        pagination: {
+            el: ".hero-swiper-pagination",
+            clickable: true,
+        },
+        spaceBetween: 0,
+        speed: 800
+    });
+
+    // Testimonial Swiper Config
     new Swiper(".testimonialSwiper", {
         slidesPerView: 1,
         spaceBetween: 30,
+        autoplay: {
+            delay: 4500,
+            disableOnInteraction: false,
+        },
         pagination: { el: ".swiper-pagination", clickable: true },
-        breakpoints: { 768: { slidesPerView: 2 } }
+        breakpoints: { 768: { slidesPerView: 2 } },
+        speed: 600
     });
+
+    // Dynamic SPA Mode Switching & Hash Routing
+    function switchLandingMode(mode) {
+        // Remove active-mode from all sections
+        document.querySelectorAll('.mode-section').forEach(section => {
+            section.classList.remove('active-mode');
+        });
+
+        // Remove active class from toggle buttons
+        document.querySelectorAll('.btn-mode-toggle').forEach(btn => {
+            btn.classList.remove('active');
+        });
+
+        // Remove active class from navbar links
+        document.querySelectorAll('.nav-link').forEach(link => {
+            link.classList.remove('text-primary');
+        });
+
+        const togglePill = document.getElementById('landing-mode-toggle-pill');
+
+        if (mode === 'matrimony') {
+            // Activate Matrimony sections
+            document.querySelectorAll('.matrimony-section').forEach(section => {
+                section.classList.add('active-mode');
+            });
+            // Update Toggle slider
+            if (togglePill) {
+                togglePill.classList.remove('business-active');
+                togglePill.classList.add('matrimony-active');
+            }
+            // Update Toggle buttons
+            const btn = document.getElementById('btn-toggle-matrimony');
+            if (btn) btn.classList.add('active');
+
+            // Update Navbar link
+            const navLink = document.getElementById('nav-link-matrimony');
+            if (navLink) navLink.classList.add('text-primary');
+
+            // Update URL hash
+            if (window.location.hash !== '#matrimony') {
+                window.location.hash = 'matrimony';
+            }
+        } else {
+            // Activate Business sections
+            document.querySelectorAll('.business-section').forEach(section => {
+                section.classList.add('active-mode');
+            });
+            // Update Toggle slider
+            if (togglePill) {
+                togglePill.classList.remove('matrimony-active');
+                togglePill.classList.add('business-active');
+            }
+            // Update Toggle buttons
+            const btn = document.getElementById('btn-toggle-business');
+            if (btn) btn.classList.add('active');
+
+            // Update Navbar link
+            const navLink = document.getElementById('nav-link-business');
+            if (navLink) navLink.classList.add('text-primary');
+
+            // Update URL hash
+            if (window.location.hash !== '#business') {
+                window.location.hash = 'business';
+            }
+        }
+
+        // Re-trigger AOS animations for freshly shown elements
+        setTimeout(() => {
+            AOS.refresh();
+        }, 150);
+    }
+
+    // Auto-detect mode on page load based on URL hash
+    window.addEventListener('DOMContentLoaded', () => {
+        const hash = window.location.hash;
+        if (hash === '#business') {
+            switchLandingMode('business');
+        } else {
+            switchLandingMode('matrimony');
+        }
+    });
+
+    // Handle hash change events (e.g. back button or direct clicks)
+    window.addEventListener('hashchange', () => {
+        const hash = window.location.hash;
+        if (hash === '#business') {
+            switchLandingMode('business');
+        } else if (hash === '#matrimony') {
+            switchLandingMode('matrimony');
+        }
+    });
+
+    // AJAX Blog Liking logic
+    const isAuthenticated = @json(auth()->check());
+
+    function toggleBlogLike(button, blogId) {
+        if (!isAuthenticated) {
+            // Unauthenticated guest user alert
+            alert("Sign In Required: Please log in to like this blog and connect with the community!");
+            window.location.href = "{{ route('login') }}";
+            return;
+        }
+
+        button.disabled = true;
+
+        fetch(`/dashboard/blogs/${blogId}/like`, {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            }
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error("HTTP error " + response.status);
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                const icon = button.querySelector('i');
+                const likesCountSpan = button.querySelector('.likes-count');
+
+                if (data.liked) {
+                    button.classList.add('liked');
+                    icon.className = 'fa-solid fa-heart text-danger';
+                } else {
+                    button.classList.remove('liked');
+                    icon.className = 'fa-regular fa-heart';
+                }
+
+                likesCountSpan.textContent = data.likes_count;
+            }
+        })
+        .catch(error => {
+            console.error('Failed to like/unlike blog:', error);
+        })
+        .finally(() => {
+            button.disabled = false;
+        });
+    }
 
     // Numbers Counter Logic
     function initCounters() {

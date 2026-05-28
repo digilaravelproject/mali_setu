@@ -41,7 +41,7 @@
                                 <div class="text-start flex-grow-1" style="max-width: 80%;">
                                     <div class="d-flex align-items-center gap-2 mb-1 flex-wrap">
                                         <h5 class="fw-bold text-dark mb-0">{{ $job->title }}</h5>
-                                        <span class="badge bg-primary bg-opacity-10 text-primary fw-bold text-uppercase small" style="font-size:0.7rem;">{{ $job->category ?? 'General' }}</span>
+                                        <span class="badge bg-primary bg-opacity-10 text-primary fw-bold text-uppercase small" style="font-size:0.7rem; color: white !important;">{{ $job->category ?? 'General' }}</span>
                                     </div>
                                     <div class="mb-3 text-muted small">
                                         <span class="me-3"><i class="fa-solid fa-store me-1 text-primary"></i> <strong>{{ $job->business->business_name ?? 'N/A' }}</strong></span>
