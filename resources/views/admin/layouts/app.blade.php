@@ -253,6 +253,13 @@
                     User Management
                 </a>
             </div>
+
+            <div class="nav-item">
+                <a href="{{ route('admin.bloggers.index') }}" class="nav-link {{ request()->routeIs('admin.bloggers.*') ? 'active' : '' }}">
+                    <i class="fas fa-users-cog"></i>
+                    Blogger Management
+                </a>
+            </div>
             
             <div class="nav-item">
                 <a href="{{ route('admin.users.verification.pending') }}" class="nav-link {{ request()->routeIs('admin.users.verification.*') ? 'active' : '' }}">

@@ -278,15 +278,11 @@ class BlogController extends Controller
 
         $likesCount = $blog->likes()->count();
 
-        if (request()->ajax()) {
-            return response()->json([
-                'success' => true,
-                'liked' => $liked,
-                'likes_count' => $likesCount
-            ]);
-        }
-
-        return back();
+        return response()->json([
+            'success' => true,
+            'liked' => $liked,
+            'likes_count' => $likesCount
+        ]);
     }
 
     /**

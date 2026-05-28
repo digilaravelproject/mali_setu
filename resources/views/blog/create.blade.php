@@ -12,7 +12,7 @@
     </div>
 
     <div class="row justify-content-center">
-        <div class="col-md-9 col-lg-8">
+        <div class="col-md-12 col-lg-12">
             <div class="card border-0 shadow-sm" style="border-radius: 24px; overflow: hidden; background: #fff;">
                 <div class="card-header bg-primary text-white p-4 border-0 d-flex align-items-center gap-3">
                     <div class="icon-circle bg-white text-primary d-flex align-items-center justify-content-center" style="width:48px; height:48px; border-radius:50%;">

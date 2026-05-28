@@ -20,6 +20,10 @@ class DashboardController extends Controller
      */
     public function index(Request $request)
     {
+        if (Auth::user()->user_type === 'bloger') {
+            return redirect()->route('blogs.index');
+        }
+
         $user = Auth::user()->load([
             'casteCertificate',
             'business.products',

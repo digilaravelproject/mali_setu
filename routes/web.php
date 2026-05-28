@@ -349,6 +349,19 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::delete('/{id}', [BlogManagementController::class, 'destroy'])->name('destroy');
             Route::patch('/{id}/toggle-status', [BlogManagementController::class, 'toggleStatus'])->name('toggle-status');
         });
+
+        // Blogger Management Routes
+        Route::prefix('bloggers')->name('bloggers.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\Admin\BloggerManagementController::class, 'index'])->name('index');
+            Route::post('/check-email', [\App\Http\Controllers\Admin\BloggerManagementController::class, 'checkEmail'])->name('check-email');
+            Route::get('/create', [\App\Http\Controllers\Admin\BloggerManagementController::class, 'create'])->name('create');
+            Route::post('/', [\App\Http\Controllers\Admin\BloggerManagementController::class, 'store'])->name('store');
+            Route::get('/{id}', [\App\Http\Controllers\Admin\BloggerManagementController::class, 'show'])->name('show');
+            Route::get('/{id}/edit', [\App\Http\Controllers\Admin\BloggerManagementController::class, 'edit'])->name('edit');
+            Route::put('/{id}', [\App\Http\Controllers\Admin\BloggerManagementController::class, 'update'])->name('update');
+            Route::delete('/{id}', [\App\Http\Controllers\Admin\BloggerManagementController::class, 'destroy'])->name('destroy');
+            Route::post('/{id}/toggle-status', [\App\Http\Controllers\Admin\BloggerManagementController::class, 'toggleStatus'])->name('toggle-status');
+        });
         
         // Education Management Routes
         Route::prefix('educations')->name('educations.')->group(function () {
