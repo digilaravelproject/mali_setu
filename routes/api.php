@@ -276,6 +276,8 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::prefix('blogs')->group(function () {
         Route::post('/', [BlogController::class, 'store']);
         Route::post('{id}/like', [BlogController::class, 'like']);
+        Route::put('{id}', [BlogController::class, 'update']);
+        Route::delete('{id}', [BlogController::class, 'destroy']);
     });
     
     // Job Management Routes

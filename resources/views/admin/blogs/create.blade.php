@@ -29,6 +29,30 @@
                 </div>
 
                 <div class="mb-3">
+                    <label class="form-label">Blog Type</label>
+                    <select name="blog_type" class="form-select" required>
+                        <option value="" disabled selected>Select Blog Category</option>
+                        @php
+                            $categories = [
+                                'Technology', 'Business', 'Finance', 'Marketing', 'Startups', 
+                                'Artificial Intelligence (AI)', 'Software Development', 'Web Development', 
+                                'Mobile App Development', 'Cybersecurity', 'Cloud Computing', 'Data Science', 
+                                'Health & Fitness', 'Lifestyle', 'Travel', 'Food & Recipes', 
+                                'Fashion & Beauty', 'Education', 'Career & Jobs', 'Personal Development', 
+                                'Entertainment', 'Movies & TV', 'Music', 'Sports', 'Gaming', 
+                                'News & Current Affairs', 'Politics', 'Science', 'Environment', 
+                                'Parenting', 'Relationships', 'Real Estate', 'Automotive', 
+                                'Photography', 'Home Improvement', 'E-commerce', 'Product Reviews', 
+                                'Tutorials & Guides', 'Case Studies', 'Interviews'
+                            ];
+                        @endphp
+                        @foreach($categories as $cat)
+                            <option value="{{ $cat }}" {{ old('blog_type') === $cat ? 'selected' : '' }}>{{ $cat }}</option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <div class="mb-3">
                     <label class="form-label">Description</label>
                     <textarea name="description" class="form-control" rows="5">{{ old('description') }}</textarea>
                 </div>
@@ -39,8 +63,8 @@
                 </div>
 
                 <div class="mb-3">
-                    <label class="form-label">Media (image/video)</label>
-                    <input type="file" name="media" class="form-control" accept="image/*,video/*">
+                    <label class="form-label">Media (image/video - select one or more)</label>
+                    <input type="file" name="media[]" class="form-control" accept="image/*,video/*" multiple>
                 </div>
 
                 <div class="form-check mb-4">

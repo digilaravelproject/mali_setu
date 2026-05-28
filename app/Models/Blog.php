@@ -25,6 +25,7 @@ class Blog extends Model
     protected $casts = [
         'tags' => 'array',
         'is_active' => 'boolean',
+        'media_path' => 'array',
     ];
 
     /**

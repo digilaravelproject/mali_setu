@@ -98,13 +98,23 @@ class BlogController extends Controller
     {
         $user = $request->user();
 
-        $validator = Validator::make($request->all(), [
+        $rules = [
             'title' => 'required|string|max:255',
             'description' => 'required|string',
-            'blog_type' => 'nullable|string',
-            'tags' => 'nullable|array',
-            'tags.*' => 'string',
-            'media' => 'nullable|string',
+            'blog_type' => 'required|string|max:255',
+            'tags' => 'required',
+        ];
+
+        if ($request->hasFile('media')) {
+            $rules['media'] = 'nullable|array';
+            $rules['media.*'] = 'file|mimes:jpg,jpeg,png,gif,mp4,mov,avi,webm|max:10240';
+        }
+
+        $validator = Validator::make($request->all(), $rules, [
+            'title.required' => 'Please enter blog title',
+            'blog_type.required' => 'Please select a blog type',
+            'description.required' => 'Please enter blog description',
+            'tags.required' => 'Please add at least one tag',
         ]);
 
         if ($validator->fails()) {
@@ -115,46 +125,57 @@ class BlogController extends Controller
             ], 422);
         }
 
-        $tags = $request->tags;
-        if (is_string($tags)) {
-            $tags = array_filter(array_map('trim', explode(',', $tags)));
+        $tags = [];
+        if ($request->filled('tags')) {
+            if (is_array($request->tags)) {
+                $tags = array_filter(array_map('trim', $request->tags));
+            } else {
+                $tags = array_filter(array_map('trim', explode(',', $request->tags)));
+            }
         }
 
-        $mediaPath = null;
-        $mediaType = null;
+        $mediaPaths = [];
+        $mediaType = 'image';
 
-        if ($request->filled('media')) {
-            $media = $request->media;
-
-            // Parse base64 data URI if provided
-            if (str_contains($media, 'data:') && str_contains($media, ';base64,')) {
-                [$meta, $encoded] = explode(';base64,', $media);
-                $mime = str_replace('data:', '', $meta);
-                $extension = explode('/', $mime)[1] ?? 'bin';
-                $decoded = base64_decode($encoded);
-            } else {
-                // Assume base64 without data URI
-                $decoded = base64_decode($media);
-                $extension = 'jpg';
-                $mime = 'image/jpeg';
+        // 1. Handle actual uploaded files
+        if ($request->hasFile('media')) {
+            $files = is_array($request->file('media')) ? $request->file('media') : [$request->file('media')];
+            foreach ($files as $file) {
+                $path = $file->store('blogs/media', 'public');
+                $mediaPaths[] = $path;
+                $mime = $file->getMimeType();
+                if (str_starts_with($mime, 'video/')) {
+                    $mediaType = 'video';
+                }
             }
+        }
+        // 2. Fallback to base64 strings (either a single string or an array of strings)
+        elseif ($request->filled('media')) {
+            $mediaInputs = is_array($request->media) ? $request->media : [$request->media];
+            foreach ($mediaInputs as $mediaItem) {
+                if (is_string($mediaItem)) {
+                    if (str_contains($mediaItem, 'data:') && str_contains($mediaItem, ';base64,')) {
+                        [$meta, $encoded] = explode(';base64,', $mediaItem);
+                        $mime = str_replace('data:', '', $meta);
+                        $extension = explode('/', $mime)[1] ?? 'bin';
+                        $decoded = base64_decode($encoded);
+                    } else {
+                        // Assume base64 without data URI
+                        $decoded = base64_decode($mediaItem);
+                        $extension = 'jpg';
+                        $mime = 'image/jpeg';
+                    }
 
-            if ($decoded === false) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Invalid media data',
-                ], 422);
+                    if ($decoded !== false) {
+                        if (str_starts_with($mime, 'video/')) {
+                            $mediaType = 'video';
+                        }
+                        $fileName = 'blogs/media/' . uniqid() . '.' . $extension;
+                        Storage::disk('public')->put($fileName, $decoded);
+                        $mediaPaths[] = $fileName;
+                    }
+                }
             }
-
-            if (str_starts_with($mime, 'video/')) {
-                $mediaType = 'video';
-            } else {
-                $mediaType = 'image';
-            }
-
-            $fileName = 'blogs/media/' . uniqid() . '.' . $extension;
-            Storage::disk('public')->put($fileName, $decoded);
-            $mediaPath = $fileName;
         }
 
         $blog = Blog::create([
@@ -162,15 +183,187 @@ class BlogController extends Controller
             'title' => $request->title,
             'description' => $request->description,
             'blog_type' => $request->blog_type,
-            'tags' => $tags,
-            'media_path' => $mediaPath,
+            'tags' => array_values($tags),
+            'media_path' => $mediaPaths,
             'media_type' => $mediaType,
+            'is_active' => true,
         ]);
 
         return response()->json([
             'success' => true,
             'message' => 'Blog created successfully',
             'data' => $blog,
+        ], 201);
+    }
+
+    /**
+     * Update the specified blog.
+     */
+    public function update(Request $request, $id)
+    {
+        $blog = Blog::findOrFail($id);
+        $user = $request->user();
+
+        if ($blog->user_id !== $user->id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized action. You do not own this blog.',
+            ], 403);
+        }
+
+        $rules = [
+            'title' => 'required|string|max:255',
+            'description' => 'required|string',
+            'blog_type' => 'required|string|max:255',
+            'tags' => 'required',
+        ];
+
+        if ($request->hasFile('media')) {
+            $rules['media'] = 'nullable|array';
+            $rules['media.*'] = 'file|mimes:jpg,jpeg,png,gif,mp4,mov,avi,webm|max:10240';
+        }
+
+        $validator = Validator::make($request->all(), $rules, [
+            'title.required' => 'Please enter blog title',
+            'blog_type.required' => 'Please select a blog type',
+            'description.required' => 'Please enter blog description',
+            'tags.required' => 'Please add at least one tag',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
+        $tags = [];
+        if ($request->filled('tags')) {
+            if (is_array($request->tags)) {
+                $tags = array_filter(array_map('trim', $request->tags));
+            } else {
+                $tags = array_filter(array_map('trim', explode(',', $request->tags)));
+            }
+        }
+
+        $mediaPaths = $blog->media_path ?? [];
+        $mediaType = $blog->media_type ?? 'image';
+        $hasNewMedia = $request->hasFile('media') || $request->filled('media');
+
+        if ($hasNewMedia) {
+            // Delete old media files from storage
+            if ($blog->media_path) {
+                $oldPaths = is_array($blog->media_path) ? $blog->media_path : json_decode($blog->media_path, true);
+                if (is_array($oldPaths)) {
+                    foreach ($oldPaths as $oldPath) {
+                        if (Storage::disk('public')->exists($oldPath)) {
+                            Storage::disk('public')->delete($oldPath);
+                        }
+                    }
+                } elseif (is_string($blog->media_path)) {
+                    if (Storage::disk('public')->exists($blog->media_path)) {
+                        Storage::disk('public')->delete($blog->media_path);
+                    }
+                }
+            }
+
+            $mediaPaths = [];
+            $mediaType = 'image';
+
+            // 1. Handle uploaded files
+            if ($request->hasFile('media')) {
+                $files = is_array($request->file('media')) ? $request->file('media') : [$request->file('media')];
+                foreach ($files as $file) {
+                    $path = $file->store('blogs/media', 'public');
+                    $mediaPaths[] = $path;
+                    $mime = $file->getMimeType();
+                    if (str_starts_with($mime, 'video/')) {
+                        $mediaType = 'video';
+                    }
+                }
+            }
+            // 2. Handle base64 strings
+            elseif ($request->filled('media')) {
+                $mediaInputs = is_array($request->media) ? $request->media : [$request->media];
+                foreach ($mediaInputs as $mediaItem) {
+                    if (is_string($mediaItem)) {
+                        if (str_contains($mediaItem, 'data:') && str_contains($mediaItem, ';base64,')) {
+                            [$meta, $encoded] = explode(';base64,', $mediaItem);
+                            $mime = str_replace('data:', '', $meta);
+                            $extension = explode('/', $mime)[1] ?? 'bin';
+                            $decoded = base64_decode($encoded);
+                        } else {
+                            $decoded = base64_decode($mediaItem);
+                            $extension = 'jpg';
+                            $mime = 'image/jpeg';
+                        }
+
+                        if ($decoded !== false) {
+                            if (str_starts_with($mime, 'video/')) {
+                                $mediaType = 'video';
+                            }
+                            $fileName = 'blogs/media/' . uniqid() . '.' . $extension;
+                            Storage::disk('public')->put($fileName, $decoded);
+                            $mediaPaths[] = $fileName;
+                        }
+                    }
+                }
+            }
+        }
+
+        $blog->update([
+            'title' => $request->title,
+            'description' => $request->description,
+            'blog_type' => $request->blog_type,
+            'tags' => array_values($tags),
+            'media_path' => $mediaPaths,
+            'media_type' => $mediaType,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Blog updated successfully',
+            'data' => $blog,
+        ]);
+    }
+
+    /**
+     * Remove the specified blog.
+     */
+    public function destroy($id, Request $request)
+    {
+        $blog = Blog::findOrFail($id);
+        $user = $request->user();
+
+        if ($blog->user_id !== $user->id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized action. You do not own this blog.',
+            ], 403);
+        }
+
+        // Delete associated files
+        if ($blog->media_path) {
+            $oldPaths = is_array($blog->media_path) ? $blog->media_path : json_decode($blog->media_path, true);
+            if (is_array($oldPaths)) {
+                foreach ($oldPaths as $oldPath) {
+                    if (Storage::disk('public')->exists($oldPath)) {
+                        Storage::disk('public')->delete($oldPath);
+                    }
+                }
+            } elseif (is_string($blog->media_path)) {
+                if (Storage::disk('public')->exists($blog->media_path)) {
+                    Storage::disk('public')->delete($blog->media_path);
+                }
+            }
+        }
+
+        $blog->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Blog deleted successfully',
         ]);
     }
 

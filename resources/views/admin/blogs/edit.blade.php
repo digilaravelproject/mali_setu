@@ -30,6 +30,30 @@
                 </div>
 
                 <div class="mb-3">
+                    <label class="form-label">Blog Type</label>
+                    <select name="blog_type" class="form-select" required>
+                        <option value="" disabled>Select Blog Category</option>
+                        @php
+                            $categories = [
+                                'Technology', 'Business', 'Finance', 'Marketing', 'Startups', 
+                                'Artificial Intelligence (AI)', 'Software Development', 'Web Development', 
+                                'Mobile App Development', 'Cybersecurity', 'Cloud Computing', 'Data Science', 
+                                'Health & Fitness', 'Lifestyle', 'Travel', 'Food & Recipes', 
+                                'Fashion & Beauty', 'Education', 'Career & Jobs', 'Personal Development', 
+                                'Entertainment', 'Movies & TV', 'Music', 'Sports', 'Gaming', 
+                                'News & Current Affairs', 'Politics', 'Science', 'Environment', 
+                                'Parenting', 'Relationships', 'Real Estate', 'Automotive', 
+                                'Photography', 'Home Improvement', 'E-commerce', 'Product Reviews', 
+                                'Tutorials & Guides', 'Case Studies', 'Interviews'
+                            ];
+                        @endphp
+                        @foreach($categories as $cat)
+                            <option value="{{ $cat }}" {{ old('blog_type', $blog->blog_type) === $cat ? 'selected' : '' }}>{{ $cat }}</option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <div class="mb-3">
                     <label class="form-label">Description</label>
                     <textarea name="description" class="form-control" rows="5">{{ old('description', $blog->description) }}</textarea>
                 </div>
@@ -40,24 +64,34 @@
                 </div>
 
                 @if($blog->media_path)
-                    <div class="mb-3">
-                        <label class="form-label">Existing Media</label>
-                        <div>
-                            @if($blog->media_type === 'video')
-                                <video controls width="250">
-                                    <source src="{{ asset('storage/' . $blog->media_path) }}" type="video/mp4">
-                                    Your browser does not support the video tag.
-                                </video>
-                            @else
-                                <img src="{{ asset('storage/' . $blog->media_path) }}" alt="Blog Media" class="img-fluid" style="max-height: 200px;">
-                            @endif
+                    @php
+                        $mediaList = is_array($blog->media_path) ? $blog->media_path : json_decode($blog->media_path, true);
+                    @endphp
+                    @if(is_array($mediaList) && count($mediaList) > 0)
+                        <div class="mb-3">
+                            <label class="form-label">Existing Media</label>
+                            <div class="row g-2">
+                                @foreach($mediaList as $mPath)
+                                    @php
+                                        $ext = strtolower(pathinfo($mPath, PATHINFO_EXTENSION));
+                                        $isVid = in_array($ext, ['mp4', 'mov', 'avi', 'webm', 'ogg']);
+                                    @endphp
+                                    <div class="col-md-3">
+                                        @if($isVid)
+                                            <video src="{{ asset('storage/' . $mPath) }}" class="img-fluid rounded border" style="max-height: 120px; width: 100%; object-fit: cover;" controls></video>
+                                        @else
+                                            <img src="{{ asset('storage/' . $mPath) }}" alt="Blog Media" class="img-fluid rounded border" style="max-height: 120px; width: 100%; object-fit: cover;">
+                                        @endif
+                                    </div>
+                                @endforeach
+                            </div>
                         </div>
-                    </div>
+                    @endif
                 @endif
 
                 <div class="mb-3">
-                    <label class="form-label">Replace Media (optional)</label>
-                    <input type="file" name="media" class="form-control" accept="image/*,video/*">
+                    <label class="form-label">Replace Media (optional - select one or more)</label>
+                    <input type="file" name="media[]" class="form-control" accept="image/*,video/*" multiple>
                 </div>
 
                 <div class="form-check mb-4">

@@ -113,10 +113,20 @@
                                         <td>
                                             <div class="d-flex align-items-center">
                                                 @if($blog->media_path)
-                                                    <img src="{{ asset('storage/' . $blog->media_path) }}" 
-                                                         style="width: 50px; height: 50px; border-radius: 8px; object-fit: cover;" 
-                                                         class="me-3" 
-                                                         alt="Media">
+                                                    @php
+                                                        $mediaList = is_array($blog->media_path) ? $blog->media_path : json_decode($blog->media_path, true);
+                                                        $singlePath = is_array($mediaList) ? ($mediaList[0] ?? null) : $blog->media_path;
+                                                    @endphp
+                                                    @if($singlePath)
+                                                        <img src="{{ asset('storage/' . $singlePath) }}" 
+                                                             style="width: 50px; height: 50px; border-radius: 8px; object-fit: cover;" 
+                                                             class="me-3" 
+                                                             alt="Media">
+                                                    @else
+                                                        <div class="bg-light d-flex align-items-center justify-content-center text-muted me-3" style="width: 50px; height: 50px; border-radius: 8px;">
+                                                            <i class="fas fa-newspaper opacity-40"></i>
+                                                        </div>
+                                                    @endif
                                                 @else
                                                     <div class="bg-light d-flex align-items-center justify-content-center text-muted me-3" style="width: 50px; height: 50px; border-radius: 8px;">
                                                         <i class="fas fa-newspaper opacity-40"></i>

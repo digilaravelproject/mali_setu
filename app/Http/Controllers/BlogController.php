@@ -32,10 +32,13 @@ class BlogController extends Controller
             $query->whereJsonContains('tags', trim($request->tag));
         }
 
-        // Get public active blogs
+        // Get public active blogs (loaded all at once for smooth client-side tab switching)
         $blogs = $query->where('is_active', true)
             ->latest()
-            ->paginate(9);
+            ->get();
+
+        // Dynamically extract categories containing at least one active blog matching search/tag
+        $activeCategories = $blogs->pluck('blog_type')->unique()->filter()->values();
 
         // Get user's own blogs (if they have blog creation access)
         $myBlogs = [];
@@ -46,7 +49,7 @@ class BlogController extends Controller
                 ->get();
         }
 
-        return view('blog.index', compact('blogs', 'myBlogs', 'user'));
+        return view('blog.index', compact('blogs', 'myBlogs', 'user', 'activeCategories'));
     }
 
     /**
@@ -77,7 +80,8 @@ class BlogController extends Controller
             'blog_type' => 'required|string|max:255',
             'description' => 'required|string|max:10000',
             'tags' => 'required|string',
-            'media' => 'nullable|file|mimes:jpg,jpeg,png,gif,mp4,mov,avi,webm|max:10240', // Max 10MB
+            'media' => 'nullable|array',
+            'media.*' => 'file|mimes:jpg,jpeg,png,gif,mp4,mov,avi,webm|max:10240', // Max 10MB per file
         ], [
             'title.required' => 'Please enter blog title',
             'blog_type.required' => 'Please select a blog type',
@@ -91,14 +95,18 @@ class BlogController extends Controller
                 $tags = array_filter(array_map('trim', explode(',', $request->tags)));
             }
 
-            $mediaPath = null;
-            $mediaType = null;
+            $mediaPaths = [];
+            $mediaType = 'image';
 
             if ($request->hasFile('media')) {
-                $file = $request->file('media');
-                $mediaPath = $file->store('blogs/media', 'public');
-                $mime = $file->getMimeType();
-                $mediaType = str_starts_with($mime, 'video/') ? 'video' : 'image';
+                foreach ($request->file('media') as $file) {
+                    $path = $file->store('blogs/media', 'public');
+                    $mediaPaths[] = $path;
+                    $mime = $file->getMimeType();
+                    if (str_starts_with($mime, 'video/')) {
+                        $mediaType = 'video';
+                    }
+                }
             }
 
             Blog::create([
@@ -107,7 +115,7 @@ class BlogController extends Controller
                 'blog_type' => $request->blog_type,
                 'description' => $request->description,
                 'tags' => array_values($tags),
-                'media_path' => $mediaPath,
+                'media_path' => $mediaPaths,
                 'media_type' => $mediaType,
                 'is_active' => true,
             ]);
@@ -191,7 +199,8 @@ class BlogController extends Controller
             'blog_type' => 'required|string|max:255',
             'description' => 'required|string|max:10000',
             'tags' => 'required|string',
-            'media' => 'nullable|file|mimes:jpg,jpeg,png,gif,mp4,mov,avi,webm|max:10240',
+            'media' => 'nullable|array',
+            'media.*' => 'file|mimes:jpg,jpeg,png,gif,mp4,mov,avi,webm|max:10240',
         ], [
             'title.required' => 'Please enter blog title',
             'blog_type.required' => 'Please select a blog type',
@@ -206,15 +215,34 @@ class BlogController extends Controller
             }
 
             if ($request->hasFile('media')) {
-                // Delete old media file
-                if ($blog->media_path && Storage::disk('public')->exists($blog->media_path)) {
-                    Storage::disk('public')->delete($blog->media_path);
+                // Delete old media files
+                if ($blog->media_path) {
+                    $oldPaths = is_array($blog->media_path) ? $blog->media_path : json_decode($blog->media_path, true);
+                    if (is_array($oldPaths)) {
+                        foreach ($oldPaths as $oldPath) {
+                            if (Storage::disk('public')->exists($oldPath)) {
+                                Storage::disk('public')->delete($oldPath);
+                            }
+                        }
+                    } elseif (is_string($blog->media_path)) {
+                        if (Storage::disk('public')->exists($blog->media_path)) {
+                            Storage::disk('public')->delete($blog->media_path);
+                        }
+                    }
                 }
 
-                $file = $request->file('media');
-                $blog->media_path = $file->store('blogs/media', 'public');
-                $mime = $file->getMimeType();
-                $blog->media_type = str_starts_with($mime, 'video/') ? 'video' : 'image';
+                $mediaPaths = [];
+                $mediaType = 'image';
+                foreach ($request->file('media') as $file) {
+                    $path = $file->store('blogs/media', 'public');
+                    $mediaPaths[] = $path;
+                    $mime = $file->getMimeType();
+                    if (str_starts_with($mime, 'video/')) {
+                        $mediaType = 'video';
+                    }
+                }
+                $blog->media_path = $mediaPaths;
+                $blog->media_type = $mediaType;
             }
 
             $blog->title = $request->title;
@@ -242,8 +270,19 @@ class BlogController extends Controller
         }
 
         try {
-            if ($blog->media_path && Storage::disk('public')->exists($blog->media_path)) {
-                Storage::disk('public')->delete($blog->media_path);
+            if ($blog->media_path) {
+                $oldPaths = is_array($blog->media_path) ? $blog->media_path : json_decode($blog->media_path, true);
+                if (is_array($oldPaths)) {
+                    foreach ($oldPaths as $oldPath) {
+                        if (Storage::disk('public')->exists($oldPath)) {
+                            Storage::disk('public')->delete($oldPath);
+                        }
+                    }
+                } elseif (is_string($blog->media_path)) {
+                    if (Storage::disk('public')->exists($blog->media_path)) {
+                        Storage::disk('public')->delete($blog->media_path);
+                    }
+                }
             }
             $blog->delete();
 

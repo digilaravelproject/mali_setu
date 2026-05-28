@@ -500,6 +500,24 @@
         }
 
         /* Interactive Blogs Styles */
+        #landingBlogTabs.nav-pills .nav-link {
+            border: 2px solid var(--primary) !important;
+            color: var(--primary) !important;
+            background: transparent !important;
+            transition: all 0.3s ease;
+            font-weight: 700;
+        }
+        #landingBlogTabs.nav-pills .nav-link.active {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%) !important;
+            color: white !important;
+            border-color: transparent !important;
+            box-shadow: 0 4px 15px rgba(255, 71, 87, 0.3) !important;
+        }
+        #landingBlogTabs.nav-pills .nav-link:hover:not(.active) {
+            background: rgba(255, 71, 87, 0.05) !important;
+            color: var(--primary) !important;
+        }
+
         .blog-card {
             background: #ffffff;
             border-radius: 24px;
@@ -645,6 +663,52 @@
             50% { transform: scale(1.3); }
             100% { transform: scale(1); }
         }
+
+        /* Horizontal Scrolling Category Tabs on Landing Page */
+        #landingBlogTabs {
+            display: flex !important;
+            flex-wrap: nowrap !important;
+            overflow-x: auto !important;
+            justify-content: start !important;
+            padding: 8px 16px 16px 16px !important;
+            -webkit-overflow-scrolling: touch;
+            max-width: 100%;
+            scrollbar-width: thin;
+            scrollbar-color: var(--primary) rgba(0, 0, 0, 0.05);
+        }
+        #landingBlogTabs::-webkit-scrollbar {
+            height: 6px !important;
+            display: block !important;
+        }
+        #landingBlogTabs::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.05) !important;
+            border-radius: 10px !important;
+        }
+        #landingBlogTabs::-webkit-scrollbar-thumb {
+            background: var(--primary) !important;
+            border-radius: 10px !important;
+        }
+        #landingBlogTabs::-webkit-scrollbar-thumb:hover {
+            background: var(--primary-dark, #ff2a3b) !important;
+        }
+        #landingBlogTabs .nav-item {
+            flex-shrink: 0 !important;
+            white-space: nowrap !important;
+        }
+        #landingBlogTabs .nav-link {
+            border: 2px solid var(--primary) !important;
+            color: var(--primary) !important;
+            background: transparent !important;
+            font-weight: 700;
+            transition: all 0.3s ease;
+            user-select: none;
+        }
+        #landingBlogTabs .nav-link.active {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%) !important;
+            color: white !important;
+            border-color: transparent !important;
+            box-shadow: 0 4px 15px rgba(255, 71, 87, 0.3) !important;
+        }
     </style>
 </head>
 <body>
@@ -664,9 +728,13 @@
     $featuredProfiles = \App\Models\MatrimonyProfile::where('approval_status', 'approved')->latest()->take(4)->get();
     $featuredBusinesses = \App\Models\Business::where('verification_status', 'approved')->latest()->take(4)->get();
 
-    // New additions
     $banners = \App\Models\HomepageHero::all();
-    $blogs = \App\Models\Blog::with('user')->withCount('likes')->where('is_active', true)->latest()->take(3)->get();
+    $blogs = \App\Models\Blog::with('user')->withCount('likes')->where('is_active', true)->latest()->get();
+    $activeCategories = \App\Models\Blog::where('is_active', true)
+        ->whereNotNull('blog_type')
+        ->where('blog_type', '!=', '')
+        ->distinct()
+        ->pluck('blog_type');
 @endphp
 
 <!-- NAVBAR -->
@@ -1337,64 +1405,132 @@
             <p class="text-secondary">Explore expert insights, success guides, and inspiring community articles.</p>
         </div>
 
-        <div class="row g-4 justify-content-center">
-            @if($blogs && $blogs->count() > 0)
-                @foreach($blogs as $blog)
+        <!-- Dynamic Category Tabs -->
+        @if(!$activeCategories->isEmpty())
+            <ul class="nav nav-pills justify-content-center mb-5 gap-2" id="landingBlogTabs" role="tablist">
+                @foreach($activeCategories as $index => $cat)
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link {{ $index === 0 ? 'active' : '' }} rounded-pill px-4 fw-bold shadow-sm" id="landing-tab-{{ Str::slug($cat) }}" data-bs-toggle="pill" data-bs-target="#landing-pane-{{ Str::slug($cat) }}" type="button" role="tab" aria-controls="landing-pane-{{ Str::slug($cat) }}" aria-selected="{{ $index === 0 ? 'true' : 'false' }}">
+                            {{ $cat }}
+                        </button>
+                    </li>
+                @endforeach
+            </ul>
+
+            <div class="tab-content" id="landingBlogTabContent">
+                @foreach($activeCategories as $index => $cat)
                     @php
-                        $coverPhoto = $blog->media_path 
-                            ? asset('storage/' . $blog->media_path) 
-                            : 'https://images.unsplash.com/photo-1499750310107-5fef28a66643?auto=format&fit=crop&w=600&q=80';
-                        
-                        $isLiked = false;
-                        if (auth()->check()) {
-                            $isLiked = $blog->likedBy(auth()->id());
-                        } else {
-                            $isLiked = \App\Models\BlogLike::where('blog_id', $blog->id)->where('session_id', session()->getId())->exists();
-                        }
+                        $catBlogs = $blogs->where('blog_type', $cat)->take(12);
                     @endphp
-                    <div class="col-md-6 col-lg-4" data-aos="fade-up" data-aos-delay="100">
-                        <a href="{{ route('blogs.public.show', $blog->id) }}">
-                            <div class="blog-card">
-                                <div class="blog-image-wrapper">
-                                    <span class="blog-badge">{{ $blog->blog_type }}</span>
-                                    <img src="{{ $coverPhoto }}" class="blog-image" alt="{{ $blog->title }}">
-                                </div>
-                                <div class="blog-content">
-                                    <div>
-                                        <div class="blog-meta">
-                                            <span><i class="fa-regular fa-calendar me-1"></i> {{ $blog->created_at->format('M d, Y') }}</span>
-                                            <span><i class="fa-regular fa-clock me-1"></i> 5 min read</span>
+                    <div class="tab-pane fade {{ $index === 0 ? 'show active' : '' }}" id="landing-pane-{{ Str::slug($cat) }}" role="tabpanel" aria-labelledby="landing-tab-{{ Str::slug($cat) }}">
+                        <div class="swiper blogsSwiper py-3">
+                            <div class="swiper-wrapper">
+                                @if($catBlogs->count() > 0)
+                                    @foreach($catBlogs as $blog)
+                                        @php
+                                            $mediaList = is_array($blog->media_path) ? $blog->media_path : json_decode($blog->media_path, true);
+                                            $singlePath = is_array($mediaList) ? ($mediaList[0] ?? null) : $blog->media_path;
+                                            
+                                            $coverPhoto = $singlePath 
+                                                ? asset('storage/' . $singlePath) 
+                                                : 'https://images.unsplash.com/photo-1499750310107-5fef28a66643?auto=format&fit=crop&w=600&q=80';
+                                            
+                                            $isLiked = false;
+                                            if (auth()->check()) {
+                                                $isLiked = $blog->likedBy(auth()->id());
+                                            } else {
+                                                $isLiked = \App\Models\BlogLike::where('blog_id', $blog->id)->where('session_id', session()->getId())->exists();
+                                            }
+                                        @endphp
+                                        <div class="swiper-slide h-auto">
+                                            <a href="{{ route('blogs.public.show', $blog->id) }}" class="text-decoration-none text-dark h-100 d-block">
+                                                <div class="blog-card h-100">
+                                                    <div class="blog-image-wrapper">
+                                                        <span class="blog-badge">{{ $blog->blog_type }}</span>
+                                                        
+                                                        @if(is_array($mediaList) && count($mediaList) > 1)
+                                                            <div id="landingCardCarousel-{{ $blog->id }}" class="carousel slide carousel-fade h-100 w-100" data-bs-ride="carousel" data-bs-interval="3000">
+                                                                <div class="carousel-indicators" style="bottom: 10px; margin-bottom: 0; z-index: 15;">
+                                                                    @foreach($mediaList as $mIdx => $mPath)
+                                                                        <button type="button" data-bs-target="#landingCardCarousel-{{ $blog->id }}" data-bs-slide-to="{{ $mIdx }}" class="{{ $mIdx === 0 ? 'active' : '' }}" aria-current="{{ $mIdx === 0 ? 'true' : 'false' }}" style="width: 8px; height: 8px; border-radius: 50%; margin: 0 4px; background-color: #fff; border: 1px solid rgba(0,0,0,0.25);"></button>
+                                                                    @endforeach
+                                                                </div>
+                                                                <div class="carousel-inner h-100">
+                                                                    @foreach($mediaList as $mIdx => $mPath)
+                                                                        @php
+                                                                            $ext = strtolower(pathinfo($mPath, PATHINFO_EXTENSION));
+                                                                            $isVid = in_array($ext, ['mp4', 'mov', 'avi', 'webm', 'ogg']);
+                                                                        @endphp
+                                                                        <div class="carousel-item h-100 {{ $mIdx === 0 ? 'active' : '' }}">
+                                                                            @if($isVid)
+                                                                                <video src="{{ asset('storage/' . $mPath) }}" muted loop playsinline autoplay class="w-100 h-100 object-fit-cover"></video>
+                                                                            @else
+                                                                                <img src="{{ asset('storage/' . $mPath) }}" alt="Media slide" class="w-100 h-100 object-fit-cover">
+                                                                            @endif
+                                                                        </div>
+                                                                    @endforeach
+                                                                </div>
+                                                            </div>
+                                                        @else
+                                                            @php
+                                                                $ext = strtolower(pathinfo($singlePath, PATHINFO_EXTENSION));
+                                                                $isVid = in_array($ext, ['mp4', 'mov', 'avi', 'webm', 'ogg']);
+                                                            @endphp
+                                                            @if($isVid)
+                                                                <video src="{{ asset('storage/' . $singlePath) }}" muted loop playsinline autoplay class="blog-image w-100 h-100 object-fit-cover"></video>
+                                                            @else
+                                                                <img src="{{ $coverPhoto }}" class="blog-image" alt="{{ $blog->title }}">
+                                                            @endif
+                                                        @endif
+                                                    </div>
+                                                    <div class="blog-content">
+                                                        <div>
+                                                            <div class="blog-meta">
+                                                                <span><i class="fa-regular fa-calendar me-1"></i> {{ $blog->created_at->format('M d, Y') }}</span>
+                                                                <span><i class="fa-regular fa-clock me-1"></i> 5 min read</span>
+                                                            </div>
+                                                            <span class="blog-title d-block">{{ $blog->title }}</span>
+                                                            <p class="blog-desc text-secondary">{{ strip_tags($blog->description) }}</p>
+                                                        </div>
+                                                        <div class="blog-footer">
+                                                            <div class="blog-author">
+                                                                <img src="{{ $blog->user->avatar ? asset('storage/' . $blog->user->avatar) : asset('default-avatar.png') }}" class="blog-author-img" alt="Author">
+                                                                <span class="blog-author-name">{{ $blog->user->name }}</span>
+                                                            </div>
+                                                            <div class="blog-actions d-flex align-items-center gap-2">
+                                                                <span class="text-muted small d-inline-flex align-items-center gap-1" title="Views" style="font-weight:600; font-size:0.8rem;">
+                                                                    <i class="fa-regular fa-eye"></i> {{ $blog->views_count }}
+                                                                </span>
+                                                                <button class="blog-action-btn {{ $isLiked ? 'liked' : '' }}" onclick="toggleBlogLike(event, this, {{ $blog->id }})">
+                                                                    <i class="{{ $isLiked ? 'fa-solid text-danger' : 'fa-regular' }} fa-heart"></i>
+                                                                    <span class="likes-count">{{ $blog->likes_count }}</span>
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </a>
                                         </div>
-                                        <a href="{{ route('blogs.public.show', $blog->id) }}" class="blog-title">{{ $blog->title }}</a>
-                                        <p class="blog-desc text-secondary">{{ strip_tags($blog->description) }}</p>
+                                    @endforeach
+                                @else
+                                    <div class="swiper-slide text-center py-5 w-100">
+                                        <div class="text-secondary opacity-60 mb-3"><i class="fa-solid fa-note-sticky fs-1"></i></div>
+                                        <p class="text-secondary">No community blogs published in this category.</p>
                                     </div>
-                                    <div class="blog-footer">
-                                        <div class="blog-author">
-                                            <img src="{{ $blog->user->avatar ? asset('storage/' . $blog->user->avatar) : asset('default-avatar.png') }}" class="blog-author-img" alt="Author">
-                                            <span class="blog-author-name">{{ $blog->user->name }}</span>
-                                        </div>
-                                        <div class="blog-actions d-flex align-items-center gap-2">
-                                            <span class="text-muted small d-inline-flex align-items-center gap-1" title="Views" style="font-weight:600; font-size:0.8rem;">
-                                                <i class="fa-regular fa-eye"></i> {{ $blog->views_count }}
-                                            </span>
-                                            <button class="blog-action-btn {{ $isLiked ? 'liked' : '' }}" onclick="toggleBlogLike(this, {{ $blog->id }})">
-                                                <i class="{{ $isLiked ? 'fa-solid text-danger' : 'fa-regular' }} fa-heart"></i>
-                                                <span class="likes-count">{{ $blog->likes_count }}</span>
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
+                                @endif
                             </div>
-                        </a>
+                            <!-- Pagination Bullets -->
+                            <div class="swiper-pagination blogs-swiper-pagination mt-4 position-relative"></div>
+                        </div>
                     </div>
                 @endforeach
-            @else
-                <div class="col-12 text-center py-5">
-                    <div class="text-secondary opacity-60 mb-3"><i class="fa-solid fa-note-sticky fs-1"></i></div>
-                    <p class="text-secondary">No community blogs published at this time.</p>
-                </div>
-            @endif
-        </div>
+            </div>
+        @else
+            <div class="text-center py-5 w-100">
+                <div class="text-secondary opacity-60 mb-3"><i class="fa-solid fa-note-sticky fs-1"></i></div>
+                <p class="text-secondary">No community blogs published at this time.</p>
+            </div>
+        @endif
         
         <?php /*<div class="text-center mt-5">
             <a href="{{ route('blogs.index') }}" class="btn btn-outline-primary px-4 py-2.5 rounded-pill shadow-sm" style="font-weight: 700;"><i class="fa-solid fa-book-open me-2"></i> Browse All Blog Articles</a>
@@ -1622,7 +1758,12 @@
     });
 
     // AJAX Blog Liking logic (Available publicly for guests and registered members)
-    function toggleBlogLike(button, blogId) {
+    function toggleBlogLike(event, button, blogId) {
+        if (event) {
+            event.stopPropagation();
+            event.preventDefault();
+        }
+
         button.disabled = true;
 
         fetch(`/blogs/${blogId}/like`, {
@@ -1663,6 +1804,25 @@
         });
     }
 
+    // Blogs Swiper Config with observers to support Swiper instances inside Bootstrap Tabs
+    document.querySelectorAll(".blogsSwiper").forEach(el => {
+        new Swiper(el, {
+            slidesPerView: 1,
+            spaceBetween: 20,
+            observer: true,
+            observeParents: true,
+            pagination: { 
+                el: el.querySelector(".blogs-swiper-pagination"), 
+                clickable: true 
+            },
+            breakpoints: {
+                768: { slidesPerView: 2, spaceBetween: 24 },
+                992: { slidesPerView: 3, spaceBetween: 30 }
+            },
+            speed: 600
+        });
+    });
+
     // Numbers Counter Logic
     function initCounters() {
         const stats = document.querySelectorAll('.stat');
@@ -1689,7 +1849,53 @@
             io.observe(el);
         });
     }
-    document.addEventListener('DOMContentLoaded', initCounters);
+    document.addEventListener('DOMContentLoaded', () => {
+        initCounters();
+
+        // Mouse drag scrolling & dynamic centering for horizontal category tabs
+        const tabEl = document.getElementById('landingBlogTabs');
+        if (tabEl) {
+            let isDown = false;
+            let startX;
+            let scrollLeft;
+
+            tabEl.addEventListener('mousedown', (e) => {
+                isDown = true;
+                startX = e.pageX - tabEl.offsetLeft;
+                scrollLeft = tabEl.scrollLeft;
+                tabEl.style.cursor = 'grabbing';
+            });
+            tabEl.addEventListener('mouseleave', () => {
+                isDown = false;
+                tabEl.style.cursor = 'grab';
+            });
+            tabEl.addEventListener('mouseup', () => {
+                isDown = false;
+                tabEl.style.cursor = 'grab';
+            });
+            tabEl.addEventListener('mousemove', (e) => {
+                if (!isDown) return;
+                e.preventDefault();
+                const x = e.pageX - tabEl.offsetLeft;
+                const walk = (x - startX) * 1.5; // multiplier
+                tabEl.scrollLeft = scrollLeft - walk;
+            });
+            tabEl.style.cursor = 'grab';
+
+            // Dynamically center tabs if they fit within the viewport, otherwise align left
+            const adjustTabsAlignment = () => {
+                if (tabEl.scrollWidth > tabEl.clientWidth) {
+                    tabEl.style.setProperty('justify-content', 'flex-start', 'important');
+                } else {
+                    tabEl.style.setProperty('justify-content', 'center', 'important');
+                }
+            };
+
+            // Run alignment checks on load and window resize
+            adjustTabsAlignment();
+            window.addEventListener('resize', adjustTabsAlignment);
+        }
+    });
 
     // Robust Image Fallback
     const fallback = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100%25' height='100%25'%3E%3Crect width='100%25' height='100%25' fill='%23f1f1f1'/%3E%3C/svg%3E";

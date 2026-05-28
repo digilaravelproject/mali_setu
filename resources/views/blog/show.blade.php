@@ -17,11 +17,51 @@
             <article class="card border-0 shadow-sm overflow-hidden" style="border-radius: 24px; background: #fff;">
                 <!-- Article Header Image/Video -->
                 @if($blog->media_path)
+                    @php
+                        $mediaList = is_array($blog->media_path) ? $blog->media_path : json_decode($blog->media_path, true);
+                    @endphp
                     <div class="article-media-wrapper position-relative" style="max-height: 480px; overflow: hidden; background: #000;">
-                        @if($blog->media_type === 'video')
-                            <video src="{{ asset('storage/' . $blog->media_path) }}" controls class="w-100 h-100 object-fit-contain" style="max-height:480px;"></video>
+                        @if(is_array($mediaList) && count($mediaList) > 1)
+                            <div id="detailCarousel-{{ $blog->id }}" class="carousel slide carousel-fade h-100 w-100" data-bs-ride="carousel" data-bs-interval="3000">
+                                <div class="carousel-inner h-100" style="max-height: 480px;">
+                                    @foreach($mediaList as $idx => $mPath)
+                                        @php
+                                            $ext = strtolower(pathinfo($mPath, PATHINFO_EXTENSION));
+                                            $isVid = in_array($ext, ['mp4', 'mov', 'avi', 'webm', 'ogg']);
+                                        @endphp
+                                        <div class="carousel-item h-100 {{ $idx === 0 ? 'active' : '' }}">
+                                            @if($isVid)
+                                                <video src="{{ asset('storage/' . $mPath) }}" controls muted loop playsinline class="d-block w-100 h-100 object-fit-contain" style="max-height: 480px;"></video>
+                                            @else
+                                                <img src="{{ asset('storage/' . $mPath) }}" alt="Media slide" class="d-block w-100 h-100 object-fit-cover" style="max-height: 480px; object-position: center;">
+                                            @endif
+                                        </div>
+                                    @endforeach
+                                </div>
+                                <button class="carousel-control-prev" type="button" data-bs-target="#detailCarousel-{{ $blog->id }}" data-bs-slide="prev">
+                                    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                                    <span class="visually-hidden">Previous</span>
+                                </button>
+                                <button class="carousel-control-next" type="button" data-bs-target="#detailCarousel-{{ $blog->id }}" data-bs-slide="next">
+                                    <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                                    <span class="visually-hidden">Next</span>
+                                </button>
+                            </div>
                         @else
-                            <img src="{{ asset('storage/' . $blog->media_path) }}" alt="{{ $blog->title }}" class="w-100 h-100 object-fit-cover" style="max-height:480px; object-position: center;">
+                            @php
+                                $singlePath = is_array($mediaList) ? ($mediaList[0] ?? null) : $blog->media_path;
+                            @endphp
+                            @if($singlePath)
+                                @php
+                                    $ext = strtolower(pathinfo($singlePath, PATHINFO_EXTENSION));
+                                    $isVid = in_array($ext, ['mp4', 'mov', 'avi', 'webm', 'ogg']);
+                                @endphp
+                                @if($isVid)
+                                    <video src="{{ asset('storage/' . $singlePath) }}" controls class="w-100 h-100 object-fit-contain" style="max-height:480px;"></video>
+                                @else
+                                    <img src="{{ asset('storage/' . $singlePath) }}" alt="{{ $blog->title }}" class="w-100 h-100 object-fit-cover" style="max-height:480px; object-position: center;">
+                                @endif
+                            @endif
                         @endif
                     </div>
                 @endif
@@ -93,15 +133,29 @@
                 <div class="d-flex flex-column gap-3">
                     @foreach($related as $rel)
                         <div class="d-flex align-items-center gap-3 py-2 border-bottom border-light last-border-0">
-                            @if($rel->media_path)
-                                <div style="width: 70px; height: 70px; border-radius: 12px; overflow: hidden; flex-shrink: 0;">
-                                    @if($rel->media_type === 'video')
-                                        <video src="{{ asset('storage/' . $rel->media_path) }}" muted class="w-100 h-100 object-fit-cover"></video>
-                                    @else
-                                        <img src="{{ asset('storage/' . $rel->media_path) }}" alt="{{ $rel->title }}" class="w-100 h-100 object-fit-cover">
-                                    @endif
-                                </div>
-                            @else
+                             @if($rel->media_path)
+                                @php
+                                    $relMediaList = is_array($rel->media_path) ? $rel->media_path : json_decode($rel->media_path, true);
+                                    $relSinglePath = is_array($relMediaList) ? ($relMediaList[0] ?? null) : $rel->media_path;
+                                @endphp
+                                @if($relSinglePath)
+                                    <div style="width: 70px; height: 70px; border-radius: 12px; overflow: hidden; flex-shrink: 0;">
+                                        @php
+                                            $ext = strtolower(pathinfo($relSinglePath, PATHINFO_EXTENSION));
+                                            $isVid = in_array($ext, ['mp4', 'mov', 'avi', 'webm', 'ogg']);
+                                        @endphp
+                                        @if($isVid)
+                                            <video src="{{ asset('storage/' . $relSinglePath) }}" muted class="w-100 h-100 object-fit-cover"></video>
+                                        @else
+                                            <img src="{{ asset('storage/' . $relSinglePath) }}" alt="{{ $rel->title }}" class="w-100 h-100 object-fit-cover">
+                                        @endif
+                                    </div>
+                                @else
+                                    <div class="bg-light d-flex align-items-center justify-content-center text-muted" style="width: 70px; height: 70px; border-radius: 12px; flex-shrink: 0;">
+                                        <i class="fa-solid fa-newspaper opacity-20"></i>
+                                    </div>
+                                @endif
+                             @else
                                 <div class="bg-light d-flex align-items-center justify-content-center text-muted" style="width: 70px; height: 70px; border-radius: 12px; flex-shrink: 0;">
                                     <i class="fa-solid fa-newspaper opacity-20"></i>
                                 </div>
