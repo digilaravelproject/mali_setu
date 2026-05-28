@@ -288,4 +288,104 @@ class BlogController extends Controller
 
         return back();
     }
+
+    /**
+     * Display the specified blog details for the public (including guest users).
+     */
+    public function showPublic($id)
+    {
+        $blog = Blog::with('user')->findOrFail($id);
+        
+        // Increase the views count dynamically on details view!
+        $blog->increment('views_count');
+        
+        // Refresh model to get updated views_count and include likes count
+        $blog = Blog::with('user')->withCount('likes')->findOrFail($id);
+
+        // Get related blogs by matching tags (or recent blogs fallback)
+        $related = Blog::where('id', '!=', $blog->id)
+            ->where('is_active', true)
+            ->when($blog->tags, function ($query) use ($blog) {
+                $query->where(function ($q) use ($blog) {
+                    foreach ($blog->tags as $tag) {
+                        $q->orWhereJsonContains('tags', $tag);
+                    }
+                });
+            })
+            ->latest()
+            ->take(5)
+            ->get();
+
+        if ($related->isEmpty()) {
+            $related = Blog::where('id', '!=', $blog->id)
+                ->where('is_active', true)
+                ->latest()
+                ->take(5)
+                ->get();
+        }
+
+        $isLiked = false;
+        $user = Auth::user();
+        if ($user) {
+            $isLiked = BlogLike::where('blog_id', $blog->id)
+                ->where('user_id', $user->id)
+                ->exists();
+        } else {
+            $isLiked = BlogLike::where('blog_id', $blog->id)
+                ->where('session_id', session()->getId())
+                ->exists();
+        }
+
+        return view('blog.public_show', compact('blog', 'related', 'isLiked'));
+    }
+
+    /**
+     * Public like/unlike a blog via AJAX or Web request for both guests and authenticated users.
+     */
+    public function likePublic($id)
+    {
+        $blog = Blog::findOrFail($id);
+        $user = Auth::user();
+
+        if ($user) {
+            $like = BlogLike::where('blog_id', $blog->id)
+                ->where('user_id', $user->id)
+                ->first();
+
+            if ($like) {
+                $like->delete();
+                $liked = false;
+            } else {
+                BlogLike::create([
+                    'blog_id' => $blog->id,
+                    'user_id' => $user->id,
+                ]);
+                $liked = true;
+            }
+        } else {
+            $sessionId = session()->getId();
+            $like = BlogLike::where('blog_id', $blog->id)
+                ->where('session_id', $sessionId)
+                ->first();
+
+            if ($like) {
+                $like->delete();
+                $liked = false;
+            } else {
+                BlogLike::create([
+                    'blog_id' => $blog->id,
+                    'session_id' => $sessionId,
+                ]);
+                $liked = true;
+            }
+        }
+
+        $likesCount = $blog->likes()->count();
+
+        return response()->json([
+            'success' => true,
+            'liked' => $liked,
+            'likes_count' => $likesCount
+        ]);
+    }
 }

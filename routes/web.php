@@ -44,6 +44,10 @@ Route::get('/privacy-policy', [PageController::class, 'privacyPolicy'])->name('p
 Route::get('/terms-condition', [PageController::class, 'termsCondition'])->name('terms-condition');
 Route::get('/contact-us', [PageController::class, 'contactUs'])->name('contact-us');
 
+// Public Blog Routes
+Route::get('/blogs/{id}', [\App\Http\Controllers\BlogController::class, 'showPublic'])->name('blogs.public.show');
+Route::post('/blogs/{id}/like', [\App\Http\Controllers\BlogController::class, 'likePublic'])->name('blogs.public.like');
+
 // Guest (Before-Login) Routes
 Route::middleware('guest')->group(function () {
     Route::get('/login', [WebAuthController::class, 'showLogin'])->name('login');

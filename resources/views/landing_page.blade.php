@@ -423,6 +423,9 @@
         .hero-slide {
             width: 100%;
         }
+        .swiper-slide.hidden-slide {
+            display: none !important;
+        }
         .business-hero-slide {
             background-size: cover !important;
             background-position: center !important;
@@ -702,7 +705,7 @@
     <div class="swiper heroSwiper">
         <div class="swiper-wrapper">
             <!-- Slide 1: Current Matrimony Banner -->
-            <div class="swiper-slide hero-slide">
+            <div class="swiper-slide hero-slide slide-matrimony">
                 <div class="floral-bg"></div>
                 <div class="container position-relative" style="z-index: 2; padding: 60px 0 80px;">
                     <div class="row align-items-center g-5">
@@ -731,7 +734,7 @@
             <!-- Slides 2+: Dynamic Business Banners from Dashboard -->
             @if($banners && $banners->count() > 0)
                 @foreach($banners as $banner)
-                    <div class="swiper-slide hero-slide px-4">
+                    <div class="swiper-slide hero-slide slide-business px-4">
                         <div class="container">
                             <div class="business-hero-slide" style="background: url('{{ asset('storage/' . $banner->image_path) }}') no-repeat;">
                                 <div class="business-hero-overlay"></div>
@@ -739,11 +742,11 @@
                                     <span class="badge bg-primary px-3 py-2 rounded-pill mb-3 fw-bold text-uppercase shadow-sm"><i class="fa-solid fa-store me-1"></i> Community Enterprise Spotlight</span>
                                     <h1 class="display-4 fw-extrabold mb-3 text-white" style="line-height: 1.2;">{{ $banner->title }}</h1>
                                     <p class="lead mb-4 text-white text-opacity-80" style="font-weight: 500;">Empowering and connecting verified regional community vendors, trusted specialists, and agricultural entrepreneurs.</p>
-                                    <?php /*@if($banner->url)
+                                    @if($banner->url)
                                         <a href="{{ $banner->url }}" target="_blank" class="btn btn-warning btn-lg fw-bold rounded-3 px-4 shadow-sm">Explore More <i class="fa-solid fa-arrow-up-right-from-square ms-2"></i></a>
                                     @else
                                         <a href="#directory" onclick="switchLandingMode('business');" class="btn btn-warning btn-lg fw-bold rounded-3 px-4 shadow-sm">Explore Directory <i class="fa-solid fa-arrow-right-long ms-2"></i></a>
-                                    @endif */?>
+                                    @endif
                                 </div>
                             </div>
                         </div>
@@ -1345,40 +1348,44 @@
                         $isLiked = false;
                         if (auth()->check()) {
                             $isLiked = $blog->likedBy(auth()->id());
+                        } else {
+                            $isLiked = \App\Models\BlogLike::where('blog_id', $blog->id)->where('session_id', session()->getId())->exists();
                         }
                     @endphp
                     <div class="col-md-6 col-lg-4" data-aos="fade-up" data-aos-delay="100">
-                        <div class="blog-card">
-                            <div class="blog-image-wrapper">
-                                <span class="blog-badge">{{ $blog->blog_type }}</span>
-                                <img src="{{ $coverPhoto }}" class="blog-image" alt="{{ $blog->title }}">
-                            </div>
-                            <div class="blog-content">
-                                <div>
-                                    <div class="blog-meta">
-                                        <span><i class="fa-regular fa-calendar me-1"></i> {{ $blog->created_at->format('M d, Y') }}</span>
-                                        <span><i class="fa-regular fa-clock me-1"></i> 5 min read</span>
-                                    </div>
-                                    <a href="{{ route('blogs.show', $blog->id) }}" class="blog-title">{{ $blog->title }}</a>
-                                    <p class="blog-desc text-secondary">{{ strip_tags($blog->description) }}</p>
+                        <a href="{{ route('blogs.public.show', $blog->id) }}">
+                            <div class="blog-card">
+                                <div class="blog-image-wrapper">
+                                    <span class="blog-badge">{{ $blog->blog_type }}</span>
+                                    <img src="{{ $coverPhoto }}" class="blog-image" alt="{{ $blog->title }}">
                                 </div>
-                                <div class="blog-footer">
-                                    <div class="blog-author">
-                                        <img src="{{ $blog->user->avatar ? asset('storage/' . $blog->user->avatar) : asset('default-avatar.png') }}" class="blog-author-img" alt="Author">
-                                        <span class="blog-author-name">{{ $blog->user->name }}</span>
+                                <div class="blog-content">
+                                    <div>
+                                        <div class="blog-meta">
+                                            <span><i class="fa-regular fa-calendar me-1"></i> {{ $blog->created_at->format('M d, Y') }}</span>
+                                            <span><i class="fa-regular fa-clock me-1"></i> 5 min read</span>
+                                        </div>
+                                        <a href="{{ route('blogs.public.show', $blog->id) }}" class="blog-title">{{ $blog->title }}</a>
+                                        <p class="blog-desc text-secondary">{{ strip_tags($blog->description) }}</p>
                                     </div>
-                                    <div class="blog-actions">
-                                        <button class="blog-action-btn {{ $isLiked ? 'liked' : '' }}" onclick="toggleBlogLike(this, {{ $blog->id }})">
-                                            <i class="{{ $isLiked ? 'fa-solid' : 'fa-regular' }} fa-heart"></i>
-                                            <span class="likes-count">{{ $blog->likes_count }}</span>
-                                        </button>
-                                        <a href="{{ route('blogs.show', $blog->id) }}" class="blog-action-btn text-decoration-none">
-                                            <i class="fa-solid fa-arrow-up-right-from-square"></i>
-                                        </a>
+                                    <div class="blog-footer">
+                                        <div class="blog-author">
+                                            <img src="{{ $blog->user->avatar ? asset('storage/' . $blog->user->avatar) : asset('default-avatar.png') }}" class="blog-author-img" alt="Author">
+                                            <span class="blog-author-name">{{ $blog->user->name }}</span>
+                                        </div>
+                                        <div class="blog-actions d-flex align-items-center gap-2">
+                                            <span class="text-muted small d-inline-flex align-items-center gap-1" title="Views" style="font-weight:600; font-size:0.8rem;">
+                                                <i class="fa-regular fa-eye"></i> {{ $blog->views_count }}
+                                            </span>
+                                            <button class="blog-action-btn {{ $isLiked ? 'liked' : '' }}" onclick="toggleBlogLike(this, {{ $blog->id }})">
+                                                <i class="{{ $isLiked ? 'fa-solid text-danger' : 'fa-regular' }} fa-heart"></i>
+                                                <span class="likes-count">{{ $blog->likes_count }}</span>
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
+                        </a>
                     </div>
                 @endforeach
             @else
@@ -1473,9 +1480,9 @@
 <script>
     AOS.init({ duration: 800, once: true });
 
-    // Hero Swiper Autoplay Config
+    // Hero Swiper Autoplay Config (loop: false to allow slide filtering without duplicates)
     const heroSwiper = new Swiper(".heroSwiper", {
-        loop: true,
+        loop: false,
         autoplay: {
             delay: 5000,
             disableOnInteraction: false,
@@ -1538,6 +1545,14 @@
             const navLink = document.getElementById('nav-link-matrimony');
             if (navLink) navLink.classList.add('text-primary');
 
+            // Filter hero swiper slides: only matrimony slides visible
+            document.querySelectorAll('.hero-slide.slide-matrimony').forEach(slide => {
+                slide.classList.remove('hidden-slide');
+            });
+            document.querySelectorAll('.hero-slide.slide-business').forEach(slide => {
+                slide.classList.add('hidden-slide');
+            });
+
             // Update URL hash
             if (window.location.hash !== '#matrimony') {
                 window.location.hash = 'matrimony';
@@ -1560,10 +1575,24 @@
             const navLink = document.getElementById('nav-link-business');
             if (navLink) navLink.classList.add('text-primary');
 
+            // Filter hero swiper slides: only business slides visible
+            document.querySelectorAll('.hero-slide.slide-business').forEach(slide => {
+                slide.classList.remove('hidden-slide');
+            });
+            document.querySelectorAll('.hero-slide.slide-matrimony').forEach(slide => {
+                slide.classList.add('hidden-slide');
+            });
+
             // Update URL hash
             if (window.location.hash !== '#business') {
                 window.location.hash = 'business';
             }
+        }
+
+        // Safely update and reset heroSwiper
+        if (typeof heroSwiper !== 'undefined' && heroSwiper && typeof heroSwiper.update === 'function') {
+            heroSwiper.update();
+            heroSwiper.slideTo(0);
         }
 
         // Re-trigger AOS animations for freshly shown elements
@@ -1592,20 +1621,11 @@
         }
     });
 
-    // AJAX Blog Liking logic
-    const isAuthenticated = @json(auth()->check());
-
+    // AJAX Blog Liking logic (Available publicly for guests and registered members)
     function toggleBlogLike(button, blogId) {
-        if (!isAuthenticated) {
-            // Unauthenticated guest user alert
-            alert("Sign In Required: Please log in to like this blog and connect with the community!");
-            window.location.href = "{{ route('login') }}";
-            return;
-        }
-
         button.disabled = true;
 
-        fetch(`/dashboard/blogs/${blogId}/like`, {
+        fetch(`/blogs/${blogId}/like`, {
             method: 'POST',
             headers: {
                 'X-CSRF-TOKEN': '{{ csrf_token() }}',
