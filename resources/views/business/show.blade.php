@@ -5,13 +5,13 @@
     <div class="col-xl-12 col-12">
         
         <!-- Header Actions -->
-        <div class="d-flex align-items-center justify-content-between mb-4">
+        <div class="d-flex align-items-center justify-content-between mb-4 mt-4">
             <a href="{{ route('dashboard.business.browse') }}" class="btn btn-light btn-sm rounded-3">
                 <i class="fa-solid fa-arrow-left"></i> Back to Directory
             </a>
             @if(Auth::id() === $business->user_id)
                 <a href="{{ route('dashboard.business.index') }}" class="btn btn-teal btn-sm rounded-3">
-                    <i class="fa-solid fa-sliders me-1"></i> Edit on Console
+                    <i class="fa-solid fa-sliders me-1"></i> Edit Business
                 </a>
             @endif
         </div>

@@ -306,12 +306,12 @@
                 </a>
             </div>
             
-            <div class="nav-item">
+            <?php /*<div class="nav-item">
                 <a href="{{ route('admin.volunteers.index') }}" class="nav-link {{ request()->routeIs('admin.volunteers.*') ? 'active' : '' }}">
                     <i class="fas fa-hands-helping"></i>
                     Volunteers
                 </a>
-            </div>
+            </div> */?>
             
             <div class="nav-item">
                 <a href="{{ route('admin.donations.index') }}" class="nav-link {{ request()->routeIs('admin.donations.*') ? 'active' : '' }}">

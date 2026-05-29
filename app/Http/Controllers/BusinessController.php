@@ -205,12 +205,40 @@ class BusinessController extends Controller
                 \Log::warning('Business registration notification failed: ' . $e->getMessage());
             }
 
-            return redirect()->route('dashboard.business.index')->with('success', 'Business registered successfully! Enjoy your 30-day trial.');
+            return redirect()->route('dashboard.business.subscription', ['business_id' => $business->id])->with('success', 'Business registered successfully! Please select a subscription plan or skip to proceed.');
 
         } catch (\Exception $e) {
             \Log::error('Web Business registration failure: ' . $e->getMessage() . "\n" . $e->getTraceAsString());
             return back()->withErrors(['error' => 'Failed to register business: ' . $e->getMessage()])->withInput();
         }
+    }
+
+    /**
+     * Show Post-Registration Subscription Plan Selection Screen
+     */
+    public function selectSubscription(Request $request)
+    {
+        $user = Auth::user();
+        $businessId = $request->query('business_id');
+        
+        $business = Business::where('user_id', $user->id)
+            ->when($businessId, function($q) use ($businessId) {
+                return $q->where('id', $businessId);
+            })
+            ->firstOrFail();
+
+        $plans = BusinessPlan::where('active', true)->get();
+
+        // Filter plans by business type if business exists
+        if ($business && $business->business_type) {
+            $businessType = trim(str_replace(' ', '', $business->business_type));
+            $plans = $plans->filter(function($p) use ($businessType) {
+                $planType = trim(str_replace(' ', '', $p->company_type ?? ''));
+                return $planType === $businessType;
+            });
+        }
+
+        return view('business.subscription', compact('user', 'business', 'plans'));
     }
 
     /**

@@ -184,6 +184,7 @@
             justify-content: center;
             transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             margin-bottom: 12px;
+            overflow: hidden;
         }
         .justdial-cat-item:hover .justdial-cat-circle {
             transform: translateY(-6px) scale(1.06);
@@ -810,11 +811,11 @@
                                     <span class="badge bg-primary px-3 py-2 rounded-pill mb-3 fw-bold text-uppercase shadow-sm"><i class="fa-solid fa-store me-1"></i> Community Enterprise Spotlight</span>
                                     <h1 class="display-4 fw-extrabold mb-3 text-white" style="line-height: 1.2;">{{ $banner->title }}</h1>
                                     <p class="lead mb-4 text-white text-opacity-80" style="font-weight: 500;">Empowering and connecting verified regional community vendors, trusted specialists, and agricultural entrepreneurs.</p>
-                                    @if($banner->url)
+                                    <?php /*@if($banner->url)
                                         <a href="{{ $banner->url }}" target="_blank" class="btn btn-warning btn-lg fw-bold rounded-3 px-4 shadow-sm">Explore More <i class="fa-solid fa-arrow-up-right-from-square ms-2"></i></a>
                                     @else
                                         <a href="#directory" onclick="switchLandingMode('business');" class="btn btn-warning btn-lg fw-bold rounded-3 px-4 shadow-sm">Explore Directory <i class="fa-solid fa-arrow-right-long ms-2"></i></a>
-                                    @endif
+                                    @endif */?>
                                 </div>
                             </div>
                         </div>
@@ -959,7 +960,11 @@
                     <div class="col" data-aos="zoom-in" data-aos-delay="{{ 50 * ($idx + 1) }}">
                         <a href="{{ route('login') }}" class="justdial-cat-item">
                             <div class="justdial-cat-circle">
-                                <i class="fa-solid {{ $matchedIcon }} {{ $matchedColor }} justdial-cat-icon"></i>
+                                @if(!empty($cat->photo) && file_exists(public_path('storage/' . $cat->photo)))
+                                    <img src="{{ asset('storage/' . $cat->photo) }}" style="width: 48px; height: 48px; object-fit: contain;">
+                                @else
+                                    <i class="fa-solid {{ $matchedIcon }} {{ $matchedColor }} justdial-cat-icon"></i>
+                                @endif
                             </div>
                             <div class="justdial-cat-label">{{ $cat->name }}</div>
                         </a>
@@ -1397,7 +1402,7 @@
 </section>
 
 <!-- COMMUNITY BLOGS & INSIGHTS -->
-<section class="py-5 bg-white" id="blogs-section">
+<section class="py-3 bg-white" id="blogs-section">
     <div class="container py-4">
         <div class="text-center mb-5">
             <span class="badge bg-primary bg-opacity-10 text-primary px-3 py-2 rounded-pill mb-2 fw-bold text-uppercase">Community Hub</span>
@@ -1539,7 +1544,7 @@
 </section>
 
 <!-- CALL TO ACTION -->
-<section class="py-5 bg-white">
+<section class="py-3 bg-white">
     <div class="container text-center">
         <div class="p-5 rounded-5 bg-primary text-white text-center position-relative overflow-hidden shadow-lg" data-aos="zoom-in">
             <div class="position-relative z-3">

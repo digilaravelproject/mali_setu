@@ -87,6 +87,7 @@ Route::middleware('auth')->group(function () {
 
     // Business Enterprise & Dependent Modules (Products, Services, Jobs, Razorpay Subscriptions)
     Route::prefix('dashboard/business')->name('dashboard.business.')->group(function () {
+        Route::get('subscription', [BusinessController::class, 'selectSubscription'])->name('subscription');
         Route::post('register', [BusinessController::class, 'registerBusiness'])->name('register');
         Route::post('update', [BusinessController::class, 'updateBusiness'])->name('update');
         Route::delete('delete', [BusinessController::class, 'deleteBusiness'])->name('delete');

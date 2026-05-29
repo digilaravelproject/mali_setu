@@ -201,7 +201,7 @@
 
                         <div class="row mb-4">
                             <div class="col-md-6 mb-3">
-                                <label class="form-label fw-semibold text-secondary small">District *</label>
+                                <label class="form-label fw-semibold text-secondary small">District <span class="text-danger">*</span></label>
                                 <input type="text" name="district" id="district_field" class="form-control" placeholder="District" required value="{{ old('district') }}">
                             </div>
                             <div class="col-md-3 mb-3">
@@ -292,11 +292,17 @@
             if (!valid) {
                 invalids.push(el);
                 el.classList.add('is-invalid');
-                // insert error message after element
+                // insert error message after element (or outside input-group if it exists)
                 const err = document.createElement('div');
                 err.className = 'text-danger small mt-1 client-error';
                 err.innerText = el.validationMessage || 'Please complete this field';
-                el.insertAdjacentElement('afterend', err);
+                
+                const inputGroup = el.closest('.input-group');
+                if (inputGroup) {
+                    inputGroup.insertAdjacentElement('afterend', err);
+                } else {
+                    el.insertAdjacentElement('afterend', err);
+                }
                 // add listener to clear error when user types
                 const clear = () => {
                     el.classList.remove('is-invalid');

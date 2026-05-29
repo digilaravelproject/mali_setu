@@ -72,7 +72,7 @@
                     <div class="mb-3 d-flex flex-wrap gap-2">
                         @if($blog->tags)
                             @foreach($blog->tags as $tag)
-                                <a href="{{ route('blogs.index', ['tag' => $tag]) }}" class="badge bg-primary bg-opacity-10 text-primary text-decoration-none px-3 py-2 rounded-pill small">
+                                <a href="{{ route('blogs.index', ['tag' => $tag]) }}" class="badge bg-primary bg-opacity-10 text-primary text-decoration-none px-3 py-2 rounded-pill small" style="color: white !important;">
                                     #{{ $tag }}
                                 </a>
                             @endforeach

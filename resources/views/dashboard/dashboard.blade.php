@@ -116,6 +116,7 @@
         align-items: center;
         justify-content: center;
         transition: transform 0.32s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.32s ease, background 0.25s ease;
+        overflow: hidden;
     }
     .justdial-cat-item:hover .justdial-cat-circle {
         transform: translateY(-6px) scale(1.06);
@@ -346,7 +347,11 @@
                         <div class="col">
                             <div onclick="selectCategoryOnDashboard({{ $cat->id }})" class="justdial-cat-item">
                                 <div class="justdial-cat-circle" style="--cat-bg: {{ $matchedBg }};">
-                                    <i class="fa-solid {{ $matchedIcon }} {{ $matchedColor }} justdial-cat-icon"></i>
+                                    @if(!empty($cat->photo) && file_exists(public_path('storage/' . $cat->photo)))
+                                        <img src="{{ asset('storage/' . $cat->photo) }}" style="width: 42px; height: 42px; object-fit: contain;">
+                                    @else
+                                        <i class="fa-solid {{ $matchedIcon }} {{ $matchedColor }} justdial-cat-icon"></i>
+                                    @endif
                                 </div>
                                 <div class="justdial-cat-label">{{ $cat->name }}</div>
                             </div>
@@ -771,7 +776,7 @@
 
 <!-- Modal: View All Business Categories -->
 <div class="modal fade" id="allCategoriesModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-xl">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content rounded-4 border-0 shadow-lg p-3">
             <div class="modal-header border-0">
                 <h5 class="fw-bold mb-0">All Business Categories</h5>
@@ -811,7 +816,11 @@
                         <div class="col">
                             <div onclick="selectCategoryOnDashboard({{ $cat->id }}); bootstrap.Modal.getInstance(document.getElementById('allCategoriesModal')).hide();" class="justdial-cat-item">
                                 <div class="justdial-cat-circle" style="--cat-bg: {{ $matchedBg }};">
-                                    <i class="fa-solid {{ $matchedIcon }} {{ $matchedColor }} justdial-cat-icon"></i>
+                                    @if(!empty($cat->photo) && file_exists(public_path('storage/' . $cat->photo)))
+                                        <img src="{{ asset('storage/' . $cat->photo) }}" style="width: 42px; height: 42px; object-fit: contain;">
+                                    @else
+                                        <i class="fa-solid {{ $matchedIcon }} {{ $matchedColor }} justdial-cat-icon"></i>
+                                    @endif
                                 </div>
                                 <div class="justdial-cat-label">{{ $cat->name }}</div>
                             </div>
