@@ -110,8 +110,18 @@
                                 <tr style="border-bottom: 1px solid #f8f9fa;">
                                     <td class="py-3">
                                         <div class="d-flex align-items-center gap-3">
-                                            <div class="bg-primary bg-opacity-10 text-primary rounded-3 d-flex align-items-center justify-content-center" style="width: 48px; height: 48px; min-width: 48px;">
-                                                <i class="fa-solid fa-briefcase fs-5"></i>
+                                            @php
+                                                $jobTitle = $app->jobPosting->title ?? 'Job';
+                                                $words = preg_split("/\s+/", trim($jobTitle));
+                                                $initials = '';
+                                                if (count($words) >= 2) {
+                                                    $initials = strtoupper(substr($words[0], 0, 1) . substr($words[1], 0, 1));
+                                                } else {
+                                                    $initials = strtoupper(substr($jobTitle, 0, 2));
+                                                }
+                                            @endphp
+                                            <div class="bg-primary bg-opacity-10 rounded-3 d-flex align-items-center justify-content-center fw-bold" style="width: 48px; height: 48px; min-width: 48px; color: #ffffff; font-size: 1.1rem;">
+                                                {{ $initials }}
                                             </div>
                                             <div>
                                                 <h6 class="fw-bold text-dark mb-0.5">{{ $app->jobPosting->title ?? 'N/A' }}</h6>

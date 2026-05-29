@@ -819,29 +819,14 @@
 
                     <div class="col-md-6 mb-4">
                         <label class="form-label">Country<span class="required-star">*</span></label>
-                        <select name="country" class="form-select" id="countryInput" required>
-                            <option value="">Select Country</option>
-                            <option value="India" {{ old('country', $ld['country'] ?? 'India') == 'India' ? 'selected' : '' }}>India</option>
-                            <option value="USA" {{ old('country', $ld['country'] ?? '') == 'USA' ? 'selected' : '' }}>USA</option>
-                            <option value="UK" {{ old('country', $ld['country'] ?? '') == 'UK' ? 'selected' : '' }}>UK</option>
-                            <option value="Canada" {{ old('country', $ld['country'] ?? '') == 'Canada' ? 'selected' : '' }}>Canada</option>
-                            <option value="Australia" {{ old('country', $ld['country'] ?? '') == 'Australia' ? 'selected' : '' }}>Australia</option>
-                            <option value="Other" {{ old('country', $ld['country'] ?? '') == 'Other' ? 'selected' : '' }}>Other</option>
-                        </select>
-                        <span class="invalid-feedback">Please select country</span>
+                        <input type="text" name="country" class="form-control" id="countryInput" placeholder="Enter Your Country" value="{{ old('country', $ld['country'] ?? 'India') }}" required>
+                        <span class="invalid-feedback">Please enter country</span>
                     </div>
 
                     <div class="col-md-4 mb-4">
                         <label class="form-label">State<span class="required-star">*</span></label>
-                        <select name="state" class="form-select" id="stateInput" required>
-                            <option value="">Select State</option>
-                            <option value="Maharashtra" {{ old('state', $ld['state'] ?? '') == 'Maharashtra' ? 'selected' : '' }}>Maharashtra</option>
-                            <option value="Gujarat" {{ old('state', $ld['state'] ?? '') == 'Gujarat' ? 'selected' : '' }}>Gujarat</option>
-                            <option value="Karnataka" {{ old('state', $ld['state'] ?? '') == 'Karnataka' ? 'selected' : '' }}>Karnataka</option>
-                            <option value="Punjab" {{ old('state', $ld['state'] ?? '') == 'Punjab' ? 'selected' : '' }}>Punjab</option>
-                            <option value="Delhi" {{ old('state', $ld['state'] ?? '') == 'Delhi' ? 'selected' : '' }}>Delhi</option>
-                        </select>
-                        <span class="invalid-feedback">Please select state</span>
+                        <input type="text" name="state" class="form-control" id="stateInput" placeholder="Enter Your State" value="{{ old('state', $ld['state'] ?? '') }}" required>
+                        <span class="invalid-feedback">Please enter state</span>
                     </div>
 
                     <div class="col-md-4 mb-4">
@@ -1079,42 +1064,21 @@
                     if (data && data[0] && data[0].Status === 'Success') {
                         const po = data[0].PostOffice[0];
                         
-                        // Select India
                         const countryInput = document.getElementById('countryInput');
                         if (countryInput) countryInput.value = "India";
                         
-                        // Dynamic State Select Option injection if not present
                         const stateInput = document.getElementById('stateInput');
-                        if (stateInput) {
-                            let stateExists = false;
-                            for (let i = 0; i < stateInput.options.length; i++) {
-                                if (stateInput.options[i].value === po.State) {
-                                    stateExists = true;
-                                    break;
-                                }
-                            }
-                            if (!stateExists && po.State) {
-                                const opt = document.createElement('option');
-                                opt.value = po.State;
-                                opt.textContent = po.State;
-                                stateInput.appendChild(opt);
-                            }
-                            stateInput.value = po.State;
-                        }
+                        if (stateInput) stateInput.value = po.State || '';
                         
-                        // Set City district
                         const cityInput = document.getElementById('cityInput');
                         if (cityInput) cityInput.value = po.District || '';
 
-                        // Set Taluka (Block)
                         const talukaInput = document.getElementById('talukaInput');
                         if (talukaInput) talukaInput.value = (po.Block && po.Block !== 'N.A.') ? po.Block : '';
 
-                        // Set Village (Name)
                         const villageInput = document.getElementById('villageInput');
                         if (villageInput) villageInput.value = po.Name || '';
 
-                        // Set Address to po.Name + po.District (E.g. Pisoli, Pune)
                         const addressInput = document.querySelector('input[name="address"]');
                         if (addressInput && po.Name && po.District) {
                             addressInput.value = po.Name + ", " + po.District;
@@ -1147,17 +1111,78 @@
     if (locIcon) {
         locIcon.style.cursor = 'pointer';
         locIcon.addEventListener('click', function() {
-            lookupPincode(true);
+            const oldClass = locIcon.className;
+            locIcon.className = 'fa-solid fa-spinner fa-spin text-primary';
             
             navigator.geolocation.getCurrentPosition(function(position) {
-                document.getElementById('matrimonyLatitudeInput').value = position.coords.latitude;
-                document.getElementById('matrimonyLongitudeInput').value = position.coords.longitude;
-                alert('GPS Coordinates fetched successfully: ' + position.coords.latitude.toFixed(4) + ', ' + position.coords.longitude.toFixed(4));
+                locIcon.className = 'fa-solid fa-circle-check text-success';
+                const lat = position.coords.latitude;
+                const lon = position.coords.longitude;
+                document.getElementById('matrimonyLatitudeInput').value = lat;
+                document.getElementById('matrimonyLongitudeInput').value = lon;
+                
+                // Fetch reverse geocoding from OpenStreetMap Nominatim
+                fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&addressdetails=1`, {
+                    headers: {
+                        'User-Agent': 'MaliSetuApp/1.0'
+                    }
+                })
+                .then(res => res.json())
+                .then(geoData => {
+                    if (geoData && geoData.address) {
+                        const addr = geoData.address;
+                        const pincode = addr.postcode || '';
+                        const country = addr.country || 'India';
+                        const state = addr.state || addr.region || '';
+                        const city = addr.city || addr.town || addr.village || addr.municipality || addr.county || addr.state_district || addr.district || '';
+                        
+                        if (pincode) {
+                            document.getElementById('pincodeInput').value = pincode.replace(/\s+/g, '');
+                        }
+                        if (country) {
+                            document.getElementById('countryInput').value = country;
+                        }
+                        if (state) {
+                            document.getElementById('stateInput').value = state;
+                        }
+                        if (city) {
+                            document.getElementById('cityInput').value = city;
+                        }
+                        
+                        const talukaInput = document.getElementById('talukaInput');
+                        if (talukaInput && (addr.suburb || addr.neighbourhood)) {
+                            talukaInput.value = addr.suburb || addr.neighbourhood || '';
+                        }
+                        
+                        const villageInput = document.getElementById('villageInput');
+                        if (villageInput && addr.village) {
+                            villageInput.value = addr.village;
+                        }
+                        
+                        const addressInput = document.querySelector('input[name="address"]');
+                        if (addressInput && geoData.display_name) {
+                            addressInput.value = geoData.display_name;
+                        }
+                    }
+                })
+                .catch(err => {
+                    console.error('Reverse geocoding error:', err);
+                });
+                
+                alert('GPS Coordinates fetched successfully: ' + lat.toFixed(4) + ', ' + lon.toFixed(4));
             }, function(error) {
-                console.warn('Geolocation failed: ' + error.message);
+                locIcon.className = oldClass;
+                // Fallback to normal pincode lookup if pincode is present
+                const pin = document.getElementById('pincodeInput').value.trim();
+                if (pin.length === 6 && /^\d+$/.test(pin)) {
+                    lookupPincode(true);
+                } else {
+                    alert('Geolocation Error: ' + error.message + '. Please enter Pincode manually.');
+                }
             }, {
                 enableHighAccuracy: true,
-                timeout: 5000
+                timeout: 10000,
+                maximumAge: 0
             });
         });
     }

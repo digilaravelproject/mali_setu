@@ -386,9 +386,60 @@
                 
                 navigator.geolocation.getCurrentPosition(function(position) {
                     icon.className = 'fa-solid fa-circle-check text-success';
-                    document.getElementById('businessLatitudeInput').value = position.coords.latitude;
-                    document.getElementById('businessLongitudeInput').value = position.coords.longitude;
-                    alert('GPS Coordinates fetched successfully: ' + position.coords.latitude.toFixed(4) + ', ' + position.coords.longitude.toFixed(4));
+                    const lat = position.coords.latitude;
+                    const lon = position.coords.longitude;
+                    document.getElementById('businessLatitudeInput').value = lat;
+                    document.getElementById('businessLongitudeInput').value = lon;
+                    
+                    // Fetch reverse geocoding from OpenStreetMap Nominatim
+                    fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&addressdetails=1`, {
+                        headers: {
+                            'User-Agent': 'MaliSetuApp/1.0'
+                        }
+                    })
+                    .then(res => res.json())
+                    .then(geoData => {
+                        if (geoData && geoData.address) {
+                            const addr = geoData.address;
+                            const pincode = addr.postcode || '';
+                            const state = addr.state || addr.region || '';
+                            const city = addr.city || addr.town || addr.village || addr.municipality || addr.county || addr.state_district || addr.district || '';
+                            const district = addr.county || addr.district || city || '';
+                            
+                            if (pincode) {
+                                document.getElementById('pincode_field').value = pincode.replace(/\s+/g, '');
+                            }
+                            if (state) {
+                                document.getElementById('state_field').value = state;
+                            }
+                            if (city) {
+                                document.getElementById('city_field').value = city;
+                            }
+                            if (district) {
+                                document.getElementById('district_field').value = district;
+                            }
+                            
+                            const talukaField = document.getElementById('taluka_field');
+                            if (talukaField && (addr.suburb || addr.neighbourhood)) {
+                                talukaField.value = addr.suburb || addr.neighbourhood || '';
+                            }
+                            
+                            const villageField = document.getElementById('village_field');
+                            if (villageField && addr.village) {
+                                villageField.value = addr.village;
+                            }
+                            
+                            const addressInput = document.querySelector('input[name="address"]');
+                            if (addressInput && geoData.display_name) {
+                                addressInput.value = geoData.display_name;
+                            }
+                        }
+                    })
+                    .catch(err => {
+                        console.error('Reverse geocoding error:', err);
+                    });
+                    
+                    alert('GPS Coordinates fetched successfully: ' + lat.toFixed(4) + ', ' + lon.toFixed(4));
                 }, function(error) {
                     icon.className = oldClass;
                     alert('Geolocation Error: ' + error.message);

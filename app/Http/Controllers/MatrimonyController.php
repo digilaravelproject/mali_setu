@@ -265,8 +265,18 @@ class MatrimonyController extends Controller
             'longitude' => $request->longitude,
         ]);
 
-        return redirect()->to(route('matrimony.index') . '#plans-section')
-            ->with('success', 'Matrimony profile created! Please subscribe to a plan to activate it.');
+        return redirect()->route('matrimony.subscription')
+            ->with('success', 'Matrimony profile created! Please select a subscription plan or skip to proceed.');
+    }
+
+    /**
+     * Show Post-Registration Matrimony Subscription Plan Selection Screen
+     */
+    public function selectSubscription(Request $request)
+    {
+        $user = Auth::user();
+        $plans = MatrimonyPlan::where('active', true)->get();
+        return view('matrimony.subscription', compact('user', 'plans'));
     }
 
     /** Show edit form */

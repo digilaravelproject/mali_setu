@@ -115,6 +115,7 @@ Route::middleware('auth')->group(function () {
     Route::prefix('dashboard/matrimony')->name('matrimony.')->group(function () {
         Route::get('/',                          [\App\Http\Controllers\MatrimonyController::class, 'index'])->name('index');
         Route::get('/create',                    [\App\Http\Controllers\MatrimonyController::class, 'create'])->name('create');
+        Route::get('/subscription',              [\App\Http\Controllers\MatrimonyController::class, 'selectSubscription'])->name('subscription');
         Route::post('/create',                   [\App\Http\Controllers\MatrimonyController::class, 'store'])->name('store');
         Route::get('/edit',                      [\App\Http\Controllers\MatrimonyController::class, 'edit'])->name('edit');
         Route::post('/update',                   [\App\Http\Controllers\MatrimonyController::class, 'update'])->name('update');

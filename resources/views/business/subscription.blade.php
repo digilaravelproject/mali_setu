@@ -60,57 +60,19 @@
     }
 </style>
 
-<div class="container py-4 text-start">
+<div class="container text-start">
     <div class="row justify-content-center">
-        <div class="col-lg-10">
+        <div class="col-lg-12">
             
-            <!-- Welcome Banner -->
-            <div class="card premium-gradient-card p-4 p-md-5 mb-5 text-start">
-                <div class="row align-items-center">
-                    <div class="col-md-8">
-                        <span class="badge bg-white bg-opacity-20 text-white mb-3 px-3 py-2 rounded-pill fw-bold text-uppercase" style="backdrop-filter: blur(10px);">Premium Catalog Setup</span>
-                        <h2 class="fw-bold mb-2">Grow Your Business on Mali Setu</h2>
-                        <p class="opacity-90 mb-0">Select a premium membership plan to list products, advertise specialized service packages, list regional jobs, and acquire Caste-verified business badges.</p>
-                    </div>
-                    <div class="col-md-4 text-end d-none d-md-block">
-                        <div class="fs-1 text-white opacity-25" style="font-size: 6rem !important;"><i class="fa-solid fa-gem"></i></div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Value Proposition Features -->
-            <div class="row g-4 mb-5 text-start">
-                <div class="col-md-4">
-                    <div class="glass-card p-4 h-100 d-flex gap-3">
-                        <div class="feature-icon flex-shrink-0 mt-1"><i class="fa-solid fa-box-open"></i></div>
-                        <div>
-                            <h6 class="fw-bold text-dark mb-1">Product Catalog</h6>
-                            <p class="text-secondary small mb-0">List and advertise your products with rich descriptions, pricing, and visual thumbnails.</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="glass-card p-4 h-100 d-flex gap-3">
-                        <div class="feature-icon flex-shrink-0 mt-1"><i class="fa-solid fa-gears"></i></div>
-                        <div>
-                            <h6 class="fw-bold text-dark mb-1">Services Suite</h6>
-                            <p class="text-secondary small mb-0">Present custom services Packages, consulting sessions, or agricultural bookings to matches.</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="glass-card p-4 h-100 d-flex gap-3">
-                        <div class="feature-icon flex-shrink-0 mt-1"><i class="fa-solid fa-user-tie"></i></div>
-                        <div>
-                            <h6 class="fw-bold text-dark mb-1">Local Job Boards</h6>
-                            <p class="text-secondary small mb-0">Publish job postings, track applicant credentials, and recruit skilled local talent directly.</p>
-                        </div>
-                    </div>
-                </div>
+            <!-- Welcome Alert Banner (Screenshot 3 style) -->
+            <div class="text-center p-4 rounded-4 bg-light border-warning border mb-5 shadow-sm" style="border: 2.5px solid #ffb300 !important; background-color: #fffbeb !important;">
+                <div class="text-warning mb-3" style="font-size:3.5rem;"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                <h4 class="fw-bold text-dark mb-2">Business Premium Subscription Required</h4>
+                <p class="text-secondary mb-0">Your business <strong>"{{ $business->business_name }}"</strong> is listed but needs an active subscription plan to list products, service suites, and manage job openings. Select a plan below to activate instant access.</p>
             </div>
 
             <!-- Plans Selector Grid -->
-            <h4 class="fw-bold text-center text-dark mb-4">Choose Your Premium Plan</h4>
+            <h4 class="fw-bold text-center text-dark mb-4">Select Your Subscription Plan</h4>
             <div class="row g-4 justify-content-center mb-5 text-start">
                 @if($plans->isEmpty())
                     <div class="col-12 text-center py-4 bg-light rounded-4 border">
@@ -118,25 +80,19 @@
                     </div>
                 @else
                     @foreach($plans as $plan)
-                        <div class="col-md-5">
-                            <div class="card pricing-card h-100 border-0 p-4 text-center bg-white shadow-sm relative">
+                        <div class="col-md-4">
+                            <div class="card h-100 border-0 rounded-4 shadow-sm text-center p-4 relative bg-white border" style="border: 2px solid rgba(13, 148, 136, 0.1) !important;">
                                 <div class="card-body d-flex flex-column justify-content-between">
                                     <div>
-                                        <h5 class="fw-bold text-dark mb-3">{{ $plan->company_type }} Premium</h5>
+                                        <h5 class="fw-bold text-dark mb-3">{{ $plan->company_type }}</h5>
                                         <div class="my-4">
-                                            <h1 class="fw-extrabold text-primary mb-0 font-monospace">₹{{ number_format($plan->price, 0) }}</h1>
-                                            <small class="text-muted">Subscription valid for {{ $plan->duration_years }} Year(s)</small>
+                                            <h2 class="fw-extrabold mb-0" style="color: #ff4757 !important;">₹{{ number_format($plan->price, 0) }}</h2>
+                                            <small class="text-muted">for {{ $plan->duration_years }} year(s)</small>
                                         </div>
-                                        <hr class="opacity-10 my-4">
-                                        <ul class="list-unstyled text-start mb-4">
-                                            <li class="mb-2.5 small text-secondary"><i class="fa-solid fa-circle-check text-primary me-2"></i> Showcase Enterprise Catalogs</li>
-                                            <li class="mb-2.5 small text-secondary"><i class="fa-solid fa-circle-check text-primary me-2"></i> Showcase Services & Packages</li>
-                                            <li class="mb-2.5 small text-secondary"><i class="fa-solid fa-circle-check text-primary me-2"></i> Unlimited Job Openings & Recruits</li>
-                                            <li class="mb-2.5 small text-secondary"><i class="fa-solid fa-circle-check text-primary me-2"></i> Premium Directory badge</li>
-                                        </ul>
+                                        <p class="small text-secondary mb-4">{{ $plan->description ?? 'List products, publish active jobs, accept applicants, and get verified.' }}</p>
                                     </div>
-                                    <button class="btn btn-primary w-100 py-3 rounded-3 fw-bold shadow-sm" onclick="startRazorpayPayment({{ $plan->id }}, {{ $plan->price }})">
-                                        Activate Premium Plan <i class="fa-solid fa-arrow-right ms-1"></i>
+                                    <button class="btn btn-primary w-100 py-2.5 rounded-3 fw-bold shadow-sm" style="background-color: #ff4757 !important; border-color: #ff4757 !important;" onclick="startRazorpayPayment({{ $plan->id }}, {{ $plan->price }})">
+                                        Select Plan <i class="fa-solid fa-arrow-right ms-1"></i>
                                     </button>
                                 </div>
                             </div>
