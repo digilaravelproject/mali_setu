@@ -80,6 +80,7 @@
                                     <th class="border-0 text-center">Services</th>
                                     <th class="border-0 text-center">Active Jobs</th>
                                     <th class="border-0 text-center">Subscription</th>
+                                    <th class="border-0 text-center"> Verification Status</th>
                                     <th class="border-0 rounded-end text-center">Actions</th>
                                 </tr>
                             </thead>
@@ -118,6 +119,15 @@
                                             @endif
                                         </td>
                                         <td class="text-center">
+                                            @if($biz->verification_status === 'approved')
+                                                <span class="badge bg-success bg-opacity-10 text-success py-1 px-2.5 rounded-pill"><i class="fa-solid fa-circle-check me-1"></i> Approved</span>
+                                            @elseif($biz->verification_status === 'rejected')
+                                                <span class="badge bg-danger bg-opacity-10 text-danger py-1 px-2.5 rounded-pill"><i class="fa-solid fa-xmark me-1"></i> Rejected</span>
+                                            @else
+                                                <span class="badge bg-warning bg-opacity-10 text-warning py-1 px-2.5 rounded-pill"><i class="fa-solid fa-triangle-exclamation me-1"></i> Pending</span>
+                                            @endif
+                                        </td>
+                                        <td class="text-center">
                                             <div class="d-flex gap-2 justify-content-center">
                                                 <a href="{{ route('dashboard.business.index', ['business_id' => $biz->id]) }}" class="btn btn-outline-success btn-sm rounded-3 @if($activeBusiness && $activeBusiness->id == $biz->id) active bg-success text-white @endif">
                                                     <i class="fa-solid fa-eye"></i>
@@ -125,7 +135,7 @@
                                                 <a href="{{ route('dashboard.business.edit', ['business_id' => $biz->id]) }}" class="btn btn-outline-primary btn-sm rounded-3">
                                                     <i class="fa-solid fa-pen-to-square"></i>
                                                 </a>
-                                                <form action="{{ route('dashboard.business.delete') }}" method="POST" class="d-inline" onsubmit="return confirm('Are you absolutely sure you want to permanently delete this business? All products, services, jobs, and applicants will be lost forever.');">
+                                                <form action="{{ route('dashboard.business.delete') }}" method="POST" class="d-inline">
                                                     @csrf
                                                     @method('DELETE')
                                                     <input type="hidden" name="business_id" value="{{ $biz->id }}">

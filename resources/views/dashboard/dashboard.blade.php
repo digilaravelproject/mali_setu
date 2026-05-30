@@ -495,7 +495,7 @@
             </div>
 
             <!-- Profile Summary -->
-            <div class="glass-card text-start">
+            <?php /*<div class="glass-card text-start">
                 <h5 class="fw-bold mb-4"><i class="fa-solid fa-user me-2 text-primary"></i> Profile Information</h5>
                 <div class="row g-3">
                     <div class="col-sm-6">
@@ -523,7 +523,7 @@
                         </div>
                     </div>
                 </div>
-            </div>
+            </div> */?>
         </div>
 
         <!-- Tab 2: Edit Profile -->
