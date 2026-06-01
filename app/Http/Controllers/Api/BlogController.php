@@ -425,4 +425,16 @@ class BlogController extends Controller
             'data' => $blogs,
         ]);
     }
+
+    /**
+     * Get active blog categories.
+     */
+    public function getCategories()
+    {
+        $categories = \App\Models\BlogCategory::active()->orderBy('name')->get();
+        return response()->json([
+            'success' => true,
+            'data' => $categories,
+        ]);
+    }
 }

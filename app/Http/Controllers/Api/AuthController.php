@@ -202,6 +202,11 @@ class AuthController extends Controller
 
         $token = $user->createToken('auth_token')->plainTextToken;
 
+        if ($user->blog_category_id) {
+            $user->load('blogCategory');
+            $user->blog_category_name = $user->blogCategory ? $user->blogCategory->name : null;
+        }
+
         return response()->json([
             'success' => true,
             'message' => 'Login successful',
@@ -244,8 +249,13 @@ class AuthController extends Controller
         $user = $request->user()->load([
             'casteCertificate',
             'business',
-            'matrimonyProfile'
+            'matrimonyProfile',
+            'blogCategory'
         ]);
+
+        if ($user->blog_category_id) {
+            $user->blog_category_name = $user->blogCategory ? $user->blogCategory->name : null;
+        }
 
         $transaction = null;
 

@@ -335,10 +335,27 @@
             </div>
 
             <div class="nav-item">
-                <a href="{{ route('admin.blogs.index') }}" class="nav-link {{ request()->routeIs('admin.blogs.*') ? 'active' : '' }}">
-                    <i class="fas fa-newspaper"></i>
-                    Manage Blogs
+                <a class="nav-link d-flex justify-content-between align-items-center {{ request()->routeIs('admin.blogs.*') || request()->routeIs('admin.blog-categories.*') ? 'active' : '' }}"
+                   data-bs-toggle="collapse" href="#blogsMenu" role="button" aria-expanded="{{ request()->routeIs('admin.blogs.*') || request()->routeIs('admin.blog-categories.*') ? 'true' : 'false' }}" aria-controls="blogsMenu">
+                    <span><i class="fas fa-newspaper"></i> Manage Blogs</span>
+                    <i class="fas fa-chevron-down"></i>
                 </a>
+
+                <div class="collapse {{ request()->routeIs('admin.blogs.*') || request()->routeIs('admin.blog-categories.*') ? 'show' : '' }}" id="blogsMenu">
+                    <div class="nav-item" style="margin-left: .6rem;">
+                        <a href="{{ route('admin.blogs.index') }}" class="nav-link {{ request()->routeIs('admin.blogs.index') || request()->routeIs('admin.blogs.create') || request()->routeIs('admin.blogs.edit') ? 'active' : '' }}">
+                            <i class="fas fa-file-alt"></i>
+                            Blogs
+                        </a>
+                    </div>
+
+                    <div class="nav-item" style="margin-left: .6rem;">
+                        <a href="{{ route('admin.blog-categories.index') }}" class="nav-link {{ request()->routeIs('admin.blog-categories.*') ? 'active' : '' }}">
+                            <i class="fas fa-tags"></i>
+                            Category
+                        </a>
+                    </div>
+                </div>
             </div>
             
             <div class="nav-item">

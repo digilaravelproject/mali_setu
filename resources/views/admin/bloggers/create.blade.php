@@ -52,6 +52,20 @@
                     <input type="text" name="phone" id="phone" class="form-control" placeholder="Enter phone number (e.g. +91 9876543210)" value="{{ old('phone') }}" required>
                 </div>
 
+                <!-- Category Select Field -->
+                <div class="mb-3">
+                    <label for="blog_category_id" class="form-label fw-bold text-secondary">Blog Category</label>
+                    <select name="blog_category_id" id="blog_category_id" class="form-select @error('blog_category_id') is-invalid @enderror" required>
+                        <option value="" disabled {{ old('blog_category_id') === null ? 'selected' : '' }}>Select a blog category</option>
+                        @foreach($categories as $category)
+                            <option value="{{ $category->id }}" {{ old('blog_category_id') == $category->id ? 'selected' : '' }}>{{ $category->name }}</option>
+                        @endforeach
+                    </select>
+                    @error('blog_category_id')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
+                </div>
+
                 <!-- Password Info Callout -->
                 <div class="alert alert-light border rounded-3 p-3 mb-4">
                     <div class="d-flex">

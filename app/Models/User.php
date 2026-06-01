@@ -50,6 +50,7 @@ class User extends Authenticatable
         'latitude',
         'longitude',
         'blog_access',
+        'blog_category_id',
     ];
 
     /**
@@ -90,6 +91,14 @@ class User extends Authenticatable
     public function isVerified(): bool
     {
         return $this->caste_verification_status === 'approved';
+    }
+
+    /**
+     * Get the blogger's blog category.
+     */
+    public function blogCategory()
+    {
+        return $this->belongsTo(BlogCategory::class, 'blog_category_id');
     }
 
     /**

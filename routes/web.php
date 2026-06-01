@@ -13,6 +13,7 @@ use App\Http\Controllers\Admin\HomepageHeroController;
 use App\Http\Controllers\Admin\VolunteerManagementController;
 use App\Http\Controllers\Admin\CastManagementController;
 use App\Http\Controllers\Admin\BlogManagementController;
+use App\Http\Controllers\Admin\BlogCategoryManagementController;
 use App\Http\Controllers\Admin\EducationManagementController;
 use App\Http\Controllers\Admin\PlanManagementController;
 use Illuminate\Support\Facades\Mail;
@@ -350,6 +351,18 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::put('/{id}', [BlogManagementController::class, 'update'])->name('update');
             Route::delete('/{id}', [BlogManagementController::class, 'destroy'])->name('destroy');
             Route::patch('/{id}/toggle-status', [BlogManagementController::class, 'toggleStatus'])->name('toggle-status');
+        });
+
+        // Blog Category Management Routes
+        Route::prefix('blog-categories')->name('blog-categories.')->group(function () {
+            Route::get('/', [BlogCategoryManagementController::class, 'index'])->name('index');
+            Route::get('/create', [BlogCategoryManagementController::class, 'create'])->name('create');
+            Route::post('/', [BlogCategoryManagementController::class, 'store'])->name('store');
+            Route::get('/{id}', [BlogCategoryManagementController::class, 'show'])->name('show');
+            Route::get('/{id}/edit', [BlogCategoryManagementController::class, 'edit'])->name('edit');
+            Route::put('/{id}', [BlogCategoryManagementController::class, 'update'])->name('update');
+            Route::post('/{id}/toggle-status', [BlogCategoryManagementController::class, 'toggleStatus'])->name('toggle-status');
+            Route::delete('/{id}', [BlogCategoryManagementController::class, 'destroy'])->name('destroy');
         });
 
         // Blogger Management Routes

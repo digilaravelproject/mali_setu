@@ -33,6 +33,7 @@ class BloggerCreatedMail extends Mailable
                 'name' => $this->user->name,
                 'email' => $this->user->email,
                 'password' => $this->password,
+                'category' => $this->user->blogCategory ? $this->user->blogCategory->name : 'N/A',
             ]);
     }
 }

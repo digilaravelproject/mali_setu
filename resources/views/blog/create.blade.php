@@ -42,29 +42,37 @@
                             <!-- Blog Type -->
                             <div class="col-md-6">
                                 <label for="blog_type" class="form-label fw-bold text-dark">Blog Type <span class="text-danger">*</span></label>
-                                <select name="blog_type" id="blog_type" class="form-select border-2 @error('blog_type') is-invalid @enderror" style="border-radius: 12px; border-color: #e5cbd6; appearance: none; background-image: url('data:image/svg+xml;utf8,<svg xmlns=&quot;http://www.w3.org/2000/svg&quot; width=&quot;24&quot; height=&quot;24&quot; viewBox=&quot;0 0 24 24&quot; fill=&quot;none&quot; stroke=&quot;%23ff4757&quot; stroke-width=&quot;2&quot; stroke-linecap=&quot;round&quot; stroke-linejoin=&quot;round&quot;><polyline points=&quot;6 9 12 15 18 9&quot;></polyline></svg>'); background-repeat: no-repeat; background-position: right 15px center; background-size: 16px;">
-                                    <option value="" disabled {{ old('blog_type') ? '' : 'selected' }}>Select Blog Category</option>
-                                    @php
-                                        $categories = [
-                                            'Technology', 'Business', 'Finance', 'Marketing', 'Startups', 
-                                            'Artificial Intelligence (AI)', 'Software Development', 'Web Development', 
-                                            'Mobile App Development', 'Cybersecurity', 'Cloud Computing', 'Data Science', 
-                                            'Health & Fitness', 'Lifestyle', 'Travel', 'Food & Recipes', 
-                                            'Fashion & Beauty', 'Education', 'Career & Jobs', 'Personal Development', 
-                                            'Entertainment', 'Movies & TV', 'Music', 'Sports', 'Gaming', 
-                                            'News & Current Affairs', 'Politics', 'Science', 'Environment', 
-                                            'Parenting', 'Relationships', 'Real Estate', 'Automotive', 
-                                            'Photography', 'Home Improvement', 'E-commerce', 'Product Reviews', 
-                                            'Tutorials & Guides', 'Case Studies', 'Interviews'
-                                        ];
-                                    @endphp
-                                    @foreach($categories as $cat)
-                                        <option value="{{ $cat }}" {{ old('blog_type') === $cat ? 'selected' : '' }}>{{ $cat }}</option>
-                                    @endforeach
-                                </select>
-                                @error('blog_type')
-                                    <div class="text-danger small mt-1 fw-semibold" style="color: #c92f54 !important;">{{ $message }}</div>
-                                @enderror
+                                @if(auth()->user()->user_type === 'bloger' && auth()->user()->blogCategory)
+                                    <select name="blog_type_disabled" id="blog_type" class="form-select border-2" style="border-radius: 12px; border-color: #e5cbd6; appearance: none; background-color: #f8fafc;" disabled>
+                                        <option value="{{ auth()->user()->blogCategory->name }}" selected>{{ auth()->user()->blogCategory->name }}</option>
+                                    </select>
+                                    <input type="hidden" name="blog_type" value="{{ auth()->user()->blogCategory->name }}">
+                                    <div class="form-text small text-muted">You are posting in your assigned category.</div>
+                                @else
+                                    <select name="blog_type" id="blog_type" class="form-select border-2 @error('blog_type') is-invalid @enderror" style="border-radius: 12px; border-color: #e5cbd6; appearance: none; background-image: url('data:image/svg+xml;utf8,<svg xmlns=&quot;http://www.w3.org/2000/svg&quot; width=&quot;24&quot; height=&quot;24&quot; viewBox=&quot;0 0 24 24&quot; fill=&quot;none&quot; stroke=&quot;%23ff4757&quot; stroke-width=&quot;2&quot; stroke-linecap=&quot;round&quot; stroke-linejoin=&quot;round&quot;><polyline points=&quot;6 9 12 15 18 9&quot;></polyline></svg>'); background-repeat: no-repeat; background-position: right 15px center; background-size: 16px;">
+                                        <option value="" disabled {{ old('blog_type') ? '' : 'selected' }}>Select Blog Category</option>
+                                        @php
+                                            $categories = [
+                                                'Technology', 'Business', 'Finance', 'Marketing', 'Startups', 
+                                                'Artificial Intelligence (AI)', 'Software Development', 'Web Development', 
+                                                'Mobile App Development', 'Cybersecurity', 'Cloud Computing', 'Data Science', 
+                                                'Health & Fitness', 'Lifestyle', 'Travel', 'Food & Recipes', 
+                                                'Fashion & Beauty', 'Education', 'Career & Jobs', 'Personal Development', 
+                                                'Entertainment', 'Movies & TV', 'Music', 'Sports', 'Gaming', 
+                                                'News & Current Affairs', 'Politics', 'Science', 'Environment', 
+                                                'Parenting', 'Relationships', 'Real Estate', 'Automotive', 
+                                                'Photography', 'Home Improvement', 'E-commerce', 'Product Reviews', 
+                                                'Tutorials & Guides', 'Case Studies', 'Interviews'
+                                            ];
+                                        @endphp
+                                        @foreach($categories as $cat)
+                                            <option value="{{ $cat }}" {{ old('blog_type') === $cat ? 'selected' : '' }}>{{ $cat }}</option>
+                                        @endforeach
+                                    </select>
+                                    @error('blog_type')
+                                        <div class="text-danger small mt-1 fw-semibold" style="color: #c92f54 !important;">{{ $message }}</div>
+                                    @enderror
+                                @endif
                             </div>
                         </div>
 

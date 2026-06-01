@@ -17,7 +17,7 @@ class BloggerManagementController extends Controller
      */
     public function index(Request $request)
     {
-        $query = User::where('user_type', 'bloger');
+        $query = User::with('blogCategory')->where('user_type', 'bloger');
 
         // Apply search filter
         if ($request->filled('search')) {
@@ -39,7 +39,8 @@ class BloggerManagementController extends Controller
      */
     public function create()
     {
-        return view('admin.bloggers.create');
+        $categories = \App\Models\BlogCategory::active()->orderBy('name')->get();
+        return view('admin.bloggers.create', compact('categories'));
     }
 
     /**
@@ -51,8 +52,11 @@ class BloggerManagementController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
             'phone' => 'required|string|max:20',
+            'blog_category_id' => 'required|exists:blog_categories,id',
         ], [
             'email.unique' => 'This email is already registered on Mali Setu.',
+            'blog_category_id.required' => 'Please select a blog category.',
+            'blog_category_id.exists' => 'Selected category is invalid.',
         ]);
 
         try {
@@ -85,6 +89,7 @@ class BloggerManagementController extends Controller
                 'blog_access' => true,
                 'status' => 'active',
                 'caste_verification_status' => 'approved', // Auto-approved to avoid restrictions
+                'blog_category_id' => $request->blog_category_id,
             ]);
 
             // Dispatch credentials email
@@ -116,7 +121,8 @@ class BloggerManagementController extends Controller
     public function edit($id)
     {
         $blogger = User::where('user_type', 'bloger')->findOrFail($id);
-        return view('admin.bloggers.edit', compact('blogger'));
+        $categories = \App\Models\BlogCategory::active()->orderBy('name')->get();
+        return view('admin.bloggers.edit', compact('blogger', 'categories'));
     }
 
     /**
@@ -131,6 +137,10 @@ class BloggerManagementController extends Controller
             'email' => 'required|email|unique:users,email,' . $blogger->id,
             'phone' => 'required|string|max:20',
             'status' => 'required|in:active,suspended',
+            'blog_category_id' => 'required|exists:blog_categories,id',
+        ], [
+            'blog_category_id.required' => 'Please select a blog category.',
+            'blog_category_id.exists' => 'Selected category is invalid.',
         ]);
 
         try {
@@ -139,6 +149,7 @@ class BloggerManagementController extends Controller
                 'email' => $request->email,
                 'phone' => $request->phone,
                 'status' => $request->status,
+                'blog_category_id' => $request->blog_category_id,
             ]);
 
             return redirect()->route('admin.bloggers.index')

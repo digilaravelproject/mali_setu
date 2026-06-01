@@ -36,6 +36,14 @@
                         </div>
 
                         <div class="mb-3 d-flex align-items-start">
+                            <div class="text-muted me-2"><i class="fas fa-tags text-primary"></i></div>
+                            <div>
+                                <span class="small text-muted d-block">Assigned Blog Category</span>
+                                <span class="fw-semibold text-dark">{{ $blogger->blogCategory->name ?? 'N/A' }}</span>
+                            </div>
+                        </div>
+
+                        <div class="mb-3 d-flex align-items-start">
                             <div class="text-muted me-2"><i class="fas fa-phone"></i></div>
                             <div>
                                 <span class="small text-muted d-block">Phone Number</span>

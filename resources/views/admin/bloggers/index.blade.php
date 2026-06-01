@@ -51,6 +51,7 @@
                         <thead>
                             <tr>
                                 <th>Blogger</th>
+                                <th>Category</th>
                                 <th>Phone</th>
                                 <th>Status</th>
                                 <th>Registered</th>
@@ -70,6 +71,11 @@
                                             <span class="small text-muted">{{ $blogger->email }}</span>
                                         </div>
                                     </div>
+                                </td>
+                                <td>
+                                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-3 py-2 rounded-pill fw-semibold">
+                                        {{ $blogger->blogCategory->name ?? 'N/A' }}
+                                    </span>
                                 </td>
                                 <td>{{ $blogger->phone ?? 'N/A' }}</td>
                                 <td>

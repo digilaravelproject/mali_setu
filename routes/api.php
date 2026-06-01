@@ -109,10 +109,10 @@ Route::prefix('plans')->group(function () {
     Route::get('matrimony', [PlanController::class, 'matrimonyPlans']);
 });
 
-// Public blog routes
 Route::prefix('blogs')->group(function () {
     Route::middleware('auth:sanctum')->get('/', [BlogController::class, 'index']);
     Route::get('/search', [BlogController::class, 'search']);
+    Route::get('/categories', [BlogController::class, 'getCategories']);
     Route::middleware('auth:sanctum')->get('/{id}', [BlogController::class, 'show']);
 });
 

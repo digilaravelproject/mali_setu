@@ -89,6 +89,9 @@
         <div class="credentials-row">
             <strong>Password:</strong> <span style="font-family: monospace; background:#fff; padding:2px 6px; border-radius:4px; font-weight:bold;">{{ $password }}</span>
         </div>
+        <div class="credentials-row">
+            <strong>Category:</strong> {{ $category }}
+        </div>
     </div>
 
     <p style="text-align: center;">
