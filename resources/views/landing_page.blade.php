@@ -125,6 +125,29 @@
             bottom: 30px; right: 60px;
             font-size: 24px;
         }
+        .business-wreath {
+            position: absolute;
+            top: -20px;
+            left: -20px;
+            width: 420px;
+            height: 420px;
+            border: 4px dashed var(--primary);
+            border-radius: 50%;
+            animation: rotateWreath 40s linear infinite;
+            z-index: 2;
+        }
+        .business-wreath::before {
+            content: '💼';
+            position: absolute;
+            top: 20px; left: 50px;
+            font-size: 24px;
+        }
+        .business-wreath::after {
+            content: '🤝';
+            position: absolute;
+            bottom: 30px; right: 60px;
+            font-size: 24px;
+        }
         .wreath-sparkle {
             position: absolute;
             top: -15px;
@@ -760,8 +783,8 @@
         </button>
         <div class="collapse navbar-collapse" id="navbarNav">
             <ul class="navbar-nav ms-auto align-items-center">
-                <li class="nav-item"><a class="nav-link px-3" href="#matrimony" id="nav-link-matrimony" onclick="switchLandingMode('matrimony');"><i class="fa-solid fa-heart text-danger me-1"></i> Matrimony</a></li>
-                <li class="nav-item"><a class="nav-link px-3" href="#business" id="nav-link-business" onclick="switchLandingMode('business');"><i class="fa-solid fa-store text-primary me-1"></i> Business</a></li>
+                <li class="nav-item"><a class="nav-link px-3" href="#matrimony-how"><i class="fa-solid fa-heart text-danger me-1"></i> Matrimony</a></li>
+                <li class="nav-item"><a class="nav-link px-3" href="#business-how"><i class="fa-solid fa-store text-primary me-1"></i> Business</a></li>
                 
                 <?php /*<li class="nav-item"><a class="nav-link px-3" href="#plans"><i class="fa-solid fa-gem text-warning me-1"></i> Pricing Plans</a></li> */?>
                 <li class="nav-item"><a class="nav-link px-3" href="{{ url('contact-us') }}"><i class="fa-solid fa-envelope text-info me-1"></i> Contact Us</a></li>
@@ -790,7 +813,7 @@
                             <p class="lead mb-4 text-secondary" style="font-weight: 500;">We bring people together. Love unites them...<br>Discover and connect with verified matrimony profiles and business catalogs within the Mali Community.</p>
                             <div class="d-flex gap-3 mt-4">
                                 <a href="{{ route('register') }}" class="btn btn-primary btn-lg px-4 shadow-sm"><i class="fa-solid fa-heart me-2"></i> Find Match</a>
-                                <a href="#plans" class="btn btn-outline-primary btn-lg px-4"><i class="fa-solid fa-gem me-2"></i> View Plans</a>
+                                <a href="#matrimony-how" class="btn btn-outline-primary btn-lg px-4"><i class="fa-solid fa-compass me-2"></i> How It Works</a>
                             </div>
                         </div>
                         
@@ -806,46 +829,37 @@
                 </div>
             </div>
 
-            <!-- Slides 2+: Dynamic Business Banners from Dashboard -->
-            @if($banners && $banners->count() > 0)
-                @foreach($banners as $banner)
-                    <div class="swiper-slide hero-slide slide-business px-4">
-                        <div class="container">
-                            <div class="business-hero-slide" style="background: url('{{ asset('storage/' . $banner->image_path) }}') no-repeat;">
-                                <div class="business-hero-overlay"></div>
-                                <div class="business-hero-content col-lg-8">
-                                    <span class="badge bg-primary px-3 py-2 rounded-pill mb-3 fw-bold text-uppercase shadow-sm"><i class="fa-solid fa-store me-1"></i> Community Enterprise Spotlight</span>
-                                    <h1 class="display-4 fw-extrabold mb-3 text-white" style="line-height: 1.2;">{{ $banner->title }}</h1>
-                                    <p class="lead mb-4 text-white text-opacity-80" style="font-weight: 500;">Empowering and connecting verified regional community vendors, trusted specialists, and agricultural entrepreneurs.</p>
-                                    <?php /*@if($banner->url)
-                                        <a href="{{ $banner->url }}" target="_blank" class="btn btn-warning btn-lg fw-bold rounded-3 px-4 shadow-sm">Explore More <i class="fa-solid fa-arrow-up-right-from-square ms-2"></i></a>
-                                    @else
-                                        <a href="#directory" onclick="switchLandingMode('business');" class="btn btn-warning btn-lg fw-bold rounded-3 px-4 shadow-sm">Explore Directory <i class="fa-solid fa-arrow-right-long ms-2"></i></a>
-                                    @endif */?>
-                                </div>
+            <!-- Slide 2: New Business Banner (designed like matrimony banner) -->
+            <div class="swiper-slide hero-slide slide-business">
+                <div class="floral-bg" style="background-image: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); opacity: 0.85;"></div>
+                <div class="container position-relative" style="z-index: 2; padding: 60px 0 80px;">
+                    <div class="row align-items-center g-5">
+                        <div class="col-lg-7 text-start">
+                            <span class="badge bg-primary text-white px-3 py-2 rounded-pill mb-3 fw-bold shadow-sm" style="background-color: var(--primary) !important;"><i class="fa-solid fa-store me-1"></i> Verified Business Directory</span>
+                            <h1 class="display-4 fw-extrabold mb-4 milan-title" style="color: #0f172a;"><span class="text-primary" style="color: var(--primary) !important;">GROW & EMPOWER</span><br>YOUR BUSINESS</h1>
+                            <p class="lead mb-4 text-secondary" style="font-weight: 500;">Scale your community reach with ease...<br>Discover and connect with trusted regional community vendors, trusted specialists, and agricultural entrepreneurs.</p>
+                            <div class="d-flex gap-3 mt-4">
+                                <a href="{{ route('register') }}" class="btn btn-primary btn-lg px-4 shadow-sm" style="background-color: var(--primary) !important;"><i class="fa-solid fa-store me-2"></i> List Business</a>
+                                <a href="#business-how" class="btn btn-outline-primary btn-lg px-4" style="border-color: var(--primary) !important; color: var(--primary) !important;"><i class="fa-solid fa-compass me-2"></i> How It Works</a>
+                            </div>
+                        </div>
+                        
+                        <!-- Circular business image in a gorgeous gear/wreath border -->
+                        <div class="col-lg-5 text-center position-relative">
+                            <div class="couple-wrapper">
+                                <div class="business-wreath"></div>
+                                <div class="wreath-sparkle" style="box-shadow: 0 0 30px rgba(59, 130, 246, 0.35);"></div>
+                                <img src="{{ asset('business_img.png') }}" class="couple-circle floating" alt="Business Wreath Frame" style="border-color: #fff; box-shadow: 0 20px 40px rgba(59, 130, 246, 0.15);">
                             </div>
                         </div>
                     </div>
-                @endforeach
-            @endif
+                </div>
+            </div>
         </div>
         <!-- Pagination -->
         <div class="swiper-pagination hero-swiper-pagination"></div>
     </div>
 </header>
-
-<!-- DUAL MODE SWITCH TOGGLE -->
-<div class="mode-toggle-container">
-    <div class="mode-toggle-pill matrimony-active" id="landing-mode-toggle-pill">
-        <div class="mode-toggle-slider"></div>
-        <button class="btn-mode-toggle active" id="btn-toggle-matrimony" onclick="switchLandingMode('matrimony')">
-            <i class="fa-solid fa-heart me-1"></i> Matrimony
-        </button>
-        <button class="btn-mode-toggle" id="btn-toggle-business" onclick="switchLandingMode('business')">
-            <i class="fa-solid fa-store me-1"></i> Business
-        </button>
-    </div>
-</div>
 
 <!-- STATS -->
 <section class="py-5 bg-white" style="margin-top: -30px; position: relative; z-index: 10;">
@@ -1113,7 +1127,7 @@
 </section>
 
 <!-- HOW IT WORKS (MATRIMONY) -->
-<div class="mode-section matrimony-section active-mode">
+<div id="matrimony-how">
     <section class="py-5 bg-light">
         <div class="container py-4 text-center">
             <div class="text-center mb-5">
@@ -1155,8 +1169,8 @@
 </div>
 
 <!-- HOW IT WORKS (BUSINESS & FLOW) -->
-<div class="mode-section business-section">
-    <section class="py-5 bg-light">
+<div id="business-how">
+    <section class="py-5 bg-white border-top">
         <div class="container py-4 text-center">
             <div class="text-center mb-5">
                 <span class="badge bg-primary bg-opacity-10 text-primary px-3 py-2 rounded-pill mb-2 fw-bold text-uppercase">Empower Local Business</span>
@@ -1625,13 +1639,12 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/swiper@9/swiper-bundle.min.js"></script>
-
 <script>
     AOS.init({ duration: 800, once: true });
 
-    // Hero Swiper Autoplay Config (loop: false to allow slide filtering without duplicates)
+    // Hero Swiper Autoplay Config (loop: true for infinite auto scrolling)
     const heroSwiper = new Swiper(".heroSwiper", {
-        loop: false,
+        loop: true,
         autoplay: {
             delay: 5000,
             disableOnInteraction: false,
@@ -1655,119 +1668,6 @@
         pagination: { el: ".swiper-pagination", clickable: true },
         breakpoints: { 768: { slidesPerView: 2 } },
         speed: 600
-    });
-
-    // Dynamic SPA Mode Switching & Hash Routing
-    function switchLandingMode(mode) {
-        // Remove active-mode from all sections
-        document.querySelectorAll('.mode-section').forEach(section => {
-            section.classList.remove('active-mode');
-        });
-
-        // Remove active class from toggle buttons
-        document.querySelectorAll('.btn-mode-toggle').forEach(btn => {
-            btn.classList.remove('active');
-        });
-
-        // Remove active class from navbar links
-        document.querySelectorAll('.nav-link').forEach(link => {
-            link.classList.remove('text-primary');
-        });
-
-        const togglePill = document.getElementById('landing-mode-toggle-pill');
-
-        if (mode === 'matrimony') {
-            // Activate Matrimony sections
-            document.querySelectorAll('.matrimony-section').forEach(section => {
-                section.classList.add('active-mode');
-            });
-            // Update Toggle slider
-            if (togglePill) {
-                togglePill.classList.remove('business-active');
-                togglePill.classList.add('matrimony-active');
-            }
-            // Update Toggle buttons
-            const btn = document.getElementById('btn-toggle-matrimony');
-            if (btn) btn.classList.add('active');
-
-            // Update Navbar link
-            const navLink = document.getElementById('nav-link-matrimony');
-            if (navLink) navLink.classList.add('text-primary');
-
-            // Filter hero swiper slides: only matrimony slides visible
-            document.querySelectorAll('.hero-slide.slide-matrimony').forEach(slide => {
-                slide.classList.remove('hidden-slide');
-            });
-            document.querySelectorAll('.hero-slide.slide-business').forEach(slide => {
-                slide.classList.add('hidden-slide');
-            });
-
-            // Update URL hash
-            if (window.location.hash !== '#matrimony') {
-                window.location.hash = 'matrimony';
-            }
-        } else {
-            // Activate Business sections
-            document.querySelectorAll('.business-section').forEach(section => {
-                section.classList.add('active-mode');
-            });
-            // Update Toggle slider
-            if (togglePill) {
-                togglePill.classList.remove('matrimony-active');
-                togglePill.classList.add('business-active');
-            }
-            // Update Toggle buttons
-            const btn = document.getElementById('btn-toggle-business');
-            if (btn) btn.classList.add('active');
-
-            // Update Navbar link
-            const navLink = document.getElementById('nav-link-business');
-            if (navLink) navLink.classList.add('text-primary');
-
-            // Filter hero swiper slides: only business slides visible
-            document.querySelectorAll('.hero-slide.slide-business').forEach(slide => {
-                slide.classList.remove('hidden-slide');
-            });
-            document.querySelectorAll('.hero-slide.slide-matrimony').forEach(slide => {
-                slide.classList.add('hidden-slide');
-            });
-
-            // Update URL hash
-            if (window.location.hash !== '#business') {
-                window.location.hash = 'business';
-            }
-        }
-
-        // Safely update and reset heroSwiper
-        if (typeof heroSwiper !== 'undefined' && heroSwiper && typeof heroSwiper.update === 'function') {
-            heroSwiper.update();
-            heroSwiper.slideTo(0);
-        }
-
-        // Re-trigger AOS animations for freshly shown elements
-        setTimeout(() => {
-            AOS.refresh();
-        }, 150);
-    }
-
-    // Auto-detect mode on page load based on URL hash
-    window.addEventListener('DOMContentLoaded', () => {
-        const hash = window.location.hash;
-        if (hash === '#business') {
-            switchLandingMode('business');
-        } else {
-            switchLandingMode('matrimony');
-        }
-    });
-
-    // Handle hash change events (e.g. back button or direct clicks)
-    window.addEventListener('hashchange', () => {
-        const hash = window.location.hash;
-        if (hash === '#business') {
-            switchLandingMode('business');
-        } else if (hash === '#matrimony') {
-            switchLandingMode('matrimony');
-        }
     });
 
     // AJAX Blog Liking logic (Available publicly for guests and registered members)
