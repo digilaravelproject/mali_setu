@@ -14,6 +14,7 @@ use App\Http\Controllers\Admin\VolunteerManagementController;
 use App\Http\Controllers\Admin\CastManagementController;
 use App\Http\Controllers\Admin\BlogManagementController;
 use App\Http\Controllers\Admin\BlogCategoryManagementController;
+use App\Http\Controllers\Admin\BlogCommentManagementController;
 use App\Http\Controllers\Admin\EducationManagementController;
 use App\Http\Controllers\Admin\PlanManagementController;
 use Illuminate\Support\Facades\Mail;
@@ -172,6 +173,8 @@ Route::middleware('auth')->group(function () {
         Route::post('/{id}/update', [\App\Http\Controllers\BlogController::class, 'update'])->name('update');
         Route::delete('/{id}', [\App\Http\Controllers\BlogController::class, 'destroy'])->name('destroy');
         Route::post('/{id}/like', [\App\Http\Controllers\BlogController::class, 'like'])->name('like');
+        Route::post('/{blogId}/comments', [\App\Http\Controllers\BlogCommentController::class, 'store'])->name('comments.store');
+        Route::delete('/comments/{id}', [\App\Http\Controllers\BlogCommentController::class, 'destroy'])->name('comments.destroy');
     });
 });
 
@@ -351,6 +354,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::put('/{id}', [BlogManagementController::class, 'update'])->name('update');
             Route::delete('/{id}', [BlogManagementController::class, 'destroy'])->name('destroy');
             Route::patch('/{id}/toggle-status', [BlogManagementController::class, 'toggleStatus'])->name('toggle-status');
+            Route::delete('/comments/{id}', [BlogManagementController::class, 'deleteComment'])->name('comments.destroy');
         });
 
         // Blog Category Management Routes

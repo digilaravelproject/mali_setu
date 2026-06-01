@@ -107,5 +107,97 @@
             </form>
         </div>
     </div>
+
+    <!-- Blog Comments Management Card -->
+    <div class="card mt-4">
+        <div class="card-header bg-light d-flex align-items-center justify-content-between py-3">
+            <h5 class="mb-0 fw-bold text-dark"><i class="fas fa-comments me-2 text-danger"></i>Manage Comments (<span id="total-comment-count">{{ $blog->allComments()->count() }}</span>)</h5>
+            <span class="text-secondary small">Scrollable discussion log</span>
+        </div>
+        <div class="card-body p-4">
+            <div id="comments-scroll-container" style="max-height: 480px; overflow-y: auto; padding-right: 8px;">
+                @forelse($blog->comments as $comment)
+                    <div class="comment-wrapper mb-4" id="comment-{{ $comment->id }}">
+                        <!-- Parent Comment Card -->
+                        <div class="d-flex align-items-start p-3 rounded mb-2 border-start border-3 border-secondary" style="background: #f8f9fa;">
+                            <div class="avatar bg-secondary text-white d-flex align-items-center justify-content-center fw-bold me-3 shadow-sm" style="width: 38px; height: 38px; border-radius: 50%; flex-shrink: 0; font-size: 0.9rem;">
+                                {{ strtoupper(substr($comment->user->name ?? 'U', 0, 1)) }}
+                            </div>
+                            <div class="flex-grow-1">
+                                <div class="d-flex align-items-center justify-content-between mb-1">
+                                    <h6 class="mb-0 fw-bold text-dark" style="font-size: 0.95rem;">{{ $comment->user->name ?? 'Anonymous' }}</h6>
+                                    <span class="text-muted small" style="font-size: 0.75rem;">{{ $comment->created_at->diffForHumans() }}</span>
+                                </div>
+                                <p class="text-secondary small mb-2" style="white-space: pre-line;">{{ $comment->comment }}</p>
+                                <div class="text-end">
+                                    <form method="POST" action="{{ route('admin.blogs.comments.destroy', $comment->id) }}" onsubmit="return confirm('Are you sure you want to delete this comment? (Deleting a parent comment will also delete all of its replies.)')" class="d-inline">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="btn btn-sm btn-outline-danger px-2.5 py-1 rounded fw-bold" style="font-size: 0.75rem;">
+                                            <i class="fas fa-trash me-1"></i>Delete Comment
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Replies List (Nested) -->
+                        <div class="replies-wrapper ms-5 border-start border-2 border-light ps-3 d-flex flex-column gap-3">
+                            @foreach($comment->replies as $reply)
+                                <div class="d-flex align-items-start p-3 rounded reply-card" id="comment-{{ $reply->id }}" style="background: rgba(255, 71, 87, 0.02); border: 1px solid rgba(255, 71, 87, 0.04);">
+                                    <div class="avatar bg-primary text-white d-flex align-items-center justify-content-center fw-bold me-3 shadow-sm" style="width: 32px; height: 32px; border-radius: 50%; flex-shrink: 0; font-size: 0.8rem;">
+                                        {{ strtoupper(substr($reply->user->name ?? 'U', 0, 1)) }}
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <div class="d-flex align-items-center justify-content-between mb-1">
+                                            <div class="d-flex align-items-center gap-2 flex-wrap">
+                                                <h6 class="mb-0 fw-bold text-dark" style="font-size: 0.85rem;">{{ $reply->user->name ?? 'Anonymous' }}</h6>
+                                                @if($reply->user_id === $blog->user_id)
+                                                    <span class="badge bg-primary text-white" style="font-size: 0.65rem; border-radius: 4px; padding: 2px 6px;">Author</span>
+                                                @endif
+                                            </div>
+                                            <span class="text-muted small" style="font-size: 0.72rem;">{{ $reply->created_at->diffForHumans() }}</span>
+                                        </div>
+                                        <p class="text-secondary small mb-2" style="white-space: pre-line;">{{ $reply->comment }}</p>
+                                        <div class="text-end">
+                                            <form method="POST" action="{{ route('admin.blogs.comments.destroy', $reply->id) }}" onsubmit="return confirm('Are you sure you want to delete this reply?')" class="d-inline">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="btn btn-sm btn-outline-danger px-2.5 py-1 rounded fw-bold" style="font-size: 0.75rem;">
+                                                    <i class="fas fa-trash me-1"></i>Delete Reply
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                @empty
+                    <div class="text-center py-5">
+                        <i class="fas fa-comments fa-3x opacity-20 mb-3 text-secondary"></i>
+                        <p class="text-muted small mb-0">No comments on this blog yet.</p>
+                    </div>
+                @endforelse
+            </div>
+        </div>
+    </div>
 </div>
+
+<style>
+    #comments-scroll-container::-webkit-scrollbar {
+        width: 6px;
+    }
+    #comments-scroll-container::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 10px;
+    }
+    #comments-scroll-container::-webkit-scrollbar-thumb {
+        background: var(--primary-color, #ff4757);
+        border-radius: 10px;
+    }
+    #comments-scroll-container::-webkit-scrollbar-thumb:hover {
+        background: #8b0000;
+    }
+</style>
 @endsection

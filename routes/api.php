@@ -278,6 +278,8 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::post('{id}/like', [BlogController::class, 'like']);
         Route::put('{id}', [BlogController::class, 'update']);
         Route::delete('{id}', [BlogController::class, 'destroy']);
+        Route::post('{id}/comments', [BlogController::class, 'storeComment']);
+        Route::delete('comments/{commentId}', [BlogController::class, 'destroyComment']);
     });
     
     // Job Management Routes

@@ -51,4 +51,20 @@ class Blog extends Model
     {
         return $this->likes()->where('user_id', $userId)->exists();
     }
+
+    /**
+     * Get top-level comments for the blog.
+     */
+    public function comments(): HasMany
+    {
+        return $this->hasMany(BlogComment::class)->whereNull('parent_id')->latest();
+    }
+
+    /**
+     * Get all comments and replies for the blog.
+     */
+    public function allComments(): HasMany
+    {
+        return $this->hasMany(BlogComment::class);
+    }
 }

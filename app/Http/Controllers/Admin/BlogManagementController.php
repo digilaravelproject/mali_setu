@@ -132,12 +132,12 @@ class BlogManagementController extends Controller
         }
     }
 
-    /**
-     * Show the form for editing the specified blog.
-     */
     public function edit($id)
     {
-        $blog = Blog::findOrFail($id);
+        $blog = Blog::with(['comments' => function($q) {
+            $q->whereNull('parent_id')->with(['user', 'replies.user'])->latest();
+        }])->findOrFail($id);
+        
         return view('admin.blogs.edit', compact('blog'));
     }
 
@@ -250,6 +250,21 @@ class BlogManagementController extends Controller
             return redirect()->back()->with('success', 'Blog status updated successfully!');
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'Failed to update status: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Remove the specified comment from a blog (Admin action).
+     */
+    public function deleteComment($id)
+    {
+        try {
+            $comment = \App\Models\BlogComment::findOrFail($id);
+            $comment->delete();
+
+            return redirect()->back()->with('success', 'Comment deleted successfully!');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Failed to delete comment: ' . $e->getMessage());
         }
     }
 }

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Blog;
 use App\Models\BlogLike;
+use App\Models\BlogComment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
@@ -59,14 +60,18 @@ class BlogController extends Controller
     {
         $userId = auth()->id(); // logged-in user
         
-        // $blog = Blog::with('user')->withCount('likes')->findOrFail($id);
-        $blog = Blog::with('user')
-            ->withCount('likes')
-            ->withExists([
-                'likes as is_liked' => function ($query) use ($userId) {
-                    $query->where('user_id', $userId);
-                }
-            ])
+        $blog = Blog::with([
+            'user',
+            'comments' => function ($q) {
+                $q->whereNull('parent_id')->with(['user', 'replies.user'])->latest();
+            }
+        ])
+        ->withCount('likes')
+        ->withExists([
+            'likes as is_liked' => function ($query) use ($userId) {
+                $query->where('user_id', $userId);
+            }
+        ])
         ->findOrFail($id);
 
 
@@ -435,6 +440,89 @@ class BlogController extends Controller
         return response()->json([
             'success' => true,
             'data' => $categories,
+        ]);
+    }
+
+    /**
+     * Store a comment or reply on a blog via API.
+     */
+    public function storeComment(Request $request, $id)
+    {
+        $validator = Validator::make($request->all(), [
+            'comment' => 'required|string|max:1000',
+            'parent_id' => 'nullable|integer|exists:blog_comments,id',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
+        $blog = Blog::findOrFail($id);
+        $user = $request->user();
+
+        // If parent_id is set, it means we are replying to a comment.
+        // Rule: Only the blog owner can reply to comments on their blog.
+        if ($request->filled('parent_id')) {
+            $parent = BlogComment::findOrFail($request->parent_id);
+
+            // Verify parent comment belongs to the same blog
+            if ($parent->blog_id !== $blog->id) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid parent comment.',
+                ], 400);
+            }
+
+            // Verify authorized: current user must be the blog owner
+            if ($blog->user_id !== $user->id) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unauthorized action. Only the blog owner can reply to comments.',
+                ], 403);
+            }
+        }
+
+        $comment = BlogComment::create([
+            'blog_id' => $blog->id,
+            'user_id' => $user->id,
+            'parent_id' => $request->parent_id,
+            'comment' => $request->comment,
+        ]);
+
+        $comment->load('user');
+
+        return response()->json([
+            'success' => true,
+            'message' => $request->filled('parent_id') ? 'Reply posted successfully!' : 'Comment posted successfully!',
+            'data' => $comment,
+        ], 201);
+    }
+
+    /**
+     * Delete a comment or reply via API.
+     */
+    public function destroyComment($commentId, Request $request)
+    {
+        $comment = BlogComment::with('blog')->findOrFail($commentId);
+        $user = $request->user();
+
+        // Authorization: Only the comment author or the blog owner can delete comments
+        if ($comment->user_id !== $user->id && $comment->blog->user_id !== $user->id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized action. You do not have permission to delete this comment.',
+            ], 403);
+        }
+
+        $comment->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Comment deleted successfully.',
         ]);
     }
 }
