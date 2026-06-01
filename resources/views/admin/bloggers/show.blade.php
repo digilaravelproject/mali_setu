@@ -142,7 +142,7 @@
                                                 @endif
                                                 <div>
                                                     <h6 class="mb-0 fw-bold text-dark">{{ $blog->title }}</h6>
-                                                    <span class="small text-muted">{{ $blog->blog_type }}</span>
+                                                    <span class="small text-muted">{{ $blog->category->name ?? $blog->blog_type }}</span>
                                                 </div>
                                             </div>
                                         </td>

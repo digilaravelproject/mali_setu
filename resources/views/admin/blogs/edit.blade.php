@@ -33,22 +33,8 @@
                     <label class="form-label">Blog Type</label>
                     <select name="blog_type" class="form-select" required>
                         <option value="" disabled>Select Blog Category</option>
-                        @php
-                            $categories = [
-                                'Technology', 'Business', 'Finance', 'Marketing', 'Startups', 
-                                'Artificial Intelligence (AI)', 'Software Development', 'Web Development', 
-                                'Mobile App Development', 'Cybersecurity', 'Cloud Computing', 'Data Science', 
-                                'Health & Fitness', 'Lifestyle', 'Travel', 'Food & Recipes', 
-                                'Fashion & Beauty', 'Education', 'Career & Jobs', 'Personal Development', 
-                                'Entertainment', 'Movies & TV', 'Music', 'Sports', 'Gaming', 
-                                'News & Current Affairs', 'Politics', 'Science', 'Environment', 
-                                'Parenting', 'Relationships', 'Real Estate', 'Automotive', 
-                                'Photography', 'Home Improvement', 'E-commerce', 'Product Reviews', 
-                                'Tutorials & Guides', 'Case Studies', 'Interviews'
-                            ];
-                        @endphp
                         @foreach($categories as $cat)
-                            <option value="{{ $cat }}" {{ old('blog_type', $blog->blog_type) === $cat ? 'selected' : '' }}>{{ $cat }}</option>
+                            <option value="{{ $cat->id }}" {{ (int)old('blog_type', $blog->blog_type) === $cat->id ? 'selected' : '' }}>{{ $cat->name }}</option>
                         @endforeach
                     </select>
                 </div>

@@ -164,12 +164,12 @@
                                         </td>
                                         <td>
                                             @if($payment->payment_method)
-                                                <span class="badge badge-info">{{ ucfirst($payment->payment_method) }}</span>
+                                                <span class="badge badge-info text-muted">{{ ucfirst($payment->payment_method) }}</span>
                                             @else
-                                                <span class="text-muted">N/A</span>
+                                                <span class="text-muted text-muted">N/A</span>
                                             @endif
                                             @if($payment->payment_gateway)
-                                                <br><small class="text-muted">{{ ucfirst($payment->payment_gateway) }}</small>
+                                                <br><small class="text-muted text-muted">{{ ucfirst($payment->payment_gateway) }}</small>
                                             @endif
                                         </td>
                                         <td>
@@ -180,13 +180,13 @@
                                         </td>
                                         <td>
                                             @if($payment->status === 'completed')
-                                                <span class="badge badge-success">Completed</span>
+                                                <span class="badge badge-success text-muted">Completed</span>
                                             @elseif($payment->status === 'pending')
-                                                <span class="badge badge-warning">Pending</span>
+                                                <span class="badge badge-warning text-muted">Pending</span>
                                             @elseif($payment->status === 'failed')
-                                                <span class="badge badge-danger">Failed</span>
+                                                <span class="badge badge-danger text-muted">Failed</span>
                                             @elseif($payment->status === 'refunded')
-                                                <span class="badge badge-info">Refunded</span>
+                                                <span class="badge badge-info text-muted">Refunded</span>
                                             @elseif($payment->status === 'cancelled')
                                                 <span class="badge badge-secondary">Cancelled</span>
                                             @endif

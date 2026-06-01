@@ -16,7 +16,7 @@ class BlogController extends Controller
     public function index(Request $request)
     {
         $user = Auth::user();
-        $query = Blog::with('user')->withCount('likes');
+        $query = Blog::with(['user', 'category'])->withCount('likes');
 
         // Apply Search Filter
         if ($request->filled('search')) {
@@ -38,7 +38,7 @@ class BlogController extends Controller
             ->get();
 
         // Dynamically extract categories containing at least one active blog matching search/tag
-        $activeCategories = $blogs->pluck('blog_type')->unique()->filter()->values();
+        $activeCategories = $blogs->pluck('category')->unique('id')->filter()->values();
 
         // Get user's own blogs (if they have blog creation access)
         $myBlogs = [];
@@ -61,8 +61,9 @@ class BlogController extends Controller
         if (!$user->blog_access) {
             return redirect()->route('blogs.index')->with('error', 'You do not have access to write blogs. Please contact an administrator.');
         }
+        $categories = \App\Models\BlogCategory::active()->get();
 
-        return view('blog.create');
+        return view('blog.create', compact('categories'));
     }
 
     /**
@@ -77,7 +78,7 @@ class BlogController extends Controller
 
         $request->validate([
             'title' => 'required|string|max:255',
-            'blog_type' => 'required|string|max:255',
+            'blog_type' => 'required|exists:blog_categories,id',
             'description' => 'required|string|max:10000',
             'tags' => 'required|string',
             'media' => 'nullable|array',
@@ -178,8 +179,9 @@ class BlogController extends Controller
         if ($blog->user_id !== $user->id) {
             return redirect()->route('blogs.index')->with('error', 'You are not authorized to edit this blog.');
         }
+        $categories = \App\Models\BlogCategory::active()->get();
 
-        return view('blog.edit', compact('blog'));
+        return view('blog.edit', compact('blog', 'categories'));
     }
 
     /**
@@ -196,7 +198,7 @@ class BlogController extends Controller
 
         $request->validate([
             'title' => 'required|string|max:255',
-            'blog_type' => 'required|string|max:255',
+            'blog_type' => 'required|exists:blog_categories,id',
             'description' => 'required|string|max:10000',
             'tags' => 'required|string',
             'media' => 'nullable|array',

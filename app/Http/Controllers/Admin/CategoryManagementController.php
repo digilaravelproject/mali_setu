@@ -144,4 +144,45 @@ class CategoryManagementController extends Controller
             return redirect()->back()->with('error', 'Failed to delete Category.');
         }
     }
+
+    /**
+     * Show edit category form
+     */
+    public function edit($id)
+    {
+        $category = BusinessCategory::findOrFail($id);
+        return view('admin.category.edit', compact('category'));
+    }
+
+    /**
+     * Update category
+     */
+    public function update(Request $request, $id)
+    {
+        $category = BusinessCategory::findOrFail($id);
+
+        $request->validate([
+            'name' => 'required|string|max:255|unique:business_categories,name,' . $id,
+            'description' => 'required|string|max:500',
+            'photo' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+        ]);
+
+        $data = [
+            'name' => $request->name,
+            'description' => $request->description,
+        ];
+
+        // Handle photo upload
+        if ($request->hasFile('photo')) {
+            // Delete old photo if it exists
+            if ($category->photo && \Illuminate\Support\Facades\Storage::disk('public')->exists($category->photo)) {
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($category->photo);
+            }
+            $data['photo'] = $request->file('photo')->store('category/photos', 'public');
+        }
+
+        $category->update($data);
+
+        return redirect()->route('admin.category.index')->with('success', 'Category updated successfully!');
+    }
 }

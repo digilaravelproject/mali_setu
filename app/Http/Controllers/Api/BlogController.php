@@ -19,7 +19,7 @@ class BlogController extends Controller
     {
         $userId = auth()->id();
         
-        $query = Blog::with('user')
+        $query = Blog::with(['user', 'category'])
         ->withCount('likes')
         ->withExists([
             'likes as is_liked' => function ($q) use ($userId) {
@@ -45,6 +45,12 @@ class BlogController extends Controller
             }
         }
 
+        if ($request->filled('category_id')) {
+            $query->where('blog_type', $request->category_id);
+        } elseif ($request->filled('blog_category_id')) {
+            $query->where('blog_type', $request->blog_category_id);
+        }
+
         $blogs = $query->paginate($request->get('per_page', 10));
 
         return response()->json([
@@ -62,6 +68,7 @@ class BlogController extends Controller
         
         $blog = Blog::with([
             'user',
+            'category',
             'comments' => function ($q) {
                 $q->whereNull('parent_id')->with(['user', 'replies.user'])->latest();
             }
@@ -106,7 +113,7 @@ class BlogController extends Controller
         $rules = [
             'title' => 'required|string|max:255',
             'description' => 'required|string',
-            'blog_type' => 'required|string|max:255',
+            'blog_type' => 'required|exists:blog_categories,id',
             'tags' => 'required',
         ];
 
@@ -219,7 +226,7 @@ class BlogController extends Controller
         $rules = [
             'title' => 'required|string|max:255',
             'description' => 'required|string',
-            'blog_type' => 'required|string|max:255',
+            'blog_type' => 'required|exists:blog_categories,id',
             'tags' => 'required',
         ];
 

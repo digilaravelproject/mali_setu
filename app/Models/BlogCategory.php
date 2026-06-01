@@ -29,6 +29,14 @@ class BlogCategory extends Model
     }
 
     /**
+     * Get the blogs for the category.
+     */
+    public function blogs(): HasMany
+    {
+        return $this->hasMany(Blog::class, 'blog_type');
+    }
+
+    /**
      * Scope for active categories
      */
     public function scopeActive($query)

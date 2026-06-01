@@ -220,6 +220,8 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::post('/{id}/active', [CategoryManagementController::class, 'active'])->name('active');
             Route::post('/{id}/inactive', [CategoryManagementController::class, 'inactive'])->name('inactive');
             Route::post('/{id}/destroy', [CategoryManagementController::class, 'destroy'])->name('destroy');
+            Route::get('/{id}/edit', [CategoryManagementController::class, 'edit'])->name('edit');
+            Route::post('/{id}/update', [CategoryManagementController::class, 'update'])->name('update');
         });
 
         // Business Management Routes

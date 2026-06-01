@@ -108,6 +108,7 @@
                         <thead>
                             <tr>
                                 <th>Title</th>
+                                <th>Category</th>
                                 <th>Description</th>
                                 <th>Tags</th>
                                 <th>Status</th>
@@ -119,6 +120,9 @@
                             @foreach($blogs as $blog)
                             <tr>
                                 <td><strong>{{ $blog->title }}</strong></td>
+                                <td>
+                                    <span class="badge bg-secondary">{{ $blog->category->name ?? 'Uncategorized' }}</span>
+                                </td>
                                 <td>
                                     <small>{{ Str::limit($blog->description, 45) ?? 'N/A' }}</small>
                                 </td>

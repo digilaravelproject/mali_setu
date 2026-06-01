@@ -86,8 +86,8 @@
         @if(!$activeCategories->isEmpty())
             @foreach($activeCategories as $index => $cat)
                 <li class="nav-item" role="presentation">
-                    <button class="nav-link {{ $index === 0 ? 'active' : '' }} rounded-pill px-4 fw-semibold" id="tab-{{ Str::slug($cat) }}" data-bs-toggle="pill" data-bs-target="#pane-{{ Str::slug($cat) }}" type="button" role="tab" aria-controls="pane-{{ Str::slug($cat) }}" aria-selected="{{ $index === 0 ? 'true' : 'false' }}">
-                        <i class="fa-solid fa-folder-open me-2"></i>{{ $cat }}
+                    <button class="nav-link {{ $index === 0 ? 'active' : '' }} rounded-pill px-4 fw-semibold" id="tab-{{ Str::slug($cat->name) }}" data-bs-toggle="pill" data-bs-target="#pane-{{ Str::slug($cat->name) }}" type="button" role="tab" aria-controls="pane-{{ Str::slug($cat->name) }}" aria-selected="{{ $index === 0 ? 'true' : 'false' }}">
+                        <i class="fa-solid fa-folder-open me-2"></i>{{ $cat->name }}
                     </button>
                 </li>
             @endforeach
@@ -110,9 +110,11 @@
         @if(!$activeCategories->isEmpty())
             @foreach($activeCategories as $index => $cat)
                 @php
-                    $catBlogs = $blogs->where('blog_type', $cat);
+                    $catBlogs = $blogs->filter(function($b) use ($cat) {
+                        return $b->blog_type == $cat->id || (is_string($b->blog_type) && trim($b->blog_type) === $cat->name);
+                    });
                 @endphp
-                <div class="tab-pane fade {{ $index === 0 ? 'show active' : '' }}" id="pane-{{ Str::slug($cat) }}" role="tabpanel" aria-labelledby="tab-{{ Str::slug($cat) }}" tabindex="0">
+                <div class="tab-pane fade {{ $index === 0 ? 'show active' : '' }}" id="pane-{{ Str::slug($cat->name) }}" role="tabpanel" aria-labelledby="tab-{{ Str::slug($cat->name) }}" tabindex="0">
                     @if($catBlogs->isEmpty())
                         <div class="text-center py-5">
                             <img src="https://illustrations.popsy.co/pink/creative-writing.svg" alt="No blogs" style="max-height: 200px;" class="mb-4">

@@ -20,6 +20,7 @@
                             <thead>
                                 <tr>
                                     <th>ID</th>
+                                    <th>Photo</th>
                                     <th>Category Name</th>
                                     <th>Status</th>
                                     <th>Created</th>
@@ -30,6 +31,13 @@
                                 @forelse($categories as $category)
                                 <tr>
                                     <td>{{ $category->id }}</td>
+                                    <td>
+                                        @if($category->photo)
+                                            <img src="{{ asset('storage/' . $category->photo) }}" alt="{{ $category->name }}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 8px;">
+                                        @else
+                                            <span class="badge bg-secondary">No Photo</span>
+                                        @endif
+                                    </td>
                                     <td>
                                         <strong>{{ $category->name }}</strong>
                                         <br>
@@ -62,6 +70,11 @@
                                                     </button>
                                                 </form>
                                             @endif
+
+                                            <!-- Edit Category Link -->
+                                            <a href="{{ route('admin.category.edit', $category->id) }}" style="margin-left: 15px;" class="btn btn-sm btn-warning" title="Edit Category">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
 
                                             <!-- Delete Category Form -->
                                             <form action="{{ route('admin.category.destroy', $category->id) }}" method="POST" class="d-inline">

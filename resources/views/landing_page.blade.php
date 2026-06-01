@@ -730,12 +730,18 @@
     $featuredBusinesses = \App\Models\Business::where('verification_status', 'approved')->latest()->take(4)->get();
 
     $banners = \App\Models\HomepageHero::all();
-    $blogs = \App\Models\Blog::with('user')->withCount('likes')->where('is_active', true)->latest()->get();
-    $activeCategories = \App\Models\Blog::where('is_active', true)
-        ->whereNotNull('blog_type')
-        ->where('blog_type', '!=', '')
-        ->distinct()
-        ->pluck('blog_type');
+    $blogs = \App\Models\Blog::with(['user', 'category'])->withCount('likes')->where('is_active', true)->latest()->get();
+    $activeCategories = \App\Models\BlogCategory::active()->whereHas('blogs', function($q) { $q->where('is_active', true); })->get();
+    if ($activeCategories->isEmpty()) {
+        $legacyNames = \App\Models\Blog::where('is_active', true)
+            ->whereNotNull('blog_type')
+            ->where('blog_type', '!=', '')
+            ->distinct()
+            ->pluck('blog_type');
+        $activeCategories = $legacyNames->map(function($name) {
+            return (object) ['id' => $name, 'name' => $name];
+        });
+    }
 @endphp
 
 <!-- NAVBAR -->
@@ -757,7 +763,7 @@
                 <li class="nav-item"><a class="nav-link px-3" href="#matrimony" id="nav-link-matrimony" onclick="switchLandingMode('matrimony');"><i class="fa-solid fa-heart text-danger me-1"></i> Matrimony</a></li>
                 <li class="nav-item"><a class="nav-link px-3" href="#business" id="nav-link-business" onclick="switchLandingMode('business');"><i class="fa-solid fa-store text-primary me-1"></i> Business</a></li>
                 
-                <li class="nav-item"><a class="nav-link px-3" href="#plans"><i class="fa-solid fa-gem text-warning me-1"></i> Pricing Plans</a></li>
+                <?php /*<li class="nav-item"><a class="nav-link px-3" href="#plans"><i class="fa-solid fa-gem text-warning me-1"></i> Pricing Plans</a></li> */?>
                 <li class="nav-item"><a class="nav-link px-3" href="{{ url('contact-us') }}"><i class="fa-solid fa-envelope text-info me-1"></i> Contact Us</a></li>
                 @auth
                     <li class="nav-item ms-lg-3"><a class="btn btn-primary shadow-sm px-4" href="{{ route('dashboard') }}"><i class="fa-solid fa-gauge me-2"></i>Dashboard</a></li>
@@ -880,7 +886,7 @@
 </section>
 
 <!-- CATEGORIES -->
-<div class="mode-section business-section">
+<?php /*<div class="mode-section business-section">
     <section class="py-5 bg-light" id="directory">
         <div class="container py-4 text-center">
             <div class="text-center mb-5">
@@ -983,7 +989,7 @@
             </div>
         </div>
     </section>
-</div>
+</div> */?>
 
 <!-- FEATURED MATRIMONY PROFILES -->
 <?php /*<div class="mode-section matrimony-section active-mode">
@@ -1161,7 +1167,7 @@
                     <div class="bg-white rounded-circle shadow-sm d-flex align-items-center justify-content-center mx-auto mb-4" style="width: 80px; height: 80px; border: 2px solid var(--primary);">
                         <i class="fa-solid fa-store text-primary fs-3"></i>
                     </div>
-                    <h5 class="fw-bold">1. Register Store</h5>
+                    <h5 class="fw-bold">1. Register Business</h5>
                     <p class="text-secondary small">Set up your business profile, upload a store logo, and add contact details.</p>
                 </div>
                 <div class="col-md-3 how-it-works-step" data-aos="fade-up" data-aos-delay="200">
@@ -1191,7 +1197,7 @@
 </div>
 
 <!-- SUBSCRIPTION PRICING PLANS -->
-<section class="py-5 bg-white" id="plans">
+<?php /*<section class="py-5 bg-white" id="plans">
     <div class="container py-4 text-center">
         
         <!-- Matrimony Plans (Only in Matrimony Mode) -->
@@ -1333,7 +1339,7 @@
         </div>
 
     </div>
-</section>
+</section> */?>
 
     </div>
 </section>
@@ -1402,7 +1408,7 @@
 </section>
 
 <!-- COMMUNITY BLOGS & INSIGHTS -->
-<section class="py-3 bg-white" id="blogs-section">
+<?php /*<section class="py-3 bg-white" id="blogs-section">
     <div class="container py-4">
         <div class="text-center mb-5">
             <span class="badge bg-primary bg-opacity-10 text-primary px-3 py-2 rounded-pill mb-2 fw-bold text-uppercase">Community Hub</span>
@@ -1415,8 +1421,8 @@
             <ul class="nav nav-pills justify-content-center mb-5 gap-2" id="landingBlogTabs" role="tablist">
                 @foreach($activeCategories as $index => $cat)
                     <li class="nav-item" role="presentation">
-                        <button class="nav-link {{ $index === 0 ? 'active' : '' }} rounded-pill px-4 fw-bold shadow-sm" id="landing-tab-{{ Str::slug($cat) }}" data-bs-toggle="pill" data-bs-target="#landing-pane-{{ Str::slug($cat) }}" type="button" role="tab" aria-controls="landing-pane-{{ Str::slug($cat) }}" aria-selected="{{ $index === 0 ? 'true' : 'false' }}">
-                            {{ $cat }}
+                        <button class="nav-link {{ $index === 0 ? 'active' : '' }} rounded-pill px-4 fw-bold shadow-sm" id="landing-tab-{{ Str::slug($cat->name) }}" data-bs-toggle="pill" data-bs-target="#landing-pane-{{ Str::slug($cat->name) }}" type="button" role="tab" aria-controls="landing-pane-{{ Str::slug($cat->name) }}" aria-selected="{{ $index === 0 ? 'true' : 'false' }}">
+                            {{ $cat->name }}
                         </button>
                     </li>
                 @endforeach
@@ -1425,9 +1431,11 @@
             <div class="tab-content" id="landingBlogTabContent">
                 @foreach($activeCategories as $index => $cat)
                     @php
-                        $catBlogs = $blogs->where('blog_type', $cat)->take(12);
+                        $catBlogs = $blogs->filter(function($blog) use ($cat) {
+                            return $blog->blog_type == $cat->id || (is_string($blog->blog_type) && trim($blog->blog_type) === $cat->name);
+                        })->take(12);
                     @endphp
-                    <div class="tab-pane fade {{ $index === 0 ? 'show active' : '' }}" id="landing-pane-{{ Str::slug($cat) }}" role="tabpanel" aria-labelledby="landing-tab-{{ Str::slug($cat) }}">
+                    <div class="tab-pane fade {{ $index === 0 ? 'show active' : '' }}" id="landing-pane-{{ Str::slug($cat->name) }}" role="tabpanel" aria-labelledby="landing-tab-{{ Str::slug($cat->name) }}">
                         <div class="swiper blogsSwiper py-3">
                             <div class="swiper-wrapper">
                                 @if($catBlogs->count() > 0)
@@ -1451,7 +1459,7 @@
                                             <a href="{{ route('blogs.public.show', $blog->id) }}" class="text-decoration-none text-dark h-100 d-block">
                                                 <div class="blog-card h-100">
                                                     <div class="blog-image-wrapper">
-                                                        <span class="blog-badge">{{ $blog->blog_type }}</span>
+                                                        <span class="blog-badge">{{ $blog->category->name ?? $blog->blog_type }}</span>
                                                         
                                                         @if(is_array($mediaList) && count($mediaList) > 1)
                                                             <div id="landingCardCarousel-{{ $blog->id }}" class="carousel slide carousel-fade h-100 w-100" data-bs-ride="carousel" data-bs-interval="3000">
@@ -1537,11 +1545,11 @@
             </div>
         @endif
         
-        <?php /*<div class="text-center mt-5">
+        <div class="text-center mt-5">
             <a href="{{ route('blogs.index') }}" class="btn btn-outline-primary px-4 py-2.5 rounded-pill shadow-sm" style="font-weight: 700;"><i class="fa-solid fa-book-open me-2"></i> Browse All Blog Articles</a>
-        </div> */?>
+        </div>
     </div>
-</section>
+</section> */?>
 
 <!-- CALL TO ACTION -->
 <section class="py-3 bg-white">

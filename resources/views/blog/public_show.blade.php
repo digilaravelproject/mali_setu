@@ -798,7 +798,7 @@
                     <!-- Category/Tags -->
                     <div class="mb-3 d-flex flex-wrap gap-2">
                         <span class="badge bg-primary bg-opacity-10 text-primary px-3 py-2 rounded-pill small fw-bold">
-                            {{ $blog->blog_type }}
+                            {{ $blog->category->name ?? $blog->blog_type }}
                         </span>
                         @if($blog->tags)
                             @foreach($blog->tags as $tag)
@@ -1327,7 +1327,7 @@
                 confirmButtonText: 'Yes, delete it!'
             }).then((result) => {
                 if (result.isConfirmed) {
-                    fetch(`/comments/${commentId}`, {
+                    fetch(`/dashboard/blogs/comments/${commentId}`, {
                         method: 'DELETE',
                         headers: {
                             'X-CSRF-TOKEN': '{{ csrf_token() }}',

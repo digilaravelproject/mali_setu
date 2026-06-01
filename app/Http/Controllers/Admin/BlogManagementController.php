@@ -14,7 +14,7 @@ class BlogManagementController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Blog::query();
+        $query = Blog::with(['category', 'user']);
 
         if ($request->has('search') && $request->search !== '') {
             $query->where('title', 'like', '%' . $request->search . '%')
@@ -77,7 +77,8 @@ class BlogManagementController extends Controller
      */
     public function create()
     {
-        return view('admin.blogs.create');
+        $categories = \App\Models\BlogCategory::active()->get();
+        return view('admin.blogs.create', compact('categories'));
     }
 
     /**
@@ -88,7 +89,7 @@ class BlogManagementController extends Controller
         try {
             $request->validate([
                 'title' => 'required|string|max:255',
-                'blog_type' => 'required|string|max:255',
+                'blog_type' => 'required|exists:blog_categories,id',
                 'description' => 'nullable|string|max:5000',
                 'tags' => 'nullable|string',
                 'media' => 'nullable|array',
@@ -138,7 +139,9 @@ class BlogManagementController extends Controller
             $q->whereNull('parent_id')->with(['user', 'replies.user'])->latest();
         }])->findOrFail($id);
         
-        return view('admin.blogs.edit', compact('blog'));
+        $categories = \App\Models\BlogCategory::active()->get();
+
+        return view('admin.blogs.edit', compact('blog', 'categories'));
     }
 
     /**
@@ -151,7 +154,7 @@ class BlogManagementController extends Controller
 
             $request->validate([
                 'title' => 'required|string|max:255',
-                'blog_type' => 'required|string|max:255',
+                'blog_type' => 'required|exists:blog_categories,id',
                 'description' => 'nullable|string|max:5000',
                 'tags' => 'nullable|string',
                 'media' => 'nullable|array',

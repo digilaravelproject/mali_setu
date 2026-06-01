@@ -37,6 +37,14 @@ class Blog extends Model
     }
 
     /**
+     * Get the category of the blog.
+     */
+    public function category(): BelongsTo
+    {
+        return $this->belongsTo(BlogCategory::class, 'blog_type');
+    }
+
+    /**
      * Get likes for the blog.
      */
     public function likes(): HasMany
