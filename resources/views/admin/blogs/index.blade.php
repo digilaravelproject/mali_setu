@@ -16,9 +16,9 @@
             <a href="{{ route('admin.blogs.create') }}" class="btn btn-primary">
                 <i class="fas fa-plus me-1"></i> Add New Blog
             </a>
-            <a href="{{ route('admin.blogs.access') }}" class="btn btn-secondary ms-2">
+            <?php /*<a href="{{ route('admin.blogs.access') }}" class="btn btn-secondary ms-2">
                 <i class="fas fa-user-lock me-1"></i> Blog Access
-            </a>
+            </a> */?>
         </div>
     </div>
 
