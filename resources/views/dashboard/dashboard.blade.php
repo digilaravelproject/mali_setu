@@ -151,6 +151,73 @@
             width: 12.5% !important;
         }
     }
+
+    /* Custom Quick Access Cards matching Screenshot 3 */
+    .quick-access-card {
+        background: #ffffff;
+        border: 1px solid #e9e8e4;
+        border-radius: 20px;
+        padding: 30px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.02);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+    .quick-access-card:hover {
+        transform: translateY(-6px);
+        box-shadow: 0 16px 35px rgba(255, 71, 87, 0.08);
+        border-color: rgba(255, 71, 87, 0.15);
+    }
+    .quick-icon-square {
+        width: 48px;
+        height: 48px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #ffffff;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+    }
+    .quick-badge {
+        background-color: #f1f3f5;
+        color: #495057;
+        border: 1px solid rgba(0, 0, 0, 0.04);
+        font-size: 0.72rem;
+        font-weight: 700;
+        padding: 6px 14px;
+        border-radius: 50px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    .quick-btn {
+        background-color: #ffffff;
+        border: 1.5px solid #ced4da;
+        color: #2d3436;
+        border-radius: 10px;
+        font-size: 0.9rem;
+        font-weight: 700;
+        padding: 11px 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        transition: all 0.2s ease;
+        text-decoration: none;
+    }
+    .quick-btn:hover {
+        background-color: #f8f9fa;
+        border-color: #2d3436;
+        color: #2d3436;
+    }
+    .quick-btn i {
+        color: var(--primary) !important;
+        transition: transform 0.2s ease;
+    }
+    .quick-btn:hover i {
+        transform: translateX(4px);
+    }
 </style>
 
 <div class="row g-4">
@@ -449,46 +516,71 @@
 
             <!-- Quick Access Section -->
             <div class="row g-4 mb-4 text-start">
-                <div class="col-md-6">
-                    <div class="glass-card h-100 d-flex flex-column justify-content-between hover-scale" style="border-top: 5px solid #ff4757; transition: all 0.3s ease;">
+                <!-- Matrimony Seeker Profile Card -->
+                <div class="col-lg-4 col-md-6 col-12">
+                    <div class="quick-access-card">
                         <div>
                             <div class="d-flex align-items-center justify-content-between mb-3">
-                                <div class="bg-primary bg-opacity-10 text-primary p-2.5 rounded-3 d-flex align-items-center justify-content-center" style="width:40px; height:40px;">
-                                    <i class="fa-solid fa-briefcase fs-5"></i>
+                                <div class="quick-icon-square" style="background-color: #ff4757;">
+                                    <i class="fa-solid fa-heart fs-5 text-white"></i>
                                 </div>
-                                @if($user->is_business)
-                                    <span class="badge bg-success py-1 px-2.5 rounded-pill text-white small"><i class="fa-solid fa-check-double me-1"></i> Registered</span>
+                                @if($user->is_matrimony)
+                                    <span class="quick-badge" style="background-color: #d1fae5; color: #065f46;">Registered</span>
                                 @else
-                                    <span class="badge bg-light text-muted border py-1 px-2.5 rounded-pill small">No Listing</span>
+                                    <span class="quick-badge">No Seeker Account</span>
                                 @endif
                             </div>
-                            <h5 class="fw-bold text-dark mb-2">Business Directory</h5>
-                            <p class="text-secondary small mb-0">List your own business, showcase catalogs, active services, publish job requirements, and hire local talent.</p>
+                            <h5 class="fw-bold text-dark mt-3 mb-2" style="font-size: 1.25rem;">Matrimony Seeker Profile</h5>
+                            <p class="text-secondary small mb-0" style="line-height: 1.6;">Manage your matrimony seeker profile, upload caste certificate, search verified community partners, and interact via private messages.</p>
                         </div>
-                        <a href="{{ route('dashboard.business.index') }}" class="btn btn-outline-dark btn-sm w-100 py-2 mt-4 rounded-3 cursor-pointer fw-semibold text-center">
-                            Access Listings <i class="fa-solid fa-arrow-right ms-1 text-primary"></i>
+                        <a href="{{ route('matrimony.index') }}" class="quick-btn mt-4">
+                            Access Profile <i class="fa-solid fa-arrow-right"></i>
                         </a>
                     </div>
                 </div>
 
-                <div class="col-md-6">
-                    <div class="glass-card h-100 d-flex flex-column justify-content-between hover-scale" style="border-top: 5px solid #e0a96d; transition: all 0.3s ease;">
+                <!-- Business Directory Card -->
+                <div class="col-lg-4 col-md-6 col-12">
+                    <div class="quick-access-card">
                         <div>
                             <div class="d-flex align-items-center justify-content-between mb-3">
-                                <div class="bg-warning bg-opacity-10 text-warning p-2.5 rounded-3 d-flex align-items-center justify-content-center" style="width:40px; height:40px; background: rgba(224,169,109,0.1); color: #e0a96d;">
-                                    <i class="fa-solid fa-gem fs-5"></i>
+                                <div class="quick-icon-square" style="background-color: #ff4757;">
+                                    <i class="fa-solid fa-briefcase fs-5 text-white"></i>
                                 </div>
-                                @if($user->has_matrimony_payment || $user->has_business_payment)
-                                    <span class="badge py-1 px-2.5 rounded-pill text-white small" style="background:#ff4757"><i class="fa-solid fa-crown me-1"></i> Active Plan</span>
+                                @if($user->is_business)
+                                    <span class="quick-badge" style="background-color: #d1fae5; color: #065f46;">Registered</span>
                                 @else
-                                    <span class="badge bg-secondary py-1 px-2.5 rounded-pill text-white small">No Active Plan</span>
+                                    <span class="quick-badge">No Listing</span>
                                 @endif
                             </div>
-                            <h5 class="fw-bold text-dark mb-2">My Subscription</h5>
-                            <p class="text-secondary small mb-0">Manage your premium membership access, view active subscriptions for matrimony matching and business listings, and explore receipt transaction history.</p>
+                            <h5 class="fw-bold text-dark mt-3 mb-2" style="font-size: 1.25rem;">Business Directory</h5>
+                            <p class="text-secondary small mb-0" style="line-height: 1.6;">List your own business, showcase catalogs, active services, publish job requirements, and hire local talent.</p>
                         </div>
-                        <a href="{{ route('subscriptions.index') }}" class="btn btn-outline-dark btn-sm w-100 py-2 mt-4 rounded-3 cursor-pointer fw-semibold text-center">
-                            Manage Subscriptions <i class="fa-solid fa-arrow-right ms-1 text-primary"></i>
+                        <a href="{{ route('dashboard.business.index') }}" class="quick-btn mt-4">
+                            Access Listings <i class="fa-solid fa-arrow-right"></i>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Blog Portal Card -->
+                <div class="col-lg-4 col-md-6 col-12">
+                    <div class="quick-access-card">
+                        <div>
+                            <div class="d-flex align-items-center justify-content-between mb-3">
+                                <div class="quick-icon-square" style="background-color: #6f42c1;">
+                                    <i class="fa-solid fa-blog fs-5 text-white"></i>
+                                </div>
+                                @if($user->user_type === 'bloger')
+                                    <span class="quick-badge" style="background-color: #f3e8ff; color: #6b21a8;">Blogger</span>
+                                @else
+                                    <span class="quick-badge">General Member</span>
+                                @endif
+                            </div>
+                            <h5 class="fw-bold text-dark mt-3 mb-2" style="font-size: 1.25rem;">Blog Portal</h5>
+                            <p class="text-secondary small mb-0" style="line-height: 1.6;">Read inspiring stories, view community updates, write articles, or engage with other users' blogs through comments and replies.</p>
+                        </div>
+                        <a href="{{ route('blogs.index') }}" class="quick-btn mt-4">
+                            Access Blog <i class="fa-solid fa-arrow-right"></i>
                         </a>
                     </div>
                 </div>

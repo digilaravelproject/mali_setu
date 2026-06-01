@@ -1,5 +1,14 @@
 <!-- Sidebar -->
 <aside class="sidebar" id="sidebarMenu">
+    <script>
+        if (window.innerWidth > 991 && localStorage.getItem('sidebar_collapsed') === 'true') {
+            document.getElementById('sidebarMenu').classList.add('collapsed');
+        }
+    </script>
+    <!-- Desktop/Mobile Edge Toggle Button -->
+    <button class="sidebar-toggle-arrow" id="desktopSidebarToggle" onclick="toggleDesktopSidebar(event)" title="Toggle Sidebar">
+        <i class="fa-solid fa-chevron-left" id="toggleArrowIcon"></i>
+    </button>
     <a href="{{ url('/') }}" class="sidebar-brand">
         <img src="{{ asset('landing_page_logo.jpeg') }}" alt="MaliSetu Logo" class="sidebar-logo">
         <h5 class="fw-bold mb-0">Mali Setu</h5>

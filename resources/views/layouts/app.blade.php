@@ -497,6 +497,103 @@
         .nav-link {
             color: #000000 !important;
         }
+
+        /* Desktop sidebar collapsed state */
+        @media (min-width: 992px) {
+            .sidebar.collapsed {
+                transform: translateX(-100%);
+            }
+            .main-content.collapsed {
+                margin-left: 0 !important;
+            }
+            /* Hide brand/menu elements to prevent weird overflow during transition */
+            .sidebar.collapsed > * {
+                opacity: 0;
+                pointer-events: none;
+            }
+            /* Ensure the toggle button itself stays visible and clickable */
+            .sidebar.collapsed .sidebar-toggle-arrow {
+                opacity: 1 !important;
+                pointer-events: auto !important;
+            }
+        }
+
+        /* Desktop Sidebar Toggle Styling */
+        .sidebar-toggle-arrow {
+            position: absolute;
+            top: 50%;
+            right: -15px;
+            transform: translateY(-50%);
+            width: 30px;
+            height: 30px;
+            background: var(--primary);
+            color: #fff;
+            border: 2px solid #fff;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 101;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+            transition: all 0.3s ease;
+        }
+        .sidebar-toggle-arrow:hover {
+            background: var(--primary-dark);
+            transform: translateY(-50%) scale(1.08);
+        }
+        .sidebar-toggle-arrow i {
+            transition: transform 0.3s ease;
+        }
+        .sidebar.collapsed .sidebar-toggle-arrow {
+            right: -30px;
+        }
+        .sidebar.collapsed .sidebar-toggle-arrow i {
+            transform: rotate(180deg); /* Animates arrow rotation left-to-right / right-to-left */
+        }
+
+        /* Sticky Mobile Hamburger */
+        .sticky-mobile-hamburger {
+            display: none;
+        }
+        @media (max-width: 991px) {
+            .sticky-mobile-hamburger {
+                display: flex;
+                position: fixed;
+                left: 0;
+                top: 50%;
+                transform: translateY(-50%);
+                width: 42px;
+                height: 42px;
+                background: var(--primary);
+                color: #fff;
+                border: none;
+                border-top-right-radius: 12px;
+                border-bottom-right-radius: 12px;
+                align-items: center;
+                justify-content: center;
+                z-index: 99;
+                box-shadow: 4px 0 10px rgba(0, 0, 0, 0.15);
+                cursor: pointer;
+                transition: all 0.3s ease;
+            }
+            .sticky-mobile-hamburger:hover {
+                background: var(--primary-dark);
+                padding-left: 4px;
+            }
+            /* Hide navbar toggle button since we have sticky hamburger on left center */
+            #sidebarToggle {
+                display: none !important;
+            }
+            /* Hide mobile hamburger when sidebar is active */
+            .sidebar.active + .sticky-mobile-hamburger {
+                display: none !important;
+            }
+            /* Hide sidebar toggle arrow in mobile view */
+            .sidebar-toggle-arrow {
+                display: none !important;
+            }
+        }
     </style>
     @yield('styles')
     <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
@@ -506,8 +603,18 @@
 <div class="dashboard-wrapper">
     @include('layouts.sidebar')
 
+    <!-- Sticky Mobile Hamburger Button on Left Center -->
+    <button class="sticky-mobile-hamburger" id="mobileSidebarToggle" onclick="toggleSidebarMenu(event)" title="Open Menu">
+        <i class="fa-solid fa-bars fs-5"></i>
+    </button>
+
     <!-- Main Content Area -->
     <main class="main-content">
+        <script>
+            if (window.innerWidth > 991 && localStorage.getItem('sidebar_collapsed') === 'true') {
+                document.querySelector('.main-content').classList.add('collapsed');
+            }
+        </script>
         @include('layouts.navbar')
 
         <!-- Toast / Alerts Display -->
@@ -866,6 +973,40 @@
         const modal = new bootstrap.Modal(document.getElementById('moderateModal'));
         modal.show();
     }
+
+    // Toggle Desktop Sidebar (with animations and local storage persistence)
+    function toggleDesktopSidebar(event) {
+        if (event) {
+            event.stopPropagation();
+            event.preventDefault();
+        }
+        
+        const sidebar = document.getElementById('sidebarMenu');
+        const mainContent = document.querySelector('.main-content');
+        
+        if (sidebar && mainContent) {
+            sidebar.classList.toggle('collapsed');
+            mainContent.classList.toggle('collapsed');
+            
+            // Save state in localStorage
+            const isCollapsed = sidebar.classList.contains('collapsed');
+            localStorage.setItem('sidebar_collapsed', isCollapsed ? 'true' : 'false');
+        }
+    }
+
+    // Auto-apply desktop sidebar state on load
+    document.addEventListener('DOMContentLoaded', function() {
+        if (window.innerWidth > 991) {
+            const sidebar = document.getElementById('sidebarMenu');
+            const mainContent = document.querySelector('.main-content');
+            const isCollapsed = localStorage.getItem('sidebar_collapsed') === 'true';
+            
+            if (isCollapsed && sidebar && mainContent) {
+                sidebar.classList.add('collapsed');
+                mainContent.classList.add('collapsed');
+            }
+        }
+    });
 
     // Toggle Sidebar on mobile
     function toggleSidebarMenu(event) {
