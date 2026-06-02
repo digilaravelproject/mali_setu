@@ -387,17 +387,18 @@
             box-shadow: 0 8px 20px rgba(0,0,0,0.1);
         }
 
-        /* Buttons consistent with sidebar primary color */
+        /* Buttons consistent with active dashboard color scheme */
         .btn-primary {
-            background-color: var(--primary) !important;
-            border-color: var(--primary) !important;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%) !important;
+            border: none !important;
             color: #fff !important;
+            box-shadow: 0 4px 12px rgba(255, 71, 87, 0.15) !important;
             transition: all 0.2s ease-in-out !important;
         }
 
         .btn-primary:hover, .btn-primary:focus, .btn-primary:active {
-            background-color: var(--primary-dark) !important;
-            border-color: var(--primary-dark) !important;
+            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 100%) !important;
+            box-shadow: 0 6px 15px rgba(255, 71, 87, 0.25) !important;
             color: #fff !important;
         }
 
@@ -411,8 +412,8 @@
         .btn-outline-primary:hover, .btn-outline-primary:focus, .btn-outline-primary:active,
         .btn-outline-teal:hover, .btn-outline-teal:focus, .btn-outline-teal:active,
         .btn-outline-secondary:hover, .btn-outline-secondary:focus, .btn-outline-secondary:active {
-            background-color: var(--primary) !important;
-            border-color: var(--primary) !important;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%) !important;
+            border-color: transparent !important;
             color: #fff !important;
         }
 

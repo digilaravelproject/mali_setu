@@ -82,7 +82,7 @@
                                 <label class="form-label fw-bold text-dark">Tags <span class="text-danger">*</span></label>
                                 <div class="input-group">
                                     <input type="text" id="tagInput" class="form-control border-2 @error('tags') is-invalid @enderror" placeholder="Add a tag" style="border-top-left-radius: 12px; border-bottom-left-radius: 12px; border-right: none; border-color: #e5cbd6;">
-                                    <button class="btn btn-primary d-flex align-items-center justify-content-center" type="button" id="addTagBtn" style="border-top-right-radius: 12px; border-bottom-right-radius: 12px; background-color: #ff4757; color: white; border-color: #ff4757; border-left: none; width: 48px; font-size: 1.2rem;">
+                                    <button class="btn btn-primary d-flex align-items-center justify-content-center" type="button" id="addTagBtn" style="border-top-right-radius: 12px; border-bottom-right-radius: 12px; background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%) !important; color: white; border: none; border-left: none; width: 48px; font-size: 1.2rem;">
                                         <i class="fa-solid fa-plus"></i>
                                     </button>
                                 </div>
@@ -96,7 +96,7 @@
                             <!-- Media (Image/Video) -->
                             <div class="col-md-6">
                                 <label for="media" class="form-label fw-bold text-dark">Media (Image/Video)</label>
-                                <div class="media-upload-dropzone border-2 border-dashed p-3 text-center rounded-4 position-relative" style="cursor: pointer; border-color: #ff4757 !important; background-color: #fff9fa; transition: all 0.3s ease;">
+                                <div class="media-upload-dropzone border-2 border-dashed p-3 text-center rounded-4 position-relative" style="cursor: pointer; border-color: var(--primary) !important; background-color: rgba(var(--primary-rgb), 0.02); transition: all 0.3s ease;">
                                     <input type="file" name="media[]" id="media" class="position-absolute top-0 start-0 opacity-0 w-100 h-100" style="cursor: pointer;" accept="image/*,video/*" multiple onchange="previewMedia(this)">
                                     <div id="dropzoneContent">
                                         <h6 class="fw-bold mb-1 text-primary" style="font-size:0.95rem;">Tap to upload media</h6>
@@ -248,9 +248,9 @@ document.addEventListener("DOMContentLoaded", function() {
         tagsArr.forEach((tag, idx) => {
             const chip = document.createElement('span');
             chip.className = 'badge d-inline-flex align-items-center gap-2 px-3 py-2 rounded-pill';
-            chip.style.backgroundColor = 'rgba(255,71,87,0.08)';
-            chip.style.color = '#ff4757';
-            chip.style.border = '1px solid rgba(255,71,87,0.2)';
+            chip.style.backgroundColor = 'rgba(var(--primary-rgb),0.08)';
+            chip.style.color = 'var(--primary)';
+            chip.style.border = '1px solid rgba(var(--primary-rgb),0.2)';
             chip.style.fontWeight = '600';
             chip.style.fontSize = '0.9rem';
             

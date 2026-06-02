@@ -218,6 +218,47 @@
     .quick-btn:hover i {
         transform: translateX(4px);
     }
+
+    @media (max-width: 576px) {
+        .quick-access-card {
+            padding: 15px !important;
+            border-radius: 14px !important;
+        }
+        .quick-access-card h5 {
+            font-size: 0.85rem !important;
+            margin-top: 10px !important;
+            margin-bottom: 4px !important;
+        }
+        .quick-access-card p {
+            font-size: 0.68rem !important;
+            display: -webkit-box !important;
+            -webkit-line-clamp: 3 !important;
+            -webkit-box-orient: vertical !important;
+            overflow: hidden !important;
+            line-height: 1.35 !important;
+            height: 2.8rem !important;
+            margin-bottom: 0 !important;
+        }
+        .quick-icon-square {
+            width: 36px !important;
+            height: 36px !important;
+            border-radius: 6px !important;
+        }
+        .quick-icon-square i {
+            font-size: 0.85rem !important;
+        }
+        .quick-badge {
+            font-size: 0.6rem !important;
+            padding: 3px 8px !important;
+        }
+        .quick-btn {
+            font-size: 0.72rem !important;
+            padding: 8px 12px !important;
+            margin-top: 15px !important;
+            border-radius: 8px !important;
+            gap: 4px !important;
+        }
+    }
 </style>
 
 <div class="row g-4">
@@ -517,7 +558,7 @@
             <!-- Quick Access Section -->
             <div class="row g-4 mb-4 text-start">
                 <!-- Matrimony Seeker Profile Card -->
-                <div class="col-lg-4 col-md-6 col-12">
+                <div class="col-6 col-md-6 col-lg-4">
                     <div class="quick-access-card">
                         <div>
                             <div class="d-flex align-items-center justify-content-between mb-3">
@@ -540,7 +581,7 @@
                 </div>
 
                 <!-- Business Directory Card -->
-                <div class="col-lg-4 col-md-6 col-12">
+                <div class="col-6 col-md-6 col-lg-4">
                     <div class="quick-access-card">
                         <div>
                             <div class="d-flex align-items-center justify-content-between mb-3">
@@ -563,7 +604,7 @@
                 </div>
 
                 <!-- Blog Portal Card -->
-                <div class="col-lg-4 col-md-6 col-12">
+                <div class="col-6 col-md-6 col-lg-4">
                     <div class="quick-access-card">
                         <div>
                             <div class="d-flex align-items-center justify-content-between mb-3">

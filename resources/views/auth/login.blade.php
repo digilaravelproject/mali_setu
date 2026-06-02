@@ -140,9 +140,9 @@
         }
 
         .brand-logo {
-            height: 50px;
+            height: 88px;
             width: auto;
-            margin-bottom: 30px;
+            margin-bottom: -15px;
         }
 
         .social-btn {
@@ -184,7 +184,7 @@
 <div class="auth-container">
     <div class="row g-0">
         <!-- Banner Side -->
-        <div class="col-lg-5 auth-banner">
+        <!-- <div class="col-lg-5 auth-banner">
             <div>
                 <img src="{{ asset('landing_page_logo.jpeg') }}" alt="MaliSetu Logo" class="brand-logo rounded-3 shadow-sm bg-white p-2">
                 <h2 class="fw-bold mt-4">Welcome back to Mali Setu</h2>
@@ -202,7 +202,40 @@
                     </div>
                 </div>
             </div>
+        </div> -->
+
+        <div class="col-lg-5 auth-banner">
+    <div class="text-center">
+        <!-- Logo -->
+        <img src="{{ asset('landing_page_logo.jpeg') }}"
+             alt="MaliSetu Logo"
+             class="brand-logo rounded-3 shadow-sm bg-white p-2">
+
+        <!-- Heading -->
+        <h2 class="fw-bold mt-4">Welcome back to Mali Setu</h2>
+
+        <!-- Description -->
+        <p class="opacity-75 mt-3">
+            Access India's premier community bridge designed to connect
+            verified businesses, matrimony seekers, and dedicated volunteers.
+        </p>
+    </div>
+
+    <div class="border-top border-white border-opacity-10 pt-4 mt-5">
+        <div class="d-flex align-items-center gap-3">
+            <div class="bg-white bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center"
+                 style="width: 50px; height: 50px;">
+                <i class="fa-solid fa-shield-halved text-warning fs-4"></i>
+            </div>
+            <div>
+                <h6 class="mb-0 fw-bold">100% Trust & Verification</h6>
+                <small class="opacity-50">
+                    Every profile is manually audited by community admins.
+                </small>
+            </div>
         </div>
+    </div>
+</div>
 
         <!-- Form Side -->
         <div class="col-lg-7 auth-form-side">

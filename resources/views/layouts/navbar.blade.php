@@ -12,13 +12,13 @@
         @if(auth()->user()->user_type === 'bloger')
             <!-- Blog Portal (Blogger Mode) -->
             <a href="{{ route('blogs.index') }}" class="nav-link-navbar {{ Request::routeIs('blogs.*') ? 'active' : '' }}">
-                <i class="fa-solid fa-blog text-primary"></i> Blog Portal
+                Blog Portal
             </a>
 
             <!-- More Dropdown (Blogger Mode) -->
             <div class="nav-item-navbar dropdown-custom">
                 <button class="nav-link-navbar dropdown-toggle-navbar {{ Request::routeIs('dashboard.privacy-policy') || Request::routeIs('dashboard.terms-conditions') || Request::routeIs('dashboard.contact-support') ? 'active' : '' }}">
-                    <i class="fa-solid fa-ellipsis text-primary"></i> More <i class="fa-solid fa-chevron-down small ms-1"></i>
+                    More <i class="fa-solid fa-chevron-down small ms-1"></i>
                 </button>
                 <div class="dropdown-menu-navbar">
                     <a href="{{ route('dashboard.privacy-policy') }}" class="dropdown-item-navbar {{ Request::routeIs('dashboard.privacy-policy') ? 'active' : '' }}">
@@ -55,7 +55,7 @@
                         <i class="fa-solid fa-heart-circle-plus text-primary"></i> Create Profile
                     </a>
                     <a href="{{ route('matrimony.browse') }}" class="dropdown-item-navbar {{ Request::routeIs('matrimony.browse') ? 'active' : '' }}">
-                        <i class="fa-solid fa-magnifying-glass text-primary"></i> Users Profiles
+                        <i class="fa-solid fa-magnifying-glass text-primary"></i> Matrimony Profiles
                     </a>
                     <a href="{{ route('matrimony.requests') }}" class="dropdown-item-navbar {{ Request::routeIs('matrimony.requests') ? 'active' : '' }}">
                         <i class="fa-solid fa-paper-plane text-primary"></i> Requests

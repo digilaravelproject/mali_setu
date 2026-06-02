@@ -271,10 +271,19 @@
                     
                     <div class="d-flex flex-column gap-3">
                         @if($business->contact_phone)
-                            <a href="tel:{{ $business->contact_phone }}" class="btn btn-outline-teal w-100 py-2.5 rounded-3 fw-bold text-start"><i class="fa-solid fa-phone me-2"></i> Call {{ $business->contact_phone }}</a>
+                            <a href="#" class="btn btn-outline-teal w-100 py-2.5 rounded-3 fw-bold text-start" data-bs-toggle="modal" data-bs-target="#phoneCallModal"><i class="fa-solid fa-phone me-2"></i> Call Vendor</a>
                         @endif
                         @if($business->contact_email)
-                            <a href="mailto:{{ $business->contact_email }}" class="btn btn-outline-teal w-100 py-2.5 rounded-3 fw-bold text-start"><i class="fa-solid fa-envelope me-2"></i> Email Vendor</a>
+                            <a href="mailto:{{ $business->contact_email }}?subject=Inquiry about {{ rawurlencode($business->business_name) }}&body=Hi, I found your business {{ rawurlencode($business->business_name) }} on Mali Setu: {{ rawurlencode(url()->current()) }}" class="btn btn-outline-teal w-100 py-2.5 rounded-3 fw-bold text-start"><i class="fa-solid fa-envelope me-2"></i> Email Vendor</a>
+                        @endif
+                        @if($business->contact_phone)
+                            @php
+                                $cleanPhone = preg_replace('/[^0-9]/', '', $business->contact_phone);
+                                if (strlen($cleanPhone) == 10) {
+                                    $cleanPhone = '91' . $cleanPhone;
+                                }
+                            @endphp
+                            <a href="https://api.whatsapp.com/send?phone={{ $cleanPhone }}&text=Hello, I found your business {{ rawurlencode($business->business_name) }} on Mali Setu: {{ rawurlencode(url()->current()) }}" target="_blank" class="btn btn-outline-success w-100 py-2.5 rounded-3 fw-bold text-start" style="border-color: #25D366 !important; color: #25D366 !important; transition: all 0.2s;"><i class="fa-brands fa-whatsapp me-2" style="font-size: 1.1rem;"></i> WhatsApp Vendor</a>
                         @endif
                         @if($business->website)
                             <a href="{{ $business->website }}" target="_blank" class="btn btn-outline-secondary w-100 py-2.5 rounded-3 fw-bold text-start"><i class="fa-solid fa-globe me-2"></i> Visit Website</a>
@@ -343,6 +352,31 @@
         </div>
     </div>
 </div>
+
+<!-- Phone Contact Call Modal -->
+@if($business->contact_phone)
+<div class="modal fade" id="phoneCallModal" tabindex="-1" aria-labelledby="phoneCallModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0 shadow-lg p-3">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="fw-bold mb-0" id="phoneCallModalLabel">Contact Vendor</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center py-4">
+                <div class="mb-3 d-inline-flex align-items-center justify-content-center bg-teal bg-opacity-10 text-teal rounded-circle" style="width: 72px; height: 72px;">
+                    <i class="fa-solid fa-phone-volume fs-1 text-primary"></i>
+                </div>
+                <h6 class="text-secondary small mb-1">Business Phone Number</h6>
+                <h3 class="fw-bold text-dark mb-4">{{ $business->contact_phone }}</h3>
+                <div class="d-flex justify-content-center gap-2">
+                    <button type="button" class="btn btn-light px-4 rounded-3 fw-bold" data-bs-dismiss="modal">Close</button>
+                    <a href="tel:{{ $business->contact_phone }}" class="btn btn-primary px-4 rounded-3 fw-bold"><i class="fa-solid fa-phone me-1"></i> Call Now</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+@endif
 
 @section('scripts')
 <script>

@@ -2,7 +2,7 @@
 <div class="mobile-bottom-bar d-lg-none">
     @if(auth()->user()->user_type === 'bloger')
         <a href="{{ route('blogs.index') }}" class="mobile-tab-item {{ Request::routeIs('blogs.*') ? 'active' : '' }}">
-            <i class="fa-solid fa-blog"></i>
+            <i class="fa-solid fa-newspaper"></i>
             <span>Blogs</span>
         </a>
         <a href="#" class="mobile-tab-item" onclick="toggleMobileMoreDrawer(event)">
@@ -23,7 +23,7 @@
             <span>Matrimony</span>
         </a>
         <a href="{{ route('blogs.index') }}" class="mobile-tab-item {{ Request::routeIs('blogs.*') ? 'active' : '' }}">
-            <i class="fa-solid fa-blog"></i>
+            <i class="fa-solid fa-newspaper"></i>
             <span>Blogs</span>
         </a>
         <a href="#" class="mobile-tab-item" onclick="toggleMobileMoreDrawer(event)">
@@ -80,7 +80,7 @@
             </li>
             <li>
                 <a href="{{ route('matrimony.browse') }}" class="drawer-menu-item {{ Request::routeIs('matrimony.browse') ? 'active' : '' }}">
-                    <i class="fa-solid fa-magnifying-glass text-primary"></i> Users Profile
+                    <i class="fa-solid fa-magnifying-glass text-primary"></i> Matrimony Profile
                 </a>
             </li>
             <li>

@@ -1,6 +1,116 @@
 @extends('layouts.app')
 
 @section('content')
+<style>
+    /* Mobile Responsive Overrides for Business cards in 2-column view */
+    @media (max-width: 576px) {
+        .welcome-banner {
+            padding: 15px 12px !important;
+            margin-bottom: 15px !important;
+        }
+        .welcome-banner h1 {
+            font-size: 1.3rem !important;
+        }
+        .welcome-banner p {
+            font-size: 0.75rem !important;
+        }
+        .welcome-banner .badge-type {
+            font-size: 0.65rem !important;
+            padding: 3px 8px !important;
+            margin-bottom: 8px !important;
+        }
+        .glass-card.p-4 {
+            padding: 12px !important;
+            margin-bottom: 15px !important;
+        }
+        .glass-card.p-4 form.row.g-3 {
+            --bs-gutter-y: 0.5rem !important;
+            --bs-gutter-x: 0.5rem !important;
+        }
+        .glass-card.p-4 label {
+            font-size: 0.7rem !important;
+            margin-bottom: 2px !important;
+        }
+        .glass-card.p-4 .form-control, .glass-card.p-4 .form-select, .glass-card.p-4 .input-group-text {
+            font-size: 0.78rem !important;
+            padding: 6px 10px !important;
+        }
+        .glass-card.p-4 button, .glass-card.p-4 a {
+            font-size: 0.78rem !important;
+            padding: 8px 12px !important;
+        }
+        
+        .card.h-100 {
+            border-radius: 14px !important;
+        }
+        .card.h-100 .relative.bg-light {
+            height: 110px !important;
+        }
+        .card.h-100 .card-body {
+            padding: 10px !important;
+        }
+        .card.h-100 h5.fw-bold.text-dark {
+            font-size: 0.82rem !important;
+            margin-bottom: 2px !important;
+            white-space: nowrap !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+        }
+        .card.h-100 .d-flex.align-items-center.gap-2.mb-3 {
+            font-size: 0.65rem !important;
+            margin-bottom: 8px !important;
+            gap: 2px !important;
+            flex-direction: column !important;
+            align-items: start !important;
+        }
+        .card.h-100 .d-flex.align-items-center.gap-2.mb-3 span {
+            max-width: 100% !important;
+            white-space: nowrap !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+        }
+        .card.h-100 .d-flex.align-items-center.gap-2.mb-3 span.text-muted {
+            display: none !important;
+        }
+        .card.h-100 p.small.text-secondary.mb-4 {
+            font-size: 0.68rem !important;
+            -webkit-line-clamp: 2 !important;
+            height: 2.7em !important;
+            margin-bottom: 8px !important;
+            line-height: 1.35 !important;
+        }
+        .card.h-100 .d-flex.justify-content-between.align-items-center.pt-3 {
+            padding-top: 8px !important;
+            flex-direction: column !important;
+            align-items: start !important;
+            gap: 8px !important;
+        }
+        .card.h-100 .d-flex.justify-content-between.align-items-center.pt-3 div {
+            width: 100% !important;
+        }
+        .card.h-100 .d-flex.justify-content-between.align-items-center.pt-3 strong {
+            font-size: 0.72rem !important;
+        }
+        .card.h-100 .d-flex.justify-content-between.align-items-center.pt-3 span {
+            font-size: 0.65rem !important;
+        }
+        .card.h-100 .d-flex.justify-content-between.align-items-center.pt-3 a.btn-primary {
+            font-size: 0.72rem !important;
+            padding: 6px 10px !important;
+            border-radius: 8px !important;
+            width: 100% !important;
+            text-align: center !important;
+        }
+        .card.h-100 .position-absolute.m-3 {
+            margin: 6px !important;
+        }
+        .card.h-100 .badge {
+            font-size: 0.6rem !important;
+            padding: 3px 6px !important;
+        }
+    }
+</style>
+
 <div class="row g-4 text-start">
     <main class="col-12 px-md-4 py-4">
         
@@ -59,7 +169,7 @@
         <h5 class="fw-bold mb-3"><i class="fa-solid fa-store me-2 text-primary"></i> Active Business Listings</h5>
         <div class="row g-4">
             @forelse($businesses as $b)
-                <div class="col-xl-4 col-md-6 col-12">
+                <div class="col-6 col-md-6 col-xl-4">
                     <div class="card h-100 border-0 rounded-4 shadow-sm relative overflow-hidden bg-white border" style="transition: transform 0.2s; border: 1px solid rgba(0,0,0,0.08) !important;">
                         
                         <!-- Thumbnail/Cover image -->

@@ -20,7 +20,7 @@
                 <!-- Blog Module -->
                 <li class="nav-item">
                     <a href="{{ route('blogs.index') }}" class="nav-link-custom {{ Request::routeIs('blogs.*') ? 'active' : '' }}">
-                        <i class="fa-solid fa-blog"></i> Blog Portal
+                        <i class="fa-solid fa-newspaper"></i> Blog Portal
                     </a>
                 </li>
 
@@ -122,7 +122,7 @@
                 <!-- Blog Portal -->
                 <li class="nav-item">
                     <a href="{{ route('blogs.index') }}" class="nav-link-custom {{ Request::routeIs('blogs.*') ? 'active' : '' }}">
-                        <i class="fa-solid fa-blog"></i> Blog Portal
+                        <i class="fa-solid fa-newspaper"></i> Blog Portal
                     </a>
                 </li>
 

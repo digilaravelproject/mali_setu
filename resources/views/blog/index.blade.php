@@ -124,7 +124,7 @@
                     @else
                         <div class="row g-4">
                             @foreach($catBlogs as $blog)
-                                <div class="col-md-6 col-lg-4">
+                                <div class="col-6 col-md-6 col-lg-4">
                                     <div class="card h-100 border-0 shadow-sm blog-card position-relative overflow-hidden" style="border-radius: 20px; transition: transform 0.3s ease, box-shadow 0.3s ease;">
                                         <!-- Media Section -->
                                         @if($blog->media_path)
@@ -245,7 +245,7 @@
                 @else
                     <div class="row g-4">
                         @foreach($myBlogs as $blog)
-                            <div class="col-md-6 col-lg-4">
+                            <div class="col-6 col-md-6 col-lg-4">
                                 <div class="card h-100 border-0 shadow-sm position-relative overflow-hidden" style="border-radius: 20px;">
                                     <!-- Media Section -->
                                     @if($blog->media_path)
@@ -393,6 +393,51 @@
     }
     .btn-like:active {
         transform: scale(1.2);
+    }
+
+    /* Mobile Responsive Overrides for grid-6 matching */
+    @media (max-width: 576px) {
+        .blog-media-container {
+            height: 120px !important;
+        }
+        .blog-card .card-body {
+            padding: 12px !important;
+        }
+        .blog-card h5 {
+            font-size: 0.82rem !important;
+            height: 2.2rem !important;
+            -webkit-line-clamp: 2 !important;
+            line-height: 1.3 !important;
+            margin-bottom: 4px !important;
+        }
+        .blog-card p.text-muted {
+            font-size: 0.72rem !important;
+            height: 2rem !important;
+            -webkit-line-clamp: 2 !important;
+            margin-bottom: 8px !important;
+        }
+        .blog-card .avatar-circle-sm {
+            width: 24px !important;
+            height: 24px !important;
+            font-size: 0.7rem !important;
+        }
+        .blog-card .small {
+            font-size: 0.68rem !important;
+        }
+        .blog-card .btn-link {
+            font-size: 0.68rem !important;
+        }
+        .blog-card .border-top {
+            padding-top: 8px !important;
+            margin-top: 8px !important;
+        }
+        .likes-count {
+            font-size: 0.75rem !important;
+        }
+        /* Publications specific height fix */
+        .tab-pane #my-blogs-pane div[style*="height: 180px"] {
+            height: 120px !important;
+        }
     }
 </style>
 @endsection
