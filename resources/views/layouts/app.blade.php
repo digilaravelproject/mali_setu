@@ -1094,7 +1094,8 @@
 </script>
 
 @php
-    $allDonationCauses = \App\Models\DonationCause::where('status', 'active')
+    $userIsBlogger = auth()->check() && auth()->user()->user_type === 'bloger';
+    $allDonationCauses = $userIsBlogger ? collect() : \App\Models\DonationCause::where('status', 'active')
         ->orderByRaw("CASE WHEN urgency = 'high' THEN 1 ELSE 2 END")
         ->latest()
         ->get();
