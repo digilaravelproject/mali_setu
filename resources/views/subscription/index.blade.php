@@ -69,7 +69,7 @@
             </div>
         @else
             <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0">
+                <table class="table table-hover align-middle mb-0" style="min-width: 900px;">
                     <thead class="table-light text-uppercase fs-7 fw-bold text-secondary">
                         <tr>
                             <th class="ps-4 py-3">Date</th>

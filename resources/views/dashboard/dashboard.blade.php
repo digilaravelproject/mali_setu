@@ -438,7 +438,7 @@
             </div>
 
             <!-- Active directory results pane (by default loads 10 featured businesses) -->
-            <div class="glass-card mb-4 text-start" id="directory-listings-section">
+            <?php /*<div class="glass-card mb-4 text-start" id="directory-listings-section">
                 <div class="d-flex align-items-center justify-content-between mb-4">
                     <div class="d-flex align-items-center gap-2">
                         <div class="bg-success bg-opacity-10 text-success p-2.5 rounded-3 d-flex align-items-center justify-content-center" style="width:42px; height:42px;">
@@ -512,7 +512,7 @@
                         </div>
                     @endif
                 </div>
-            </div>
+            </div> */?>
 
             <!-- Quick Access Section -->
             <div class="row g-4 mb-4 text-start">

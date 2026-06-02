@@ -23,95 +23,147 @@
                         <i class="fa-solid fa-blog"></i> Blog Portal
                     </a>
                 </li>
+
+                <!-- More Module Dropdown (for bloggers) -->
+                <li class="nav-item has-dropdown {{ Request::routeIs('dashboard.privacy-policy') || Request::routeIs('dashboard.terms-conditions') || Request::routeIs('dashboard.contact-support') ? 'open' : '' }}">
+                    <a class="nav-link-custom dropdown-toggle-custom" onclick="toggleSidebarDropdown(event)">
+                        <i class="fa-solid fa-ellipsis"></i> More
+                        <i class="fa-solid fa-chevron-down ms-auto dropdown-arrow"></i>
+                    </a>
+                    <ul class="submenu-menu">
+                        <li>
+                            <a href="{{ route('dashboard.privacy-policy') }}" class="nav-link-custom submenu-link {{ Request::routeIs('dashboard.privacy-policy') ? 'active' : '' }}">
+                                <i class="fa-solid fa-shield-halved"></i> Privacy Policy
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{{ route('dashboard.terms-conditions') }}" class="nav-link-custom submenu-link {{ Request::routeIs('dashboard.terms-conditions') ? 'active' : '' }}">
+                                <i class="fa-solid fa-file-contract"></i> Terms & Condition
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{{ route('dashboard.contact-support') }}" class="nav-link-custom submenu-link {{ Request::routeIs('dashboard.contact-support') ? 'active' : '' }}">
+                                <i class="fa-solid fa-headset"></i> Contact Support
+                            </a>
+                        </li>
+                        <li>
+                            <form action="{{ route('logout') }}" method="POST" id="logout-form">
+                                @csrf
+                                <button type="submit" class="nav-link-custom submenu-link w-100 border-0 text-start logout-btn-submenu" style="padding: 10px 24px 10px 48px; background: transparent; color: #ff7878;">
+                                    <i class="fa-solid fa-arrow-right-from-bracket"></i> Sign Out
+                                </button>
+                            </form>
+                        </li>
+                    </ul>
+                </li>
             @else
+                <!-- Dashboard -->
                 <li class="nav-item">
                     <a href="{{ route('dashboard') }}" class="nav-link-custom {{ Request::routeIs('dashboard') ? 'active' : '' }}">
                         <i class="fa-solid fa-chart-line"></i> Dashboard
                     </a>
                 </li>
 
-                <!-- Matrimony Module -->
-                <li class="nav-item">
-                    <a href="{{ route('matrimony.index') }}" class="nav-link-custom {{ Request::routeIs('matrimony.*') ? 'active' : '' }}">
+                <!-- Matrimony Module Dropdown -->
+                <li class="nav-item has-dropdown {{ Request::routeIs('matrimony.*') ? 'open' : '' }}">
+                    <a class="nav-link-custom dropdown-toggle-custom" onclick="toggleSidebarDropdown(event)">
                         <i class="fa-solid fa-heart"></i> Matrimony
+                        <i class="fa-solid fa-chevron-down ms-auto dropdown-arrow"></i>
                     </a>
-                </li>
-                <li class="nav-item ps-3">
-                    <a href="{{ route('matrimony.browse') }}" class="nav-link-custom small {{ Request::routeIs('matrimony.browse') ? 'active' : '' }}" style="font-size:0.82rem; padding: 8px 16px;">
-                        <i class="fa-solid fa-magnifying-glass text-primary"></i> Users Profiles
-                    </a>
-                </li>
-                <li class="nav-item ps-3">
-                    <a href="{{ route('matrimony.requests') }}" class="nav-link-custom small {{ Request::routeIs('matrimony.requests') ? 'active' : '' }}" style="font-size:0.82rem; padding: 8px 16px;">
-                        <i class="fa-solid fa-paper-plane text-primary"></i> Requests
-                    </a>
-                </li>
-                <li class="nav-item ps-3">
-                    <a href="{{ route('matrimony.conversations') }}" class="nav-link-custom small {{ Request::routeIs('matrimony.conversations') || Request::routeIs('matrimony.chat') ? 'active' : '' }}" style="font-size:0.82rem; padding: 8px 16px;">
-                        <i class="fa-solid fa-comments text-primary"></i> Messages
-                    </a>
-                </li>
-
-                <li class="nav-item">
-                    <a href="{{ route('dashboard.business.index') }}" class="nav-link-custom {{ Request::routeIs('dashboard.business.index') || Request::routeIs('dashboard.business.create') || Request::routeIs('dashboard.business.edit') ? 'active' : '' }}">
-                        <i class="fa-solid fa-briefcase"></i> Manage Business
-                    </a>
-                </li>
-                <li class="nav-item ps-3">
-                    <a href="{{ route('dashboard.business.browse') }}" class="nav-link-custom small {{ Request::routeIs('dashboard.business.browse') || Request::routeIs('dashboard.business.show') ? 'active' : '' }}" style="font-size:0.82rem; padding: 8px 16px;">
-                        <i class="fa-solid fa-magnifying-glass text-primary"></i> All Businesses
-                    </a>
-                </li>
-                <li class="nav-item ps-3">
-                    <a href="{{ route('dashboard.jobs.applied') }}" class="nav-link-custom small {{ Request::routeIs('dashboard.jobs.applied') ? 'active' : '' }}" style="font-size:0.82rem; padding: 8px 16px;">
-                        <i class="fa-solid fa-briefcase text-primary"></i> All Jobs
-                    </a>
+                    <ul class="submenu-menu">
+                        <li>
+                            <a href="{{ route('matrimony.create') }}" class="nav-link-custom submenu-link {{ Request::routeIs('matrimony.create') ? 'active' : '' }}">
+                                <i class="fa-solid fa-heart-circle-plus"></i> Create Profile
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{{ route('matrimony.browse') }}" class="nav-link-custom submenu-link {{ Request::routeIs('matrimony.browse') ? 'active' : '' }}">
+                                <i class="fa-solid fa-magnifying-glass"></i> Matrimony Profile
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{{ route('matrimony.requests') }}" class="nav-link-custom submenu-link {{ Request::routeIs('matrimony.requests') ? 'active' : '' }}">
+                                <i class="fa-solid fa-paper-plane"></i> Request
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{{ route('matrimony.conversations') }}" class="nav-link-custom submenu-link {{ Request::routeIs('matrimony.conversations') || Request::routeIs('matrimony.chat') ? 'active' : '' }}">
+                                <i class="fa-solid fa-comments"></i> Messages
+                            </a>
+                        </li>
+                    </ul>
                 </li>
 
-                <!-- Blog Module -->
+                <!-- Manage Business Dropdown -->
+                <li class="nav-item has-dropdown {{ Request::routeIs('dashboard.business.*') || Request::routeIs('dashboard.jobs.*') ? 'open' : '' }}">
+                    <a class="nav-link-custom dropdown-toggle-custom" onclick="toggleSidebarDropdown(event)">
+                        <i class="fa-solid fa-briefcase"></i> Business
+                        <i class="fa-solid fa-chevron-down ms-auto dropdown-arrow"></i>
+                    </a>
+                    <ul class="submenu-menu">
+                        <li>
+                            <a href="{{ route('dashboard.business.create') }}" class="nav-link-custom submenu-link {{ Request::routeIs('dashboard.business.create') ? 'active' : '' }}">
+                                <i class="fa-solid fa-plus-circle"></i> Create Business
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{{ route('dashboard.business.browse') }}" class="nav-link-custom submenu-link {{ Request::routeIs('dashboard.business.browse') || Request::routeIs('dashboard.business.show') ? 'active' : '' }}">
+                                <i class="fa-solid fa-magnifying-glass"></i> All Business
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{{ route('dashboard.jobs.applied') }}" class="nav-link-custom submenu-link {{ Request::routeIs('dashboard.jobs.applied') ? 'active' : '' }}">
+                                <i class="fa-solid fa-briefcase"></i> All Jobs
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+
+                <!-- Blog Portal -->
                 <li class="nav-item">
                     <a href="{{ route('blogs.index') }}" class="nav-link-custom {{ Request::routeIs('blogs.*') ? 'active' : '' }}">
                         <i class="fa-solid fa-blog"></i> Blog Portal
                     </a>
                 </li>
 
-                <!-- Subscription Module -->
-                <li class="nav-item">
-                    <a href="{{ route('subscriptions.index') }}" class="nav-link-custom {{ Request::routeIs('subscriptions.*') ? 'active' : '' }}">
-                        <i class="fa-solid fa-credit-card"></i> My Subscriptions
+                <!-- More Dropdown -->
+                <li class="nav-item has-dropdown {{ Request::routeIs('subscriptions.*') || Request::routeIs('dashboard.privacy-policy') || Request::routeIs('dashboard.terms-conditions') || Request::routeIs('dashboard.contact-support') ? 'open' : '' }}">
+                    <a class="nav-link-custom dropdown-toggle-custom" onclick="toggleSidebarDropdown(event)">
+                        <i class="fa-solid fa-ellipsis"></i> More
+                        <i class="fa-solid fa-chevron-down ms-auto dropdown-arrow"></i>
                     </a>
-                </li>
-
-                <!-- Privacy Policy -->
-                <li class="nav-item">
-                    <a href="{{ route('dashboard.privacy-policy') }}" class="nav-link-custom {{ Request::routeIs('dashboard.privacy-policy') ? 'active' : '' }}">
-                        <i class="fa-solid fa-shield-halved"></i> Privacy Policy
-                    </a>
-                </li>
-
-                <!-- Terms & Conditions -->
-                <li class="nav-item">
-                    <a href="{{ route('dashboard.terms-conditions') }}" class="nav-link-custom {{ Request::routeIs('dashboard.terms-conditions') ? 'active' : '' }}">
-                        <i class="fa-solid fa-file-contract"></i> Terms & Conditions
-                    </a>
-                </li>
-
-                <!-- Contact Support -->
-                <li class="nav-item">
-                    <a href="{{ route('dashboard.contact-support') }}" class="nav-link-custom {{ Request::routeIs('dashboard.contact-support') ? 'active' : '' }}">
-                        <i class="fa-solid fa-headset"></i> Contact Support
-                    </a>
+                    <ul class="submenu-menu">
+                        <li>
+                            <a href="{{ route('subscriptions.index') }}" class="nav-link-custom submenu-link {{ Request::routeIs('subscriptions.*') ? 'active' : '' }}">
+                                <i class="fa-solid fa-credit-card"></i> My Subscription
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{{ route('dashboard.privacy-policy') }}" class="nav-link-custom submenu-link {{ Request::routeIs('dashboard.privacy-policy') ? 'active' : '' }}">
+                                <i class="fa-solid fa-shield-halved"></i> Privacy Policy
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{{ route('dashboard.terms-conditions') }}" class="nav-link-custom submenu-link {{ Request::routeIs('dashboard.terms-conditions') ? 'active' : '' }}">
+                                <i class="fa-solid fa-file-contract"></i> Terms & Condition
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{{ route('dashboard.contact-support') }}" class="nav-link-custom submenu-link {{ Request::routeIs('dashboard.contact-support') ? 'active' : '' }}">
+                                <i class="fa-solid fa-headset"></i> Contact Support
+                            </a>
+                        </li>
+                        <li>
+                            <form action="{{ route('logout') }}" method="POST" id="logout-form">
+                                @csrf
+                                <button type="submit" class="nav-link-custom submenu-link w-100 border-0 text-start logout-btn-submenu" style="padding: 10px 24px 10px 48px; background: transparent; color: #ff7878;">
+                                    <i class="fa-solid fa-arrow-right-from-bracket"></i> Sign Out
+                                </button>
+                            </form>
+                        </li>
+                    </ul>
                 </li>
             @endif
         </ul>
-    </div>
-
-    <div>
-        <form action="{{ route('logout') }}" method="POST" id="logout-form">
-            @csrf
-            <button type="submit" class="nav-link-custom logout-btn w-100 border-0 text-start">
-                <i class="fa-solid fa-arrow-right-from-bracket"></i> Sign Out
-            </button>
-        </form>
     </div>
 </aside>

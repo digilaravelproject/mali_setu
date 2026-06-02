@@ -1,14 +1,125 @@
 <!-- Top Navbar -->
 <nav class="dashboard-navbar">
     <div class="d-flex align-items-center">
-        <button class="btn btn-outline-primary d-lg-none me-3 py-1.5 px-2.5 rounded-3" id="sidebarToggle" onclick="toggleSidebarMenu(event)" style="border-width: 1.5px;">
-            <i class="fa-solid fa-bars"></i>
-        </button>
-        <div class="navbar-brand-title">
-            <i class="fa-solid fa-briefcase text-primary me-2"></i> Mali Setu Workspace
-        </div>
+        <!-- Brand Branding (Logo + Name) -->
+        <a href="{{ url('/') }}" class="navbar-brand-custom d-flex align-items-center gap-2 text-decoration-none text-dark">
+            <img src="{{ asset('landing_page_logo.jpeg') }}" alt="MaliSetu Logo" class="navbar-logo-custom" style="height: 50px; border-radius: 8px; background: #fff; padding: 2px; border: 1px solid rgba(0,0,0,0.05);">
+        </a>
     </div>
-    
+
+    <!-- Middle Menu Navigation Items (Visible only on Desktop) -->
+    <div class="navbar-menu-items d-none d-lg-flex align-items-center gap-2">
+        @if(auth()->user()->user_type === 'bloger')
+            <!-- Blog Portal (Blogger Mode) -->
+            <a href="{{ route('blogs.index') }}" class="nav-link-navbar {{ Request::routeIs('blogs.*') ? 'active' : '' }}">
+                <i class="fa-solid fa-blog text-primary"></i> Blog Portal
+            </a>
+
+            <!-- More Dropdown (Blogger Mode) -->
+            <div class="nav-item-navbar dropdown-custom">
+                <button class="nav-link-navbar dropdown-toggle-navbar {{ Request::routeIs('dashboard.privacy-policy') || Request::routeIs('dashboard.terms-conditions') || Request::routeIs('dashboard.contact-support') ? 'active' : '' }}">
+                    <i class="fa-solid fa-ellipsis text-primary"></i> More <i class="fa-solid fa-chevron-down small ms-1"></i>
+                </button>
+                <div class="dropdown-menu-navbar">
+                    <a href="{{ route('dashboard.privacy-policy') }}" class="dropdown-item-navbar {{ Request::routeIs('dashboard.privacy-policy') ? 'active' : '' }}">
+                        <i class="fa-solid fa-shield-halved text-primary"></i> Privacy Policy
+                    </a>
+                    <a href="{{ route('dashboard.terms-conditions') }}" class="dropdown-item-navbar {{ Request::routeIs('dashboard.terms-conditions') ? 'active' : '' }}">
+                        <i class="fa-solid fa-file-contract text-primary"></i> Terms & Conditions
+                    </a>
+                    <a href="{{ route('dashboard.contact-support') }}" class="dropdown-item-navbar {{ Request::routeIs('dashboard.contact-support') ? 'active' : '' }}">
+                        <i class="fa-solid fa-headset text-primary"></i> Contact Support
+                    </a>
+                    <div class="dropdown-divider my-1"></div>
+                    <form action="{{ route('logout') }}" method="POST" id="logout-form" class="m-0">
+                        @csrf
+                        <button type="submit" class="dropdown-item-navbar text-danger w-100 border-0 text-start bg-transparent">
+                            <i class="fa-solid fa-arrow-right-from-bracket"></i> Sign Out
+                        </button>
+                    </form>
+                </div>
+            </div>
+        @else
+            <!-- Dashboard -->
+            <a href="{{ route('dashboard') }}" class="nav-link-navbar {{ Request::routeIs('dashboard') ? 'active' : '' }}">
+                Dashboard
+            </a>
+
+            <!-- Matrimony Dropdown -->
+            <div class="nav-item-navbar dropdown-custom">
+                <button class="nav-link-navbar dropdown-toggle-navbar {{ Request::routeIs('matrimony.*') ? 'active' : '' }}">
+                    </i> Matrimony <i class="fa-solid fa-chevron-down small ms-1"></i>
+                </button>
+                <div class="dropdown-menu-navbar">
+                    <a href="{{ route('matrimony.create') }}" class="dropdown-item-navbar {{ Request::routeIs('matrimony.create') ? 'active' : '' }}">
+                        <i class="fa-solid fa-heart-circle-plus text-primary"></i> Create Profile
+                    </a>
+                    <a href="{{ route('matrimony.browse') }}" class="dropdown-item-navbar {{ Request::routeIs('matrimony.browse') ? 'active' : '' }}">
+                        <i class="fa-solid fa-magnifying-glass text-primary"></i> Users Profiles
+                    </a>
+                    <a href="{{ route('matrimony.requests') }}" class="dropdown-item-navbar {{ Request::routeIs('matrimony.requests') ? 'active' : '' }}">
+                        <i class="fa-solid fa-paper-plane text-primary"></i> Requests
+                    </a>
+                    <a href="{{ route('matrimony.conversations') }}" class="dropdown-item-navbar {{ Request::routeIs('matrimony.conversations') || Request::routeIs('matrimony.chat') ? 'active' : '' }}">
+                        <i class="fa-solid fa-comments text-primary"></i> Messages
+                    </a>
+                </div>
+            </div>
+
+            <!-- Manage Business Dropdown -->
+            <div class="nav-item-navbar dropdown-custom">
+                <button class="nav-link-navbar dropdown-toggle-navbar {{ Request::routeIs('dashboard.business.*') || Request::routeIs('dashboard.jobs.*') ? 'active' : '' }}">
+                    </i> Business <i class="fa-solid fa-chevron-down small ms-1"></i>
+                </button>
+                <div class="dropdown-menu-navbar">
+                    <a href="{{ route('dashboard.business.create') }}" class="dropdown-item-navbar {{ Request::routeIs('dashboard.business.create') ? 'active' : '' }}">
+                        <i class="fa-solid fa-plus-circle text-primary"></i> Create Business
+                    </a>
+                    <a href="{{ route('dashboard.business.browse') }}" class="dropdown-item-navbar {{ Request::routeIs('dashboard.business.browse') || Request::routeIs('dashboard.business.show') ? 'active' : '' }}">
+                        <i class="fa-solid fa-magnifying-glass text-primary"></i> All Businesses
+                    </a>
+                    <a href="{{ route('dashboard.jobs.applied') }}" class="dropdown-item-navbar {{ Request::routeIs('dashboard.jobs.applied') ? 'active' : '' }}">
+                        <i class="fa-solid fa-briefcase text-primary"></i> All Jobs
+                    </a>
+                </div>
+            </div>
+
+            <!-- Blog Portal -->
+            <a href="{{ route('blogs.index') }}" class="nav-link-navbar {{ Request::routeIs('blogs.*') ? 'active' : '' }}">
+                Blog Portal
+            </a>
+
+            <!-- More Dropdown -->
+            <div class="nav-item-navbar dropdown-custom">
+                <button class="nav-link-navbar dropdown-toggle-navbar {{ Request::routeIs('subscriptions.*') || Request::routeIs('dashboard.privacy-policy') || Request::routeIs('dashboard.terms-conditions') || Request::routeIs('dashboard.contact-support') ? 'active' : '' }}">
+                    More <i class="fa-solid fa-chevron-down small ms-1"></i>
+                </button>
+                <div class="dropdown-menu-navbar">
+                    <a href="{{ route('subscriptions.index') }}" class="dropdown-item-navbar {{ Request::routeIs('subscriptions.*') ? 'active' : '' }}">
+                        <i class="fa-solid fa-credit-card text-primary"></i> My Subscription
+                    </a>
+                    <a href="{{ route('dashboard.privacy-policy') }}" class="dropdown-item-navbar {{ Request::routeIs('dashboard.privacy-policy') ? 'active' : '' }}">
+                        <i class="fa-solid fa-shield-halved text-primary"></i> Privacy Policy
+                    </a>
+                    <a href="{{ route('dashboard.terms-conditions') }}" class="dropdown-item-navbar {{ Request::routeIs('dashboard.terms-conditions') ? 'active' : '' }}">
+                        <i class="fa-solid fa-file-contract text-primary"></i> Terms & Conditions
+                    </a>
+                    <a href="{{ route('dashboard.contact-support') }}" class="dropdown-item-navbar {{ Request::routeIs('dashboard.contact-support') ? 'active' : '' }}">
+                        <i class="fa-solid fa-headset text-primary"></i> Contact Support
+                    </a>
+                    <div class="dropdown-divider my-1"></div>
+                    <form action="{{ route('logout') }}" method="POST" id="logout-form" class="m-0">
+                        @csrf
+                        <button type="submit" class="dropdown-item-navbar text-danger w-100 border-0 text-start bg-transparent">
+                            <i class="fa-solid fa-arrow-right-from-bracket"></i> Sign Out
+                        </button>
+                    </form>
+                </div>
+            </div>
+        @endif
+    </div>
+
+    <!-- Right Block (User Profile) -->
     <div class="navbar-user-dropdown">
         <button class="navbar-dropdown-btn" onclick="toggleNavbarDropdown(event)">
             @if(optional(auth()->user())->photo)
@@ -16,7 +127,7 @@
             @else
                 <img src="{{ asset('default-avatar.png') }}" alt="Profile" style="width:36px;height:36px;border-radius:50%;object-fit:cover;border:2px solid #fff;" />
             @endif
-            <span>{{ optional(auth()->user())->name }}</span>
+            <span class="d-none d-sm-inline">{{ optional(auth()->user())->name }}</span>
             <i class="fa-solid fa-chevron-down small"></i>
         </button>
         <div class="navbar-dropdown-menu" id="navbarDropdownMenu">

@@ -71,7 +71,7 @@
 
                 @if($businesses->isNotEmpty())
                     <div class="table-responsive bg-white rounded-4 shadow-sm border p-2 text-start">
-                        <table class="table align-middle mb-0">
+                        <table class="table align-middle mb-0" style="min-width: 900px;">
                             <thead>
                                 <tr class="bg-light">
                                     <th class="border-0 rounded-start">Business Name</th>
@@ -370,7 +370,7 @@
 
                                 @if($activeBusiness->products && count($activeBusiness->products) > 0)
                                     <div class="table-responsive">
-                                        <table class="table align-middle">
+                                        <table class="table align-middle" style="min-width: 600px;">
                                             <thead>
                                                 <tr>
                                                     <th>Image</th>
@@ -421,7 +421,7 @@
 
                                 @if($activeBusiness->services && count($activeBusiness->services) > 0)
                                     <div class="table-responsive">
-                                        <table class="table align-middle">
+                                        <table class="table align-middle" style="min-width: 600px;">
                                             <thead>
                                                 <tr>
                                                     <th>Image</th>
