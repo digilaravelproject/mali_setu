@@ -38,7 +38,7 @@ class AdminAuthController extends Controller
             $user = Auth::user();
             
             // Check if user is admin (you might want to add an is_admin field or role system)
-            if ($user->email === 'admin@malisetu.com' || $user->caste_verification_status === 'approved') {
+            if ($user->user_type === 'admin') {
                 $request->session()->regenerate();
                 return redirect()->intended(route('admin.dashboard'));
             } else {
