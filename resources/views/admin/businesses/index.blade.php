@@ -10,6 +10,9 @@
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h3 class="card-title">Business Management</h3>
                     <div class="card-tools">
+                        <a href="{{ route('admin.businesses.create') }}" class="btn btn-primary btn-sm me-2">
+                            <i class="fas fa-plus"></i> Add Business
+                        </a>
                         <a href="{{ route('admin.businesses.verification') }}" class="btn btn-warning btn-sm">
                             <i class="fas fa-clock"></i> Pending Verification ({{ $stats['pending'] }})
                         </a>
@@ -152,6 +155,9 @@
                                         <div class="btn-group" role="group">
                                             <a href="{{ route('admin.businesses.show', $business->id) }}" class="btn btn-sm btn-info" title="View business">
                                                 <i class="fas fa-eye"></i>
+                                            </a>
+                                            <a href="{{ route('admin.businesses.edit', $business->id) }}" class="btn btn-sm btn-warning text-white" title="Edit business">
+                                                <i class="fas fa-edit"></i>
                                             </a>
                                             @if($business->verification_status === 'approved')
                                                 <a href="{{ route('admin.businesses.jobs', $business->id) }}" class="btn btn-sm btn-primary" title="View jobs for this business">

@@ -260,7 +260,7 @@
                                     <tr>
                                         <td>{{ $transaction->user->name }}</td>
                                         <td>
-                                            <span class="badge badge-info">{{ ucfirst(str_replace('_', ' ', $transaction->purpose)) }}</span>
+                                            <span class="badge badge-info text-black">{{ ucfirst(str_replace('_', ' ', $transaction->purpose)) }}</span>
                                         </td>
                                         <td>₹{{ number_format($transaction->amount, 2) }}</td>
                                         <td>

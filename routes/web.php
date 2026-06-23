@@ -200,6 +200,8 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::prefix('users')->name('users.')->group(function () {
             Route::get('/', [UserManagementController::class, 'index'])->name('index');
             Route::get('/pending', [UserManagementController::class, 'pending'])->name('pending');
+            Route::get('/create', [UserManagementController::class, 'create'])->name('create');
+            Route::post('/', [UserManagementController::class, 'store'])->name('store');
             Route::post('/{id}/approve-certificate', [UserManagementController::class, 'approveCertificate'])->name('approve-certificate');
             Route::post('/{id}/reject-certificate', [UserManagementController::class, 'rejectCertificate'])->name('reject-certificate');
             Route::get('/{id}', [UserManagementController::class, 'show'])->name('show');
@@ -229,6 +231,8 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::get('/', [BusinessManagementController::class, 'index'])->name('index');
             Route::get('/pending', [BusinessManagementController::class, 'pending'])->name('pending');
             Route::get('/verification', [BusinessManagementController::class, 'verification'])->name('verification');
+            Route::get('/create', [BusinessManagementController::class, 'create'])->name('create');
+            Route::post('/', [BusinessManagementController::class, 'store'])->name('store');
             Route::post('/{id}/approve', [BusinessManagementController::class, 'approve'])->name('approve');
             Route::post('/{id}/reject', [BusinessManagementController::class, 'reject'])->name('reject');
             Route::get('/{id}/jobs', [BusinessManagementController::class, 'jobs'])->name('jobs');
@@ -263,8 +267,12 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::prefix('matrimony')->name('matrimony.')->group(function () {
             Route::get('/', [MatrimonyManagementController::class, 'index'])->name('index');
             Route::get('/moderation', [MatrimonyManagementController::class, 'moderation'])->name('moderation');
+            Route::get('/create', [MatrimonyManagementController::class, 'create'])->name('create');
+            Route::post('/', [MatrimonyManagementController::class, 'store'])->name('store');
             Route::post('/{id}/approve', [MatrimonyManagementController::class, 'approve'])->name('approve');
-        Route::post('/{id}/reject', [MatrimonyManagementController::class, 'reject'])->name('reject');
+            Route::post('/{id}/reject', [MatrimonyManagementController::class, 'reject'])->name('reject');
+            Route::get('/{id}/edit', [MatrimonyManagementController::class, 'edit'])->name('edit');
+            Route::put('/{id}', [MatrimonyManagementController::class, 'update'])->name('update');
             Route::get('/{id}', [MatrimonyManagementController::class, 'show'])->name('show');
             Route::post('/{id}/suspend', [MatrimonyManagementController::class, 'suspend'])->name('suspend');
             Route::post('/{id}/activate', [MatrimonyManagementController::class, 'activate'])->name('activate');

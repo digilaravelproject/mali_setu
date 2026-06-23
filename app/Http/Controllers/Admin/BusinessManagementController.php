@@ -325,6 +325,78 @@ class BusinessManagementController extends Controller
     /**
      * Show edit form for a business
      */
+    public function create()
+    {
+        // Get all users to allow assigning ownership of the business
+        $users = User::orderBy('name')->get();
+        $categories = BusinessCategory::where('is_active', true)->get();
+
+        $baseTypes = [
+            'Public Ltd',
+            'Private Ltd',
+            'Proprietary /Partnership - LLP'
+        ];
+
+        $existingTypes = Business::select('business_type')
+            ->distinct()
+            ->orderBy('business_type')
+            ->pluck('business_type')
+            ->toArray();
+
+        $businessTypes = array_values(array_unique(array_merge($baseTypes, $existingTypes)));
+
+        return view('admin.businesses.create', compact('users', 'categories', 'businessTypes'));
+    }
+
+    /**
+     * Store a new business
+     */
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'user_id' => 'required|integer|exists:users,id',
+            'business_name' => 'required|string|max:255',
+            'business_type' => 'required|string|max:255',
+            'category_id' => 'required|integer|exists:business_categories,id',
+            'description' => 'required|string',
+            'contact_phone' => 'nullable|string|max:20',
+            'contact_email' => 'nullable|email',
+            'country' => 'required|string|max:100',
+            'state' => 'required|string|max:100',
+            'district' => 'required|string|max:100',
+            'city' => 'required|string|max:100',
+            'pincode' => 'required|digits:6',
+            'village' => 'nullable|string|max:100',
+            'taluka' => 'nullable|string|max:100',
+            'address' => 'nullable|string|max:500',
+            'website' => 'nullable|url',
+            'opening_time' => 'nullable|date_format:H:i',
+            'closing_time' => 'nullable|date_format:H:i',
+            'latitude' => 'nullable|numeric|between:-90,90',
+            'longitude' => 'nullable|numeric|between:-180,180',
+            'photo' => 'nullable|image|max:2048',
+            'verification_status' => 'required|in:pending,approved,rejected',
+            'status' => 'required|in:active,suspended,banned',
+        ]);
+
+        if ($request->hasFile('photo')) {
+            $validated['photo'] = $request->file('photo')->store('business/photos', 'public');
+        }
+
+        $validated['subscription_status'] = 'trial';
+
+        $business = Business::create($validated);
+
+        // Update user type to business if needed
+        $user = User::find($request->user_id);
+        if ($user && (empty($user->user_type) || $user->user_type != 'business')) {
+            $user->update(['user_type' => 'business']);
+        }
+
+        return redirect()->route('admin.businesses.show', $business->id)
+            ->with('success', 'Business created successfully.');
+    }
+
     public function edit($id)
     {
         $business = Business::findOrFail($id);
@@ -358,11 +430,34 @@ class BusinessManagementController extends Controller
             'business_name' => 'required|string|max:255',
             'business_type' => 'required|string|max:255',
             'category_id' => 'required|integer|exists:business_categories,id',
-            'description' => 'nullable|string',
+            'description' => 'required|string',
             'contact_phone' => 'nullable|string|max:20',
             'contact_email' => 'nullable|email',
+            'country' => 'required|string|max:100',
+            'state' => 'required|string|max:100',
+            'district' => 'required|string|max:100',
+            'city' => 'required|string|max:100',
+            'pincode' => 'required|digits:6',
+            'village' => 'nullable|string|max:100',
+            'taluka' => 'nullable|string|max:100',
+            'address' => 'nullable|string|max:500',
             'website' => 'nullable|url',
+            'opening_time' => 'nullable|date_format:H:i',
+            'closing_time' => 'nullable|date_format:H:i',
+            'latitude' => 'nullable|numeric|between:-90,90',
+            'longitude' => 'nullable|numeric|between:-180,180',
+            'photo' => 'nullable|image|max:2048',
+            'verification_status' => 'required|in:pending,approved,rejected',
+            'status' => 'required|in:active,suspended,banned',
         ]);
+
+        if ($request->hasFile('photo')) {
+            // Delete old photo if it exists
+            if ($business->photo && Storage::disk('public')->exists($business->photo)) {
+                Storage::disk('public')->delete($business->photo);
+            }
+            $validated['photo'] = $request->file('photo')->store('business/photos', 'public');
+        }
 
         $business->update($validated);
 

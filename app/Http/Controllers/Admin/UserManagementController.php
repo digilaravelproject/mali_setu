@@ -276,6 +276,89 @@ class UserManagementController extends Controller
     }
     
     /**
+     * Show the form for creating a new user
+     */
+    public function create()
+    {
+        return view('admin.users.create');
+    }
+
+    /**
+     * Store a newly created user in storage
+     */
+    public function store(Request $request)
+    {
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email',
+            'phone' => 'required|string|max:20|unique:users,phone',
+            'password' => 'required|string|min:8|confirmed',
+            'user_type' => 'required|in:general,business,matrimony,volunteer,bloger',
+            'caste_verification_status' => 'required|in:pending,approved,rejected',
+            'status' => 'required|in:active,suspended,banned',
+            'admin_notes' => 'nullable|string|max:1000',
+            'age' => 'nullable|integer|min:18|max:100',
+            'dob' => 'nullable|date',
+            'occupation' => 'nullable|string|max:255',
+            'company_name' => 'nullable|string|max:255',
+            'dept_name' => 'nullable|string|max:255',
+            'designation' => 'nullable|string|max:255',
+            'reffral_code' => 'nullable|string|max:50',
+            'address' => 'nullable|string|max:500',
+            'nearby_location' => 'nullable|string|max:255',
+            'pincode' => 'nullable|digits:6',
+            'road_number' => 'nullable|string|max:50',
+            'state' => 'nullable|string|max:100',
+            'city' => 'nullable|string|max:100',
+            'sector' => 'nullable|string|max:100',
+            'district' => 'nullable|string|max:100',
+            'village' => 'nullable|string|max:100',
+            'destination' => 'nullable|string|max:255',
+            'latitude' => 'nullable|numeric|between:-90,90',
+            'longitude' => 'nullable|numeric|between:-180,180',
+        ]);
+
+        $userData = [
+            'name' => $request->name,
+            'email' => $request->email,
+            'phone' => $request->phone,
+            'password' => bcrypt($request->password),
+            'user_type' => $request->user_type,
+            'caste_verification_status' => $request->caste_verification_status,
+            'status' => $request->status,
+            'admin_notes' => $request->admin_notes,
+            'age' => $request->age,
+            'dob' => $request->dob,
+            'occupation' => $request->occupation,
+            'company_name' => $request->company_name,
+            'dept_name' => $request->dept_name,
+            'designation' => $request->designation,
+            'reffral_code' => $request->reffral_code,
+            'address' => $request->address,
+            'nearby_location' => $request->nearby_location,
+            'pincode' => $request->pincode,
+            'road_number' => $request->road_number,
+            'state' => $request->state,
+            'city' => $request->city,
+            'sector' => $request->sector,
+            'district' => $request->district,
+            'village' => $request->village,
+            'destination' => $request->destination,
+            'latitude' => $request->latitude,
+            'longitude' => $request->longitude,
+        ];
+
+        if ($request->has('email_verified') && $request->email_verified) {
+            $userData['email_verified_at'] = now();
+        }
+
+        $user = User::create($userData);
+
+        return redirect()->route('admin.users.show', $user->id)
+            ->with('success', 'User created successfully!');
+    }
+
+    /**
      * Show the form for editing the specified user
      */
     public function edit($id)
@@ -296,12 +379,31 @@ class UserManagementController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email,' . $id,
-            'phone' => 'required|string|max:20',
-            'user_type' => 'required|in:general,individual,business,matrimony,volunteer',
+            'phone' => 'required|string|max:20|unique:users,phone,' . $id,
+            'user_type' => 'required|in:general,business,matrimony,volunteer,bloger',
             'caste_verification_status' => 'required|in:pending,approved,rejected',
             'status' => 'required|in:active,suspended,banned',
             'admin_notes' => 'nullable|string|max:1000',
-            'password' => 'nullable|string|min:8|confirmed'
+            'password' => 'nullable|string|min:8|confirmed',
+            'age' => 'nullable|integer|min:18|max:100',
+            'dob' => 'nullable|date',
+            'occupation' => 'nullable|string|max:255',
+            'company_name' => 'nullable|string|max:255',
+            'dept_name' => 'nullable|string|max:255',
+            'designation' => 'nullable|string|max:255',
+            'reffral_code' => 'nullable|string|max:50',
+            'address' => 'nullable|string|max:500',
+            'nearby_location' => 'nullable|string|max:255',
+            'pincode' => 'nullable|digits:6',
+            'road_number' => 'nullable|string|max:50',
+            'state' => 'nullable|string|max:100',
+            'city' => 'nullable|string|max:100',
+            'sector' => 'nullable|string|max:100',
+            'district' => 'nullable|string|max:100',
+            'village' => 'nullable|string|max:100',
+            'destination' => 'nullable|string|max:255',
+            'latitude' => 'nullable|numeric|between:-90,90',
+            'longitude' => 'nullable|numeric|between:-180,180',
         ]);
         
         $updateData = [
@@ -311,7 +413,26 @@ class UserManagementController extends Controller
             'user_type' => $request->user_type,
             'caste_verification_status' => $request->caste_verification_status,
             'status' => $request->status,
-            'admin_notes' => $request->admin_notes
+            'admin_notes' => $request->admin_notes,
+            'age' => $request->age,
+            'dob' => $request->dob,
+            'occupation' => $request->occupation,
+            'company_name' => $request->company_name,
+            'dept_name' => $request->dept_name,
+            'designation' => $request->designation,
+            'reffral_code' => $request->reffral_code,
+            'address' => $request->address,
+            'nearby_location' => $request->nearby_location,
+            'pincode' => $request->pincode,
+            'road_number' => $request->road_number,
+            'state' => $request->state,
+            'city' => $request->city,
+            'sector' => $request->sector,
+            'district' => $request->district,
+            'village' => $request->village,
+            'destination' => $request->destination,
+            'latitude' => $request->latitude,
+            'longitude' => $request->longitude,
         ];
         
         // Handle email verification status

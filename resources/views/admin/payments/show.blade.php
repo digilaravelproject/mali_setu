@@ -52,7 +52,7 @@
                                         <tr>
                                             <td><strong>Payment Method:</strong></td>
                                             <td>
-                                                <span class="badge badge-info">{{ ucfirst($payment->payment_method ?? 'N/A') }}</span>
+                                                <span class="badge badge-info text-black">{{ ucfirst($payment->payment_method ?? 'N/A') }}</span>
                                             </td>
                                         </tr>
                                         <tr>
@@ -71,7 +71,7 @@
                                                 @elseif($payment->status === 'failed')
                                                     <span class="badge badge-danger">Failed</span>
                                                 @elseif($payment->status === 'refunded')
-                                                    <span class="badge badge-info">Refunded</span>
+                                                    <span class="badge badge-info text-black">Refunded</span>
                                                 @else
                                                     <span class="badge badge-secondary text-black">{{ ucfirst($payment->status) }}</span>
                                                 @endif

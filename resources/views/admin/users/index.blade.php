@@ -8,6 +8,9 @@
     <div class="d-sm-flex align-items-center justify-content-between mb-4">
         <h1 class="h3 mb-0 text-gray-800">User Management</h1>
         <div class="d-sm-flex">
+            <a href="{{ route('admin.users.create') }}" class="btn btn-primary btn-sm shadow-sm mr-2">
+                <i class="fas fa-plus fa-sm text-white-50"></i> Add User
+            </a>
             <a href="{{ route('admin.users.verification.pending') }}" class="btn btn-warning btn-sm shadow-sm mr-2">
                 <i class="fas fa-clock fa-sm text-white-50"></i> Pending Verifications
             </a>

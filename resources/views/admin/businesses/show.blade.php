@@ -6,7 +6,7 @@
 <div class="container-fluid">
     <!-- Page Header -->
     <div class="d-sm-flex align-items-center justify-content-between mb-4">
-        <h1 class="h3 mb-0 text-gray-800">Business Details</h1>
+        <h1 class="h3 mb-0 text-gray-800 font-weight-bold">Business Details</h1>
         <div class="d-sm-flex">
             <a href="{{ route('admin.businesses.index') }}" class="btn btn-secondary btn-sm shadow-sm">
                 <i class="fas fa-arrow-left fa-sm text-white-50"></i> Back to Businesses
@@ -15,19 +15,11 @@
     </div>
 
     <div class="row">
-        <div class="col-12 mb-3">
-            @if($business->verification_status == 'approved' && $business->completed_business_registrations_count == 0)
-                <div class="alert alert-warning">
-                    <i class="fas fa-exclamation-triangle me-2"></i>
-                    Payment pending for this business. The user has not completed the business registration payment yet.
-                </div>
-            @endif
-        </div>
-        <!-- Business Information -->
+        <!-- Main details -->
         <div class="col-md-8">
             <div class="card shadow mb-4">
                 <div class="card-header py-3">
-                    <h6 class="m-0 font-weight-bold text-primary">Business Information</h6>
+                    <h6 class="m-0 font-weight-bold text-primary">Business Profile Information</h6>
                 </div>
                 <div class="card-body">
                     <div class="row">
@@ -53,6 +45,16 @@
                                     <td><strong>Email:</strong></td>
                                     <td>{{ $business->contact_email ?? 'N/A' }}</td>
                                 </tr>
+                                <tr>
+                                    <td><strong>Website:</strong></td>
+                                    <td>
+                                        @if($business->website)
+                                            <a href="{{ $business->website }}" target="_blank">{{ $business->website }}</a>
+                                        @else
+                                            N/A
+                                        @endif
+                                    </td>
+                                </tr>
                             </table>
                         </div>
                         <div class="col-md-6">
@@ -74,18 +76,6 @@
                                             <span class="badge bg-warning">Pending</span>
                                         @else
                                             <span class="badge bg-danger">Rejected</span>
-                                        @endif
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td><strong>Payment Status:</strong></td>
-                                    <td>
-                                        @if($business->completed_business_registrations_count > 0)
-                                            <span class="badge bg-success">Paid</span>
-                                        @elseif($business->pending_business_registrations_count > 0)
-                                            <span class="badge bg-warning">Payment Pending</span>
-                                        @else
-                                            <span class="badge bg-secondary">Not Paid</span>
                                         @endif
                                     </td>
                                 </tr>
@@ -118,28 +108,75 @@
                     </div>
                     
                     @if($business->description)
-                    <div class="row mt-3">
+                    <div class="row mt-3 border-top pt-3">
                         <div class="col-12">
-                            <h6 class="font-weight-bold">Description</h6>
-                            <p class="text-muted">{{ $business->description }}</p>
+                            <h6 class="font-weight-bold text-secondary">Description</h6>
+                            <p class="text-muted small">{{ $business->description }}</p>
                         </div>
                     </div>
                     @endif
-                    
-                    @if($business->address)
-                    <div class="row mt-3">
+
+                    <!-- Location details -->
+                    <div class="row mt-3 border-top pt-3">
                         <div class="col-12">
-                            <h6 class="font-weight-bold">Address</h6>
-                            <p class="text-muted">{{ $business->address }}</p>
+                            <h6 class="font-weight-bold text-secondary"><i class="fas fa-location-dot me-1"></i>Location Details</h6>
+                            <table class="table table-sm table-borderless">
+                                <tr>
+                                    <td style="width: 25%;"><strong>Country:</strong></td>
+                                    <td>{{ $business->country ?? 'India' }}</td>
+                                    <td style="width: 25%;"><strong>State:</strong></td>
+                                    <td>{{ $business->state ?? 'N/A' }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>District:</strong></td>
+                                    <td>{{ $business->district ?? 'N/A' }}</td>
+                                    <td><strong>City/Town:</strong></td>
+                                    <td>{{ $business->city ?? 'N/A' }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Pincode:</strong></td>
+                                    <td>{{ $business->pincode ?? 'N/A' }}</td>
+                                    <td><strong>Village:</strong></td>
+                                    <td>{{ $business->village ?? 'N/A' }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Taluka:</strong></td>
+                                    <td>{{ $business->taluka ?? 'N/A' }}</td>
+                                    <td><strong>Coordinates:</strong></td>
+                                    <td>
+                                        @if($business->latitude || $business->longitude)
+                                            Lat: {{ $business->latitude ?? '0' }}, Lng: {{ $business->longitude ?? '0' }}
+                                        @else
+                                            N/A
+                                        @endif
+                                    </td>
+                                </tr>
+                                @if($business->address)
+                                <tr>
+                                    <td><strong>Address:</strong></td>
+                                    <td colspan="3">{{ $business->address }}</td>
+                                </tr>
+                                @endif
+                            </table>
                         </div>
                     </div>
-                    @endif
+
+                    <!-- Timings -->
+                    <div class="row mt-3 border-top pt-3">
+                        <div class="col-12">
+                            <h6 class="font-weight-bold text-secondary"><i class="fas fa-clock me-1"></i>Business Hours</h6>
+                            <p class="text-muted small">
+                                <strong>Opening Time:</strong> {{ $business->opening_time ? \Carbon\Carbon::parse($business->opening_time)->format('h:i A') : 'N/A' }} <br>
+                                <strong>Closing Time:</strong> {{ $business->closing_time ? \Carbon\Carbon::parse($business->closing_time)->format('h:i A') : 'N/A' }}
+                            </p>
+                        </div>
+                    </div>
                     
                     @if($business->rejection_reason)
-                    <div class="row mt-3">
+                    <div class="row mt-3 border-top pt-3">
                         <div class="col-12">
                             <h6 class="font-weight-bold text-danger">Rejection Reason</h6>
-                            <p class="text-danger">{{ $business->rejection_reason }}</p>
+                            <p class="text-danger small">{{ $business->rejection_reason }}</p>
                         </div>
                     </div>
                     @endif
@@ -193,19 +230,31 @@
         
         <!-- Action Panel -->
         <div class="col-md-4">
+            <!-- Business Photo -->
+            @if($business->photo)
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Business Photo</h6>
+                </div>
+                <div class="card-body text-center">
+                    <img src="{{ asset('storage/' . $business->photo) }}" alt="Business Photo" class="img-fluid rounded" style="max-height: 250px;">
+                </div>
+            </div>
+            @endif
+
             <div class="card shadow mb-4">
                 <div class="card-header py-3">
                     <h6 class="m-0 font-weight-bold text-primary">Actions</h6>
                 </div>
                 <div class="card-body">
-                    <a href="{{ route('admin.businesses.edit', $business->id) }}" class="btn btn-primary btn-block mb-2">
+                    <a href="{{ route('admin.businesses.edit', $business->id) }}" class="btn btn-primary btn-block mb-2 w-100">
                         <i class="fas fa-edit"></i> Edit Business
                     </a>
                     @if($business->verification_status == 'pending')
                         <!-- Approve Business Form -->
                         <form action="{{ route('admin.businesses.approve', $business->id) }}" method="POST" class="d-inline w-100 mb-2">
                             @csrf
-                            <button type="submit" class="btn btn-success btn-block" onclick="return confirm('Are you sure you want to approve this business?')">
+                            <button type="submit" class="btn btn-success btn-block w-100 mb-2" onclick="return confirm('Are you sure you want to approve this business?')">
                                 <i class="fas fa-check"></i> Approve Business
                             </button>
                         </form>
@@ -214,7 +263,7 @@
                         <form action="{{ route('admin.businesses.reject', $business->id) }}" method="POST" class="d-inline w-100 mb-2">
                             @csrf
                             <input type="hidden" name="rejection_reason" id="rejection_reason_{{ $business->id }}">
-                            <button type="submit" class="btn btn-danger btn-block" onclick="return handleRejectClick({{ $business->id }})">
+                            <button type="submit" class="btn btn-danger btn-block w-100 mb-2" onclick="return handleRejectClick({{ $business->id }})">
                                 <i class="fas fa-times"></i> Reject Business
                             </button>
                         </form>
@@ -224,7 +273,7 @@
                         <!-- Suspend Business Form -->
                         <form action="{{ route('admin.businesses.suspend', $business->id) }}" method="POST" class="d-inline w-100 mb-2">
                             @csrf
-                            <button type="submit" class="btn btn-warning btn-block" onclick="return confirm('Are you sure you want to suspend this business?')">
+                            <button type="submit" class="btn btn-warning btn-block w-100 mb-2" onclick="return confirm('Are you sure you want to suspend this business?')">
                                 <i class="fas fa-ban"></i> Suspend Business
                             </button>
                         </form>
@@ -232,13 +281,13 @@
                         <!-- Activate Business Form -->
                         <form action="{{ route('admin.businesses.activate', $business->id) }}" method="POST" class="d-inline w-100 mb-2">
                             @csrf
-                            <button type="submit" class="btn btn-success btn-block" onclick="return confirm('Are you sure you want to activate this business?')">
+                            <button type="submit" class="btn btn-success btn-block w-100 mb-2" onclick="return confirm('Are you sure you want to activate this business?')">
                                 <i class="fas fa-check-circle"></i> Activate Business
                             </button>
                         </form>
                     @endif
                     
-                    <a href="{{ route('admin.users.show', $business->user->id) }}" class="btn btn-info btn-block mb-2">
+                    <a href="{{ route('admin.users.show', $business->user->id) }}" class="btn btn-info btn-block mb-2 w-100">
                         <i class="fas fa-user"></i> View Owner
                     </a>
                     
@@ -246,7 +295,7 @@
                     <form action="{{ route('admin.businesses.destroy', $business->id) }}" method="POST" class="d-inline w-100">
                         @csrf
                         @method('DELETE')
-                        <button type="submit" class="btn btn-danger btn-block" onclick="return confirm('Are you sure you want to delete this business? This action cannot be undone.')">
+                        <button type="submit" class="btn btn-danger btn-block w-100" onclick="return confirm('Are you sure you want to delete this business? This action cannot be undone.')">
                             <i class="fas fa-trash"></i> Delete Business
                         </button>
                     </form>

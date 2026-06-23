@@ -10,6 +10,9 @@
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h3 class="card-title">Matrimony Profile Management</h3>
                     <div class="card-tools">
+                        <a href="{{ route('admin.matrimony.create') }}" class="btn btn-primary btn-sm me-2">
+                            <i class="fas fa-plus"></i> Add Profile
+                        </a>
                         <a href="{{ route('admin.matrimony.moderation') }}" class="btn btn-warning btn-sm">
                             <i class="fas fa-eye"></i> Content Moderation
                         </a>
@@ -158,8 +161,11 @@
                                     <td>{{ $profile->created_at->format('M d, Y') }}</td>
                                     <td>
                                         <div class="btn-group" role="group">
-                                            <a href="{{ route('admin.matrimony.show', $profile->id) }}" class="btn btn-sm btn-info">
+                                            <a href="{{ route('admin.matrimony.show', $profile->id) }}" class="btn btn-sm btn-info" title="View Details">
                                                 <i class="fas fa-eye"></i>
+                                            </a>
+                                            <a href="{{ route('admin.matrimony.edit', $profile->id) }}" class="btn btn-sm btn-warning text-white" title="Edit Profile">
+                                                <i class="fas fa-edit"></i>
                                             </a>
                                             @if($profile->approval_status == 'pending')
                                                 <!-- Approve Form -->

@@ -114,7 +114,7 @@
                                         <td>{{ $business->user->name }}</td>
                                         <td>{{ $business->user->email }}</td>
                                         <td>
-                                            <span class="badge badge-info">{{ ucfirst($business->business_type) }}</span>
+                                            <span class="badge badge-info text-black">{{ ucfirst($business->business_type) }}</span>
                                         </td>
                                         <td>
                                             @if($business->category)
