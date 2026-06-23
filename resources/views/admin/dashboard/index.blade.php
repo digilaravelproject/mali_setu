@@ -163,11 +163,11 @@
                                     <tr>
                                         <td>{{ $user->name }}</td>
                                         <td>
-                                            <span class="badge badge-secondary">{{ ucfirst($user->user_type) }}</span>
+                                            <span class="badge badge-secondary text-black">{{ ucfirst($user->user_type) }}</span>
                                         </td>
                                         <td>
                                             @if($user->caste_verification_status === 'approved')
-                                                <span class="badge badge-success">Verified</span>
+                                                <span class="badge badge-success text-black">Verified</span>
                                             @elseif($user->caste_verification_status === 'pending')
                                                 <span class="badge badge-warning">Pending</span>
                                             @else
@@ -213,7 +213,7 @@
                                         <td>{{ $business->user->name }}</td>
                                         <td>
                                             @if($business->verification_status === 'approved')
-                                                <span class="badge badge-success">Approved</span>
+                                                <span class="badge badge-success text-black">Approved</span>
                                             @elseif($business->verification_status === 'pending')
                                                 <span class="badge badge-warning">Pending</span>
                                             @else
@@ -264,7 +264,7 @@
                                         </td>
                                         <td>₹{{ number_format($transaction->amount, 2) }}</td>
                                         <td>
-                                            <span class="badge badge-success">{{ ucfirst($transaction->status) }}</span>
+                                            <span class="badge badge-success text-black">{{ ucfirst($transaction->status) }}</span>
                                         </td>
                                         <td>{{ $transaction->created_at->format('M d, Y H:i') }}</td>
                                     </tr>

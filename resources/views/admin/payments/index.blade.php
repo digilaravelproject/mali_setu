@@ -188,7 +188,7 @@
                                             @elseif($payment->status === 'refunded')
                                                 <span class="badge badge-info text-muted">Refunded</span>
                                             @elseif($payment->status === 'cancelled')
-                                                <span class="badge badge-secondary">Cancelled</span>
+                                                <span class="badge badge-secondary text-black">Cancelled</span>
                                             @endif
                                         </td>
                                         <td>

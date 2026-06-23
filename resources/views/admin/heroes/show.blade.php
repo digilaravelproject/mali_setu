@@ -6,8 +6,21 @@
 
     <div class="card mt-3">
         <div class="card-body">
-            <h4 class="card-title mb-3">{{ $hero->title }}</h4>
-            <img src="{{ asset('storage/'.$hero->image_path) }}" alt="Hero" class="img-fluid" style="max-height:400px">
+            <h4 class="card-title mb-4">{{ $hero->title }}</h4>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <h5 class="fw-bold mb-2">Mobile Hero Image</h5>
+                    <img src="{{ asset('storage/'.$hero->image_path) }}" alt="Mobile Hero" class="img-fluid border rounded" style="max-height:300px">
+                </div>
+                <div class="col-md-6 mb-3">
+                    <h5 class="fw-bold mb-2">Web Hero Image</h5>
+                    @if($hero->web_image_path)
+                        <img src="{{ asset('storage/'.$hero->web_image_path) }}" alt="Web Hero" class="img-fluid border rounded" style="max-height:300px">
+                    @else
+                        <div class="alert alert-secondary">No Web Hero Image uploaded.</div>
+                    @endif
+                </div>
+            </div>
             <div class="mt-3 text-muted">Created: {{ $hero->created_at->format('d M Y H:i') }}</div>
         </div>
     </div>

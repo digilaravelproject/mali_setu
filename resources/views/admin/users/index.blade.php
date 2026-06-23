@@ -118,7 +118,7 @@
         <div class="card-body">
             <form method="GET" action="{{ route('admin.users.index') }}">
                 <div class="row">
-                    <div class="col-md-3">
+                    <div class="col-md-4">
                         <div class="form-group">
                             <label for="search">Search Users</label>
                             <input type="text" class="form-control" id="search" name="search" 
@@ -130,16 +130,13 @@
                             <label for="user_type">User Type</label>
                             <select class="form-control" id="user_type" name="user_type">
                                 <option value="">All Types</option>
-                                <option value="individual" {{ request('user_type') == 'individual' ? 'selected' : '' }}>Individual</option>
-                                <option value="business" {{ request('user_type') == 'business' ? 'selected' : '' }}>Business</option>
-                                <option value="volunteer" {{ request('user_type') == 'volunteer' ? 'selected' : '' }}>Volunteer</option>
-                                <option value="donor" {{ request('user_type') == 'donor' ? 'selected' : '' }}>Donor</option>
-                                <option value="matrimony" {{ request('user_type') == 'matrimony' ? 'selected' : '' }}>Matrimony</option>
-                                <option value="admin" {{ request('user_type') == 'admin' ? 'selected' : '' }}>Admin</option>
+                                @foreach($userTypes as $type)
+                                    <option value="{{ $type }}" {{ request('user_type') == $type ? 'selected' : '' }}>{{ ucfirst($type) }}</option>
+                                @endforeach
                             </select>
                         </div>
                     </div>
-                    <div class="col-md-2">
+                    <?php /*<div class="col-md-2">
                         <div class="form-group">
                             <label for="verification_status">Verification</label>
                             <select class="form-control" id="verification_status" name="verification_status">
@@ -149,10 +146,10 @@
                                 <option value="rejected" {{ request('verification_status') == 'rejected' ? 'selected' : '' }}>Rejected</option>
                             </select>
                         </div>
-                    </div>
+                    </div> */?>
                     <div class="col-md-2">
                         <div class="form-group">
-                            <label for="status">Account Status</label>
+                            <label for="status">Status</label>
                             <select class="form-control" id="status" name="status">
                                 <option value="">All Status</option>
                                 <option value="active" {{ request('status') == 'active' ? 'selected' : '' }}>Active</option>
@@ -161,7 +158,7 @@
                             </select>
                         </div>
                     </div>
-                    <div class="col-md-3">
+                    <div class="col-md-4">
                         <div class="form-group">
                             <label>&nbsp;</label>
                             <div class="d-flex">
@@ -240,22 +237,22 @@
                                     </div>
                                 </td>
                                 <td>
-                                    <span class="badge badge-secondary">{{ ucfirst($user->user_type) }}</span>
+                                    <span class="badge badge-secondary text-black">{{ ucfirst($user->user_type) }}</span>
                                 </td>
                                 <td>
                                     @if($user->caste_certificate_verified)
-                                        <span class="badge badge-success">Verified</span>
+                                        <span class="badge badge-success text-black">Verified</span>
                                     @elseif($user->caste_certificate_path)
                                         <span class="badge badge-warning">Pending</span>
                                     @else
-                                        <span class="badge badge-secondary">Not Submitted</span>
+                                        <span class="badge badge-secondary text-black">Not Submitted</span>
                                     @endif
                                 </td>
                                 <td>
                                     @if($user->status == 'active')
-                                        <span class="badge badge-success">Active</span>
+                                        <span class="badge badge-success text-black">Active</span>
                                     @elseif($user->status == 'inactive')
-                                        <span class="badge badge-secondary">Inactive</span>
+                                        <span class="badge badge-secondary text-black">Inactive</span>
                                     @else
                                         <span class="badge badge-danger">Suspended</span>
                                     @endif

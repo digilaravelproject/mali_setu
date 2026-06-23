@@ -339,29 +339,40 @@
                 <div id="homepageBannersCarousel" class="carousel slide mb-4 rounded-4 overflow-hidden shadow-sm" data-bs-ride="carousel">
                     <div class="carousel-indicators">
                         @foreach($banners as $index => $banner)
-                            <button type="button" data-bs-target="#homepageBannersCarousel" data-bs-slide-to="{{ $index }}" class="{{ $index === 0 ? 'active' : '' }}"></button>
+                            <button type="button" data-bs-target="#homepageBannersCarousel" data-bs-slide-to="{{ $index }}" class="{{ $index === 0 ? 'active' : '' }}" {!! $index === 0 ? 'aria-current="true"' : '' !!}></button>
                         @endforeach
                     </div>
                     <div class="carousel-inner">
                         @foreach($banners as $index => $banner)
                             <div class="carousel-item {{ $index === 0 ? 'active' : '' }}" data-bs-interval="4500">
-                                <div class="banner-slide-wrapper position-relative" style="height: 250px; background: url('{{ asset('storage/' . $banner->image_path) }}') center/cover no-repeat;">
-                                    <div class="banner-overlay position-absolute w-100 h-100 top-0 start-0 d-flex flex-column justify-content-end p-4 text-start" style="background: linear-gradient(180deg, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.75) 100%);">
+                                <div class="banner-slide-wrapper position-relative w-100 overflow-hidden" style="height: 250px;">
+                                    <!-- Web Banner (Desktops and Laptops) -->
+                                    <img src="{{ asset('storage/' . ($banner->web_image_path ?? $banner->image_path)) }}" class="d-none d-md-block w-100 h-100" style="object-fit: cover; object-position: center;" alt="{{ $banner->title }}">
+                                    <!-- Mobile Banner (Smartphones and Tablets) -->
+                                    <img src="{{ asset('storage/' . $banner->image_path) }}" class="d-md-none w-100 h-100" style="object-fit: cover; object-position: center;" alt="{{ $banner->title }}">
+                                    
+                                    <div class="banner-overlay position-absolute w-100 h-100 top-0 start-0 d-flex flex-column justify-content-end p-4 text-start" style="background: linear-gradient(180deg, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.75) 100%); z-index: 2;">
                                         <h3 class="fw-bold text-white mb-2">{{ $banner->title }}</h3>
                                         <?php /*@if($banner->url)
-                                            <a href="{{ $banner->url }}" target="_blank" class="btn btn-primary btn-sm rounded-pill px-4 align-self-start fw-semibold shadow-sm">Explore More <i class="fa-solid fa-arrow-up-right-from-square ms-1"></i></a>
-                                        @endif */?>
+                                             <a href="{{ $banner->url }}" target="_blank" class="btn btn-primary btn-sm rounded-pill px-4 align-self-start fw-semibold shadow-sm">Explore More <i class="fa-solid fa-arrow-up-right-from-square ms-1"></i></a>
+                                         @endif */?>
                                     </div>
                                 </div>
                             </div>
                         @endforeach
                     </div>
-                    <button class="carousel-control-prev" type="button" data-bs-target="#homepageBannersCarousel" data-bs-slide="prev">
-                        <span class="carousel-control-prev-icon"></span>
-                    </button>
-                    <button class="carousel-control-next" type="button" data-bs-target="#homepageBannersCarousel" data-bs-slide="next">
-                        <span class="carousel-control-next-icon"></span>
-                    </button>
+                    @if($banners->count() > 1)
+                        <button class="carousel-control-prev" type="button" data-bs-target="#homepageBannersCarousel" data-bs-slide="prev">
+                            <span class="carousel-control-prev-icon"></span>
+                        </button>
+                        <button class="carousel-control-next" type="button" data-bs-target="#homepageBannersCarousel" data-bs-slide="next">
+                            <span class="carousel-control-next-icon"></span>
+                        </button>
+                    @endif
+                </div>
+            @else
+                <div class="glass-card mb-4 text-center py-5">
+                    <p class="text-secondary mb-0"><i class="fa-solid fa-image-portrait text-muted me-2 fs-4"></i> No banner data found.</p>
                 </div>
             @endif
 
@@ -1183,6 +1194,16 @@
 
     // Startup configuration & Tab URL Preloaders
     document.addEventListener('DOMContentLoaded', () => {
+        // Explicitly initialize the homepage banners carousel for autoplay
+        const bannersCarouselEl = document.getElementById('homepageBannersCarousel');
+        if (bannersCarouselEl) {
+            new bootstrap.Carousel(bannersCarouselEl, {
+                interval: 4500,
+                ride: 'carousel',
+                wrap: true
+            });
+        }
+
         // Parse tabs from URL parameter
         const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.has('tab')) {

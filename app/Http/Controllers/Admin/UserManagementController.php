@@ -23,15 +23,16 @@ class UserManagementController extends Controller
         }
         
         // Filter by verification status if provided
-        if ($request->has('verification_status') && $request->verification_status !== '') {
-            $query->where('caste_verification_status', $request->verification_status);
-        }
+        // if ($request->has('verification_status') && $request->verification_status !== '') {
+        //     $query->where('caste_verification_status', $request->verification_status);
+        // }
         
-        // Search by name or email
+        // Search by name, email, or phone
         if ($request->has('search') && $request->search !== '') {
             $query->where(function($q) use ($request) {
                 $q->where('name', 'like', '%' . $request->search . '%')
-                  ->orWhere('email', 'like', '%' . $request->search . '%');
+                  ->orWhere('email', 'like', '%' . $request->search . '%')
+                  ->orWhere('phone', 'like', '%' . $request->search . '%');
             });
         }
         
@@ -48,7 +49,15 @@ class UserManagementController extends Controller
                 ->toArray()
         ];
         
-        return view('admin.users.index', compact('users', 'stats'));
+        // Fetch all distinct user types added in DB
+        $userTypes = User::select('user_type')
+            ->distinct()
+            ->whereNotNull('user_type')
+            ->where('user_type', '!=', '')
+            ->pluck('user_type')
+            ->toArray();
+        
+        return view('admin.users.index', compact('users', 'stats', 'userTypes'));
     }
     
     /**

@@ -24,6 +24,7 @@ class StoreHomepageHeroRequest extends FormRequest
         return [
             'title' => ['required','string','max:255'],
             'image' => ['required','image','mimes:jpeg,png,jpg,webp,avif','max:5120'], // 5MB
+            'web_image' => ['required','image','mimes:jpeg,png,jpg,webp,avif','max:10240'], // 10MB
         ];
     }
 }

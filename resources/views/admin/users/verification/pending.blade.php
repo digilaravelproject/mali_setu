@@ -149,7 +149,7 @@
                                 <td>{{ $user->email ?? 'N/A' }}</td>
                                 <td>{{ $user->phone ?? 'N/A' }}</td>
                                 <td>
-                                    <span class="badge badge-secondary">{{ ucfirst($user->user_type ?? 'general') }}</span>
+                                    <span class="badge badge-secondary text-black">{{ ucfirst($user->user_type ?? 'general') }}</span>
                                 </td>
                                 <td>
                                     @if($user->casteCertificate && $user->casteCertificate->file_path)

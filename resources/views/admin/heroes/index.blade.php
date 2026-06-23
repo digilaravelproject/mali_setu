@@ -17,7 +17,8 @@
                 <thead>
                     <tr>
                         <th>#</th>
-                        <th>Preview</th>
+                        <th>Mobile Preview</th>
+                        <th>Web Preview</th>
                         <th>Title</th>
                         <th>Created</th>
                         <th class="text-end">Actions</th>
@@ -28,7 +29,14 @@
                         <tr>
                             <td>{{ $heroes->firstItem() + $idx }}</td>
                             <td>
-                                <img src="{{ asset('storage/'.$hero->image_path) }}" alt="Hero" style="height:60px">
+                                <img src="{{ asset('storage/'.$hero->image_path) }}" alt="Mobile Hero" style="height:60px">
+                            </td>
+                            <td>
+                                @if($hero->web_image_path)
+                                    <img src="{{ asset('storage/'.$hero->web_image_path) }}" alt="Web Hero" style="height:60px">
+                                @else
+                                    <span class="text-muted">None</span>
+                                @endif
                             </td>
                             <td>{{ $hero->title }}</td>
                             <td>{{ $hero->created_at->format('d M Y') }}</td>

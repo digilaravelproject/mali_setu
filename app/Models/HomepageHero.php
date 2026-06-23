@@ -9,6 +9,7 @@ class HomepageHero extends Model
     protected $fillable = [
         'title',
         'image_path',
+        'web_image_path',
         'url'
     ];
 }

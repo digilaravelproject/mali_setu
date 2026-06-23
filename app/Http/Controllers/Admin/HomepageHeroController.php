@@ -27,10 +27,12 @@ class HomepageHeroController extends Controller
     public function store(StoreHomepageHeroRequest $request)
     {
         $path = $request->file('image')->store('hero_images', 'public');
+        $webPath = $request->file('web_image')->store('hero_images', 'public');
 
         $hero = HomepageHero::create([
             'title' => $request->title,
             'image_path' => $path,
+            'web_image_path' => $webPath,
         ]);
 
         return redirect()
@@ -60,6 +62,14 @@ class HomepageHeroController extends Controller
             $data['image_path'] = $request->file('image')->store('hero_images', 'public');
         }
 
+        if ($request->hasFile('web_image')) {
+            // delete old web image
+            if ($hero->web_image_path && Storage::disk('public')->exists($hero->web_image_path)) {
+                Storage::disk('public')->delete($hero->web_image_path);
+            }
+            $data['web_image_path'] = $request->file('web_image')->store('hero_images', 'public');
+        }
+
         $hero->update($data);
 
         return redirect()
@@ -71,6 +81,10 @@ class HomepageHeroController extends Controller
     {
         if ($hero->image_path && Storage::disk('public')->exists($hero->image_path)) {
             Storage::disk('public')->delete($hero->image_path);
+        }
+
+        if ($hero->web_image_path && Storage::disk('public')->exists($hero->web_image_path)) {
+            Storage::disk('public')->delete($hero->web_image_path);
         }
 
         $hero->delete();

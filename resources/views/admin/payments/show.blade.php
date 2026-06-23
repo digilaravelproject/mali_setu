@@ -58,14 +58,14 @@
                                         <tr>
                                             <td><strong>Payment Type:</strong></td>
                                             <td>
-                                                <span class="badge badge-secondary">{{ ucfirst($payment->payment_type ?? 'N/A') }}</span>
+                                                <span class="badge badge-secondary text-black">{{ ucfirst($payment->payment_type ?? 'N/A') }}</span>
                                             </td>
                                         </tr>
                                         <tr>
                                             <td><strong>Status:</strong></td>
                                             <td>
                                                 @if($payment->status === 'completed')
-                                                    <span class="badge badge-success">Completed</span>
+                                                    <span class="badge badge-success text-black">Completed</span>
                                                 @elseif($payment->status === 'pending')
                                                     <span class="badge badge-warning">Pending</span>
                                                 @elseif($payment->status === 'failed')
@@ -73,7 +73,7 @@
                                                 @elseif($payment->status === 'refunded')
                                                     <span class="badge badge-info">Refunded</span>
                                                 @else
-                                                    <span class="badge badge-secondary">{{ ucfirst($payment->status) }}</span>
+                                                    <span class="badge badge-secondary text-black">{{ ucfirst($payment->status) }}</span>
                                                 @endif
                                             </td>
                                         </tr>
@@ -168,7 +168,7 @@
                                                     <td><strong>Verification Status:</strong></td>
                                                     <td>
                                                         @if($payment->business->verification_status === 'approved')
-                                                            <span class="badge badge-success">Approved</span>
+                                                            <span class="badge badge-success text-black">Approved</span>
                                                         @elseif($payment->business->verification_status === 'pending')
                                                             <span class="badge badge-warning">Pending</span>
                                                         @else
