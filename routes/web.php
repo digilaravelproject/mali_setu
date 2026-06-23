@@ -219,6 +219,8 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::get('/', [CategoryManagementController::class, 'index'])->name('index');
             Route::get('/addcategory', [CategoryManagementController::class, 'addcategory'])->name('addcategory');
             Route::post('/storecategory', [CategoryManagementController::class, 'storeCategory'])->name('storecategory');
+            Route::post('/reorder', [CategoryManagementController::class, 'reorder'])->name('reorder');
+            Route::post('/move-to-page', [CategoryManagementController::class, 'moveToPage'])->name('moveToPage');
             Route::post('/{id}/active', [CategoryManagementController::class, 'active'])->name('active');
             Route::post('/{id}/inactive', [CategoryManagementController::class, 'inactive'])->name('inactive');
             Route::post('/{id}/destroy', [CategoryManagementController::class, 'destroy'])->name('destroy');

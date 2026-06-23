@@ -56,7 +56,7 @@ class BusinessManagementController extends Controller
         
         $businesses = $query->latest()->paginate(20);
         
-        $categories = BusinessCategory::where('is_active', true)->get();
+        $categories = BusinessCategory::where('is_active', true)->orderBy('sort_order', 'asc')->orderBy('id', 'asc')->get();
 
         $businessTypes = Business::select('business_type')
             ->distinct()
@@ -329,7 +329,7 @@ class BusinessManagementController extends Controller
     {
         // Get all users to allow assigning ownership of the business
         $users = User::orderBy('name')->get();
-        $categories = BusinessCategory::where('is_active', true)->get();
+        $categories = BusinessCategory::where('is_active', true)->orderBy('sort_order', 'asc')->orderBy('id', 'asc')->get();
 
         $baseTypes = [
             'Public Ltd',
@@ -400,7 +400,7 @@ class BusinessManagementController extends Controller
     public function edit($id)
     {
         $business = Business::findOrFail($id);
-        $categories = BusinessCategory::where('is_active', true)->get();
+        $categories = BusinessCategory::where('is_active', true)->orderBy('sort_order', 'asc')->orderBy('id', 'asc')->get();
 
         $baseTypes = [
             'Public Ltd',
@@ -607,7 +607,7 @@ class BusinessManagementController extends Controller
      */
     public function categories()
     {
-        $categories = BusinessCategory::withCount('businesses')->paginate(20);
+        $categories = BusinessCategory::withCount('businesses')->orderBy('sort_order', 'asc')->orderBy('id', 'asc')->paginate(20);
         
         return view('admin.businesses.categories', compact('categories'));
     }

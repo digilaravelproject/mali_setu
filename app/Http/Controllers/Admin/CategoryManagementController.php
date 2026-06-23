@@ -13,7 +13,7 @@ class CategoryManagementController extends Controller
      */
     public function index(Request $request)
     {
-        $categories = BusinessCategory::latest()->paginate(20);
+        $categories = BusinessCategory::orderBy('sort_order', 'asc')->orderBy('id', 'asc')->paginate(20);
         
         return view('admin.category.index', compact('categories'));
     }
@@ -184,5 +184,102 @@ class CategoryManagementController extends Controller
         $category->update($data);
 
         return redirect()->route('admin.category.index')->with('success', 'Category updated successfully!');
+    }
+
+    /**
+     * Reorder categories via AJAX
+     */
+    public function reorder(Request $request)
+    {
+        $request->validate([
+            'order' => 'required|array',
+            'order.*' => 'exists:business_categories,id',
+            'page' => 'required|integer|min:1',
+            'per_page' => 'required|integer|min:1',
+        ]);
+
+        $order = $request->order;
+        $page = $request->page;
+        $perPage = $request->per_page;
+
+        $startPosition = ($page - 1) * $perPage;
+
+        foreach ($order as $index => $id) {
+            BusinessCategory::where('id', $id)->update([
+                'sort_order' => $startPosition + $index + 1
+            ]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Category order updated successfully!'
+        ]);
+    }
+
+    /**
+     * Move category to specific page and position
+     */
+    public function moveToPage(Request $request)
+    {
+        $request->validate([
+            'category_id' => 'required|exists:business_categories,id',
+            'target_page' => 'required|integer|min:1',
+            'position' => 'required|in:top,bottom',
+        ]);
+
+        $categoryId = $request->category_id;
+        $targetPage = $request->target_page;
+        $position = $request->position;
+        $perPage = 20;
+
+        // Get all categories ordered by sort_order asc, id asc
+        $allCategories = BusinessCategory::orderBy('sort_order', 'asc')->orderBy('id', 'asc')->get();
+        
+        $totalCategories = $allCategories->count();
+        $totalPages = ceil($totalCategories / $perPage);
+
+        if ($targetPage > $totalPages) {
+            $targetPage = $totalPages;
+        }
+
+        // Find the index of the category to move
+        $targetItem = null;
+        $filtered = [];
+        foreach ($allCategories as $cat) {
+            if ($cat->id == $categoryId) {
+                $targetItem = $cat;
+            } else {
+                $filtered[] = $cat;
+            }
+        }
+
+        if (!$targetItem) {
+            return redirect()->back()->with('error', 'Category not found.');
+        }
+
+        // Calculate insertion index
+        if ($position === 'top') {
+            $insertIndex = ($targetPage - 1) * $perPage;
+        } else {
+            $insertIndex = ($targetPage * $perPage) - 1;
+        }
+
+        if ($insertIndex < 0) {
+            $insertIndex = 0;
+        }
+        if ($insertIndex > count($filtered)) {
+            $insertIndex = count($filtered);
+        }
+
+        array_splice($filtered, $insertIndex, 0, [$targetItem]);
+
+        // Save new sequential order
+        foreach ($filtered as $index => $cat) {
+            $cat->sort_order = $index + 1;
+            $cat->save();
+        }
+
+        return redirect()->route('admin.category.index', ['page' => $targetPage])
+            ->with('success', 'Category "' . $targetItem->name . '" moved to page ' . $targetPage . ' (' . $position . ') successfully!');
     }
 }

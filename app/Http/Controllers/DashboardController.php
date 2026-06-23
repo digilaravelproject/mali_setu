@@ -66,7 +66,7 @@ class DashboardController extends Controller
         ];
 
         // Fetch categories & active banner heroes
-        $categories = \App\Models\BusinessCategory::where('is_active', true)->get();
+        $categories = \App\Models\BusinessCategory::where('is_active', true)->orderBy('sort_order', 'asc')->orderBy('id', 'asc')->get();
         $banners = \App\Models\HomepageHero::all();
         $featuredBusinesses = \App\Models\Business::where('verification_status', 'approved')
             ->with(['category', 'products', 'services'])

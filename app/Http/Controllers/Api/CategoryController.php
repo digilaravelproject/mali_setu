@@ -15,7 +15,9 @@ class CategoryController extends Controller
      */
     public function index(Request $request)
     {
-        $query = BusinessCategory::where('is_active', '1');
+        $query = BusinessCategory::where('is_active', '1')
+            ->orderBy('sort_order', 'asc')
+            ->orderBy('id', 'asc');
 
         $businessesCat = $query->paginate(10);
 

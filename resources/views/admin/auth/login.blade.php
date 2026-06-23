@@ -178,17 +178,16 @@
                     @enderror
                 </div>
                 
-                <div class="form-floating">
-                    <div class="input-group">
-                        <input type="password" class="form-control @error('password') is-invalid @enderror" 
-                               id="password" name="password" placeholder="Password" required>
-                        <button type="button" class="btn" onclick="togglePassword()">
-                            <i class="fas fa-eye" id="toggleIcon"></i>
-                        </button>
-                    </div>
+                <div class="form-floating position-relative">
+                    <input type="password" class="form-control @error('password') is-invalid @enderror" 
+                           id="password" name="password" placeholder="Password" required
+                           style="padding-right: 3rem;">
                     <label for="password">
                         <i class="fas fa-lock me-2"></i>Password
                     </label>
+                    <button type="button" class="btn position-absolute end-0 top-50 translate-middle-y me-2" onclick="togglePassword()" style="z-index: 10; border: none; background: none; color: #6b7280; padding: 0.375rem 0.75rem;">
+                        <i class="fas fa-eye" id="toggleIcon"></i>
+                    </button>
                     @error('password')
                         <div class="invalid-feedback">{{ $message }}</div>
                     @enderror

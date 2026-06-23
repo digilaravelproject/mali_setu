@@ -93,7 +93,7 @@
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
             display: flex;
             align-items: center;
-            justify-content: between;
+            justify-content: space-between;
             padding: 0 2rem;
         }
         
@@ -255,10 +255,27 @@
             </div>
 
             <div class="nav-item">
-                <a href="{{ route('admin.bloggers.index') }}" class="nav-link {{ request()->routeIs('admin.bloggers.*') ? 'active' : '' }}">
-                    <i class="fas fa-users-cog"></i>
-                    Blogger Management
+                <a class="nav-link d-flex justify-content-between align-items-center {{ request()->routeIs('admin.bloggers.*') || request()->routeIs('admin.blogs.access') ? 'active' : '' }}"
+                   data-bs-toggle="collapse" href="#bloggersMenu" role="button" aria-expanded="{{ request()->routeIs('admin.bloggers.*') || request()->routeIs('admin.blogs.access') ? 'true' : 'false' }}" aria-controls="bloggersMenu">
+                    <span><i class="fas fa-users-cog"></i> Manage Blogger</span>
+                    <i class="fas fa-chevron-down"></i>
                 </a>
+
+                <div class="collapse {{ request()->routeIs('admin.bloggers.*') || request()->routeIs('admin.blogs.access') ? 'show' : '' }}" id="bloggersMenu">
+                    <div class="nav-item" style="margin-left: .6rem;">
+                        <a href="{{ route('admin.bloggers.index') }}" class="nav-link {{ request()->routeIs('admin.bloggers.index') || request()->routeIs('admin.bloggers.create') || request()->routeIs('admin.bloggers.edit') ? 'active' : '' }}">
+                            <i class="fas fa-user-plus"></i>
+                            Add Blogger
+                        </a>
+                    </div>
+
+                    <div class="nav-item" style="margin-left: .6rem;">
+                        <a href="{{ route('admin.blogs.access') }}" class="nav-link {{ request()->routeIs('admin.blogs.access') ? 'active' : '' }}">
+                            <i class="fas fa-user-lock"></i>
+                            Blog Access
+                        </a>
+                    </div>
+                </div>
             </div>
             
             <div class="nav-item">
@@ -393,18 +410,24 @@
             </div>
             
             <div class="dropdown">
-                <button class="btn btn-link dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                    <i class="fas fa-user-circle fa-lg"></i>
-                    <span class="ms-2">{{ auth()->user()->name }}</span>
+                <button class="btn btn-light dropdown-toggle d-flex align-items-center px-3 py-2 border rounded-pill shadow-sm" type="button" data-bs-toggle="dropdown" aria-expanded="false" style="text-decoration: none; color: #374151; font-weight: 500; transition: all 0.2s;">
+                    <div class="avatar-circle d-flex align-items-center justify-content-center bg-danger text-white rounded-circle me-2" style="width: 32px; height: 32px; font-weight: 600; font-size: 0.875rem;">
+                        {{ strtoupper(substr(auth()->user()->name, 0, 2)) }}
+                    </div>
+                    <span class="me-1">{{ auth()->user()->name }}</span>
                 </button>
-                <ul class="dropdown-menu dropdown-menu-end">
-                    <li><a class="dropdown-item" href="#"><i class="fas fa-user me-2"></i>Profile</a></li>
-                    <li><hr class="dropdown-divider"></li>
+                <ul class="dropdown-menu dropdown-menu-end p-2 border-0 shadow-lg" style="border-radius: 12px; min-width: 200px;">
+                    <li class="px-3 py-2 border-bottom mb-2">
+                        <div class="fw-bold text-dark">{{ auth()->user()->name }}</div>
+                        <div class="text-muted small" style="font-size: 0.75rem;">{{ auth()->user()->email }}</div>
+                    </li>
+                    <li><a class="dropdown-item rounded-2 py-2 px-3 d-flex align-items-center" href="#"><i class="fas fa-user text-muted me-2" style="width: 20px;"></i>Profile</a></li>
+                    <li><hr class="dropdown-divider my-2"></li>
                     <li>
                         <form action="{{ route('admin.logout') }}" method="POST" class="d-inline">
                             @csrf
-                            <button type="submit" class="dropdown-item">
-                                <i class="fas fa-sign-out-alt me-2"></i>Logout
+                            <button type="submit" class="dropdown-item rounded-2 py-2 px-3 d-flex align-items-center text-danger">
+                                <i class="fas fa-sign-out-alt me-2" style="width: 20px;"></i>Logout
                             </button>
                         </form>
                     </li>

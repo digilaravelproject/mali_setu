@@ -57,7 +57,7 @@ class BusinessController extends Controller
         }
         $user->has_business_payment = !is_null($businessPayment);
 
-        $categories = BusinessCategory::where('is_active', true)->get();
+        $categories = BusinessCategory::where('is_active', true)->orderBy('sort_order', 'asc')->orderBy('id', 'asc')->get();
         $plans = BusinessPlan::where('active', true)->get();
         
         $jobs = [];
@@ -111,7 +111,7 @@ class BusinessController extends Controller
      */
     public function create()
     {
-        $categories = BusinessCategory::where('is_active', true)->get();
+        $categories = BusinessCategory::where('is_active', true)->orderBy('sort_order', 'asc')->orderBy('id', 'asc')->get();
         return view('business.create', compact('categories'));
     }
 
@@ -253,7 +253,7 @@ class BusinessController extends Controller
         } else {
             $business = Business::where('user_id', $user->id)->firstOrFail();
         }
-        $categories = BusinessCategory::where('is_active', true)->get();
+        $categories = BusinessCategory::where('is_active', true)->orderBy('sort_order', 'asc')->orderBy('id', 'asc')->get();
         return view('business.edit', compact('business', 'categories'));
     }
 
@@ -343,7 +343,7 @@ class BusinessController extends Controller
      */
     public function browse(Request $request)
     {
-        $categories = BusinessCategory::where('is_active', true)->get();
+        $categories = BusinessCategory::where('is_active', true)->orderBy('sort_order', 'asc')->orderBy('id', 'asc')->get();
         
         $query = Business::where('verification_status', 'approved')
             ->with(['category', 'products', 'services']);
