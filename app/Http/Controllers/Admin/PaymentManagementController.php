@@ -21,7 +21,7 @@ class PaymentManagementController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Payment::with(['user', 'business']);
+        $query = Payment::with(['user.business', 'user.matrimonyProfile']);
         
         // Filter by payment status
         if ($request->has('status') && $request->status !== '') {
@@ -138,7 +138,7 @@ class PaymentManagementController extends Controller
      */
     public function show($id)
     {
-        $payment = Payment::with(['user', 'business'])->findOrFail($id);
+        $payment = Payment::with(['user.business', 'user.matrimonyProfile'])->findOrFail($id);
         
         return view('admin.payments.show', compact('payment'));
     }
@@ -183,7 +183,7 @@ class PaymentManagementController extends Controller
      */
     public function export(Request $request)
     {
-        $query = Payment::with(['user', 'business']);
+        $query = Payment::with(['user.business', 'user.matrimonyProfile']);
         
         // Apply same filters as index
         if ($request->has('status') && $request->status !== '') {
@@ -244,7 +244,7 @@ class PaymentManagementController extends Controller
      */
     public function businessTransactions(Request $request)
     {
-        $query = Transaction::with('user')->where('purpose', 'business_registration');
+        $query = Transaction::with(['user.business', 'user.matrimonyProfile'])->where('purpose', 'business_registration');
 
         if ($request->has('status') && $request->status !== '') {
             $query->where('status', $request->status);
@@ -278,7 +278,7 @@ class PaymentManagementController extends Controller
      */
     public function exportBusiness(Request $request)
     {
-        $query = Transaction::with('user')->where('purpose', 'business_registration');
+        $query = Transaction::with(['user.business', 'user.matrimonyProfile'])->where('purpose', 'business_registration');
 
         if ($request->has('date_from') && $request->date_from !== '') {
             $query->whereDate('created_at', '>=', $request->date_from);
@@ -320,7 +320,7 @@ class PaymentManagementController extends Controller
      */
     public function matrimonyTransactions(Request $request)
     {
-        $query = Transaction::with('user')->where('purpose', 'matrimony_profile');
+        $query = Transaction::with(['user.business', 'user.matrimonyProfile'])->where('purpose', 'matrimony_profile');
 
         if ($request->has('status') && $request->status !== '') {
             $query->where('status', $request->status);
@@ -354,7 +354,7 @@ class PaymentManagementController extends Controller
      */
     public function exportMatrimony(Request $request)
     {
-        $query = Transaction::with('user')->where('purpose', 'matrimony_profile');
+        $query = Transaction::with(['user.business', 'user.matrimonyProfile'])->where('purpose', 'matrimony_profile');
 
         if ($request->has('date_from') && $request->date_from !== '') {
             $query->whereDate('created_at', '>=', $request->date_from);
@@ -396,7 +396,7 @@ class PaymentManagementController extends Controller
      */
     public function showTransaction($id)
     {
-        $transaction = Transaction::with('user')->findOrFail($id);
+        $transaction = Transaction::with(['user.business', 'user.matrimonyProfile'])->findOrFail($id);
         return view('admin.payments.transaction_show', compact('transaction'));
     }
     
@@ -426,7 +426,7 @@ class PaymentManagementController extends Controller
      */
     public function exportBusinessXlsx(Request $request)
     {
-        $query = Transaction::with('user')->where('purpose', 'business_registration');
+        $query = Transaction::with(['user.business', 'user.matrimonyProfile'])->where('purpose', 'business_registration');
 
         if ($request->has('date_from') && $request->date_from !== '') {
             $query->whereDate('created_at', '>=', $request->date_from);
@@ -446,7 +446,7 @@ class PaymentManagementController extends Controller
      */
     public function exportMatrimonyXlsx(Request $request)
     {
-        $query = Transaction::with('user')->where('purpose', 'matrimony_profile');
+        $query = Transaction::with(['user.business', 'user.matrimonyProfile'])->where('purpose', 'matrimony_profile');
 
         if ($request->has('date_from') && $request->date_from !== '') {
             $query->whereDate('created_at', '>=', $request->date_from);
@@ -466,7 +466,7 @@ class PaymentManagementController extends Controller
      */
     public function exportXlsx(Request $request)
     {
-        $query = Payment::with(['user', 'business']);
+        $query = Payment::with(['user.business', 'user.matrimonyProfile']);
         
         if ($request->has('status') && $request->status !== '') {
             $query->where('status', $request->status);
@@ -490,7 +490,7 @@ class PaymentManagementController extends Controller
      */
     public function exportPdf(Request $request)
     {
-        $query = Payment::with(['user', 'business']);
+        $query = Payment::with(['user.business', 'user.matrimonyProfile']);
         
         if ($request->has('status') && $request->status !== '') {
             $query->where('status', $request->status);
@@ -506,7 +506,7 @@ class PaymentManagementController extends Controller
         $payments = $query->latest()->get();
 
         $title = "Payments Export Report";
-        $headers = ['Transaction ID', 'User', 'Amount', 'Method', 'Purpose', 'Status', 'Date'];
+        $headers = ['Transaction ID', 'User', 'Amount', 'Method', 'Purpose', 'Status', 'Date', 'Start Date', 'End Date'];
         $rows = [];
         foreach ($payments as $pay) {
             $rows[] = [
@@ -516,7 +516,9 @@ class PaymentManagementController extends Controller
                 'method' => ucfirst($pay->payment_method ?? 'N/A'),
                 'purpose' => $pay->purpose ?? 'General',
                 'status' => ucfirst($pay->status),
-                'date' => $pay->created_at->format('Y-m-d')
+                'date' => $pay->created_at->format('Y-m-d'),
+                'start_date' => $pay->subscription_start_date ? Carbon::parse($pay->subscription_start_date)->format('Y-m-d') : 'N/A',
+                'end_date' => $pay->subscription_end_date ? Carbon::parse($pay->subscription_end_date)->format('Y-m-d') : 'N/A'
             ];
         }
         $summary = [
@@ -536,7 +538,7 @@ class PaymentManagementController extends Controller
      */
     public function exportBusinessPdf(Request $request)
     {
-        $query = Transaction::with('user')->where('purpose', 'business_registration');
+        $query = Transaction::with(['user.business', 'user.matrimonyProfile'])->where('purpose', 'business_registration');
 
         if ($request->has('date_from') && $request->date_from !== '') {
             $query->whereDate('created_at', '>=', $request->date_from);
@@ -547,7 +549,7 @@ class PaymentManagementController extends Controller
 
         $transactions = $query->latest()->get();
         $title = "Business Registration Transactions";
-        $headers = ['Transaction ID', 'User', 'Amount', 'Status', 'Date'];
+        $headers = ['Transaction ID', 'User', 'Amount', 'Status', 'Date', 'Start Date', 'End Date'];
         $rows = [];
         foreach ($transactions as $t) {
             $rows[] = [
@@ -555,7 +557,9 @@ class PaymentManagementController extends Controller
                 'user' => $t->user?->name ?? 'Deleted User',
                 'amount' => 'INR ' . number_format($t->amount, 2),
                 'status' => ucfirst($t->status),
-                'date' => $t->created_at->format('Y-m-d')
+                'date' => $t->created_at->format('Y-m-d'),
+                'start_date' => $t->subscription_start_date ? Carbon::parse($t->subscription_start_date)->format('Y-m-d') : 'N/A',
+                'end_date' => $t->subscription_end_date ? Carbon::parse($t->subscription_end_date)->format('Y-m-d') : 'N/A'
             ];
         }
         $summary = [
@@ -574,7 +578,7 @@ class PaymentManagementController extends Controller
      */
     public function exportMatrimonyPdf(Request $request)
     {
-        $query = Transaction::with('user')->where('purpose', 'matrimony_profile');
+        $query = Transaction::with(['user.business', 'user.matrimonyProfile'])->where('purpose', 'matrimony_profile');
 
         if ($request->has('date_from') && $request->date_from !== '') {
             $query->whereDate('created_at', '>=', $request->date_from);
@@ -585,7 +589,7 @@ class PaymentManagementController extends Controller
 
         $transactions = $query->latest()->get();
         $title = "Matrimony Profile Transactions";
-        $headers = ['Transaction ID', 'User', 'Amount', 'Status', 'Date'];
+        $headers = ['Transaction ID', 'User', 'Amount', 'Status', 'Date', 'Start Date', 'End Date'];
         $rows = [];
         foreach ($transactions as $t) {
             $rows[] = [
@@ -593,7 +597,9 @@ class PaymentManagementController extends Controller
                 'user' => $t->user?->name ?? 'Deleted User',
                 'amount' => 'INR ' . number_format($t->amount, 2),
                 'status' => ucfirst($t->status),
-                'date' => $t->created_at->format('Y-m-d')
+                'date' => $t->created_at->format('Y-m-d'),
+                'start_date' => $t->subscription_start_date ? Carbon::parse($t->subscription_start_date)->format('Y-m-d') : 'N/A',
+                'end_date' => $t->subscription_end_date ? Carbon::parse($t->subscription_end_date)->format('Y-m-d') : 'N/A'
             ];
         }
         $summary = [

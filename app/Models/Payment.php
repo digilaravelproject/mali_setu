@@ -93,4 +93,41 @@ class Payment extends Model
     {
         return $this->status === 'refunded';
     }
+
+    /**
+     * Get the subscription start date
+     */
+    public function getSubscriptionStartDateAttribute()
+    {
+        return $this->paid_at ?? $this->created_at;
+    }
+
+    /**
+     * Get the subscription end date
+     */
+    public function getSubscriptionEndDateAttribute()
+    {
+        $user = $this->user;
+        if (!$user) {
+            return null;
+        }
+
+        if ($this->payment_type === 'business_registration') {
+            return $user->business?->subscription_expires_at;
+        }
+
+        if ($this->payment_type === 'matrimony_subscription') {
+            return $user->matrimonyProfile?->profile_expires_at;
+        }
+
+        // Fallback checks
+        if (str_contains(strtolower($this->description ?? ''), 'business')) {
+            return $user->business?->subscription_expires_at;
+        }
+        if (str_contains(strtolower($this->description ?? ''), 'matrimony')) {
+            return $user->matrimonyProfile?->profile_expires_at;
+        }
+
+        return null;
+    }
 }

@@ -81,6 +81,14 @@
                                             <td><strong>Created:</strong></td>
                                             <td>{{ $payment->created_at->format('M d, Y H:i:s') }}</td>
                                         </tr>
+                                        <tr>
+                                            <td><strong>Start Date:</strong></td>
+                                            <td>{{ $payment->subscription_start_date ? \Carbon\Carbon::parse($payment->subscription_start_date)->format('M d, Y') : 'N/A' }}</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>End Date:</strong></td>
+                                            <td>{{ $payment->subscription_end_date ? \Carbon\Carbon::parse($payment->subscription_end_date)->format('M d, Y') : 'N/A' }}</td>
+                                        </tr>
                                         @if($payment->completed_at)
                                         <tr>
                                             <td><strong>Completed:</strong></td>

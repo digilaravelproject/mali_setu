@@ -925,8 +925,8 @@ class MatrimonyController extends Controller
         ]);
 
         // Email: new connection request (receiver)
-        $receiverProfile = MatrimonyProfile::where('user_id', $request->receiver_id)->first();
-        $senderProfile = MatrimonyProfile::where('user_id', $request->user()->id)->first();
+        $receiverProfile = MatrimonyProfile::with('user')->where('user_id', $request->receiver_id)->first();
+        $senderProfile = MatrimonyProfile::with('user')->where('user_id', $request->user()->id)->first();
 
         if ($receiverProfile && $senderProfile) {
             $this->notifications->notifyConnectionRequest($receiverProfile, $senderProfile);
@@ -1033,8 +1033,8 @@ class MatrimonyController extends Controller
             ]);
 
             // Email: connection request accepted (sender)
-            $senderProfile = MatrimonyProfile::where('user_id', $connectionRequest->sender_id)->first();
-            $receiverProfile = MatrimonyProfile::where('user_id', $connectionRequest->receiver_id)->first();
+            $senderProfile = MatrimonyProfile::with('user')->where('user_id', $connectionRequest->sender_id)->first();
+            $receiverProfile = MatrimonyProfile::with('user')->where('user_id', $connectionRequest->receiver_id)->first();
 
             if ($senderProfile && $receiverProfile) {
                 $this->notifications->createNotification(
@@ -1054,7 +1054,7 @@ class MatrimonyController extends Controller
             }
         } else {
             // Email: connection request rejected (sender)
-            $receiverProfile = MatrimonyProfile::where('user_id', $connectionRequest->receiver_id)->first();
+            $receiverProfile = MatrimonyProfile::with('user')->where('user_id', $connectionRequest->receiver_id)->first();
 
             $this->notifications->createNotification(
                 $connectionRequest->sender_id,

@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Business;
+use App\Models\MatrimonyProfile;
 use App\Models\Notification;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Log;
@@ -72,6 +73,44 @@ class SubscriptionReminderService
                 $this->sendReminder($business, $expiry, $stageKey);
             }
         }
+
+        // Load matrimony profiles whose subscription expiry is within the window we care about.
+        $profiles = MatrimonyProfile::with('user')
+            ->whereNotNull('profile_expires_at')
+            ->whereBetween('profile_expires_at', [$earliest, $latest])
+            ->get();
+
+        foreach ($profiles as $profile) {
+            if (!$profile->user) {
+                continue;
+            }
+
+            $expiry = Carbon::parse($profile->profile_expires_at)->startOfDay();
+
+            foreach ($reminderStages as $stageKey => $monthDelta) {
+
+                $sendAt = $expiry->copy()->addMonthsNoOverflow($monthDelta);
+
+                // Only send on the exact day
+                if (!$sendAt->isSameDay($today)) {
+                    continue;
+                }
+
+                // Avoid duplicate reminders for the same stage
+                $alreadySent = Notification::where('user_id', $profile->user_id)
+                    ->where('type', Notification::TYPE_SUBSCRIPTION_EXPIRY_REMINDER)
+                    ->where('related_type', MatrimonyProfile::class)
+                    ->where('related_id', $profile->id)
+                    ->where('data->reminder_stage', $stageKey)
+                    ->exists();
+
+                if ($alreadySent) {
+                    continue;
+                }
+
+                $this->sendMatrimonyReminder($profile, $expiry, $stageKey);
+            }
+        }
     }
 
     protected function sendReminder(Business $business, Carbon $expiry, string $stageKey): void
@@ -122,6 +161,59 @@ class SubscriptionReminderService
         Log::info('Sent subscription expiry reminder', [
             'user_id' => $user->id,
             'business_id' => $business->id,
+            'stage' => $stageKey,
+            'expiry_date' => $expiryDate,
+        ]);
+    }
+
+    protected function sendMatrimonyReminder(MatrimonyProfile $profile, Carbon $expiry, string $stageKey): void
+    {
+        $user = $profile->user;
+        $expiryDate = $expiry->format('M d, Y');
+
+        $stageLabels = [
+            'before_3_months' => '3 months before expiry',
+            'before_2_months' => '2 months before expiry',
+            'before_1_month'  => '1 month before expiry',
+            'on_date'         => 'on expiry date',
+            'after_1_month'   => '1 month after expiry',
+            'after_2_months'  => '2 months after expiry',
+            'after_3_months'  => '3 months after expiry',
+            'after_4_months'  => '4 months after expiry',
+            'after_5_months'  => '5 months after expiry',
+            'after_6_months'  => '6 months after expiry',
+        ];
+
+        $title = "Matrimony profile subscription expiring on {$expiryDate}";
+
+        if (str_starts_with($stageKey, 'before_')) {
+            $message = "Your matrimony profile subscription will expire on {$expiryDate}. This is your reminder {$stageLabels[$stageKey]}. Please renew to avoid interruption.";
+        } elseif ($stageKey === 'on_date') {
+            $message = "Your matrimony profile subscription expires today ({$expiryDate}). Please renew to keep your profile active.";
+        } else {
+            $message = "Your matrimony profile subscription expired on {$expiryDate}. This is your reminder {$stageLabels[$stageKey]}. Please renew to continue enjoying the service.";
+        }
+
+        $notificationService = app(NotificationService::class);
+        $notificationService->createNotification(
+            $user->id,
+            Notification::TYPE_SUBSCRIPTION_EXPIRY_REMINDER,
+            $title,
+            $message,
+            [
+                'matrimony_profile_id' => $profile->id,
+                'expiry_date' => $expiryDate,
+                'reminder_stage' => $stageKey,
+            ],
+            '/matrimony/manage',
+            Notification::PRIORITY_HIGH,
+            $profile,
+            ['in_app', 'email']
+        );
+
+        Log::info('Sent matrimony subscription expiry reminder', [
+            'user_id' => $user->id,
+            'matrimony_profile_id' => $profile->id,
             'stage' => $stageKey,
             'expiry_date' => $expiryDate,
         ]);

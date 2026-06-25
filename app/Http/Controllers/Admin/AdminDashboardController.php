@@ -34,13 +34,165 @@ class AdminDashboardController extends Controller
             'businesses' => Business::where('verification_status', 'pending')->count(),
             'matrimony_profiles' => MatrimonyProfile::where('approval_status', 'pending')->count(),
         ];
+
+        // Fetch subscription expiry reminders (logic from SubscriptionReminderService)
+        $today = Carbon::now()->startOfDay();
+        $reminderStages = [
+            'before_3_months' => -3,
+            'before_2_months' => -2,
+            'before_1_month'  => -1,
+            'on_date'         => 0,
+            'after_1_month'   => 1,
+            'after_2_months'  => 2,
+            'after_3_months'  => 3,
+            'after_4_months'  => 4,
+            'after_5_months'  => 5,
+            'after_6_months'  => 6,
+        ];
+        
+        $earliest = $today->copy()->subMonthsNoOverflow(6)->startOfDay();
+        $latest = $today->copy()->addMonthsNoOverflow(3)->endOfDay();
+        
+        $expiryReminders = [];
+
+        // 1. Process Business Expiries
+        $businesses = Business::with('user')
+            ->whereNotNull('subscription_expires_at')
+            ->whereBetween('subscription_expires_at', [$earliest, $latest])
+            ->get();
+            
+        foreach ($businesses as $business) {
+            if (!$business->user) {
+                continue;
+            }
+            
+            $expiry = Carbon::parse($business->subscription_expires_at)->startOfDay();
+            
+            foreach ($reminderStages as $stageKey => $monthDelta) {
+                $sendAt = $expiry->copy()->addMonthsNoOverflow($monthDelta);
+                
+                if ($sendAt->isSameDay($today)) {
+                    $stageLabels = [
+                        'before_3_months' => '3 months before expiry',
+                        'before_2_months' => '2 months before expiry',
+                        'before_1_month'  => '1 month before expiry',
+                        'on_date'         => 'on expiry date',
+                        'after_1_month'   => '1 month after expiry',
+                        'after_2_months'  => '2 months after expiry',
+                        'after_3_months'  => '3 months after expiry',
+                        'after_4_months'  => '4 months after expiry',
+                        'after_5_months'  => '5 months after expiry',
+                        'after_6_months'  => '6 months after expiry',
+                    ];
+                    
+                    $user = $business->user;
+                    $phone = preg_replace('/[^0-9]/', '', $user->phone ?? '');
+                    if (strlen($phone) === 10) {
+                        $phone = '91' . $phone;
+                    }
+                    
+                    $expiryDateStr = $expiry->format('M d, Y');
+                    if (str_starts_with($stageKey, 'before_')) {
+                        $msg = "Hello {$user->name}, your subscription for \"{$business->business_name}\" will expire on {$expiryDateStr}. Please renew to avoid any interruption.";
+                    } elseif ($stageKey === 'on_date') {
+                        $msg = "Hello {$user->name}, your subscription for \"{$business->business_name}\" expires today ({$expiryDateStr}). Please renew to keep your listing active.";
+                    } else {
+                        $msg = "Hello {$user->name}, your subscription for \"{$business->business_name}\" expired on {$expiryDateStr}. Please renew to continue enjoying the service.";
+                    }
+                    
+                    $waLink = !empty($phone) ? "https://wa.me/{$phone}?text=" . urlencode($msg) : '#';
+                    
+                    $expiryReminders[] = [
+                        'type' => 'Business',
+                        'entity_id' => $business->id,
+                        'entity_name' => $business->business_name,
+                        'user_id' => $user->id,
+                        'user_name' => $user->name,
+                        'user_phone' => $user->phone ?? 'N/A',
+                        'expiry_date' => $expiry->format('Y-m-d'),
+                        'stage_label' => $stageLabels[$stageKey],
+                        'wa_link' => $waLink
+                    ];
+                    break;
+                }
+            }
+        }
+
+        // 2. Process Matrimony Profile Expiries
+        $matrimonyProfiles = MatrimonyProfile::with('user')
+            ->whereNotNull('profile_expires_at')
+            ->whereBetween('profile_expires_at', [$earliest, $latest])
+            ->get();
+
+        foreach ($matrimonyProfiles as $profile) {
+            if (!$profile->user) {
+                continue;
+            }
+            
+            $expiry = Carbon::parse($profile->profile_expires_at)->startOfDay();
+            
+            foreach ($reminderStages as $stageKey => $monthDelta) {
+                $sendAt = $expiry->copy()->addMonthsNoOverflow($monthDelta);
+                
+                if ($sendAt->isSameDay($today)) {
+                    $stageLabels = [
+                        'before_3_months' => '3 months before expiry',
+                        'before_2_months' => '2 months before expiry',
+                        'before_1_month'  => '1 month before expiry',
+                        'on_date'         => 'on expiry date',
+                        'after_1_month'   => '1 month after expiry',
+                        'after_2_months'  => '2 months after expiry',
+                        'after_3_months'  => '3 months after expiry',
+                        'after_4_months'  => '4 months after expiry',
+                        'after_5_months'  => '5 months after expiry',
+                        'after_6_months'  => '6 months after expiry',
+                    ];
+                    
+                    $user = $profile->user;
+                    $phone = preg_replace('/[^0-9]/', '', $user->phone ?? '');
+                    if (strlen($phone) === 10) {
+                        $phone = '91' . $phone;
+                    }
+                    
+                    $expiryDateStr = $expiry->format('M d, Y');
+                    if (str_starts_with($stageKey, 'before_')) {
+                        $msg = "Hello {$user->name}, your matrimony profile subscription will expire on {$expiryDateStr}. Please renew to avoid any interruption.";
+                    } elseif ($stageKey === 'on_date') {
+                        $msg = "Hello {$user->name}, your matrimony profile subscription expires today ({$expiryDateStr}). Please renew to keep your profile active.";
+                    } else {
+                        $msg = "Hello {$user->name}, your matrimony profile subscription expired on {$expiryDateStr}. Please renew to continue enjoying the service.";
+                    }
+                    
+                    $waLink = !empty($phone) ? "https://wa.me/{$phone}?text=" . urlencode($msg) : '#';
+                    
+                    $expiryReminders[] = [
+                        'type' => 'Matrimony',
+                        'entity_id' => $profile->id,
+                        'entity_name' => 'Matrimony Profile',
+                        'user_id' => $user->id,
+                        'user_name' => $user->name,
+                        'user_phone' => $user->phone ?? 'N/A',
+                        'expiry_date' => $expiry->format('Y-m-d'),
+                        'stage_label' => $stageLabels[$stageKey],
+                        'wa_link' => $waLink
+                    ];
+                    break;
+                }
+            }
+        }
+
+        // Sort by expiry date ascending
+        usort($expiryReminders, function($a, $b) {
+            return strcmp($a['expiry_date'], $b['expiry_date']);
+        });
         
         return view('admin.dashboard.index', compact(
             'stats', 
             'recentUsers', 
             'recentBusinesses', 
             'recentTransactions',
-            'pendingVerifications'
+            'pendingVerifications',
+            'expiryReminders'
         ));
     }
     
@@ -424,7 +576,7 @@ class AdminDashboardController extends Controller
             ];
         } elseif ($type === 'businesses') {
             $title = "Business Directory Report";
-            $headers = ['ID', 'Business Name', 'Owner', 'Category', 'Verification', 'Subscription'];
+            $headers = ['ID', 'Business Name', 'Owner', 'Category', 'Verification', 'Subscription', 'Start Date', 'End Date'];
             
             $query = Business::with('user');
             $totalCount = Business::query();
@@ -455,7 +607,9 @@ class AdminDashboardController extends Controller
                     'owner' => $b->user?->name ?? 'N/A',
                     'category' => $b->category_name ?? 'N/A',
                     'verification' => ucfirst($b->verification_status),
-                    'subscription' => ucfirst($b->subscription_status)
+                    'subscription' => ucfirst($b->subscription_status),
+                    'start_date' => $b->created_at ? $b->created_at->format('Y-m-d') : 'N/A',
+                    'end_date' => $b->subscription_expires_at ? $b->subscription_expires_at->format('Y-m-d') : 'N/A'
                 ];
             }
             $summary = [
@@ -466,7 +620,7 @@ class AdminDashboardController extends Controller
             ];
         } elseif ($type === 'matrimony') {
             $title = "Matrimonial Profiles Report";
-            $headers = ['ID', 'Profile Name', 'Gender', 'Caste', 'Status', 'Registered'];
+            $headers = ['ID', 'Profile Name', 'Gender', 'Caste', 'Status', 'Registered', 'Start Date', 'End Date'];
             
             $query = MatrimonyProfile::with('user');
             $totalCount = MatrimonyProfile::query();
@@ -494,7 +648,9 @@ class AdminDashboardController extends Controller
                     'gender' => ucfirst($p->gender ?? 'N/A'),
                     'caste' => $p->caste ?? 'N/A',
                     'status' => ucfirst($p->approval_status),
-                    'registered' => $p->created_at->format('Y-m-d')
+                    'registered' => $p->created_at->format('Y-m-d'),
+                    'start_date' => $p->created_at ? $p->created_at->format('Y-m-d') : 'N/A',
+                    'end_date' => $p->profile_expires_at ? $p->profile_expires_at->format('Y-m-d') : 'N/A'
                 ];
             }
             $summary = [
@@ -504,9 +660,9 @@ class AdminDashboardController extends Controller
             ];
         } elseif ($type === 'payments') {
             $title = "Payments & Revenue Report";
-            $headers = ['Transaction ID', 'User', 'Amount', 'Purpose', 'Status', 'Date'];
+            $headers = ['Transaction ID', 'User', 'Amount', 'Purpose', 'Status', 'Date', 'Start Date', 'End Date'];
             
-            $query = \App\Models\Payment::with('user');
+            $query = \App\Models\Payment::with(['user.business', 'user.matrimonyProfile']);
             $totalCount = \App\Models\Payment::query();
             $revenueSum = \App\Models\Payment::where('status', 'completed');
             $successCount = \App\Models\Payment::where('status', 'completed');
@@ -535,7 +691,9 @@ class AdminDashboardController extends Controller
                     'amount' => 'INR ' . number_format($pay->amount, 2),
                     'purpose' => $pay->purpose ?? 'General',
                     'status' => ucfirst($pay->status),
-                    'date' => $pay->created_at->format('Y-m-d')
+                    'date' => $pay->created_at->format('Y-m-d'),
+                    'start_date' => $pay->subscription_start_date ? Carbon::parse($pay->subscription_start_date)->format('Y-m-d') : 'N/A',
+                    'end_date' => $pay->subscription_end_date ? Carbon::parse($pay->subscription_end_date)->format('Y-m-d') : 'N/A'
                 ];
             }
             $summary = [

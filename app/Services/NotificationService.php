@@ -276,19 +276,20 @@ class NotificationService
 
     public function notifyConnectionRequest($matrimonyProfile, $requesterProfile)
     {
+        $requesterName = optional($requesterProfile->user)->name ?? 'Someone';
         return $this->createNotification(
             $matrimonyProfile->user_id,
             Notification::TYPE_CONNECTION_REQUEST,
             'New Connection Request',
-            $requesterProfile->user->name . ' has sent you a connection request.',
+            $requesterName . ' has sent you a connection request.',
             [
                 'requester_id' => $requesterProfile->user_id,
-                'requester_name' => $requesterProfile->user->name
+                'requester_name' => $requesterName
             ],
             '/matrimony/requests',
             Notification::PRIORITY_MEDIUM,
             $requesterProfile,
-            ['in_app', 'push']
+            ['in_app', 'email']
         );
     }
 

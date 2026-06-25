@@ -143,6 +143,8 @@
                                         <th>Purpose</th>
                                         <th>Status</th>
                                         <th>Date</th>
+                                        <th>Start Date</th>
+                                        <th>End Date</th>
                                         <th>Actions</th>
                                     </tr>
                                 </thead>
@@ -198,6 +200,20 @@
                                             {{ $payment->created_at->format('M d, Y') }}
                                             <br>
                                             <small class="text-muted">{{ $payment->created_at->format('H:i') }}</small>
+                                        </td>
+                                        <td>
+                                            @if($payment->subscription_start_date)
+                                                {{ \Carbon\Carbon::parse($payment->subscription_start_date)->format('M d, Y') }}
+                                            @else
+                                                <span class="text-muted">N/A</span>
+                                            @endif
+                                        </td>
+                                        <td>
+                                            @if($payment->subscription_end_date)
+                                                {{ \Carbon\Carbon::parse($payment->subscription_end_date)->format('M d, Y') }}
+                                            @else
+                                                <span class="text-muted">N/A</span>
+                                            @endif
                                         </td>
                                         <td>
                                             <div class="btn-group" role="group">

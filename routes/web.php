@@ -68,7 +68,7 @@ Route::middleware('guest')->group(function () {
 });
 
 // Protected (After-Login) Routes
-Route::middleware('auth')->group(function () {
+Route::middleware(['auth', 'redirect.admin'])->group(function () {
     Route::post('/logout', [WebAuthController::class, 'logout'])->name('logout');
 
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
@@ -189,7 +189,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
     });
     
     // Authenticated admin routes
-    Route::middleware('auth')->group(function () {
+    Route::middleware(['auth', 'role:admin'])->group(function () {
         Route::post('logout', [AdminAuthController::class, 'logout'])->name('logout');
         
         // Dashboard

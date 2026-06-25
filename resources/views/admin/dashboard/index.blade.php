@@ -137,6 +137,71 @@
     </div>
     @endif
 
+    <!-- Subscription Expiry Reminders Card -->
+    <div class="row">
+        <div class="col-12 mb-4">
+            <div class="card shadow mb-4 border-left-danger text-dark">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between bg-white">
+                    <h6 class="m-0 font-weight-bold text-danger d-flex align-items-center">
+                        <i class="fas fa-bell" style="margin-right: 8px;"></i> Subscription Expiry Reminders (Due Today)
+                    </h6>
+                    <span class="badge bg-danger text-white rounded-pill" style="font-size: 0.85rem; padding: 5px 10px;">{{ count($expiryReminders) }}</span>
+                </div>
+                <div class="card-body">
+                    @if(count($expiryReminders) > 0)
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-striped table-hover mb-0" style="font-size: 0.9rem;">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Type</th>
+                                        <th>User Name</th>
+                                        <th>Contact (Phone)</th>
+                                        <th>Business/Profile Name</th>
+                                        <th>Expiry Date</th>
+                                        <th>Reminder Stage</th>
+                                        <th class="text-center" style="width: 180px;">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach($expiryReminders as $reminder)
+                                    <tr>
+                                        <td>
+                                            @if(($reminder['type'] ?? '') === 'Matrimony')
+                                                <span class="badge badge-info text-black" style="font-size: 0.8rem; padding: 4px 8px;">Matrimony</span>
+                                            @else
+                                                <span class="badge badge-success text-black" style="font-size: 0.8rem; padding: 4px 8px;">Business</span>
+                                            @endif
+                                        </td>
+                                        <td><strong>{{ $reminder['user_name'] }}</strong></td>
+                                        <td>{{ $reminder['user_phone'] }}</td>
+                                        <td>{{ $reminder['entity_name'] }}</td>
+                                        <td><span class="text-danger font-weight-bold">{{ \Carbon\Carbon::parse($reminder['expiry_date'])->format('M d, Y') }}</span></td>
+                                        <td><span class="badge badge-warning text-black">{{ $reminder['stage_label'] }}</span></td>
+                                        <td class="text-center">
+                                            @if($reminder['wa_link'] !== '#')
+                                                <a href="{{ $reminder['wa_link'] }}" target="_blank" class="btn btn-success btn-sm d-inline-flex align-items-center text-white" style="background-color: #25D366; border-color: #25D366; padding: 4px 10px; font-weight: 500; border-radius: 4px; transition: all 0.2s ease-in-out;">
+                                                    <i class="fab fa-whatsapp" style="margin-right: 6px; font-size: 0.95rem;"></i> Send Reminder
+                                                </a>
+                                            @else
+                                                <span class="text-muted small">No Phone</span>
+                                            @endif
+                                        </td>
+                                    </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    @else
+                        <div class="text-center py-3 text-muted">
+                            <i class="fas fa-check-circle text-success fa-2x mb-2"></i>
+                            <p class="mb-0">No subscription expiry reminders are due today.</p>
+                        </div>
+                    @endif
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Content Row -->
     <div class="row">
         <!-- Recent Users -->
