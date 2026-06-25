@@ -418,6 +418,162 @@ class MatrimonyController extends Controller
     }
 
     /**
+     * Get matrimony profile by ID
+     */
+    public function getProfileById(Request $request, $id)
+    {
+        $profile = MatrimonyProfile::with('user')->find($id);
+
+        if (!$profile) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No matrimony profile found'
+            ], 404);
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => ['profile' => $profile]
+        ]);
+    }
+
+    /**
+     * Update matrimony profile by ID
+     */
+    public function updateProfileById(Request $request, $id)
+    {
+        $user = $request->user();
+        $profile = MatrimonyProfile::find($id);
+        
+        if (!$profile) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No matrimony profile found'
+            ], 404);
+        }
+
+        // Check if user is the owner or an admin
+        if ($profile->user_id != $user->id && $user->user_type !== 'admin') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized to update this profile.'
+            ], 403);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'age' => 'required|integer|min:18|max:100',
+            'height' => 'nullable|string|max:10',
+            'weight' => 'nullable|string|max:10',
+            'complexion' => 'nullable|string|max:50',
+            'physical_status' => 'nullable|string|max:50',
+            'personal_details' => 'required|array',
+            'family_details' => 'required|array',
+            'education_details' => 'required|array',
+            'professional_details' => 'required|array',
+            'lifestyle_details' => 'nullable|array',
+            'location_details' => 'required|array',
+            'partner_preferences' => 'required|array',
+            'privacy_settings' => 'nullable|array',
+            'photos' => 'nullable|array|max:5',
+            'photos.*' => 'image|mimes:jpeg,png,jpg|max:5120',
+        ]);
+
+        if ($validator->fails()) {
+            $errors = $validator->errors();
+        
+            return response()->json([
+                'success' => false,
+                'message' => $errors->first(),
+                'errors' => $errors
+            ], 422);
+        }
+
+        // Handle photo uploads
+        $photoPaths = [];
+        if (!empty($request->personal_details['photos'])) {
+            foreach ($request->personal_details['photos'] as $photo) {
+                // Check if base64 image
+                if (preg_match('/^data:image\/(\w+);base64,/', $photo, $type)) {
+                    $imageType = $type[1];
+                    $decodedPhoto = base64_decode(substr($photo, strpos($photo, ',') + 1));
+                    if ($decodedPhoto === false) {
+                        continue;
+                    }
+                    if (strlen($decodedPhoto) > 5 * 1024 * 1024) {
+                        return response()->json([
+                            'success' => false,
+                            'message' => 'Each photo must not exceed 5MB.'
+                        ], 422);
+                    }
+                    $fileName = 'matrimony/photos/' . Str::uuid() . '.' . $imageType;
+                    Storage::disk('public')->put($fileName, $decodedPhoto);
+                    $photoPaths[] = $fileName;
+                } else {
+                    $photoPaths[] = $photo;
+                }
+            }
+        }
+
+        if ($request->hasFile('photos')) {
+            foreach ($request->file('photos') as $photoFile) {
+                $photoPaths[] = $photoFile->store('matrimony/photos', 'public');
+            }
+        }
+
+        // Keep old photos if none were updated
+        if (empty($photoPaths) && !empty($profile->personal_details['photos'])) {
+            $photoPaths = $profile->personal_details['photos'];
+        }
+
+        if (count($photoPaths) < 2) {
+            return response()->json([
+                'success' => false,
+                'message' => 'At least 2 photos are required.'
+            ], 422);
+        }
+
+        $profile->update([
+            'age' => $request->age,
+            'height' => $request->height,
+            'weight' => $request->weight,
+            'complexion' => $request->complexion,
+            'physical_status' => $request->physical_status,
+            'personal_details' => $request->personal_details,
+            'family_details' => $request->family_details,
+            'education_details' => $request->education_details,
+            'professional_details' => $request->professional_details,
+            'lifestyle_details' => $request->lifestyle_details ?? [],
+            'location_details' => $request->location_details,
+            'partner_preferences' => $request->partner_preferences,
+            'privacy_settings' => $request->privacy_settings ?? [],
+        ]);
+
+        // Store photo paths
+        $profile->update([
+            'personal_details' => array_merge($profile->personal_details, ['photos' => $photoPaths])
+        ]);
+
+        // Email: matrimony profile updated
+        $this->notifications->createNotification(
+            $profile->user_id,
+            Notification::TYPE_PROFILE_UPDATE,
+            'Matrimony profile updated',
+            'Your matrimony profile details have been updated.',
+            ['profile_id' => $profile->id],
+            '/matrimony/profile',
+            Notification::PRIORITY_LOW,
+            $profile,
+            ['in_app', 'email']
+        );
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Profile updated successfully',
+            'data' => ['profile' => $profile]
+        ]);
+    }
+
+    /**
      * Search matrimony profiles
      */
     public function searchProfiles_old(Request $request)

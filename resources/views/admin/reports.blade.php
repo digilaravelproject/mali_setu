@@ -15,6 +15,40 @@
     </div>
 </div>
 
+<!-- Date Range Filter Card -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card shadow-sm border-0" style="border-radius: 12px; overflow: hidden; background: linear-gradient(145deg, #ffffff, #f1f3f7); border: 1px solid #e2e8f0;">
+            <div class="card-body p-4">
+                <h5 class="fw-bold mb-3 text-secondary d-flex align-items-center" style="font-size: 1.05rem;">
+                    <i class="fas fa-calendar-alt text-primary" style="margin-right: 8px;"></i> Filter Reports by Date Range (Optional)
+                </h5>
+                <div class="row align-items-end">
+                    <div class="col-md-4 mb-3 mb-md-0">
+                        <label for="start_date" class="form-label small fw-bold text-muted mb-2">Start Date</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-white border-end-0 text-muted"><i class="fas fa-calendar-day"></i></span>
+                            <input type="date" id="start_date" class="form-control border-start-0" style="border-radius: 0 6px 6px 0;">
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-3 mb-md-0">
+                        <label for="end_date" class="form-label small fw-bold text-muted mb-2">End Date</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-white border-end-0 text-muted"><i class="fas fa-calendar-day"></i></span>
+                            <input type="date" id="end_date" class="form-control border-start-0" style="border-radius: 0 6px 6px 0;">
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <button type="button" id="clear_dates" class="btn btn-outline-secondary w-100 d-inline-flex align-items-center justify-content-center transition-all" style="border-radius: 6px; height: 38px; font-weight: 500;">
+                            <i class="fas fa-undo" style="margin-right: 8px;"></i> Reset Filter
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="row">
     <!-- Users Report Card -->
     <div class="col-md-6 mb-4">
@@ -105,3 +139,52 @@
     </div>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const startDateInput = document.getElementById('start_date');
+    const endDateInput = document.getElementById('end_date');
+    const clearBtn = document.getElementById('clear_dates');
+    const downloadLinks = document.querySelectorAll('a[href*="/admin/reports/download"]');
+
+    // Store original hrefs
+    downloadLinks.forEach(link => {
+        link.dataset.originalHref = link.getAttribute('href');
+    });
+
+    function updateLinks() {
+        const startVal = startDateInput.value;
+        const endVal = endDateInput.value;
+
+        // Validation: end date cannot be before start date
+        if (startVal && endVal && new Date(endVal) < new Date(startVal)) {
+            alert('End date cannot be earlier than start date.');
+            endDateInput.value = '';
+            return;
+        }
+
+        downloadLinks.forEach(link => {
+            let href = link.dataset.originalHref;
+            const params = [];
+            if (startVal) params.push(`start_date=${startVal}`);
+            if (endVal) params.push(`end_date=${endVal}`);
+            
+            if (params.length > 0) {
+                href += '?' + params.join('&');
+            }
+            link.setAttribute('href', href);
+        });
+    }
+
+    startDateInput.addEventListener('change', updateLinks);
+    endDateInput.addEventListener('change', updateLinks);
+
+    clearBtn.addEventListener('click', function () {
+        startDateInput.value = '';
+        endDateInput.value = '';
+        updateLinks();
+    });
+});
+</script>
+@endpush

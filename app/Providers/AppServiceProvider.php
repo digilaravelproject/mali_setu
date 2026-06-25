@@ -21,10 +21,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        // Share the authenticated user instance with all views to
-        // avoid "Undefined variable $user" errors in blade templates.
         View::composer('*', function ($view) {
-            $view->with('user', auth()->user());
+            if (!array_key_exists('user', $view->getData())) {
+                $view->with('user', auth()->user());
+            }
         });
         // Use Bootstrap 5 for pagination rendering
         Paginator::useBootstrapFive();

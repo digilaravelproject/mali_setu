@@ -372,11 +372,36 @@ class AdminDashboardController extends Controller
         $headers = [];
         $rows = [];
         $summary = [];
+        
+        $startDate = $request->input('start_date');
+        $endDate = $request->input('end_date');
 
         if ($type === 'users') {
             $title = "Users Registration Report";
             $headers = ['ID', 'Name', 'Email', 'Phone', 'Status', 'Joined'];
-            $users = User::latest()->get();
+            
+            $query = User::query();
+            $totalCount = User::query();
+            $activeCount = User::where('status', 'active');
+            $inactiveCount = User::where('status', 'inactive');
+            $suspendedCount = User::where('status', 'suspended');
+            
+            if ($startDate) {
+                $query->whereDate('created_at', '>=', $startDate);
+                $totalCount->whereDate('created_at', '>=', $startDate);
+                $activeCount->whereDate('created_at', '>=', $startDate);
+                $inactiveCount->whereDate('created_at', '>=', $startDate);
+                $suspendedCount->whereDate('created_at', '>=', $startDate);
+            }
+            if ($endDate) {
+                $query->whereDate('created_at', '<=', $endDate);
+                $totalCount->whereDate('created_at', '<=', $endDate);
+                $activeCount->whereDate('created_at', '<=', $endDate);
+                $inactiveCount->whereDate('created_at', '<=', $endDate);
+                $suspendedCount->whereDate('created_at', '<=', $endDate);
+            }
+
+            $users = $query->latest()->get();
             foreach ($users as $user) {
                 $statusBadge = $user->status === 'active' 
                     ? '<span style="color: green; font-weight: bold;">Active</span>' 
@@ -392,15 +417,37 @@ class AdminDashboardController extends Controller
                 ];
             }
             $summary = [
-                'Total Users' => User::count(),
-                'Active Users' => User::where('status', 'active')->count(),
-                'Inactive Users' => User::where('status', 'inactive')->count(),
-                'Suspended Users' => User::where('status', 'suspended')->count(),
+                'Total Users' => $totalCount->count(),
+                'Active Users' => $activeCount->count(),
+                'Inactive Users' => $inactiveCount->count(),
+                'Suspended Users' => $suspendedCount->count(),
             ];
         } elseif ($type === 'businesses') {
             $title = "Business Directory Report";
             $headers = ['ID', 'Business Name', 'Owner', 'Category', 'Verification', 'Subscription'];
-            $businesses = Business::with('user')->latest()->get();
+            
+            $query = Business::with('user');
+            $totalCount = Business::query();
+            $approvedCount = Business::where('verification_status', 'approved');
+            $pendingCount = Business::where('verification_status', 'pending');
+            $activeSubCount = Business::where('subscription_status', 'active');
+            
+            if ($startDate) {
+                $query->whereDate('created_at', '>=', $startDate);
+                $totalCount->whereDate('created_at', '>=', $startDate);
+                $approvedCount->whereDate('created_at', '>=', $startDate);
+                $pendingCount->whereDate('created_at', '>=', $startDate);
+                $activeSubCount->whereDate('created_at', '>=', $startDate);
+            }
+            if ($endDate) {
+                $query->whereDate('created_at', '<=', $endDate);
+                $totalCount->whereDate('created_at', '<=', $endDate);
+                $approvedCount->whereDate('created_at', '<=', $endDate);
+                $pendingCount->whereDate('created_at', '<=', $endDate);
+                $activeSubCount->whereDate('created_at', '<=', $endDate);
+            }
+
+            $businesses = $query->latest()->get();
             foreach ($businesses as $b) {
                 $rows[] = [
                     'id' => $b->id,
@@ -412,15 +459,34 @@ class AdminDashboardController extends Controller
                 ];
             }
             $summary = [
-                'Total Businesses' => Business::count(),
-                'Approved' => Business::where('verification_status', 'approved')->count(),
-                'Pending' => Business::where('verification_status', 'pending')->count(),
-                'Active Subscriptions' => Business::where('subscription_status', 'active')->count(),
+                'Total Businesses' => $totalCount->count(),
+                'Approved' => $approvedCount->count(),
+                'Pending' => $pendingCount->count(),
+                'Active Subscriptions' => $activeSubCount->count(),
             ];
         } elseif ($type === 'matrimony') {
             $title = "Matrimonial Profiles Report";
             $headers = ['ID', 'Profile Name', 'Gender', 'Caste', 'Status', 'Registered'];
-            $profiles = MatrimonyProfile::with('user')->latest()->get();
+            
+            $query = MatrimonyProfile::with('user');
+            $totalCount = MatrimonyProfile::query();
+            $approvedCount = MatrimonyProfile::where('approval_status', 'approved');
+            $pendingCount = MatrimonyProfile::where('approval_status', 'pending');
+            
+            if ($startDate) {
+                $query->whereDate('created_at', '>=', $startDate);
+                $totalCount->whereDate('created_at', '>=', $startDate);
+                $approvedCount->whereDate('created_at', '>=', $startDate);
+                $pendingCount->whereDate('created_at', '>=', $startDate);
+            }
+            if ($endDate) {
+                $query->whereDate('created_at', '<=', $endDate);
+                $totalCount->whereDate('created_at', '<=', $endDate);
+                $approvedCount->whereDate('created_at', '<=', $endDate);
+                $pendingCount->whereDate('created_at', '<=', $endDate);
+            }
+
+            $profiles = $query->latest()->get();
             foreach ($profiles as $p) {
                 $rows[] = [
                     'id' => $p->id,
@@ -432,14 +498,36 @@ class AdminDashboardController extends Controller
                 ];
             }
             $summary = [
-                'Total Matrimony Profiles' => MatrimonyProfile::count(),
-                'Approved' => MatrimonyProfile::where('approval_status', 'approved')->count(),
-                'Pending' => MatrimonyProfile::where('approval_status', 'pending')->count(),
+                'Total Matrimony Profiles' => $totalCount->count(),
+                'Approved' => $approvedCount->count(),
+                'Pending' => $pendingCount->count(),
             ];
         } elseif ($type === 'payments') {
             $title = "Payments & Revenue Report";
             $headers = ['Transaction ID', 'User', 'Amount', 'Purpose', 'Status', 'Date'];
-            $payments = \App\Models\Payment::with('user')->latest()->get();
+            
+            $query = \App\Models\Payment::with('user');
+            $totalCount = \App\Models\Payment::query();
+            $revenueSum = \App\Models\Payment::where('status', 'completed');
+            $successCount = \App\Models\Payment::where('status', 'completed');
+            $pendingCount = \App\Models\Payment::where('status', 'pending');
+            
+            if ($startDate) {
+                $query->whereDate('created_at', '>=', $startDate);
+                $totalCount->whereDate('created_at', '>=', $startDate);
+                $revenueSum->whereDate('created_at', '>=', $startDate);
+                $successCount->whereDate('created_at', '>=', $startDate);
+                $pendingCount->whereDate('created_at', '>=', $startDate);
+            }
+            if ($endDate) {
+                $query->whereDate('created_at', '<=', $endDate);
+                $totalCount->whereDate('created_at', '<=', $endDate);
+                $revenueSum->whereDate('created_at', '<=', $endDate);
+                $successCount->whereDate('created_at', '<=', $endDate);
+                $pendingCount->whereDate('created_at', '<=', $endDate);
+            }
+
+            $payments = $query->latest()->get();
             foreach ($payments as $pay) {
                 $rows[] = [
                     'id' => $pay->transaction_id ?? 'N/A',
@@ -451,16 +539,25 @@ class AdminDashboardController extends Controller
                 ];
             }
             $summary = [
-                'Total Transactions' => \App\Models\Payment::count(),
-                'Completed Revenue' => 'INR ' . number_format(\App\Models\Payment::where('status', 'completed')->sum('amount'), 2),
-                'Successful Payments' => \App\Models\Payment::where('status', 'completed')->count(),
-                'Pending Payments' => \App\Models\Payment::where('status', 'pending')->count(),
+                'Total Transactions' => $totalCount->count(),
+                'Completed Revenue' => 'INR ' . number_format($revenueSum->sum('amount'), 2),
+                'Successful Payments' => $successCount->count(),
+                'Pending Payments' => $pendingCount->count(),
             ];
         } else {
             abort(404, "Report type not found");
         }
 
+        $originalTitle = $title;
+        if ($startDate && $endDate) {
+            $title .= " (" . date('Y-m-d', strtotime($startDate)) . " to " . date('Y-m-d', strtotime($endDate)) . ")";
+        } elseif ($startDate) {
+            $title .= " (From " . date('Y-m-d', strtotime($startDate)) . ")";
+        } elseif ($endDate) {
+            $title .= " (Up to " . date('Y-m-d', strtotime($endDate)) . ")";
+        }
+
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('admin.pdf.report_template', compact('title', 'headers', 'rows', 'summary'));
-        return $pdf->download(strtolower(str_replace(' ', '_', $title)) . '_' . date('Ymd') . '.pdf');
+        return $pdf->download(strtolower(str_replace(' ', '_', $originalTitle)) . '_' . date('Ymd') . '.pdf');
     }
 }

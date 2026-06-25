@@ -199,6 +199,9 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::post('profile', [MatrimonyController::class, 'createProfile']);
         Route::get('profile', [MatrimonyController::class, 'getProfile']);
         Route::put('profile', [MatrimonyController::class, 'updateProfile']);
+        Route::get('profile/{id}', [MatrimonyController::class, 'getProfileById']);
+        Route::post('profile/{id}', [MatrimonyController::class, 'updateProfileById']);
+        Route::put('profile/{id}', [MatrimonyController::class, 'updateProfileById']);
         
         // Connection requests
         Route::post('connection-request', [MatrimonyController::class, 'sendConnectionRequest']);
