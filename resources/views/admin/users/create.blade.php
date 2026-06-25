@@ -153,7 +153,13 @@
                                             </div>
                                             <div class="col-md-3 mb-3">
                                                 <label for="occupation" class="form-label font-weight-bold small">Occupation</label>
-                                                <input type="text" class="form-control" id="occupation" name="occupation" value="{{ old('occupation') }}" placeholder="Software Developer">
+                                                <select class="form-select @error('occupation') is-invalid @enderror" id="occupation" name="occupation">
+                                                    <option value="" disabled {{ old('occupation') ? '' : 'selected' }}>Select Occupation</option>
+                                                    <option value="Service" {{ old('occupation') == 'Service' ? 'selected' : '' }}>Service</option>
+                                                    <option value="Business" {{ old('occupation') == 'Business' ? 'selected' : '' }}>Business</option>
+                                                    <option value="Student" {{ old('occupation') == 'Student' ? 'selected' : '' }}>Student</option>
+                                                    <option value="Not Working" {{ old('occupation') == 'Not Working' ? 'selected' : '' }}>Not Working</option>
+                                                </select>
                                             </div>
                                             <div class="col-md-3 mb-3">
                                                 <label for="designation" class="form-label font-weight-bold small">Designation</label>

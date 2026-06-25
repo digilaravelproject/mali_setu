@@ -32,9 +32,6 @@ class AuthController extends Controller
                 'phone'            => 'required|string|max:15|unique:users',
                 'cast_certificate' => 'nullable|string',
                 'occupation'       => 'nullable|string|max:255',
-                'occupation'       => 'nullable|string|max:255',
-                'occupation'       => 'nullable|string|max:255',
-                'occupation'       => 'nullable|string|max:255',
                 'company_name'     => 'nullable|string|max:255',
                 'dept_name'        => 'nullable|string|max:255',
                 'dob' => 'nullable|date_format:d/m/Y',
@@ -123,7 +120,9 @@ class AuthController extends Controller
                 'state'                  => $request->state,
                 'city'                   => $request->city,
                 'sector'                 => $request->sector,
-                'district'               => $request->district,                'village'                 => $request->village,                'destination'            => $request->destination,
+                'district'               => $request->district,                
+                'village'                 => $request->village,                
+                'destination'            => $request->destination,
                 'latitude'               => $request->latitude,
                 'longitude'              => $request->longitude,
                 'cast_certificate'       => $cast_certificate,
@@ -367,6 +366,10 @@ class AuthController extends Controller
             'state', 'city', 'sector', 'district', 'village', 'destination',
             'latitude', 'longitude'
         ]);
+        
+        if ($request->filled('name') && $request->name !== $user->name) {
+            $data['status'] = 'inactive';
+        }
         
         if (!empty($photoPaths)) {
             $data['photo'] = implode(',', $photoPaths);

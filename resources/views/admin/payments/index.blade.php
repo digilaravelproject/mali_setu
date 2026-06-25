@@ -10,14 +10,17 @@
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h3 class="card-title">Payment Management</h3>
                     <div class="card-tools">
-                        <a href="{{ route('admin.payments.analytics') }}" class="btn btn-info btn-sm">
+                        <?php /*<a href="{{ route('admin.payments.analytics') }}" class="btn btn-info btn-sm">
                             <i class="fas fa-chart-bar"></i> Analytics
-                        </a>
+                        </a> */?>
                         <a href="{{ route('admin.payments.export') }}" class="btn btn-success btn-sm">
                             <i class="fas fa-download"></i> Export CSV
                         </a>
                         <a href="{{ route('admin.payments.exportXlsx') }}" class="btn btn-info btn-sm">
                             <i class="fas fa-file-excel"></i> Export Excel
+                        </a>
+                        <a href="{{ route('admin.payments.exportPdf', request()->all()) }}" class="btn btn-danger btn-sm">
+                            <i class="fas fa-file-pdf"></i> Export PDF
                         </a>
                     </div>
                 </div>
@@ -153,9 +156,9 @@
                                             @endif
                                         </td>
                                         <td>
-                                            {{ $payment->user->name }}
+                                            {{ $payment->user?->name ?? 'Deleted User' }}
                                             <br>
-                                            <small class="text-muted">{{ $payment->user->email }}</small>
+                                            <small class="text-muted">{{ $payment->user?->email ?? 'N/A' }}</small>
                                         </td>
                                         <td>
                                             <strong>₹{{ number_format($payment->amount, 2) }}</strong>
@@ -217,6 +220,14 @@
                                                             onclick="updateStatus({{ $payment->id }}, 'failed')" title="Mark Failed">
                                                         <i class="fas fa-times"></i>
                                                     </button>
+                                                @endif
+                                                @if($payment->user && $payment->user->phone)
+                                                    <a href="https://wa.me/{{ preg_replace('/[^0-9]/', '', $payment->user->phone) }}" 
+                                                       class="btn btn-sm btn-success" 
+                                                       target="_blank" 
+                                                       title="WhatsApp">
+                                                        <i class="fab fa-whatsapp"></i>
+                                                    </a>
                                                 @endif
                                             </div>
                                         </td>

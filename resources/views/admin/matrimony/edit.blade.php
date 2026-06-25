@@ -447,7 +447,7 @@
                                     <div class="col-md-12 mb-3">
                                         <label for="photos" class="form-label font-weight-bold small">Upload New Photos</label>
                                         <input type="file" class="form-control" id="photos" name="photos[]" accept="image/*" multiple>
-                                        <small class="text-muted small">Select one or more photos to add (max 2MB per photo).</small>
+                                        <small class="text-muted small">Select new photos to add (max 5MB per photo). Keep at least 2 photos total.</small>
                                     </div>
                                 </div>
                             </div>

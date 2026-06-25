@@ -611,7 +611,7 @@
                     </div>
 
                     <div class="col-12 mb-4">
-                        <label class="form-label">PHOTOS (UP TO 5)</label>
+                        <label class="form-label">PHOTOS (Min 5)</label>
                         <input type="file" id="fileInput" name="photos[]" multiple accept="image/*" class="d-none">
                         
                         <div class="upload-container" id="uploadContainer">
@@ -882,6 +882,14 @@
         if (currentTotal + files.length > 5) {
             alert('You can upload up to 5 photos only.');
             return;
+        }
+
+        // Check file size (max 5MB = 5 * 1024 * 1024 bytes)
+        for (let file of files) {
+            if (file.size > 5 * 1024 * 1024) {
+                alert(`File "${file.name}" exceeds the 5MB size limit.`);
+                return;
+            }
         }
 
         files.forEach(file => {
@@ -1235,6 +1243,15 @@
             return;
         }
 
+        // Enforce at least 2 photos on Step 2 (Horoscope/Photos step)
+        if (currentStep === 2) {
+            const currentTotal = document.querySelectorAll('.preview-thumbnail').length;
+            if (currentTotal < 2) {
+                alert('Please upload/keep at least 2 photos.');
+                return;
+            }
+        }
+
         document.getElementById(`section-${currentStep}`).classList.remove('active');
         document.getElementById(`section-${currentStep + 1}`).classList.add('active');
         
@@ -1257,6 +1274,16 @@
             if (firstError) {
                 firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 firstError.focus();
+            }
+        } else {
+            const currentTotal = document.querySelectorAll('.preview-thumbnail').length;
+            if (currentTotal < 2) {
+                e.preventDefault();
+                alert('Please upload/keep at least 2 photos.');
+                // Go back to section 2 (photos section)
+                document.getElementById('section-4').classList.remove('active');
+                document.getElementById('section-2').classList.add('active');
+                updateProgress(2);
             }
         }
     });

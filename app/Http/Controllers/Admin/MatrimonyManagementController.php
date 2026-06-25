@@ -195,8 +195,8 @@ class MatrimonyManagementController extends Controller
             'location_details' => 'required|array',
             'partner_preferences' => 'required|array',
             'privacy_settings' => 'nullable|array',
-            'photos' => 'nullable|array',
-            'photos.*' => 'image|mimes:jpeg,png,jpg|max:2048',
+            'photos' => 'required|array|min:2|max:5',
+            'photos.*' => 'image|mimes:jpeg,png,jpg|max:5120',
         ]);
 
         // Upload photos if any
@@ -280,8 +280,8 @@ class MatrimonyManagementController extends Controller
             'location_details' => 'required|array',
             'partner_preferences' => 'required|array',
             'privacy_settings' => 'nullable|array',
-            'photos' => 'nullable|array',
-            'photos.*' => 'image|mimes:jpeg,png,jpg|max:2048',
+            'photos' => 'nullable|array|max:5',
+            'photos.*' => 'image|mimes:jpeg,png,jpg|max:5120',
         ]);
 
         // Keep existing photos if no new photos are uploaded
@@ -308,6 +308,10 @@ class MatrimonyManagementController extends Controller
                 }
             }
             $photoPaths = array_values($photoPaths); // re-index
+        }
+
+        if (count($photoPaths) < 2) {
+            return redirect()->back()->withInput()->withErrors(['photos' => 'At least 2 photos are required.']);
         }
 
         $personal = $request->personal_details;

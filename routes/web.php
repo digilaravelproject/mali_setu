@@ -212,6 +212,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::post('/{id}/activate', [UserManagementController::class, 'activate'])->name('activate');
             Route::post('/{id}/verify', [UserManagementController::class, 'verify'])->name('verify');
             Route::get('/verification/pending', [UserManagementController::class, 'pendingVerifications'])->name('verification.pending');
+            Route::get('/{id}/pdf', [UserManagementController::class, 'downloadPdf'])->name('pdf');
         });
         
         // Category Management Routes
@@ -289,12 +290,15 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::get('/analytics', [PaymentManagementController::class, 'analytics'])->name('analytics');
             Route::get('/export', [PaymentManagementController::class, 'export'])->name('export');
             Route::get('/export-xlsx', [PaymentManagementController::class, 'exportXlsx'])->name('exportXlsx');
+            Route::get('/export-pdf', [PaymentManagementController::class, 'exportPdf'])->name('exportPdf');
             Route::get('/business', [PaymentManagementController::class, 'businessTransactions'])->name('business');
             Route::get('/business/export', [PaymentManagementController::class, 'exportBusiness'])->name('exportBusiness');
             Route::get('/business/export-xlsx', [PaymentManagementController::class, 'exportBusinessXlsx'])->name('exportBusinessXlsx');
+            Route::get('/business/export-pdf', [PaymentManagementController::class, 'exportBusinessPdf'])->name('exportBusinessPdf');
             Route::get('/matrimony', [PaymentManagementController::class, 'matrimonyTransactions'])->name('matrimony');
             Route::get('/matrimony/export', [PaymentManagementController::class, 'exportMatrimony'])->name('exportMatrimony');
             Route::get('/matrimony/export-xlsx', [PaymentManagementController::class, 'exportMatrimonyXlsx'])->name('exportMatrimonyXlsx');
+            Route::get('/matrimony/export-pdf', [PaymentManagementController::class, 'exportMatrimonyPdf'])->name('exportMatrimonyPdf');
             Route::get('/transaction/{id}', [PaymentManagementController::class, 'showTransaction'])->name('transaction.show');
             Route::get('/{id}', [PaymentManagementController::class, 'show'])->name('show');
             Route::post('/{id}/refund', [PaymentManagementController::class, 'refund'])->name('refund');
@@ -409,6 +413,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
          Route::get('settings', [AdminDashboardController::class, 'settings'])->name('settings');
          Route::post('settings', [AdminDashboardController::class, 'updateSettings'])->name('settings.update');
          Route::get('reports', [AdminDashboardController::class, 'reports'])->name('reports');
+         Route::get('reports/download/{type}', [AdminDashboardController::class, 'downloadReportPdf'])->name('reports.download');
          
          // System Actions
          Route::post('system/clear-cache', [AdminDashboardController::class, 'clearCache'])->name('system.clear-cache');

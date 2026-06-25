@@ -620,7 +620,7 @@
                     </div>
 
                     <div class="col-12 mb-4">
-                        <label class="form-label">PHOTOS (UP TO 5)</label>
+                        <label class="form-label">PHOTOS (Min 5)</label>
                         <input type="file" id="fileInput" name="photos[]" multiple accept="image/*" class="d-none">
                         
                         <div class="upload-container" id="uploadContainer">
@@ -870,6 +870,14 @@
         if (selectedFiles.length + files.length > 5) {
             alert('You can upload up to 5 photos only.');
             return;
+        }
+
+        // Check file size (max 5MB = 5 * 1024 * 1024 bytes)
+        for (let file of files) {
+            if (file.size > 5 * 1024 * 1024) {
+                alert(`File "${file.name}" exceeds the 5MB size limit.`);
+                return;
+            }
         }
 
         files.forEach(file => {
@@ -1190,6 +1198,14 @@
             return;
         }
 
+        // Enforce at least 2 photos on Step 2 (Horoscope/Photos step)
+        if (currentStep === 2) {
+            if (selectedFiles.length < 2) {
+                alert('Please upload at least 2 photos.');
+                return;
+            }
+        }
+
         // Advance to next section
         document.getElementById(`section-${currentStep}`).classList.remove('active');
         document.getElementById(`section-${currentStep + 1}`).classList.add('active');
@@ -1215,6 +1231,13 @@
                 firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 firstError.focus();
             }
+        } else if (selectedFiles.length < 2) {
+            e.preventDefault();
+            alert('Please upload at least 2 photos.');
+            // Go back to section 2 (photos section)
+            document.getElementById('section-4').classList.remove('active');
+            document.getElementById('section-2').classList.add('active');
+            updateProgress(2);
         }
     });
 </script>

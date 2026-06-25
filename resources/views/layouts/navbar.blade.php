@@ -33,12 +33,6 @@
                             <i class="fa-solid fa-headset text-primary"></i> Contact Support
                         </a>
                         <div class="dropdown-divider my-1"></div>
-                        <form action="{{ route('logout') }}" method="POST" id="logout-form" class="m-0">
-                            @csrf
-                            <button type="submit" class="dropdown-item-navbar text-danger w-100 border-0 text-start bg-transparent">
-                                <i class="fa-solid fa-arrow-right-from-bracket"></i> Sign Out
-                            </button>
-                        </form>
                     </div>
                 </div>
             @else
@@ -110,12 +104,6 @@
                             <i class="fa-solid fa-headset text-primary"></i> Contact Support
                         </a>
                         <div class="dropdown-divider my-1"></div>
-                        <form action="{{ route('logout') }}" method="POST" id="logout-form" class="m-0">
-                            @csrf
-                            <button type="submit" class="dropdown-item-navbar text-danger w-100 border-0 text-start bg-transparent">
-                                <i class="fa-solid fa-arrow-right-from-bracket"></i> Sign Out
-                            </button>
-                        </form>
                     </div>
                 </div>
             @endif
@@ -150,6 +138,13 @@
                         <i class="fa-solid fa-triangle-exclamation text-danger"></i> Danger Zone
                     </button>
                 @endif
+
+                <form action="{{ route('logout') }}" method="POST" id="logout-form" class="m-0">
+                    @csrf
+                    <button type="submit" class="dropdown-item-navbar text-danger w-100 border-0 text-start bg-transparent" style="margin-left: 8px !important;">
+                        <i class="fa-solid fa-arrow-right-from-bracket"></i> Sign Out
+                    </button>
+                </form>
             </div>
         </div>
     </div>

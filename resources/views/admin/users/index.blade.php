@@ -121,7 +121,7 @@
         <div class="card-body">
             <form method="GET" action="{{ route('admin.users.index') }}">
                 <div class="row">
-                    <div class="col-md-4">
+                    <div class="col-md-3">
                         <div class="form-group">
                             <label for="search">Search Users</label>
                             <input type="text" class="form-control" id="search" name="search" 
@@ -139,7 +139,7 @@
                             </select>
                         </div>
                     </div>
-                    <?php /*<div class="col-md-2">
+                    <div class="col-md-2">
                         <div class="form-group">
                             <label for="verification_status">Verification</label>
                             <select class="form-control" id="verification_status" name="verification_status">
@@ -149,7 +149,7 @@
                                 <option value="rejected" {{ request('verification_status') == 'rejected' ? 'selected' : '' }}>Rejected</option>
                             </select>
                         </div>
-                    </div> */?>
+                    </div>
                     <div class="col-md-2">
                         <div class="form-group">
                             <label for="status">Status</label>
@@ -161,15 +161,15 @@
                             </select>
                         </div>
                     </div>
-                    <div class="col-md-4">
+                    <div class="col-md-3">
                         <div class="form-group">
                             <label>&nbsp;</label>
                             <div class="d-flex">
-                                <button type="submit" class="btn btn-primary mr-2">
-                                    <i class="fas fa-search"></i> Search
+                                <button type="submit" class="btn btn-primary mr-2" style="margin-right: 10px !important;">
+                                    <i class="fas fa-search"></i>
                                 </button>
                                 <a href="{{ route('admin.users.index') }}" class="btn btn-secondary">
-                                    <i class="fas fa-undo"></i> Reset
+                                    <i class="fas fa-undo"></i>
                                 </a>
                             </div>
                         </div>
@@ -243,9 +243,11 @@
                                     <span class="badge badge-secondary text-black">{{ ucfirst($user->user_type) }}</span>
                                 </td>
                                 <td>
-                                    @if($user->caste_certificate_verified)
+                                    @if($user->caste_verification_status === 'approved')
                                         <span class="badge badge-success text-black">Verified</span>
-                                    @elseif($user->caste_certificate_path)
+                                    @elseif($user->caste_verification_status === 'rejected')
+                                        <span class="badge badge-danger">Rejected</span>
+                                    @elseif($user->cast_certificate)
                                         <span class="badge badge-warning">Pending</span>
                                     @else
                                         <span class="badge badge-secondary text-black">Not Submitted</span>
@@ -276,6 +278,10 @@
                                                 data-toggle="tooltip" title="Edit User">
                                             <i class="fas fa-edit"></i>
                                         </button>
+                                        <a href="{{ route('admin.users.pdf', $user->id) }}" class="btn btn-danger btn-sm" 
+                                           data-toggle="tooltip" title="Download PDF">
+                                            <i class="fas fa-file-pdf"></i>
+                                        </a>
                                         @if($user->status == 'active')
                                             <button type="button" class="btn btn-danger btn-sm" 
                                                     onclick="suspendUser({{ $user->id }})" 

@@ -99,6 +99,7 @@
                                     <h5 class="mb-0">User Information</h5>
                                 </div>
                                 <div class="card-body">
+                                    @if($payment->user)
                                     <table class="table table-borderless">
                                         <tr>
                                             <td><strong>Name:</strong></td>
@@ -131,6 +132,11 @@
                                             </td>
                                         </tr>
                                     </table>
+                                    @else
+                                    <div class="text-center py-4">
+                                        <p class="text-danger mb-0 font-weight-bold">User has been deleted / not found</p>
+                                    </div>
+                                    @endif
                                 </div>
                             </div>
                         </div>

@@ -78,6 +78,23 @@ class User extends Authenticatable
     }
 
     /**
+     * The "booted" method of the model.
+     */
+    protected static function booted()
+    {
+        static::saved(function ($user) {
+            if ($user->cast_certificate) {
+                \App\Models\CasteCertificate::updateOrCreate(
+                    ['user_id' => $user->id],
+                    ['file_path' => $user->cast_certificate]
+                );
+            } else {
+                \App\Models\CasteCertificate::where('user_id', $user->id)->delete();
+            }
+        });
+    }
+
+    /**
      * Check if user has a specific role
      */
     public function hasRole(string $role): bool

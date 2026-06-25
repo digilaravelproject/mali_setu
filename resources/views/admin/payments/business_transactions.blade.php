@@ -14,6 +14,9 @@
                 <a href="{{ route('admin.payments.exportBusinessXlsx') }}" class="btn btn-info btn-sm">
                     <i class="fas fa-file-excel"></i> Export Excel
                 </a>
+                <a href="{{ route('admin.payments.exportBusinessPdf', request()->all()) }}" class="btn btn-danger btn-sm">
+                    <i class="fas fa-file-pdf"></i> Export PDF
+                </a>
             </div>
         </div>
         <div class="card-body">
@@ -41,7 +44,10 @@
                                 <td>{{ $t->metadata['plan_id'] ?? '-' }}</td>
                                 <td>{{ $t->created_at->format('Y-m-d') }}</td>
                                 <td>
-                                    <a href="{{ route('admin.payments.transaction.show', $t->id) }}" class="btn btn-sm btn-info"><i class="fas fa-eye"></i></a>
+                                    <a href="{{ route('admin.payments.transaction.show', $t->id) }}" class="btn btn-sm btn-info" title="View"><i class="fas fa-eye"></i></a>
+                                    @if($t->user && $t->user->phone)
+                                        <a href="https://wa.me/{{ preg_replace('/[^0-9]/', '', $t->user->phone) }}" class="btn btn-sm btn-success" target="_blank" title="WhatsApp"><i class="fab fa-whatsapp"></i></a>
+                                    @endif
                                 </td>
                             </tr>
                             @endforeach

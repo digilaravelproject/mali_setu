@@ -18,17 +18,26 @@ class UserManagementController extends Controller
         $query = User::with(['casteCertificate']);
         
         // Filter by user type if provided
-        if ($request->has('user_type') && $request->user_type !== '') {
+        if ($request->has('user_type') && $request->user_type != '') {
             $query->where('user_type', $request->user_type);
         }
         
         // Filter by verification status if provided
-        // if ($request->has('verification_status') && $request->verification_status !== '') {
-        //     $query->where('caste_verification_status', $request->verification_status);
-        // }
+        if ($request->has('verification_status') && $request->verification_status != '') {
+            if ($request->verification_status === 'verified') {
+                $query->where('caste_verification_status', 'approved');
+            } else {
+                $query->where('caste_verification_status', $request->verification_status);
+            }
+        }
+
+        // Filter by status
+        if ($request->filled('status') && $request->status != '') {
+            $query->where('status', $request->status);
+        }
         
         // Search by name, email, or phone
-        if ($request->has('search') && $request->search !== '') {
+        if ($request->has('search') && $request->search != '') {
             $query->where(function($q) use ($request) {
                 $q->where('name', 'like', '%' . $request->search . '%')
                   ->orWhere('email', 'like', '%' . $request->search . '%')
@@ -295,7 +304,7 @@ class UserManagementController extends Controller
             'password' => 'required|string|min:8|confirmed',
             'user_type' => 'required|in:general,business,matrimony,volunteer,bloger',
             'caste_verification_status' => 'required|in:pending,approved,rejected',
-            'status' => 'required|in:active,suspended,banned',
+            'status' => 'required|in:active,inactive,suspended,banned',
             'admin_notes' => 'nullable|string|max:1000',
             'age' => 'nullable|integer|min:18|max:100',
             'dob' => 'nullable|date',
@@ -382,7 +391,7 @@ class UserManagementController extends Controller
             'phone' => 'required|string|max:20|unique:users,phone,' . $id,
             'user_type' => 'required|in:general,business,matrimony,volunteer,bloger',
             'caste_verification_status' => 'required|in:pending,approved,rejected',
-            'status' => 'required|in:active,suspended,banned',
+            'status' => 'required|in:active,inactive,suspended,banned',
             'admin_notes' => 'nullable|string|max:1000',
             'password' => 'nullable|string|min:8|confirmed',
             'age' => 'nullable|integer|min:18|max:100',
@@ -478,8 +487,8 @@ class UserManagementController extends Controller
             $user = User::findOrFail($id);
             
             // Delete associated files if they exist
-            if ($user->casteCertificate && $user->casteCertificate->certificate_path) {
-                Storage::delete($user->casteCertificate->certificate_path);
+            if ($user->casteCertificate && $user->casteCertificate->file_path) {
+                Storage::delete($user->casteCertificate->file_path);
             }
             
             // Delete the user (this will cascade delete related records)
@@ -512,5 +521,15 @@ class UserManagementController extends Controller
     public function pending(Request $request)
     {
         return $this->pendingVerifications($request);
+    }
+
+    /**
+     * Download User Profile PDF
+     */
+    public function downloadPdf($id)
+    {
+        $user = User::findOrFail($id);
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('admin.pdf.user_profile', compact('user'));
+        return $pdf->download("user_{$user->id}_profile.pdf");
     }
 }

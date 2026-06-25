@@ -727,7 +727,13 @@
                     <div class="row">
                         <div class="col-md-4 mb-4">
                             <label class="form-label">Occupation</label>
-                            <input type="text" name="occupation" value="{{ old('occupation', $user->occupation) }}" class="form-control">
+                            <select name="occupation" class="form-select @error('occupation') is-invalid @enderror">
+                                <option value="" disabled {{ old('occupation', $user->occupation) ? '' : 'selected' }}>Select Occupation</option>
+                                <option value="Service" {{ old('occupation', $user->occupation) == 'Service' ? 'selected' : '' }}>Service</option>
+                                <option value="Business" {{ old('occupation', $user->occupation) == 'Business' ? 'selected' : '' }}>Business</option>
+                                <option value="Student" {{ old('occupation', $user->occupation) == 'Student' ? 'selected' : '' }}>Student</option>
+                                <option value="Not Working" {{ old('occupation', $user->occupation) == 'Not Working' ? 'selected' : '' }}>Not Working</option>
+                            </select>
                         </div>
                         <div class="col-md-4 mb-4">
                             <label class="form-label">Company Name</label>

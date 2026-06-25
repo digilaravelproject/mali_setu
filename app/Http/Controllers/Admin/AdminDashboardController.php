@@ -354,4 +354,113 @@ class AdminDashboardController extends Controller
             ]
         ];
     }
+
+    /**
+     * Show reports list view
+     */
+    public function reports()
+    {
+        return view('admin.reports');
+    }
+
+    /**
+     * Download list report as PDF
+     */
+    public function downloadReportPdf(Request $request, $type)
+    {
+        $title = "";
+        $headers = [];
+        $rows = [];
+        $summary = [];
+
+        if ($type === 'users') {
+            $title = "Users Registration Report";
+            $headers = ['ID', 'Name', 'Email', 'Phone', 'Status', 'Joined'];
+            $users = User::latest()->get();
+            foreach ($users as $user) {
+                $statusBadge = $user->status === 'active' 
+                    ? '<span style="color: green; font-weight: bold;">Active</span>' 
+                    : ($user->status === 'inactive' ? '<span style="color: gray;">Inactive</span>' : '<span style="color: red;">Suspended</span>');
+                
+                $rows[] = [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'phone' => $user->phone ?? 'N/A',
+                    'status' => $statusBadge,
+                    'joined' => $user->created_at->format('Y-m-d')
+                ];
+            }
+            $summary = [
+                'Total Users' => User::count(),
+                'Active Users' => User::where('status', 'active')->count(),
+                'Inactive Users' => User::where('status', 'inactive')->count(),
+                'Suspended Users' => User::where('status', 'suspended')->count(),
+            ];
+        } elseif ($type === 'businesses') {
+            $title = "Business Directory Report";
+            $headers = ['ID', 'Business Name', 'Owner', 'Category', 'Verification', 'Subscription'];
+            $businesses = Business::with('user')->latest()->get();
+            foreach ($businesses as $b) {
+                $rows[] = [
+                    'id' => $b->id,
+                    'name' => $b->name,
+                    'owner' => $b->user?->name ?? 'N/A',
+                    'category' => $b->category_name ?? 'N/A',
+                    'verification' => ucfirst($b->verification_status),
+                    'subscription' => ucfirst($b->subscription_status)
+                ];
+            }
+            $summary = [
+                'Total Businesses' => Business::count(),
+                'Approved' => Business::where('verification_status', 'approved')->count(),
+                'Pending' => Business::where('verification_status', 'pending')->count(),
+                'Active Subscriptions' => Business::where('subscription_status', 'active')->count(),
+            ];
+        } elseif ($type === 'matrimony') {
+            $title = "Matrimonial Profiles Report";
+            $headers = ['ID', 'Profile Name', 'Gender', 'Caste', 'Status', 'Registered'];
+            $profiles = MatrimonyProfile::with('user')->latest()->get();
+            foreach ($profiles as $p) {
+                $rows[] = [
+                    'id' => $p->id,
+                    'name' => $p->user?->name ?? 'N/A',
+                    'gender' => ucfirst($p->gender ?? 'N/A'),
+                    'caste' => $p->caste ?? 'N/A',
+                    'status' => ucfirst($p->approval_status),
+                    'registered' => $p->created_at->format('Y-m-d')
+                ];
+            }
+            $summary = [
+                'Total Matrimony Profiles' => MatrimonyProfile::count(),
+                'Approved' => MatrimonyProfile::where('approval_status', 'approved')->count(),
+                'Pending' => MatrimonyProfile::where('approval_status', 'pending')->count(),
+            ];
+        } elseif ($type === 'payments') {
+            $title = "Payments & Revenue Report";
+            $headers = ['Transaction ID', 'User', 'Amount', 'Purpose', 'Status', 'Date'];
+            $payments = \App\Models\Payment::with('user')->latest()->get();
+            foreach ($payments as $pay) {
+                $rows[] = [
+                    'id' => $pay->transaction_id ?? 'N/A',
+                    'user' => $pay->user?->name ?? 'Deleted User',
+                    'amount' => 'INR ' . number_format($pay->amount, 2),
+                    'purpose' => $pay->purpose ?? 'General',
+                    'status' => ucfirst($pay->status),
+                    'date' => $pay->created_at->format('Y-m-d')
+                ];
+            }
+            $summary = [
+                'Total Transactions' => \App\Models\Payment::count(),
+                'Completed Revenue' => 'INR ' . number_format(\App\Models\Payment::where('status', 'completed')->sum('amount'), 2),
+                'Successful Payments' => \App\Models\Payment::where('status', 'completed')->count(),
+                'Pending Payments' => \App\Models\Payment::where('status', 'pending')->count(),
+            ];
+        } else {
+            abort(404, "Report type not found");
+        }
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('admin.pdf.report_template', compact('title', 'headers', 'rows', 'summary'));
+        return $pdf->download(strtolower(str_replace(' ', '_', $title)) . '_' . date('Ymd') . '.pdf');
+    }
 }

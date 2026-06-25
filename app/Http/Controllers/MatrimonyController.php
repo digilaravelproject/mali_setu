@@ -137,8 +137,8 @@ class MatrimonyController extends Controller
             'longitude'                    => 'nullable|numeric|between:-180,180',
 
             // photos
-            'photos'                       => 'nullable|array',
-            'photos.*'                     => 'image|mimes:jpeg,png,jpg|max:2048',
+            'photos'                       => 'required|array|min:2|max:5',
+            'photos.*'                     => 'image|mimes:jpeg,png,jpg|max:5120',
         ]);
 
         // Handle photo uploads
@@ -362,11 +362,17 @@ class MatrimonyController extends Controller
             'longitude'                    => 'nullable|numeric|between:-180,180',
 
             // photos
-            'photos'                       => 'nullable|array',
-            'photos.*'                     => 'image|mimes:jpeg,png,jpg|max:2048',
+            'photos'                       => 'nullable|array|max:5',
+            'photos.*'                     => 'image|mimes:jpeg,png,jpg|max:5120',
         ]);
 
         $photoPaths = $request->existing_photos ?? [];
+        $newPhotosCount = $request->hasFile('photos') ? count($request->file('photos')) : 0;
+        
+        if ((count($photoPaths) + $newPhotosCount) < 2) {
+            return redirect()->back()->withInput()->withErrors(['photos' => 'At least 2 photos are required.']);
+        }
+
         if ($request->hasFile('photos')) {
             foreach ($request->file('photos') as $photo) {
                 $photoPaths[] = $photo->store('matrimony/photos', 'public');

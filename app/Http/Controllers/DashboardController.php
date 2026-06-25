@@ -207,6 +207,10 @@ class DashboardController extends Controller
             'village', 'destination', 'latitude', 'longitude'
         ]);
 
+        if ($request->filled('name') && $request->name !== $user->name) {
+            $data['status'] = 'inactive';
+        }
+
         if ($request->hasFile('photo')) {
             if (!empty($user->photo)) {
                 foreach (explode(',', $user->photo) as $p) {

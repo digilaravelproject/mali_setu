@@ -484,4 +484,126 @@ class PaymentManagementController extends Controller
 
         return Excel::download(new PaymentsExport($payments), $filename);
     }
+
+    /**
+     * Export all payments to PDF
+     */
+    public function exportPdf(Request $request)
+    {
+        $query = Payment::with(['user', 'business']);
+        
+        if ($request->has('status') && $request->status !== '') {
+            $query->where('status', $request->status);
+        }
+
+        if ($request->has('date_from') && $request->date_from !== '') {
+            $query->whereDate('created_at', '>=', $request->date_from);
+        }
+        if ($request->has('date_to') && $request->date_to !== '') {
+            $query->whereDate('created_at', '<=', $request->date_to);
+        }
+
+        $payments = $query->latest()->get();
+
+        $title = "Payments Export Report";
+        $headers = ['Transaction ID', 'User', 'Amount', 'Method', 'Purpose', 'Status', 'Date'];
+        $rows = [];
+        foreach ($payments as $pay) {
+            $rows[] = [
+                'id' => $pay->transaction_id ?? 'N/A',
+                'user' => $pay->user?->name ?? 'Deleted User',
+                'amount' => 'INR ' . number_format($pay->amount, 2),
+                'method' => ucfirst($pay->payment_method ?? 'N/A'),
+                'purpose' => $pay->purpose ?? 'General',
+                'status' => ucfirst($pay->status),
+                'date' => $pay->created_at->format('Y-m-d')
+            ];
+        }
+        $summary = [
+            'Total Transactions' => $payments->count(),
+            'Total Amount' => 'INR ' . number_format($payments->where('status', 'completed')->sum('amount'), 2),
+            'Successful' => $payments->where('status', 'completed')->count(),
+            'Pending' => $payments->where('status', 'pending')->count(),
+            'Failed' => $payments->where('status', 'failed')->count()
+        ];
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('admin.pdf.report_template', compact('title', 'headers', 'rows', 'summary'));
+        return $pdf->download('payments_export_' . date('Y-m-d_H-i-s') . '.pdf');
+    }
+
+    /**
+     * Export business transactions to PDF
+     */
+    public function exportBusinessPdf(Request $request)
+    {
+        $query = Transaction::with('user')->where('purpose', 'business_registration');
+
+        if ($request->has('date_from') && $request->date_from !== '') {
+            $query->whereDate('created_at', '>=', $request->date_from);
+        }
+        if ($request->has('date_to') && $request->date_to !== '') {
+            $query->whereDate('created_at', '<=', $request->date_to);
+        }
+
+        $transactions = $query->latest()->get();
+        $title = "Business Registration Transactions";
+        $headers = ['Transaction ID', 'User', 'Amount', 'Status', 'Date'];
+        $rows = [];
+        foreach ($transactions as $t) {
+            $rows[] = [
+                'id' => $t->transaction_id ?? 'N/A',
+                'user' => $t->user?->name ?? 'Deleted User',
+                'amount' => 'INR ' . number_format($t->amount, 2),
+                'status' => ucfirst($t->status),
+                'date' => $t->created_at->format('Y-m-d')
+            ];
+        }
+        $summary = [
+            'Total Transactions' => $transactions->count(),
+            'Completed Revenue' => 'INR ' . number_format($transactions->where('status', 'completed')->sum('amount'), 2),
+            'Successful' => $transactions->where('status', 'completed')->count(),
+            'Pending' => $transactions->where('status', 'pending')->count()
+        ];
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('admin.pdf.report_template', compact('title', 'headers', 'rows', 'summary'));
+        return $pdf->download('business_transactions_' . date('Y-m-d_H-i-s') . '.pdf');
+    }
+
+    /**
+     * Export matrimony transactions to PDF
+     */
+    public function exportMatrimonyPdf(Request $request)
+    {
+        $query = Transaction::with('user')->where('purpose', 'matrimony_profile');
+
+        if ($request->has('date_from') && $request->date_from !== '') {
+            $query->whereDate('created_at', '>=', $request->date_from);
+        }
+        if ($request->has('date_to') && $request->date_to !== '') {
+            $query->whereDate('created_at', '<=', $request->date_to);
+        }
+
+        $transactions = $query->latest()->get();
+        $title = "Matrimony Profile Transactions";
+        $headers = ['Transaction ID', 'User', 'Amount', 'Status', 'Date'];
+        $rows = [];
+        foreach ($transactions as $t) {
+            $rows[] = [
+                'id' => $t->transaction_id ?? 'N/A',
+                'user' => $t->user?->name ?? 'Deleted User',
+                'amount' => 'INR ' . number_format($t->amount, 2),
+                'status' => ucfirst($t->status),
+                'date' => $t->created_at->format('Y-m-d')
+            ];
+        }
+        $summary = [
+            'Total Transactions' => $transactions->count(),
+            'Completed Revenue' => 'INR ' . number_format($transactions->where('status', 'completed')->sum('amount'), 2),
+            'Successful' => $transactions->where('status', 'completed')->count(),
+            'Pending' => $transactions->where('status', 'pending')->count()
+        ];
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('admin.pdf.report_template', compact('title', 'headers', 'rows', 'summary'));
+        return $pdf->download('matrimony_transactions_' . date('Y-m-d_H-i-s') . '.pdf');
+    }
 }

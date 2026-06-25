@@ -447,7 +447,13 @@
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label class="form-label small fw-bold text-secondary">Occupation <span class="text-danger">*</span></label>
-                                <input type="text" name="occupation" value="{{ old('occupation') }}" class="form-control form-control-lg @error('occupation') is-invalid @enderror" placeholder="E.g., Engineer, Farmer, Shopkeeper" required>
+                                <select name="occupation" class="form-select form-select-lg @error('occupation') is-invalid @enderror" required>
+                                    <option value="" disabled {{ old('occupation') ? '' : 'selected' }}>Select Occupation</option>
+                                    <option value="Service" {{ old('occupation') == 'Service' ? 'selected' : '' }}>Service</option>
+                                    <option value="Business" {{ old('occupation') == 'Business' ? 'selected' : '' }}>Business</option>
+                                    <option value="Student" {{ old('occupation') == 'Student' ? 'selected' : '' }}>Student</option>
+                                    <option value="Not Working" {{ old('occupation') == 'Not Working' ? 'selected' : '' }}>Not Working</option>
+                                </select>
                                 @error('occupation')
                                     <div class="text-danger small mt-1">{{ $message }}</div>
                                 @enderror

@@ -390,6 +390,13 @@
             </div>
             
             <div class="nav-item">
+                <a href="{{ route('admin.reports') }}" class="nav-link {{ request()->routeIs('admin.reports') ? 'active' : '' }}">
+                    <i class="fas fa-file-pdf"></i>
+                    Reports
+                </a>
+            </div>
+            
+            <div class="nav-item">
                 <a href="{{ route('admin.settings') }}" class="nav-link {{ request()->routeIs('admin.settings') ? 'active' : '' }}">
                     <i class="fas fa-cog"></i>
                     Settings

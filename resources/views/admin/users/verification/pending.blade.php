@@ -178,11 +178,10 @@
                                                 data-toggle="tooltip" title="Reject">
                                             <i class="fas fa-times"></i>
                                         </button>
-                                        <button type="button" class="btn btn-info btn-sm" 
-                                                onclick="viewUserDetails({{ $user->id }})" 
-                                                data-toggle="tooltip" title="View User Details">
-                                            <i class="fas fa-info-circle"></i>
-                                        </button>
+                                        <a href="{{ route('admin.users.edit', $user->id) }}" class="btn btn-warning btn-sm" 
+                                           data-toggle="tooltip" title="Edit User">
+                                            <i class="fas fa-edit text-white"></i>
+                                        </a>
                                     </div>
                                 </td>
                             </tr>

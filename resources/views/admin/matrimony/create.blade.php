@@ -401,7 +401,7 @@
                                     <div class="col-md-12 mb-3">
                                         <label for="photos" class="form-label font-weight-bold small">Upload Seeker Photos</label>
                                         <input type="file" class="form-control" id="photos" name="photos[]" accept="image/*" multiple>
-                                        <small class="text-muted small">Select one or more photos (max 2MB per photo). The first photo will be primary.</small>
+                                        <small class="text-muted small">Upload at least 2 photos (max 5MB per photo). The first photo will be primary.</small>
                                     </div>
                                 </div>
                             </div>

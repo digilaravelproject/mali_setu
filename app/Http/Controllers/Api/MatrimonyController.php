@@ -51,8 +51,9 @@ class MatrimonyController extends Controller
             'location_details' => 'required|array',
             'partner_preferences' => 'required|array',
             'privacy_settings' => 'nullable|array',
-            'photos' => 'nullable|array',
-            'photos.*' => 'image|mimes:jpeg,png,jpg|max:2048',
+            'photos' => 'required_without:personal_details.photos|array|min:2|max:5',
+            'photos.*' => 'image|mimes:jpeg,png,jpg|max:5120',
+            'personal_details.photos' => 'required_without:photos|array|min:2|max:5',
         ]);
 
         if ($validator->fails()) {
@@ -83,20 +84,41 @@ class MatrimonyController extends Controller
                 if (preg_match('/^data:image\/(\w+);base64,/', $photo, $type)) {
         
                     $imageType = $type[1]; // jpg, png, jpeg, webp, etc
-                    $photo = substr($photo, strpos($photo, ',') + 1);
-                    $photo = base64_decode($photo);
+                    $decodedPhoto = base64_decode(substr($photo, strpos($photo, ',') + 1));
         
-                    if ($photo === false) {
+                    if ($decodedPhoto === false) {
                         continue;
+                    }
+
+                    if (strlen($decodedPhoto) > 5 * 1024 * 1024) {
+                        return response()->json([
+                            'success' => false,
+                            'message' => 'Each photo must not exceed 5MB.'
+                        ], 422);
                     }
         
                     $fileName = 'matrimony/photos/' . Str::uuid() . '.' . $imageType;
         
-                    Storage::disk('public')->put($fileName, $photo);
+                    Storage::disk('public')->put($fileName, $decodedPhoto);
         
                     $photoPaths[] = $fileName;
+                } else {
+                    $photoPaths[] = $photo;
                 }
             }
+        }
+
+        if ($request->hasFile('photos')) {
+            foreach ($request->file('photos') as $photoFile) {
+                $photoPaths[] = $photoFile->store('matrimony/photos', 'public');
+            }
+        }
+
+        if (count($photoPaths) < 2) {
+            return response()->json([
+                'success' => false,
+                'message' => 'At least 2 photos are required.'
+            ], 422);
         }
 
         $profile = MatrimonyProfile::create([
@@ -299,8 +321,8 @@ class MatrimonyController extends Controller
             'location_details' => 'sometimes|array',
             'partner_preferences' => 'sometimes|array',
             'privacy_settings' => 'nullable|array',
-            'photos' => 'nullable|array',
-            'photos.*' => 'image|mimes:jpeg,png,jpg|max:2048',
+            'photos' => 'nullable|array|max:5',
+            'photos.*' => 'image|mimes:jpeg,png,jpg|max:5120',
         ]);
 
         if ($validator->fails()) {
@@ -322,19 +344,42 @@ class MatrimonyController extends Controller
                 if (preg_match('/^data:image\/(\w+);base64,/', $photo, $type)) {
         
                     $imageType = $type[1]; // jpg, png, jpeg, webp, etc
-                    $photo = substr($photo, strpos($photo, ',') + 1);
-                    $photo = base64_decode($photo);
+                    $decodedPhoto = base64_decode(substr($photo, strpos($photo, ',') + 1));
         
-                    if ($photo === false) {
+                    if ($decodedPhoto === false) {
                         continue;
+                    }
+
+                    if (strlen($decodedPhoto) > 5 * 1024 * 1024) {
+                        return response()->json([
+                            'success' => false,
+                            'message' => 'Each photo must not exceed 5MB.'
+                        ], 422);
                     }
         
                     $fileName = 'matrimony/photos/' . Str::uuid() . '.' . $imageType;
         
-                    Storage::disk('public')->put($fileName, $photo);
+                    Storage::disk('public')->put($fileName, $decodedPhoto);
         
                     $photoPaths[] = $fileName;
+                } else {
+                    $photoPaths[] = $photo;
                 }
+            }
+        }
+
+        if ($request->hasFile('photos')) {
+            foreach ($request->file('photos') as $photoFile) {
+                $photoPaths[] = $photoFile->store('matrimony/photos', 'public');
+            }
+        }
+
+        if (isset($request->personal_details['photos']) || $request->hasFile('photos')) {
+            if (count($photoPaths) < 2) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'At least 2 photos are required.'
+                ], 422);
             }
         }
 
