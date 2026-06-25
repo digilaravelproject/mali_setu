@@ -135,11 +135,6 @@
                                 </td>
                                 <td>
                                     <div class="d-flex align-items-center">
-                                        <div class="mr-3">
-                                            <div class="icon-circle bg-primary">
-                                                <i class="fas fa-heart text-white"></i>
-                                            </div>
-                                        </div>
                                         <div>
                                             <div class="font-weight-bold">{{ $profile->user->name ?? 'N/A' }}</div>
                                             <div class="text-xs text-gray-500">{{ $profile->user->email ?? 'N/A' }}</div>

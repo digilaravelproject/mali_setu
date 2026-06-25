@@ -171,7 +171,7 @@
                                             @elseif($user->caste_verification_status === 'pending')
                                                 <span class="badge badge-warning">Pending</span>
                                             @else
-                                                <span class="badge badge-danger">Rejected</span>
+                                                <span class="badge badge-danger" style="color: red !important;">Rejected</span>
                                             @endif
                                         </td>
                                         <td>{{ $user->created_at->diffForHumans() }}</td>
@@ -217,7 +217,7 @@
                                             @elseif($business->verification_status === 'pending')
                                                 <span class="badge badge-warning">Pending</span>
                                             @else
-                                                <span class="badge badge-danger">Rejected</span>
+                                                <span class="badge badge-danger" style="color: red !important;">Rejected</span>
                                             @endif
                                         </td>
                                         <td>{{ $business->created_at->diffForHumans() }}</td>

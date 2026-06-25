@@ -134,7 +134,7 @@
                 @elseif($user->status === 'suspended')
                     <span class="badge badge-warning">Suspended</span>
                 @else
-                    <span class="badge badge-danger">{{ $user->status }}</span>
+                    <span class="badge badge-danger" style="color: red !important;">{{ $user->status }}</span>
                 @endif
             </td>
         </tr>
@@ -146,7 +146,7 @@
                 @elseif($user->caste_verification_status === 'pending')
                     <span class="badge badge-warning">Pending Review</span>
                 @else
-                    <span class="badge badge-danger">Rejected</span>
+                    <span class="badge badge-danger" style="color: red !important;">Rejected</span>
                 @endif
             </td>
         </tr>

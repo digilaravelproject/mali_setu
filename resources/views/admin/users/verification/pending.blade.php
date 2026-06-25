@@ -135,11 +135,6 @@
                                 </td>
                                 <td>
                                     <div class="d-flex align-items-center">
-                                        <div class="mr-3">
-                                            <div class="icon-circle bg-primary">
-                                                <i class="fas fa-user text-white"></i>
-                                            </div>
-                                        </div>
                                         <div>
                                             <div class="font-weight-bold">{{ $user->name ?? 'N/A' }}</div>
                                             <div class="text-xs text-gray-500">ID: {{ $user->id }}</div>

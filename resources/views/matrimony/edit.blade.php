@@ -611,7 +611,7 @@
                     </div>
 
                     <div class="col-12 mb-4">
-                        <label class="form-label">PHOTOS (Min 5)</label>
+                        <label class="form-label">PHOTOS (Min 2)</label>
                         <input type="file" id="fileInput" name="photos[]" multiple accept="image/*" class="d-none">
                         
                         <div class="upload-container" id="uploadContainer">

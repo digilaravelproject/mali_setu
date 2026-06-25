@@ -222,11 +222,6 @@
                                 </td>
                                 <td>
                                     <div class="d-flex align-items-center">
-                                        <div class="mr-3">
-                                            <div class="icon-circle bg-primary">
-                                                <i class="fas fa-user text-white"></i>
-                                            </div>
-                                        </div>
                                         <div>
                                             <div class="font-weight-bold">{{ $user->name }}</div>
                                             <div class="text-xs text-gray-500">ID: {{ $user->id }}</div>
@@ -246,7 +241,7 @@
                                     @if($user->caste_verification_status === 'approved')
                                         <span class="badge badge-success text-black">Verified</span>
                                     @elseif($user->caste_verification_status === 'rejected')
-                                        <span class="badge badge-danger">Rejected</span>
+                                        <span class="badge badge-danger" style="color: red !important;">Rejected</span>
                                     @elseif($user->cast_certificate)
                                         <span class="badge badge-warning">Pending</span>
                                     @else
@@ -259,7 +254,7 @@
                                     @elseif($user->status == 'inactive')
                                         <span class="badge badge-secondary text-black">Inactive</span>
                                     @else
-                                        <span class="badge badge-danger">Suspended</span>
+                                        <span class="badge badge-danger" style="color: red !important;">Suspended</span>
                                     @endif
                                 </td>
                                 <td>
