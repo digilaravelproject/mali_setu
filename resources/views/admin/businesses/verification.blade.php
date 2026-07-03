@@ -143,6 +143,9 @@
                                                    class="btn btn-sm btn-info" title="View Details">
                                                     <i class="fas fa-eye"></i>
                                                 </a>
+                                                <a href="{{ route('admin.businesses.edit', $business->id) }}" class="btn btn-sm btn-warning text-white" title="Edit business">
+                                                    <i class="fas fa-edit"></i>
+                                                </a>
                                                 @if($business->completed_business_registrations_count > 0)
                                                     <button type="button" class="btn btn-sm btn-success" 
                                                             onclick="approveBusiness({{ $business->id }})" title="Approve">
