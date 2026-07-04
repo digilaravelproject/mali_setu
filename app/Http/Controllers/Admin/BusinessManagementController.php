@@ -9,6 +9,7 @@ use App\Models\JobPosting;
 use App\Models\Product;
 use App\Models\Service;
 use App\Models\Transaction;
+use App\Models\User;
 use Illuminate\Http\Request;
 
 class BusinessManagementController extends Controller
