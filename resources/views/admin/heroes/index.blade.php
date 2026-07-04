@@ -18,7 +18,7 @@
                     <tr>
                         <th>#</th>
                         <th>Mobile Preview</th>
-                        <th>Web Preview</th>
+                        <th>Desktop Preview</th>
                         <th>Title</th>
                         <th>Created</th>
                         <th class="text-end">Actions</th>

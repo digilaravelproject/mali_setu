@@ -733,6 +733,40 @@
             border-color: transparent !important;
             box-shadow: 0 4px 15px rgba(255, 71, 87, 0.3) !important;
         }
+        
+        @media (max-width: 768px) {
+            .hero {
+                padding: 60px 0 80px;
+                border-bottom-left-radius: 40px;
+                border-bottom-right-radius: 40px;
+            }
+            .milan-title {
+                font-size: 2.2rem;
+            }
+            .couple-wrapper {
+                margin-top: 10px;
+            }
+            .couple-circle {
+                width: 260px;
+                height: 260px;
+            }
+            .flower-wreath, .business-wreath {
+                width: 290px;
+                height: 290px;
+                top: -15px;
+                left: -15px;
+            }
+            .wreath-sparkle {
+                width: 280px;
+                height: 280px;
+                top: -10px;
+                left: -10px;
+            }
+            section {
+                padding-top: 3rem !important;
+                padding-bottom: 3rem !important;
+            }
+        }
     </style>
 </head>
 <body>
@@ -805,7 +839,7 @@
             <!-- Slide 1: Current Matrimony Banner -->
             <div class="swiper-slide hero-slide slide-matrimony">
                 <div class="floral-bg"></div>
-                <div class="container position-relative" style="z-index: 2; padding: 60px 0 80px;">
+                <div class="container position-relative" style="z-index: 2; padding-top: 60px; padding-bottom: 80px;">
                     <div class="row align-items-center g-5">
                         <div class="col-lg-7 text-start">
                             <span class="badge bg-warning text-dark px-3 py-2 rounded-pill mb-3 fw-bold shadow-sm"><i class="fa-solid fa-award me-1 text-primary"></i> Premium Matrimony & Directory Platform</span>
@@ -832,7 +866,7 @@
             <!-- Slide 2: New Business Banner (designed like matrimony banner) -->
             <div class="swiper-slide hero-slide slide-business">
                 <div class="floral-bg" style="background-image: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); opacity: 0.85;"></div>
-                <div class="container position-relative" style="z-index: 2; padding: 60px 0 80px;">
+                <div class="container position-relative" style="z-index: 2; padding-top: 60px; padding-bottom: 80px;">
                     <div class="row align-items-center g-5">
                         <div class="col-lg-7 text-start">
                             <span class="badge bg-primary text-white px-3 py-2 rounded-pill mb-3 fw-bold shadow-sm" style="background-color: var(--primary) !important;"><i class="fa-solid fa-store me-1"></i> Verified Business Directory</span>

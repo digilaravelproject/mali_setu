@@ -13,11 +13,11 @@
                     <img src="{{ asset('storage/'.$hero->image_path) }}" alt="Mobile Hero" class="img-fluid border rounded" style="max-height:300px">
                 </div>
                 <div class="col-md-6 mb-3">
-                    <h5 class="fw-bold mb-2">Web Hero Image</h5>
+                    <h5 class="fw-bold mb-2">Desktop Hero Image</h5>
                     @if($hero->web_image_path)
                         <img src="{{ asset('storage/'.$hero->web_image_path) }}" alt="Web Hero" class="img-fluid border rounded" style="max-height:300px">
                     @else
-                        <div class="alert alert-secondary">No Web Hero Image uploaded.</div>
+                        <div class="alert alert-secondary">No Desktop Hero Image uploaded.</div>
                     @endif
                 </div>
             </div>

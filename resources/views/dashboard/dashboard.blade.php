@@ -93,6 +93,13 @@
     .banner-slide-wrapper {
         border-radius: 24px;
         overflow: hidden;
+        height: 250px;
+    }
+    @media (min-width: 768px) {
+        .banner-slide-wrapper {
+            height: auto;
+            aspect-ratio: 1920 / 700;
+        }
     }
  
     /* Premium Justdial-Style Categories Circle Grid */
@@ -345,11 +352,11 @@
                     <div class="carousel-inner">
                         @foreach($banners as $index => $banner)
                             <div class="carousel-item {{ $index === 0 ? 'active' : '' }}" data-bs-interval="4500">
-                                <div class="banner-slide-wrapper position-relative w-100 overflow-hidden" style="height: 250px;">
+                                <div class="banner-slide-wrapper position-relative w-100 overflow-hidden">
                                     <!-- Web Banner (Desktops and Laptops) -->
                                     <img src="{{ asset('storage/' . $banner->web_image_path) }}" class="d-none d-md-block w-100 h-100" style="object-fit: cover; object-position: center;" alt="{{ $banner->title }}">
                                     <!-- Mobile Banner (Smartphones and Tablets) -->
-                                    <!-- <img src="{{ asset('storage/' . $banner->image_path) }}" class="d-md-none w-100 h-100" style="object-fit: cover; object-position: center;" alt="{{ $banner->title }}"> -->
+                                    <img src="{{ asset('storage/' . $banner->image_path) }}" class="d-md-none w-100 h-100" style="object-fit: cover; object-position: center;" alt="{{ $banner->title }}">
                                     
                                     <div class="banner-overlay position-absolute w-100 h-100 top-0 start-0 d-flex flex-column justify-content-end p-4 text-start" style="background: linear-gradient(180deg, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.75) 100%); z-index: 2;">
                                         <h3 class="fw-bold text-white mb-2">{{ $banner->title }}</h3>
