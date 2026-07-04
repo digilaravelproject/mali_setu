@@ -5,7 +5,7 @@
 @section('content')
 <div class="container-fluid py-2">
     <!-- Welcome Header -->
-    <div class="welcome-banner mb-4">
+    <div class="welcome-banner mb-4 d-none">
         <h1 class="fw-bold mb-2">Volunteer Portal</h1>
         <p class="lead mb-0 text-white-50">Join community efforts, share your expertise, and build a stronger community together.</p>
     </div>

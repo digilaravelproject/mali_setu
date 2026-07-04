@@ -5,7 +5,7 @@
     <main class="col-12 px-md-4 py-4">
         
         <!-- Welcome banner -->
-        <div class="welcome-banner mb-4">
+        <div class="welcome-banner mb-4 d-none">
             <div class="row align-items-center">
                 <div class="col-md-8">
                     <span class="badge-type mb-3">Enterprise Dashboard</span>

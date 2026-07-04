@@ -5,7 +5,7 @@
 @section('content')
 <div class="container-fluid py-2">
     <!-- Welcome Header -->
-    <div class="welcome-banner mb-4">
+    <div class="welcome-banner mb-4 d-none">
         <h1 class="fw-bold mb-2">My Subscriptions & Payments</h1>
         <p class="lead mb-0 text-white-50">Audit and view all your active services, plan receipts, and community support histories.</p>
     </div>

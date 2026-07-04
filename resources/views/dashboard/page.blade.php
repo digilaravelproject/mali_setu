@@ -7,7 +7,7 @@
     <div class="col-xl-12 col-12">
         
         <!-- Header Banner -->
-        <div class="welcome-banner mb-4 text-start shadow-sm border border-white border-opacity-10" style="background: linear-gradient(135deg, #ff4757 0%, #ff7a59 100%);">
+        <div class="welcome-banner mb-4 text-start shadow-sm border border-white border-opacity-10 d-none" style="background: linear-gradient(135deg, #ff4757 0%, #ff7a59 100%);">
             <span class="badge bg-white bg-opacity-20 text-black mb-3 px-3 py-1.5 rounded-pill fw-bold text-uppercase small"><i class="fa-solid fa-file-invoice me-1 text-warning"></i> Policy & Info</span>
             <h1 class="fw-extrabold text-white mb-2 fs-2">{{ $page->page_name ?? 'Information' }}</h1>
             <p class="opacity-90 mb-0 font-medium small" style="line-height:1.6;">Official policy parameters, community guidelines, and service parameters of the Mali Setu Foundation.</p>

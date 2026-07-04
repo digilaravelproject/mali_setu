@@ -6,7 +6,7 @@
     <main class="col-12 px-md-4 py-4">
         
         <!-- Welcome banner -->
-        <div class="welcome-banner mb-4 text-start shadow-sm border border-white border-opacity-10" style="background: linear-gradient(135deg, #ff4757 0%, #ff7a59 100%);">
+        <div class="welcome-banner mb-4 text-start shadow-sm border border-white border-opacity-10 d-none" style="background: linear-gradient(135deg, #ff4757 0%, #ff7a59 100%);">
             <div class="row align-items-center">
                 <div class="col-md-8">
                     <span class="badge bg-white bg-opacity-20 text-black mb-3 px-3 py-1.5 rounded-pill fw-bold text-uppercase small"><i class="fa-solid fa-store me-1 text-warning"></i> Enterprise Dashboard</span>

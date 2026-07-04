@@ -7,7 +7,7 @@
     <main class="col-12 px-md-4 py-4">
         
         <!-- Welcome Banner -->
-        <div class="welcome-banner mb-4">
+        <div class="welcome-banner mb-4 d-none">
             <div class="row align-items-center">
                 <div class="col-md-8">
                     <span class="badge mb-3 bg-white text-primary shadow-sm px-3 py-2 rounded-pill fw-bold text-uppercase small">Community Support</span>

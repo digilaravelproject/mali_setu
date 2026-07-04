@@ -260,7 +260,7 @@
 </style>
 
 <div class="py-4">
-    <div class="welcome-banner mb-4">
+    <div class="welcome-banner mb-4 d-none">
         <div class="row align-items-center">
             <div class="col-md-8">
                 <h1 class="fw-bold mb-2">Browse Matrimony Profiles</h1>
