@@ -398,11 +398,39 @@ class DashboardController extends Controller
             ->latest('applied_at')
             ->paginate(10, ['*'], 'applications_page');
 
-        $allJobs = \App\Models\JobPosting::where('is_active', true)
+        $query = \App\Models\JobPosting::where('is_active', true)
             ->where('status', 'approved')
-            ->with('business')
-            ->latest()
-            ->paginate(10, ['*'], 'jobs_page');
+            ->with('business');
+
+        // Apply filters
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('title', 'like', "%{$search}%")
+                  ->orWhere('description', 'like', "%{$search}%")
+                  ->orWhere('category', 'like', "%{$search}%")
+                  ->orWhere('location', 'like', "%{$search}%")
+                  ->orWhereHas('business', function($bQ) use ($search) {
+                      $bQ->where('business_name', 'like', "%{$search}%");
+                  });
+            });
+        }
+
+        if ($request->filled('employment_type')) {
+            $query->where('employment_type', $request->employment_type);
+        }
+
+        if ($request->filled('experience_level')) {
+            $query->where('experience_level', $request->experience_level);
+        }
+
+        if ($request->filled('category')) {
+            $query->where('category', $request->category);
+        }
+
+        $allJobs = $query->latest()
+            ->paginate(10, ['*'], 'jobs_page')
+            ->withQueryString();
 
         return view('dashboard.applied_jobs', compact('applications', 'allJobs'));
     }

@@ -40,7 +40,7 @@
             if (!$isAssoc) return $arr; // keep indexed arrays as-is
 
             foreach ($arr as $k => $v) {
-                if (is_array($v)) {
+                if ($k !== 'photos' && is_array($v)) {
                     // join simple arrays, json_encode nested structures
                     $arr[$k] = implode(', ', array_map(function ($item) {
                         return is_array($item) ? json_encode($item) : $item;

@@ -498,9 +498,21 @@ class MatrimonyController extends Controller
     }
 
     /** Browse/Search approved profiles */
+    /** Browse/Search approved profiles */
     public function browse(Request $request)
     {
         $user = Auth::user();
+
+        $myProfile = $user->matrimonyProfile;
+        $hasSubscription = $user->user_type === 'admin' || (
+                           $myProfile && 
+                           $myProfile->profile_expires_at && 
+                           \Carbon\Carbon::parse($myProfile->profile_expires_at)->isFuture());
+
+        if (!$hasSubscription) {
+            return redirect()->route('matrimony.index')->with('error', 'Subscription required to browse matrimonial profiles.');
+        }
+
         $query = MatrimonyProfile::where('approval_status', 'approved')
             ->where('user_id', '!=', $user->id)
             ->with('user');
@@ -526,10 +538,16 @@ class MatrimonyController extends Controller
             $query->where('personal_details->marital_status', $request->marital_status);
         }
         if ($request->filled('language') && $request->language !== 'Any') {
-            $query->where('personal_details->mother_tongue', $request->language);
+            $query->where(function($q) use ($request) {
+                $q->where('personal_details->language', $request->language)
+                  ->orWhere('personal_details->mother_tongue', $request->language);
+            });
         }
         if ($request->filled('physical_status') && $request->physical_status !== "Doesn't Matter") {
-            $query->where('personal_details->physical_status', $request->physical_status);
+            $query->where(function($q) use ($request) {
+                $q->where('physical_status', $request->physical_status)
+                  ->orWhere('personal_details->physical_status', $request->physical_status);
+            });
         }
 
         // 2. Professional Details
@@ -542,10 +560,16 @@ class MatrimonyController extends Controller
 
         // 3. Religion Details
         if ($request->filled('manglik') && $request->manglik !== "Doesn't Matter") {
-            $query->whereJsonContains('personal_details->star_details', 'manglik-' . strtolower($request->manglik));
+            $query->where(function($q) use ($request) {
+                $q->where('personal_details->star_details', 'like', '%manglik-' . strtolower($request->manglik) . '%')
+                  ->orWhere('personal_details->manglik', $request->manglik);
+            });
         }
         if ($request->filled('dosh') && $request->dosh !== "Doesn't Matter") {
-            $query->where('personal_details->dosh', $request->dosh);
+            $query->where(function($q) use ($request) {
+                $q->where('personal_details->dosh', $request->dosh)
+                  ->orWhere('personal_details->star_details', 'like', '%' . $request->dosh . '%');
+            });
         }
 
         // 4. Family Details
@@ -636,6 +660,19 @@ class MatrimonyController extends Controller
     {
         $user = Auth::user();
         $profile = MatrimonyProfile::with('user')->findOrFail($id);
+
+        // Block viewing other users' profiles if not subscribed (except for admins or viewing own profile)
+        if ($profile->user_id !== $user->id) {
+            $myProfile = $user->matrimonyProfile;
+            $hasSubscription = $user->user_type === 'admin' || (
+                               $myProfile && 
+                               $myProfile->profile_expires_at && 
+                               \Carbon\Carbon::parse($myProfile->profile_expires_at)->isFuture());
+
+            if (!$hasSubscription) {
+                return redirect()->route('matrimony.index')->with('error', 'Subscription required to view matrimonial profiles.');
+            }
+        }
 
         $myId = $user->id;
         $conn = ConnectionRequest::where(function($q) use ($myId, $profile) {

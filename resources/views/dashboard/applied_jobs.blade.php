@@ -34,6 +34,49 @@
                 <!-- TAB 1: BROWSE JOBS DIRECTORY -->
                 <h5 class="fw-bold mb-4" style="color: var(--primary);"><i class="fa-solid fa-magnifying-glass me-1"></i> Active Employment Opportunities</h5>
                 
+                <!-- Filter Section -->
+                <div class="card border-0 shadow-sm rounded-4 mb-4 p-3 bg-light bg-opacity-75">
+                    <form method="GET" action="{{ route('dashboard.jobs.applied') }}" class="row g-3 align-items-end">
+                        <div class="col-md-3">
+                            <label class="form-label small fw-bold text-secondary mb-1">Search Keyword</label>
+                            <input type="text" name="search" class="form-control rounded-3" placeholder="Job title, description, company..." value="{{ request('search') }}">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label small fw-bold text-secondary mb-1">Employment Type</label>
+                            <select name="employment_type" class="form-select rounded-3">
+                                <option value="">All Types</option>
+                                <option value="full-time" {{ request('employment_type') === 'full-time' ? 'selected' : '' }}>Full-time</option>
+                                <option value="part-time" {{ request('employment_type') === 'part-time' ? 'selected' : '' }}>Part-time</option>
+                                <option value="contract" {{ request('employment_type') === 'contract' ? 'selected' : '' }}>Contract</option>
+                                <option value="internship" {{ request('employment_type') === 'internship' ? 'selected' : '' }}>Internship</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label small fw-bold text-secondary mb-1">Experience Level</label>
+                            <select name="experience_level" class="form-select rounded-3">
+                                <option value="">All Levels</option>
+                                <option value="entry" {{ request('experience_level') === 'entry' ? 'selected' : '' }}>Entry Level</option>
+                                <option value="mid" {{ request('experience_level') === 'mid' ? 'selected' : '' }}>Mid Level</option>
+                                <option value="senior" {{ request('experience_level') === 'senior' ? 'selected' : '' }}>Senior Level</option>
+                                <option value="lead" {{ request('experience_level') === 'lead' ? 'selected' : '' }}>Lead / Management</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small fw-bold text-secondary mb-1">Category</label>
+                            <select name="category" class="form-select rounded-3">
+                                <option value="">All Categories</option>
+                                @foreach(\App\Models\JobPosting::where('is_active', true)->where('status', 'approved')->whereNotNull('category')->distinct()->pluck('category') as $cat)
+                                    <option value="{{ $cat }}" {{ request('category') === $cat ? 'selected' : '' }}>{{ $cat }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="col-md-2 d-flex gap-2">
+                            <button type="submit" class="btn btn-primary w-100 rounded-3 fw-bold"><i class="fa-solid fa-filter me-1"></i> Filter</button>
+                            <a href="{{ route('dashboard.jobs.applied') }}" class="btn btn-light border rounded-3 fw-bold text-secondary"><i class="fa-solid fa-arrow-rotate-left"></i></a>
+                        </div>
+                    </form>
+                </div>
+                
                 <div class="d-flex flex-column gap-4">
                     @forelse($allJobs as $job)
                         <div class="card border rounded-4 p-4 text-start bg-light bg-opacity-50 hover-shadow transition">
