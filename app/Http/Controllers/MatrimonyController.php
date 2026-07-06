@@ -58,7 +58,8 @@ class MatrimonyController extends Controller
             return redirect()->route('matrimony.index')->with('success', 'You already have a matrimony profile.');
         }
         $casts = Cast::where('is_active', true)->get();
-        return view('matrimony.create', compact('casts'));
+        $educations = \App\Models\Education::where('is_active', true)->orderBy('highest_qualification')->get();
+        return view('matrimony.create', compact('casts', 'educations'));
     }
 
     /** Store new matrimony profile */
@@ -287,7 +288,8 @@ class MatrimonyController extends Controller
         $user = Auth::user();
         $profile = MatrimonyProfile::where('user_id', $user->id)->firstOrFail();
         $casts = Cast::where('is_active', true)->get();
-        return view('matrimony.edit', compact('profile', 'casts'));
+        $educations = \App\Models\Education::where('is_active', true)->orderBy('highest_qualification')->get();
+        return view('matrimony.edit', compact('profile', 'casts', 'educations'));
     }
 
     /** Update profile */

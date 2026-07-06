@@ -227,7 +227,12 @@
                                 <div class="row">
                                     <div class="col-md-4 mb-3">
                                         <label for="highest_qualification" class="form-label font-weight-bold small">Highest Qualification <span class="text-danger">*</span></label>
-                                        <input type="text" class="form-control" id="highest_qualification" name="education_details[highest_qualification]" value="{{ old('education_details.highest_qualification', $ed['highest_qualification'] ?? '') }}" required>
+                                        <select class="form-select" id="highest_qualification" name="education_details[highest_qualification]" required>
+                                            <option value="" disabled {{ !old('education_details.highest_qualification', $ed['highest_qualification'] ?? '') ? 'selected' : '' }}>Select Qualification</option>
+                                            @foreach($educations as $edu)
+                                                <option value="{{ $edu->highest_qualification }}" {{ old('education_details.highest_qualification', $ed['highest_qualification'] ?? '') == $edu->highest_qualification ? 'selected' : '' }}>{{ $edu->highest_qualification }}</option>
+                                            @endforeach
+                                        </select>
                                     </div>
                                     <div class="col-md-4 mb-3">
                                         <label for="college_name" class="form-label font-weight-bold small">College / University</label>

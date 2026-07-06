@@ -151,7 +151,7 @@
             <div class="col-md-3">
                 <h6 class="fw-bold mb-4 text-white text-uppercase tracking-wider">Contact Support</h6>
                 <p class="small opacity-60 mb-1">Email us at:</p>
-                <p class="fw-bold mb-3">help@malisetu.org</p>
+                <p class="fw-bold mb-3">supportmalisetu@gmail.com</p>
                 <p class="small opacity-60 mb-1">Call support:</p>
                 <p class="fw-bold">+91 98765 43210</p>
             </div>

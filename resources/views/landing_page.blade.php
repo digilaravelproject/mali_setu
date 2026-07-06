@@ -1405,7 +1405,7 @@
                     <div class="glass-card text-center p-5">
                         <i class="fa-solid fa-quote-left fs-1 text-primary opacity-20 mb-4"></i>
                         <p class="fs-5 text-secondary" style="font-style: italic;">"Mali Setu helped me find a trusted civil contractor within our community. The service was seamless and the verification gave me peace of mind."</p>
-                        <h6 class="fw-bold mt-4 mb-0">Sanjay Kumar</h6>
+                        <h6 class="fw-bold mt-4 mb-0">Sanjay Bhojne</h6>
                         <span class="small text-muted">Business Owner, Pune</span>
                     </div>
                 </div>
@@ -1413,7 +1413,7 @@
                     <div class="glass-card text-center p-5">
                         <i class="fa-solid fa-quote-left fs-1 text-primary opacity-20 mb-4"></i>
                         <p class="fs-5 text-secondary" style="font-style: italic;">"Finding a life partner who shares our cultural values was easier than expected. I'm thankful to the team for their dedicated support."</p>
-                        <h6 class="fw-bold mt-4 mb-0">Meena K.</h6>
+                        <h6 class="fw-bold mt-4 mb-0">Manisha Kolhe</h6>
                         <span class="small text-muted">Parent, Nashik</span>
                     </div>
                 </div>
@@ -1429,7 +1429,7 @@
                     <div class="glass-card text-center p-5">
                         <i class="fa-solid fa-quote-left fs-1 text-primary opacity-20 mb-4"></i>
                         <p class="fs-5 text-secondary" style="font-style: italic;">"We connected through Mali Setu's verified matrimony. The profile verification process is top-notch, ensuring we interacted with genuine families."</p>
-                        <h6 class="fw-bold mt-4 mb-0">Priyanka & Amit</h6>
+                        <h6 class="fw-bold mt-4 mb-0">Priyanka Mahajan</h6>
                         <span class="small text-muted">Happily Married, Mumbai</span>
                     </div>
                 </div>
@@ -1651,7 +1651,7 @@
             <div class="col-md-3">
                 <h6 class="fw-bold mb-4 text-white text-uppercase tracking-wider">Contact Support</h6>
                 <p class="small opacity-60 mb-1">Email us at:</p>
-                <p class="fw-bold mb-3">help@malisetu.org</p>
+                <p class="fw-bold mb-3">supportmalisetu@gmail.com</p>
                 <p class="small opacity-60 mb-1">Call support:</p>
                 <p class="fw-bold">+91 98765 43210</p>
             </div>

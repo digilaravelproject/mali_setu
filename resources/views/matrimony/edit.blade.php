@@ -656,11 +656,10 @@
                         <select name="highest_qualification" class="form-select" required>
                             <option value="">Select Highest Qualification</option>
                             @php
-                                $qualifications = ['PhD', 'M.Com', 'M.Sc', 'M.Tech / M.E.', 'MBA / PGDM', 'MCA', 'M.Pharm', "Bachelor's Degree", 'Diploma', 'High School', 'Other'];
                                 $savedQualification = $ed['highest_qualification'] ?? '';
                             @endphp
-                            @foreach($qualifications as $qf)
-                                <option value="{{ $qf }}" {{ old('highest_qualification', $savedQualification) == $qf ? 'selected' : '' }}>{{ $qf }}</option>
+                            @foreach($educations as $edu)
+                                <option value="{{ $edu->highest_qualification }}" {{ old('highest_qualification', $savedQualification) == $edu->highest_qualification ? 'selected' : '' }}>{{ $edu->highest_qualification }}</option>
                             @endforeach
                         </select>
                         <span class="invalid-feedback">Please select highest qualification</span>

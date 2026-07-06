@@ -652,17 +652,9 @@
                         <label class="form-label">Highest Qualification<span class="required-star">*</span></label>
                         <select name="highest_qualification" class="form-select" required>
                             <option value="">Select Highest Qualification</option>
-                            <option value="PhD" {{ old('highest_qualification') == 'PhD' ? 'selected' : '' }}>PhD</option>
-                            <option value="M.Com" {{ old('highest_qualification') == 'M.Com' ? 'selected' : '' }}>M.Com</option>
-                            <option value="M.Sc" {{ old('highest_qualification') == 'M.Sc' ? 'selected' : '' }}>M.Sc</option>
-                            <option value="M.Tech / M.E." {{ old('highest_qualification') == 'M.Tech / M.E.' ? 'selected' : '' }}>M.Tech / M.E.</option>
-                            <option value="MBA / PGDM" {{ old('highest_qualification') == 'MBA / PGDM' ? 'selected' : '' }}>MBA / PGDM</option>
-                            <option value="MCA" {{ old('highest_qualification') == 'MCA' ? 'selected' : '' }}>MCA</option>
-                            <option value="M.Pharm" {{ old('highest_qualification') == 'M.Pharm' ? 'selected' : '' }}>M.Pharm</option>
-                            <option value="Bachelor's Degree" {{ old('highest_qualification') == "Bachelor's Degree" ? 'selected' : '' }}>Bachelor's Degree</option>
-                            <option value="Diploma" {{ old('highest_qualification') == 'Diploma' ? 'selected' : '' }}>Diploma</option>
-                            <option value="High School" {{ old('highest_qualification') == 'High School' ? 'selected' : '' }}>High School</option>
-                            <option value="Other" {{ old('highest_qualification') == 'Other' ? 'selected' : '' }}>Other</option>
+                            @foreach($educations as $edu)
+                                <option value="{{ $edu->highest_qualification }}" {{ old('highest_qualification') == $edu->highest_qualification ? 'selected' : '' }}>{{ $edu->highest_qualification }}</option>
+                            @endforeach
                         </select>
                         <span class="invalid-feedback">Please select highest qualification</span>
                     </div>

@@ -73,6 +73,7 @@ Route::middleware(['auth', 'redirect.admin'])->group(function () {
     Route::post('/logout', [WebAuthController::class, 'logout'])->name('logout');
 
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/dashboard/businesses/search', [DashboardController::class, 'searchDirectoryBusinesses'])->name('dashboard.businesses.search');
     Route::post('/dashboard/profile', [DashboardController::class, 'updateProfile'])->name('dashboard.profile.update');
     Route::post('/dashboard/change-password', [DashboardController::class, 'changePassword'])->name('dashboard.password.change');
     Route::delete('/dashboard/delete-account', [DashboardController::class, 'deleteAccount'])->name('dashboard.account.delete');

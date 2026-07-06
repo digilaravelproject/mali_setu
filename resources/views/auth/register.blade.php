@@ -214,7 +214,7 @@
             </div>
             
             <div class="border-top border-white border-opacity-10 pt-4 mt-4">
-                <small class="opacity-50">Already have an account? <a href="{{ route('login') }}" class="text-warning fw-bold text-decoration-none">Sign In instead</a></small>
+                <small>Already have an account? <a href="{{ route('login') }}" class="text-warning fw-bold text-decoration-none">Sign In instead</a></small>
             </div>
         </div>
 

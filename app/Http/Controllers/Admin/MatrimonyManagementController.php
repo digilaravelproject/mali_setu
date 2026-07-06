@@ -166,8 +166,9 @@ class MatrimonyManagementController extends Controller
         // Fetch active castes and subcasts
         $castes = \App\Models\Cast::where('is_active', true)->orderBy('name')->get();
         $subcastes = \App\Models\SubCast::where('is_active', true)->orderBy('name')->get();
+        $educations = \App\Models\Education::where('is_active', true)->orderBy('highest_qualification')->get();
 
-        return view('admin.matrimony.create', compact('users', 'castes', 'subcastes'));
+        return view('admin.matrimony.create', compact('users', 'castes', 'subcastes', 'educations'));
     }
 
     /**
@@ -252,8 +253,9 @@ class MatrimonyManagementController extends Controller
         $profile = MatrimonyProfile::findOrFail($id);
         $castes = \App\Models\Cast::where('is_active', true)->orderBy('name')->get();
         $subcastes = \App\Models\SubCast::where('is_active', true)->orderBy('name')->get();
+        $educations = \App\Models\Education::where('is_active', true)->orderBy('highest_qualification')->get();
 
-        return view('admin.matrimony.edit', compact('profile', 'castes', 'subcastes'));
+        return view('admin.matrimony.edit', compact('profile', 'castes', 'subcastes', 'educations'));
     }
 
     /**
