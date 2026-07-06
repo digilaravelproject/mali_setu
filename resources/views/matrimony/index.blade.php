@@ -106,14 +106,46 @@
                 <h4 class="fw-bold mb-0">{{ $conversations->count() }}</h4>
             </div>
         </div>
-        <div class="col-md-3 col-6">
-            <div class="matri-stat-card">
-                <div class="text-primary mb-1"><i class="fa-solid fa-crown"></i></div>
-                <h6 class="text-secondary small mb-1">Subscription</h6>
-                <h4 class="fw-bold mb-0 small">{{ $hasPaid ? 'Active' : 'Free' }}</h4>
+        @if(!$hasPaid)
+            <div class="col-md-3 col-6">
+                <div class="matri-stat-card">
+                    <div class="text-primary mb-1"><i class="fa-solid fa-crown"></i></div>
+                    <h6 class="text-secondary small mb-1">Subscription</h6>
+                    <span class="profile-status-badge bg-warning text-dark"><i class="fa-solid fa-clock me-1"></i> Pending Payment</span>
+                </div>
             </div>
+        @else
+            <div class="col-md-3 col-6">
+                <div class="matri-stat-card">
+                    <div class="text-primary mb-1"><i class="fa-solid fa-crown"></i></div>
+                    <h6 class="text-secondary small mb-1">Subscription</h6>
+                    <h4 class="fw-bold mb-0 small">{{ $hasPaid ? 'Active' : 'Free' }}</h4>
+                </div>
+            </div>
+        @endif
+    </div>
+
+    {{-- Subscription Plans (show if not paid) --}}
+    @if(!$hasPaid && $plans->count() > 0)
+    <div class="glass-card mb-4" id="plans-section">
+        <h5 class="fw-bold mb-2 text-primary"><i class="fa-solid fa-crown me-2"></i> Subscribe to a Premium Plan</h5>
+        <p class="text-secondary small mb-4">Upgrade to a premium plan to get your profile approved faster, access advanced filters, and send unlimited connection requests.</p>
+        <div class="row g-4">
+            @foreach($plans as $plan)
+            <div class="col-md-4">
+                <div class="plan-card">
+                    <h5 class="fw-bold mb-3">{{ $plan->plan_name }}</h5>
+                    <div class="my-3"><h2 class="fw-bold text-primary mb-0">₹{{ number_format($plan->price, 0) }}</h2>
+                    <small class="text-muted">for {{ $plan->duration_years }} year(s)</small></div>
+                    <button class="btn btn-primary w-100 py-2 rounded-3 fw-bold" onclick="startMatrimonyPayment({{ $plan->id }}, {{ $plan->price }})">
+                        <i class="fa-solid fa-crown me-1"></i> Subscribe Now
+                    </button>
+                </div>
+            </div>
+            @endforeach
         </div>
     </div>
+    @endif
 
     {{-- Profile Summary --}}
     <div class="glass-card mb-4">
@@ -184,28 +216,6 @@
                 </div>
             </div>
         @endforeach
-    </div>
-    @endif
-
-    {{-- Subscription Plans (show if not paid) --}}
-    @if(!$hasPaid && $plans->count() > 0)
-    <div class="glass-card mb-4" id="plans-section">
-        <h5 class="fw-bold mb-2 text-primary"><i class="fa-solid fa-crown me-2"></i> Subscribe to a Premium Plan</h5>
-        <p class="text-secondary small mb-4">Upgrade to a premium plan to get your profile approved faster, access advanced filters, and send unlimited connection requests.</p>
-        <div class="row g-4">
-            @foreach($plans as $plan)
-            <div class="col-md-4">
-                <div class="plan-card">
-                    <h5 class="fw-bold mb-3">{{ $plan->plan_name }}</h5>
-                    <div class="my-3"><h2 class="fw-bold text-primary mb-0">₹{{ number_format($plan->price, 0) }}</h2>
-                    <small class="text-muted">for {{ $plan->duration_years }} year(s)</small></div>
-                    <button class="btn btn-primary w-100 py-2 rounded-3 fw-bold" onclick="startMatrimonyPayment({{ $plan->id }}, {{ $plan->price }})">
-                        <i class="fa-solid fa-crown me-1"></i> Subscribe Now
-                    </button>
-                </div>
-            </div>
-            @endforeach
-        </div>
     </div>
     @endif
 

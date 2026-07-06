@@ -124,10 +124,16 @@
             transform: translateX(-3px);
         }
 
-        .brand-logo {
+        /* .brand-logo {
             height: 50px;
             width: auto;
             margin-bottom: 30px;
+        } */
+
+        .brand-logo {
+            margin-left: 35%;
+            height: 88px;
+            width: auto;
         }
 
         /* Interactive User Type Select Cards */

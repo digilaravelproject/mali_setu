@@ -810,7 +810,9 @@
                 alt="MaliSetu Logo"
                 style="height:55px; width:auto; object-fit:contain; border-radius: 8px;"
             >
-            <span class="ms-2 fw-extrabold text-primary fs-4">Mali<span style="color:var(--accent)">Setu</span></span>
+            <span class="ms-2 fw-bold text-primary fs-4">
+    Mali<span style="color: var(--accent);"> Setu</span>
+</span>
         </a>
         <button class="navbar-toggler border-0 shadow-none" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
             <span class="navbar-toggler-icon"></span>

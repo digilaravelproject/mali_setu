@@ -3,7 +3,10 @@
     <div class="d-flex align-items-center">
         <!-- Brand Branding (Logo + Name) -->
         <a href="{{ url('/') }}" class="navbar-brand-custom d-flex align-items-center gap-2 text-decoration-none text-dark">
-            <img src="{{ asset('landing_page_logo.jpeg') }}" alt="MaliSetu Logo" class="navbar-logo-custom" style="height: 50px; border-radius: 8px; background: #fff; padding: 2px; border: 1px solid rgba(0,0,0,0.05);">
+            <img src="{{ asset('landing_page_logo.jpeg') }}" alt="MaliSetu Logo" class="navbar-logo-custom" style="height: 72px; border-radius: 8px; background: #fff; border: 1px solid rgba(0,0,0,0.05);">
+            <span class="ms-2 fw-bold text-primary fs-4">
+                Mali<span style="color: var(--accent);"> Setu</span>
+            </span>
         </a>
     </div>
 

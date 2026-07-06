@@ -391,11 +391,13 @@
                         <p class="text-secondary small mb-0">Browse through active directories, verify services or look up agricultural vendors.</p>
                     </div>
                     <div class="col-md-6 mt-3 mt-md-0">
-                        <div class="input-group">
-                            <span class="input-group-text bg-white border-end-0"><i class="fa-solid fa-magnifying-glass text-muted"></i></span>
-                            <input type="text" id="business-search-input" class="form-control border-start-0" placeholder="Search by name, city, state or keywords...">
-                            <button class="btn btn-primary px-4" type="button" onclick="performBusinessSearch()"><i class="fa-solid fa-search"></i></button>
-                        </div>
+                        <form action="{{ route('dashboard.business.browse') }}" method="GET" class="w-100">
+                            <div class="input-group">
+                                <span class="input-group-text bg-white border-end-0"><i class="fa-solid fa-magnifying-glass text-muted"></i></span>
+                                <input type="text" name="q" class="form-control border-start-0" placeholder="Search by name, city, state or keywords..." required>
+                                <button class="btn btn-primary px-4" type="submit"><i class="fa-solid fa-search"></i></button>
+                            </div>
+                        </form>
                     </div>
                 </div>
             </div>
@@ -572,6 +574,8 @@
                     @endif
                 </div>
             </div> */?>
+
+            <div class="row g-4" id="directory-listings-grid"></div>
 
             <!-- Quick Access Section -->
             <div class="row g-4 mb-4 text-start">
