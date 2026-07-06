@@ -67,7 +67,7 @@
                                                 @if($payment->status === 'completed')
                                                     <span class="badge badge-success text-black">Completed</span>
                                                 @elseif($payment->status === 'pending')
-                                                    <span class="badge badge-warning">Pending</span>
+                                                    <span class="badge badge-warning text-black">Pending</span>
                                                 @elseif($payment->status === 'failed')
                                                     <span class="badge badge-danger" style="color: red !important;">Failed</span>
                                                 @elseif($payment->status === 'refunded')
@@ -184,7 +184,7 @@
                                                         @if($payment->business->verification_status === 'approved')
                                                             <span class="badge badge-success text-black">Approved</span>
                                                         @elseif($payment->business->verification_status === 'pending')
-                                                            <span class="badge badge-warning">Pending</span>
+                                                            <span class="badge badge-warning text-black">Pending</span>
                                                         @else
                                                             <span class="badge badge-danger" style="color: red !important;">Rejected</span>
                                                         @endif

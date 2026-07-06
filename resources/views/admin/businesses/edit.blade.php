@@ -154,7 +154,7 @@
                         </div>
 
                         <div class="row align-items-center">
-                            <div class="col-md-6 mb-3">
+                            <div class="col-md-3 mb-3">
                                 <label for="photo" class="form-label font-weight-bold small">Business Image / Photo</label>
                                 <input type="file" class="form-control" id="photo" name="photo" accept="image/*">
                                 <small class="text-muted small">Upload a new photo to replace the current one (max 2MB)</small>
@@ -174,6 +174,10 @@
                                     <option value="suspended" {{ old('status', $business->status) == 'suspended' ? 'selected' : '' }}>Suspended</option>
                                     <option value="banned" {{ old('status', $business->status) == 'banned' ? 'selected' : '' }}>Banned</option>
                                 </select>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label for="subscription_expires_at" class="form-label font-weight-bold small">Subscription Expired At</label>
+                                <input type="date" class="form-control" id="subscription_expires_at" name="subscription_expires_at" value="{{ old('subscription_expires_at', $business->subscription_expires_at ? $business->subscription_expires_at->format('Y-m-d') : '') }}">
                             </div>
                         </div>
 

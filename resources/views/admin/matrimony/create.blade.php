@@ -87,21 +87,25 @@
                                 </div>
 
                                 <div class="row">
-                                    <div class="col-md-4 mb-3">
+                                    <div class="col-md-3 mb-3">
                                         <label for="complexion" class="form-label font-weight-bold small">Complexion</label>
                                         <input type="text" class="form-control" id="complexion" name="complexion" value="{{ old('complexion') }}" placeholder="e.g. Fair, Medium">
                                     </div>
-                                    <div class="col-md-4 mb-3">
+                                    <div class="col-md-3 mb-3">
                                         <label for="physical_status" class="form-label font-weight-bold small">Physical Status</label>
                                         <input type="text" class="form-control" id="physical_status" name="physical_status" value="{{ old('physical_status') }}" placeholder="e.g. Normal, Physically Challenged">
                                     </div>
-                                    <div class="col-md-4 mb-3">
+                                    <div class="col-md-3 mb-3">
                                         <label for="approval_status" class="form-label font-weight-bold small">Approval Status <span class="text-danger">*</span></label>
                                         <select class="form-select" id="approval_status" name="approval_status" required>
                                             <option value="pending" {{ old('approval_status') == 'pending' ? 'selected' : '' }}>Pending</option>
                                             <option value="approved" {{ old('approval_status') == 'approved' ? 'selected' : '' }}>Approved</option>
                                             <option value="rejected" {{ old('approval_status') == 'rejected' ? 'selected' : '' }}>Rejected</option>
                                         </select>
+                                    </div>
+                                    <div class="col-md-3 mb-3">
+                                        <label for="profile_expires_at" class="form-label font-weight-bold small">Profile Expires At</label>
+                                        <input type="date" class="form-control" id="profile_expires_at" name="profile_expires_at" value="{{ old('profile_expires_at') }}">
                                     </div>
                                 </div>
                             </div>

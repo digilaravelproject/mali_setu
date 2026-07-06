@@ -520,13 +520,128 @@ class AdminDashboardController extends Controller
      */
     public function downloadReportPdf(Request $request, $type)
     {
+        $startDate = $request->input('start_date');
+        $endDate = $request->input('end_date');
+
+        list($title, $headers, $rows, $summary) = $this->getReportData($type, $startDate, $endDate);
+
+        $originalTitle = $title;
+        if ($startDate && $endDate) {
+            $title .= " (" . date('Y-m-d', strtotime($startDate)) . " to " . date('Y-m-d', strtotime($endDate)) . ")";
+        } elseif ($startDate) {
+            $title .= " (From " . date('Y-m-d', strtotime($startDate)) . ")";
+        } elseif ($endDate) {
+            $title .= " (Up to " . date('Y-m-d', strtotime($endDate)) . ")";
+        }
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('admin.pdf.report_template', compact('title', 'headers', 'rows', 'summary'));
+        return $pdf->download(strtolower(str_replace(' ', '_', $originalTitle)) . '_' . date('Ymd') . '.pdf');
+    }
+
+    /**
+     * Download list report as password protected XLS zip
+     */
+    public function downloadReportXls(Request $request, $type)
+    {
+        $startDate = $request->input('start_date');
+        $endDate = $request->input('end_date');
+
+        list($title, $headers, $rows, $summary) = $this->getReportData($type, $startDate, $endDate);
+
+        $originalTitle = $title;
+        if ($startDate && $endDate) {
+            $title .= " (" . date('Y-m-d', strtotime($startDate)) . " to " . date('Y-m-d', strtotime($endDate)) . ")";
+        } elseif ($startDate) {
+            $title .= " (From " . date('Y-m-d', strtotime($startDate)) . ")";
+        } elseif ($endDate) {
+            $title .= " (Up to " . date('Y-m-d', strtotime($endDate)) . ")";
+        }
+
+        // Generate XLS using PhpSpreadsheet
+        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        
+        // Title
+        $sheet->setCellValue('A1', $title);
+        $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(14);
+        
+        // Headers
+        $col = 'A';
+        foreach ($headers as $header) {
+            $sheet->setCellValue($col . '3', $header);
+            $sheet->getStyle($col . '3')->getFont()->setBold(true);
+            $col++;
+        }
+        
+        // Rows
+        $rowNum = 4;
+        foreach ($rows as $row) {
+            $col = 'A';
+            foreach ($row as $val) {
+                $sheet->setCellValue($col . $rowNum, strip_tags($val));
+                $col++;
+            }
+            $rowNum++;
+        }
+        
+        // Summary section
+        $rowNum += 2;
+        $sheet->setCellValue('A' . $rowNum, 'SUMMARY');
+        $sheet->getStyle('A' . $rowNum)->getFont()->setBold(true);
+        $rowNum++;
+        
+        foreach ($summary as $key => $val) {
+            $sheet->setCellValue('A' . $rowNum, $key);
+            $sheet->setCellValue('B' . $rowNum, strip_tags($val));
+            $sheet->getStyle('A' . $rowNum)->getFont()->setBold(true);
+            $rowNum++;
+        }
+
+        // Set password for Excel sheet protection
+        $password = date('dmY');
+        $sheet->getProtection()->setPassword($password);
+        $sheet->getProtection()->setSheet(true);
+
+        // Save to temporary XLS file
+        $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xls($spreadsheet);
+        $tempXlsPath = tempnam(sys_get_temp_dir(), 'xls_report');
+        $writer->save($tempXlsPath);
+
+        // Create password-protected ZIP archive
+        $tempZipPath = tempnam(sys_get_temp_dir(), 'zip_report');
+        $zip = new \ZipArchive();
+        if ($zip->open($tempZipPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) === TRUE) {
+            $zip->setPassword($password);
+            
+            // XLS file name in the zip
+            $xlsFileName = strtolower(str_replace(' ', '_', $originalTitle)) . '_' . date('Ymd') . '.xls';
+            
+            $zip->addFile($tempXlsPath, $xlsFileName);
+            if (defined('ZipArchive::EM_AES_256')) {
+                $zip->setEncryptionName($xlsFileName, \ZipArchive::EM_AES_256);
+            } else {
+                $zip->setEncryptionName($xlsFileName, \ZipArchive::EM_TRAD_PKWARE);
+            }
+            $zip->close();
+        }
+        
+        // Delete temporary XLS file
+        @unlink($tempXlsPath);
+
+        return response()->download($tempZipPath, strtolower(str_replace(' ', '_', $originalTitle)) . '_' . date('Ymd') . '.zip', [
+            'Content-Type' => 'application/zip',
+        ])->deleteFileAfterSend(true);
+    }
+
+    /**
+     * Shared helper to retrieve report dataset
+     */
+    private function getReportData($type, $startDate, $endDate)
+    {
         $title = "";
         $headers = [];
         $rows = [];
         $summary = [];
-        
-        $startDate = $request->input('start_date');
-        $endDate = $request->input('end_date');
 
         if ($type === 'users') {
             $title = "Users Registration Report";
@@ -603,9 +718,9 @@ class AdminDashboardController extends Controller
             foreach ($businesses as $b) {
                 $rows[] = [
                     'id' => $b->id,
-                    'name' => $b->name,
+                    'name' => $b->business_name,
                     'owner' => $b->user?->name ?? 'N/A',
-                    'category' => $b->category_name ?? 'N/A',
+                    'category' => $b->category?->name ?? 'N/A',
                     'verification' => ucfirst($b->verification_status),
                     'subscription' => ucfirst($b->subscription_status),
                     'start_date' => $b->created_at ? $b->created_at->format('Y-m-d') : 'N/A',
@@ -642,11 +757,12 @@ class AdminDashboardController extends Controller
 
             $profiles = $query->latest()->get();
             foreach ($profiles as $p) {
+                $personal = $p->personal_details ?? [];
                 $rows[] = [
                     'id' => $p->id,
                     'name' => $p->user?->name ?? 'N/A',
                     'gender' => ucfirst($p->gender ?? 'N/A'),
-                    'caste' => $p->caste ?? 'N/A',
+                    'caste' => $personal['caste'] ?? 'N/A',
                     'status' => ucfirst($p->approval_status),
                     'registered' => $p->created_at->format('Y-m-d'),
                     'start_date' => $p->created_at ? $p->created_at->format('Y-m-d') : 'N/A',
@@ -692,8 +808,8 @@ class AdminDashboardController extends Controller
                     'purpose' => $pay->purpose ?? 'General',
                     'status' => ucfirst($pay->status),
                     'date' => $pay->created_at->format('Y-m-d'),
-                    'start_date' => $pay->subscription_start_date ? Carbon::parse($pay->subscription_start_date)->format('Y-m-d') : 'N/A',
-                    'end_date' => $pay->subscription_end_date ? Carbon::parse($pay->subscription_end_date)->format('Y-m-d') : 'N/A'
+                    'start_date' => $pay->subscription_start_date ? \Carbon\Carbon::parse($pay->subscription_start_date)->format('Y-m-d') : 'N/A',
+                    'end_date' => $pay->subscription_end_date ? \Carbon\Carbon::parse($pay->subscription_end_date)->format('Y-m-d') : 'N/A'
                 ];
             }
             $summary = [
@@ -702,20 +818,8 @@ class AdminDashboardController extends Controller
                 'Successful Payments' => $successCount->count(),
                 'Pending Payments' => $pendingCount->count(),
             ];
-        } else {
-            abort(404, "Report type not found");
         }
 
-        $originalTitle = $title;
-        if ($startDate && $endDate) {
-            $title .= " (" . date('Y-m-d', strtotime($startDate)) . " to " . date('Y-m-d', strtotime($endDate)) . ")";
-        } elseif ($startDate) {
-            $title .= " (From " . date('Y-m-d', strtotime($startDate)) . ")";
-        } elseif ($endDate) {
-            $title .= " (Up to " . date('Y-m-d', strtotime($endDate)) . ")";
-        }
-
-        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('admin.pdf.report_template', compact('title', 'headers', 'rows', 'summary'));
-        return $pdf->download(strtolower(str_replace(' ', '_', $originalTitle)) . '_' . date('Ymd') . '.pdf');
+        return [$title, $headers, $rows, $summary];
     }
 }

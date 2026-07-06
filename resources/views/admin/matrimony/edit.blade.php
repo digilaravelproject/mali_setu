@@ -111,15 +111,15 @@
                                 </div>
 
                                 <div class="row">
-                                    <div class="col-md-4 mb-3">
+                                    <div class="col-md-3 mb-3">
                                         <label for="complexion" class="form-label font-weight-bold small">Complexion</label>
                                         <input type="text" class="form-control" id="complexion" name="complexion" value="{{ old('complexion', $profile->complexion) }}">
                                     </div>
-                                    <div class="col-md-4 mb-3">
+                                    <div class="col-md-3 mb-3">
                                         <label for="physical_status" class="form-label font-weight-bold small">Physical Status</label>
                                         <input type="text" class="form-control" id="physical_status" name="physical_status" value="{{ old('physical_status', $profile->physical_status) }}">
                                     </div>
-                                    <div class="col-md-4 mb-3">
+                                    <div class="col-md-3 mb-3">
                                         <label for="approval_status" class="form-label font-weight-bold small">Approval Status <span class="text-danger">*</span></label>
                                         <select class="form-select" id="approval_status" name="approval_status" required>
                                             <option value="pending" {{ old('approval_status', $profile->approval_status) == 'pending' ? 'selected' : '' }}>Pending</option>
@@ -127,7 +127,10 @@
                                             <option value="rejected" {{ old('approval_status', $profile->approval_status) == 'rejected' ? 'selected' : '' }}>Rejected</option>
                                         </select>
                                     </div>
-                                </div>
+                                    <div class="col-md-3 mb-3">
+                                        <label for="profile_expires_at" class="form-label font-weight-bold small">Profile Expires At</label>
+                                        <input type="date" class="form-control" id="profile_expires_at" name="profile_expires_at" value="{{ old('profile_expires_at', $profile->profile_expires_at ? $profile->profile_expires_at->format('Y-m-d') : '') }}">
+                                    </div>
                             </div>
                         </div>
 

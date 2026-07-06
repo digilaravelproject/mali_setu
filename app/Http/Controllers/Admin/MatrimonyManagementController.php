@@ -186,6 +186,7 @@ class MatrimonyManagementController extends Controller
             'complexion' => 'nullable|string|max:50',
             'physical_status' => 'nullable|string|max:50',
             'approval_status' => 'required|in:pending,approved,rejected',
+            'profile_expires_at' => 'nullable|date',
             
             'personal_details' => 'required|array',
             'family_details' => 'required|array',
@@ -230,6 +231,7 @@ class MatrimonyManagementController extends Controller
             'partner_preferences' => $request->partner_preferences,
             'privacy_settings' => $request->privacy_settings ?? [],
             'approval_status' => $request->approval_status,
+            'profile_expires_at' => $request->profile_expires_at,
         ]);
 
         // Update user type to matrimony if needed
@@ -271,6 +273,7 @@ class MatrimonyManagementController extends Controller
             'complexion' => 'nullable|string|max:50',
             'physical_status' => 'nullable|string|max:50',
             'approval_status' => 'required|in:pending,approved,rejected',
+            'profile_expires_at' => 'nullable|date',
             
             'personal_details' => 'required|array',
             'family_details' => 'required|array',
@@ -336,6 +339,7 @@ class MatrimonyManagementController extends Controller
             'partner_preferences' => $request->partner_preferences,
             'privacy_settings' => $request->privacy_settings ?? [],
             'approval_status' => $request->approval_status,
+            'profile_expires_at' => $request->profile_expires_at,
         ]);
 
         return redirect()->route('admin.matrimony.show', $profile->id)

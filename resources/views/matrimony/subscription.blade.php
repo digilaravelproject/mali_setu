@@ -60,7 +60,7 @@
         <div class="col-lg-12">
             
             <!-- Welcome Banner -->
-            <div class="card premium-gradient-card p-4 p-md-5 mb-5 text-start">
+            <div class="card premium-gradient-card p-4 p-md-5 mb-5 text-start d-none">
                 <div class="row align-items-center">
                     <div class="col-md-8">
                         <span class="badge bg-white bg-opacity-20 text-white mb-3 px-3 py-2 rounded-pill fw-bold text-uppercase" style="backdrop-filter: blur(10px); color: #000000 !important;">Premium Membership</span>
@@ -69,37 +69,6 @@
                     </div>
                     <div class="col-md-4 text-end d-none d-md-block">
                         <div class="fs-1 text-white opacity-25" style="font-size: 6rem !important;"><i class="fa-solid fa-heart"></i></div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Features -->
-            <div class="row g-4 mb-5 text-start">
-                <div class="col-md-4">
-                    <div class="glass-card p-4 h-100 d-flex gap-3">
-                        <div class="feature-icon flex-shrink-0 mt-1"><i class="fa-solid fa-circle-check"></i></div>
-                        <div>
-                            <h6 class="fw-bold text-dark mb-1">Instant Approval</h6>
-                            <p class="text-secondary small mb-0">Skip the standard verification queue and get approved instantly by the support team.</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="glass-card p-4 h-100 d-flex gap-3">
-                        <div class="feature-icon flex-shrink-0 mt-1"><i class="fa-solid fa-comments"></i></div>
-                        <div>
-                            <h6 class="fw-bold text-dark mb-1">Unlimited Chats</h6>
-                            <p class="text-secondary small mb-0">Initiate seamless active conversations and chat with your accepted matrimony matches.</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="glass-card p-4 h-100 d-flex gap-3">
-                        <div class="feature-icon flex-shrink-0 mt-1"><i class="fa-solid fa-users"></i></div>
-                        <div>
-                            <h6 class="fw-bold text-dark mb-1">Advanced Filters</h6>
-                            <p class="text-secondary small mb-0">Filter candidates dynamically by caste, sub-caste, diet, education level, or coordinates.</p>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -138,6 +107,37 @@
                         </div>
                     @endforeach
                 @endif
+            </div>
+
+            <!-- Features -->
+            <div class="row g-4 mb-5 text-start">
+                <div class="col-md-4">
+                    <div class="glass-card p-4 h-100 d-flex gap-3">
+                        <div class="feature-icon flex-shrink-0 mt-1"><i class="fa-solid fa-circle-check"></i></div>
+                        <div>
+                            <h6 class="fw-bold text-dark mb-1">Instant Approval</h6>
+                            <p class="text-secondary small mb-0">Skip the standard verification queue and get approved instantly by the support team.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="glass-card p-4 h-100 d-flex gap-3">
+                        <div class="feature-icon flex-shrink-0 mt-1"><i class="fa-solid fa-comments"></i></div>
+                        <div>
+                            <h6 class="fw-bold text-dark mb-1">Unlimited Chats</h6>
+                            <p class="text-secondary small mb-0">Initiate seamless active conversations and chat with your accepted matrimony matches.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="glass-card p-4 h-100 d-flex gap-3">
+                        <div class="feature-icon flex-shrink-0 mt-1"><i class="fa-solid fa-users"></i></div>
+                        <div>
+                            <h6 class="fw-bold text-dark mb-1">Advanced Filters</h6>
+                            <p class="text-secondary small mb-0">Filter candidates dynamically by caste, sub-caste, diet, education level, or coordinates.</p>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <!-- Skip and Proceed Flow -->

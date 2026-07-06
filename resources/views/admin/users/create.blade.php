@@ -16,7 +16,7 @@
                     </div>
                 </div>
                 
-                <form action="{{ route('admin.users.store') }}" method="POST">
+                <form action="{{ route('admin.users.store') }}" method="POST" enctype="multipart/form-data">
                     @csrf
                     
                     <div class="card-body">
@@ -38,10 +38,35 @@
                                         <h6 class="m-0 font-weight-bold text-dark"><i class="fas fa-key me-2 text-primary"></i>Credentials & Role</h6>
                                     </div>
                                     <div class="card-body">
-                                        <div class="mb-3">
-                                            <label for="name" class="form-label font-weight-bold small">Full Name <span class="text-danger">*</span></label>
-                                            <input type="text" class="form-control @error('name') is-invalid @enderror" 
-                                                   id="name" name="name" value="{{ old('name') }}" required placeholder="John Doe">
+                                        <div class="row">
+                                            <div class="col-md-3 mb-3">
+                                                <label for="title" class="form-label font-weight-bold small">Title <span class="text-danger">*</span></label>
+                                                <select class="form-select @error('title') is-invalid @enderror" id="title" name="title" required>
+                                                    <option value="" disabled selected>Select</option>
+                                                    <option value="Mr." {{ old('title') == 'Mr.' ? 'selected' : '' }}>Mr.</option>
+                                                    <option value="Mrs." {{ old('title') == 'Mrs.' ? 'selected' : '' }}>Mrs.</option>
+                                                    <option value="Ms." {{ old('title') == 'Ms.' ? 'selected' : '' }}>Ms.</option>
+                                                    <option value="Dr." {{ old('title') == 'Dr.' ? 'selected' : '' }}>Dr.</option>
+                                                    <option value="Prof." {{ old('title') == 'Prof.' ? 'selected' : '' }}>Prof.</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-9 mb-3">
+                                                <label for="first_name" class="form-label font-weight-bold small">First Name <span class="text-danger">*</span></label>
+                                                <input type="text" class="form-control @error('first_name') is-invalid @enderror" 
+                                                       id="first_name" name="first_name" value="{{ old('first_name') }}" required placeholder="John">
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-6 mb-3">
+                                                <label for="middle_name" class="form-label font-weight-bold small">Middle Name</label>
+                                                <input type="text" class="form-control @error('middle_name') is-invalid @enderror" 
+                                                       id="middle_name" name="middle_name" value="{{ old('middle_name') }}" placeholder="Barry">
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <label for="last_name" class="form-label font-weight-bold small">Last Name <span class="text-danger">*</span></label>
+                                                <input type="text" class="form-control @error('last_name') is-invalid @enderror" 
+                                                       id="last_name" name="last_name" value="{{ old('last_name') }}" required placeholder="Doe">
+                                            </div>
                                         </div>
                                         
                                         <div class="mb-3">
@@ -101,6 +126,13 @@
                                                 <option value="approved" {{ old('caste_verification_status') == 'approved' ? 'selected' : '' }}>Approved</option>
                                                 <option value="rejected" {{ old('caste_verification_status') == 'rejected' ? 'selected' : '' }}>Rejected</option>
                                             </select>
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <label for="caste_certificate" class="form-label font-weight-bold small">Caste Certificate</label>
+                                            <input type="file" class="form-control @error('caste_certificate') is-invalid @enderror" 
+                                                   id="caste_certificate" name="caste_certificate" accept=".pdf,image/*">
+                                            <small class="text-muted small">Upload PDF or image of caste certificate (max 5MB)</small>
                                         </div>
                                         
                                         <div class="mb-3">

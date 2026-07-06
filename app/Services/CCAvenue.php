@@ -46,8 +46,12 @@ class CCAvenue
         // Add merchant_id to parameters
         $params['merchant_id'] = $this->merchantId;
 
-        // Build query string
-        $queryString = http_build_query($params);
+        // Build query string matching official CCAvenue integration standard
+        $queryString = '';
+        foreach ($params as $key => $value) {
+            $queryString .= $key . '=' . $value . '&';
+        }
+        $queryString = rtrim($queryString, '&');
 
         // Encrypt query string using the working key
         return $this->encryptAes($queryString, $this->workingKey);

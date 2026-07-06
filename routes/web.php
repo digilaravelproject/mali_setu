@@ -415,6 +415,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
          Route::post('settings', [AdminDashboardController::class, 'updateSettings'])->name('settings.update');
          Route::get('reports', [AdminDashboardController::class, 'reports'])->name('reports');
          Route::get('reports/download/{type}', [AdminDashboardController::class, 'downloadReportPdf'])->name('reports.download');
+         Route::get('reports/download-xls/{type}', [AdminDashboardController::class, 'downloadReportXls'])->name('reports.download.xls');
          
          // System Actions
          Route::post('system/clear-cache', [AdminDashboardController::class, 'clearCache'])->name('system.clear-cache');

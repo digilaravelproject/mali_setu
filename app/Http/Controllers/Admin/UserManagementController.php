@@ -298,7 +298,10 @@ class UserManagementController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'name' => 'required|string|max:255',
+            'title' => 'required|string|max:50',
+            'first_name' => 'required|string|max:100',
+            'middle_name' => 'nullable|string|max:100',
+            'last_name' => 'required|string|max:100',
             'email' => 'required|email|unique:users,email',
             'phone' => 'required|string|max:20|unique:users,phone',
             'password' => 'required|string|min:8|confirmed',
@@ -325,10 +328,13 @@ class UserManagementController extends Controller
             'destination' => 'nullable|string|max:255',
             'latitude' => 'nullable|numeric|between:-90,90',
             'longitude' => 'nullable|numeric|between:-180,180',
+            'caste_certificate' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:5120',
         ]);
 
+        $name = trim($request->title . ' ' . $request->first_name . ' ' . ($request->middle_name ? $request->middle_name . ' ' : '') . $request->last_name);
+
         $userData = [
-            'name' => $request->name,
+            'name' => $name,
             'email' => $request->email,
             'phone' => $request->phone,
             'password' => bcrypt($request->password),
@@ -361,6 +367,10 @@ class UserManagementController extends Controller
             $userData['email_verified_at'] = now();
         }
 
+        if ($request->hasFile('caste_certificate')) {
+            $userData['cast_certificate'] = $request->file('caste_certificate')->store('certificates', 'public');
+        }
+
         $user = User::create($userData);
 
         return redirect()->route('admin.users.show', $user->id)
@@ -386,7 +396,10 @@ class UserManagementController extends Controller
         $user = User::findOrFail($id);
         
         $request->validate([
-            'name' => 'required|string|max:255',
+            'title' => 'required|string|max:50',
+            'first_name' => 'required|string|max:100',
+            'middle_name' => 'nullable|string|max:100',
+            'last_name' => 'required|string|max:100',
             'email' => 'required|email|unique:users,email,' . $id,
             'phone' => 'required|string|max:20|unique:users,phone,' . $id,
             'user_type' => 'required|in:general,business,matrimony,volunteer,bloger',
@@ -413,10 +426,13 @@ class UserManagementController extends Controller
             'destination' => 'nullable|string|max:255',
             'latitude' => 'nullable|numeric|between:-90,90',
             'longitude' => 'nullable|numeric|between:-180,180',
+            'caste_certificate' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:5120',
         ]);
+
+        $name = trim($request->title . ' ' . $request->first_name . ' ' . ($request->middle_name ? $request->middle_name . ' ' : '') . $request->last_name);
         
         $updateData = [
-            'name' => $request->name,
+            'name' => $name,
             'email' => $request->email,
             'phone' => $request->phone,
             'user_type' => $request->user_type,
@@ -443,6 +459,13 @@ class UserManagementController extends Controller
             'latitude' => $request->latitude,
             'longitude' => $request->longitude,
         ];
+
+        if ($request->hasFile('caste_certificate')) {
+            if ($user->cast_certificate && \Storage::disk('public')->exists($user->cast_certificate)) {
+                \Storage::disk('public')->delete($user->cast_certificate);
+            }
+            $updateData['cast_certificate'] = $request->file('caste_certificate')->store('certificates', 'public');
+        }
         
         // Handle email verification status
         if ($request->has('email_verified')) {

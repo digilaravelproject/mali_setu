@@ -234,7 +234,7 @@
                                             @if($user->caste_verification_status === 'approved')
                                                 <span class="badge badge-success text-black">Verified</span>
                                             @elseif($user->caste_verification_status === 'pending')
-                                                <span class="badge badge-warning">Pending</span>
+                                                <span class="badge badge-warning text-black">Pending</span>
                                             @else
                                                 <span class="badge badge-danger" style="color: red !important;">Rejected</span>
                                             @endif
@@ -280,7 +280,7 @@
                                             @if($business->verification_status === 'approved')
                                                 <span class="badge badge-success text-black">Approved</span>
                                             @elseif($business->verification_status === 'pending')
-                                                <span class="badge badge-warning">Pending</span>
+                                                <span class="badge badge-warning text-black">Pending</span>
                                             @else
                                                 <span class="badge badge-danger" style="color: red !important;">Rejected</span>
                                             @endif

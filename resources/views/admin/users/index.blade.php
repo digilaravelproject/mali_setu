@@ -243,7 +243,7 @@
                                     @elseif($user->caste_verification_status === 'rejected')
                                         <span class="badge badge-danger" style="color: red !important;">Rejected</span>
                                     @elseif($user->cast_certificate)
-                                        <span class="badge badge-warning">Pending</span>
+                                        <span class="badge badge-warning text-black">Pending</span>
                                     @else
                                         <span class="badge badge-secondary text-black">Not Submitted</span>
                                     @endif

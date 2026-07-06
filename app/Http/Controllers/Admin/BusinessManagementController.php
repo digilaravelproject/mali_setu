@@ -378,6 +378,7 @@ class BusinessManagementController extends Controller
             'photo' => 'nullable|image|max:2048',
             'verification_status' => 'required|in:pending,approved,rejected',
             'status' => 'required|in:active,suspended,banned',
+            'subscription_expires_at' => 'nullable|date',
         ]);
 
         if ($request->hasFile('photo')) {
@@ -450,6 +451,7 @@ class BusinessManagementController extends Controller
             'photo' => 'nullable|image|max:2048',
             'verification_status' => 'required|in:pending,approved,rejected',
             'status' => 'required|in:active,suspended,banned',
+            'subscription_expires_at' => 'nullable|date',
         ]);
 
         if ($request->hasFile('photo')) {
