@@ -259,6 +259,8 @@ class MatrimonyController extends Controller
             'approval_status'     => 'pending',
         ]);
 
+        \App\Jobs\SendPaymentPendingEmail::dispatch('matrimony', $profile->id)->delay(now()->addMinutes(10));
+
         $user->update([
             'user_type' => 'matrimony',
             'latitude'  => $request->latitude,

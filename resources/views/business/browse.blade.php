@@ -232,9 +232,16 @@
                                         <span class="text-muted small">({{ $reviewsCount }})</span>
                                     </div>
                                 </div>
-                                <a href="{{ route('dashboard.business.show', $b->id) }}" class="btn btn-primary btn-sm rounded-3 px-3 py-2 fw-semibold">
-                                    View Profile <i class="fa-solid fa-arrow-right ms-1"></i>
-                                </a>
+                                <div class="d-flex align-items-center gap-2">
+                                    @if(auth()->check() && $b->user_id === auth()->id() && (!$b->subscription_expires_at || \Carbon\Carbon::parse($b->subscription_expires_at)->isPast()))
+                                        <a href="{{ route('dashboard.business.subscription') }}" class="btn btn-warning btn-sm rounded-3 px-3 py-2 fw-semibold">
+                                            Renew Now <i class="fa-solid fa-arrows-rotate ms-1"></i>
+                                        </a>
+                                    @endif
+                                    <a href="{{ route('dashboard.business.show', $b->id) }}" class="btn btn-primary btn-sm rounded-3 px-3 py-2 fw-semibold">
+                                        View Profile <i class="fa-solid fa-arrow-right ms-1"></i>
+                                    </a>
+                                </div>
                             </div>
                         </div>
 

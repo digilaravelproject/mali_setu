@@ -42,7 +42,7 @@
                             <div class="card-body">
                                 <div class="row">
                                     <div class="col-md-6 mb-3">
-                                        <label for="user_id" class="form-label font-weight-bold small">Seeker User <span class="text-danger">*</span></label>
+                                        <label for="user_id" class="form-label font-weight-bold small">Users <span class="text-danger">*</span></label>
                                         <select class="form-select" id="user_id" name="user_id" required>
                                             <option value="" disabled selected>Select user account</option>
                                             @foreach($users as $user)

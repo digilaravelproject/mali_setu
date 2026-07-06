@@ -535,7 +535,36 @@ class AdminDashboardController extends Controller
         }
 
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('admin.pdf.report_template', compact('title', 'headers', 'rows', 'summary'));
-        return $pdf->download(strtolower(str_replace(' ', '_', $originalTitle)) . '_' . date('Ymd') . '.pdf');
+        
+        // Save PDF to a temporary file
+        $tempPdfPath = tempnam(sys_get_temp_dir(), 'pdf_report');
+        file_put_contents($tempPdfPath, $pdf->output());
+
+        // Create password-protected ZIP archive
+        $password = date('dmY');
+        $tempZipPath = tempnam(sys_get_temp_dir(), 'zip_report');
+        $zip = new \ZipArchive();
+        if ($zip->open($tempZipPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) === TRUE) {
+            $zip->setPassword($password);
+            
+            // PDF file name inside the zip
+            $pdfFileName = strtolower(str_replace(' ', '_', $originalTitle)) . '_' . date('Ymd') . '.pdf';
+            
+            $zip->addFile($tempPdfPath, $pdfFileName);
+            if (defined('ZipArchive::EM_AES_256')) {
+                $zip->setEncryptionName($pdfFileName, \ZipArchive::EM_AES_256);
+            } else {
+                $zip->setEncryptionName($pdfFileName, \ZipArchive::EM_TRAD_PKWARE);
+            }
+            $zip->close();
+        }
+        
+        // Delete temporary PDF file
+        @unlink($tempPdfPath);
+
+        return response()->download($tempZipPath, strtolower(str_replace(' ', '_', $originalTitle)) . '_' . date('Ymd') . '.zip', [
+            'Content-Type' => 'application/zip',
+        ])->deleteFileAfterSend(true);
     }
 
     /**

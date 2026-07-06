@@ -225,4 +225,45 @@ function startMatrimonyPayment(planId, price) {
     }).catch(() => alert("Payment initialization failed."));
 }
 </script>
+
+@if($profile && (!$profile->profile_expires_at || \Carbon\Carbon::parse($profile->profile_expires_at)->isPast()))
+    <!-- Modal for Renew Now -->
+    <div class="modal fade show" id="renewMatrimonyModal" tabindex="-1" aria-labelledby="renewMatrimonyModalLabel" aria-hidden="true" style="display: block; background: rgba(0,0,0,0.5);">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 rounded-4 shadow-lg">
+                <div class="modal-header border-0 bg-light p-4">
+                    <h5 class="modal-title fw-bold text-dark" id="renewMatrimonyModalLabel">
+                        <i class="fa-solid fa-heart-crack text-danger me-2"></i> Subscription Expired
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" onclick="closeRenewModal()"></button>
+                </div>
+                <div class="modal-body p-4 text-center">
+                    <div class="mb-3" style="font-size: 3rem; color: var(--primary);">
+                        <i class="fa-solid fa-clock-rotate-left"></i>
+                    </div>
+                    <h5 class="fw-bold mb-2">Renew Matrimony Subscription</h5>
+                    <p class="text-secondary mb-4">Your matrimony subscription has expired. Please renew your subscription to continue connecting with potential life partners.</p>
+                    
+                    <div class="d-grid gap-2">
+                        <a href="{{ route('matrimony.subscription') }}" class="btn btn-primary rounded-3 py-2 fw-bold">
+                            <i class="fa-solid fa-arrows-rotate me-1"></i> Renew Now
+                        </a>
+                        <button type="button" class="btn btn-outline-secondary rounded-3 py-2 fw-semibold" data-bs-dismiss="modal" onclick="closeRenewModal()">
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        function closeRenewModal() {
+            var modal = document.getElementById('renewMatrimonyModal');
+            if (modal) {
+                modal.classList.remove('show');
+                modal.style.display = 'none';
+            }
+        }
+    </script>
+@endif
 @endsection

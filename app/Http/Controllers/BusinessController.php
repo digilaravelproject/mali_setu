@@ -185,6 +185,8 @@ class BusinessController extends Controller
                 'longitude' => $request->longitude,
             ]);
 
+            \App\Jobs\SendPaymentPendingEmail::dispatch('business', $business->id)->delay(now()->addMinutes(10));
+
             if (empty($user->user_type) || $user->user_type != 'business') {
                 $user->update(['user_type' => 'business']);
             }
