@@ -320,10 +320,10 @@
                                             <label class="form-label-bold col-12">Age Range</label>
                                             <div class="row g-2">
                                                 <div class="col-6">
-                                                    <input type="number" name="age_min" class="form-control" min="18" max="100" value="{{ request('age_min', 18) }}" placeholder="Min">
+                                                    <input type="number" name="age_min" class="form-control" min="18" max="100" value="{{ request('age_min') }}" placeholder="Min">
                                                 </div>
                                                 <div class="col-6">
-                                                    <input type="number" name="age_max" class="form-control" min="18" max="100" value="{{ request('age_max', 60) }}" placeholder="Max">
+                                                    <input type="number" name="age_max" class="form-control" min="18" max="100" value="{{ request('age_max') }}" placeholder="Max">
                                                 </div>
                                             </div>
                                         </div>
@@ -771,18 +771,41 @@
         // Update the value inside hidden inputs
         document.getElementById(inputGroup + 'Input').value = value;
 
-        // Reset highlight borders/styles for current tag buttons list
+        // Reset highlight borders/styles for current tag borders list
         btnElement.parentNode.querySelectorAll('.filter-tag-btn').forEach(btn => {
             btn.classList.remove('active');
         });
 
         // Add highlight styling to clicked option tag
         btnElement.classList.add('active');
+
+        // Submit form automatically
+        document.getElementById('discoverForm').submit();
     }
 
     function resetFilters() {
         // Redirect to clear filters completely
         window.location.href = "{{ route('matrimony.browse') }}";
     }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.getElementById('discoverForm');
+        if (form) {
+            // Auto submit form on select change
+            form.querySelectorAll('select').forEach(select => {
+                select.addEventListener('change', () => form.submit());
+            });
+
+            // Auto submit on checkbox or radio button change
+            form.querySelectorAll('input[type="checkbox"], input[type="radio"]').forEach(input => {
+                input.addEventListener('change', () => form.submit());
+            });
+
+            // Auto submit on age range inputs change / blur
+            form.querySelectorAll('input[type="number"]').forEach(input => {
+                input.addEventListener('change', () => form.submit());
+            });
+        }
+    });
 </script>
 @endsection
