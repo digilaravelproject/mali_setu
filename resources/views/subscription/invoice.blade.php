@@ -33,7 +33,7 @@
         .logo {
             font-size: 24px;
             font-weight: 800;
-            color: #ff4757;
+            color: #84144f;
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
@@ -121,7 +121,7 @@
             border-bottom: none;
             font-size: 18px;
             font-weight: 800;
-            color: #ff4757;
+            color: #84144f;
             padding-top: 15px;
         }
         .footer {
@@ -136,7 +136,7 @@
             width: 150px;
             margin: 20px auto 0;
             padding: 10px 20px;
-            background-color: #ff4757;
+            background-color: #84144f;
             color: #fff;
             text-align: center;
             border-radius: 6px;
@@ -239,7 +239,7 @@
 
     <div class="footer">
         <p>This is a computer-generated transaction receipt. No signature is required.</p>
-        <p>Mali Setu Community Platform • <a href="mailto:support@malisetu.org" style="color: #ff4757; text-decoration: none;">support@malisetu.org</a></p>
+        <p>Mali Setu Community Platform • <a href="mailto:support@malisetu.org" style="color: #84144f; text-decoration: none;">support@malisetu.org</a></p>
     </div>
 </div>
 

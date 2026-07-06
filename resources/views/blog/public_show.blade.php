@@ -15,10 +15,10 @@
 
     <style>
         :root { 
-            --primary: #ff4757; 
-            --primary-dark: #ff2a3b;
-            --accent: #ff7a59; 
-            --accent-dark: #e05e3d;
+            --primary: #84144f; 
+            --primary-dark: #630837;
+            --accent: #aa1262; 
+            --accent-dark: #84144f;
             --light-bg: #f4f3f0;
             --glass: rgba(255, 255, 255, 0.9);
             --gold: #d4af37;
@@ -363,7 +363,7 @@
             bottom: 4px;
             left: 4px;
             width: calc(50% - 4px);
-            background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+            background: linear-gradient(135deg, #84144f 0%, #aa1262 100%);
             border-radius: 50px;
             transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
             z-index: 1;
@@ -493,7 +493,7 @@
             transition: all 0.3s;
         }
         .plan-tabs .nav-link.active {
-            background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%) !important;
+            background: linear-gradient(135deg, #84144f 0%, #aa1262 100%) !important;
             color: #ffffff !important;
             box-shadow: 0 8px 20px rgba(255, 71, 87, 0.2);
             border-color: transparent;
@@ -685,11 +685,11 @@
             border-radius: 10px;
         }
         #comments-container::-webkit-scrollbar-thumb {
-            background: #ff4757;
+            background: #84144f;
             border-radius: 10px;
         }
         #comments-container::-webkit-scrollbar-thumb:hover {
-            background: #ff2a3b;
+            background: #aa1262;
         }
     </style>
 </head>
@@ -1322,7 +1322,7 @@
                 text: "You won't be able to revert this!",
                 icon: 'warning',
                 showCancelButton: true,
-                confirmButtonColor: '#ff4757',
+                confirmButtonColor: '#84144f',
                 cancelButtonColor: '#718096',
                 confirmButtonText: 'Yes, delete it!'
             }).then((result) => {

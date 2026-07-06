@@ -6,7 +6,7 @@
     <main class="col-12 px-md-4 py-4">
         
         <!-- Welcome banner -->
-        <div class="welcome-banner mb-4 text-start shadow-sm border border-white border-opacity-10 d-none" style="background: linear-gradient(135deg, #ff4757 0%, #ff7a59 100%);">
+        <div class="welcome-banner mb-4 text-start shadow-sm border border-white border-opacity-10 d-none" style="background: linear-gradient(135deg, #84144f 0%, #aa1262 100%);">
             <div class="row align-items-center">
                 <div class="col-md-8">
                     <span class="badge bg-white bg-opacity-20 text-black mb-3 px-3 py-1.5 rounded-pill fw-bold text-uppercase small"><i class="fa-solid fa-store me-1 text-warning"></i> Enterprise Dashboard</span>
@@ -350,10 +350,7 @@
                                     </div>
                                 </div>
                             @endforeach
-                        </div>
-
-                        <!-- Razorpay SDK & Loader/Modal JS script -->
-                        <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+                        </div>                        <!-- CCAvenue Checkout Integration -->
                         <script>
                             function startRazorpayPayment(planId, price) {
                                 const csrfToken = '{{ csrf_token() }}';
@@ -369,58 +366,10 @@
                                 .then(res => res.json())
                                 .then(data => {
                                     if (!data.success) {
-                                        alert(data.message || "Failed to create Razorpay Order.");
+                                        alert(data.message || "Failed to create Order.");
                                         return;
                                     }
-
-                                    const options = {
-                                        key: data.key_id,
-                                        amount: data.amount,
-                                        currency: data.currency,
-                                        name: "Mali Setu Enterprise",
-                                        description: "Business Premium Plan Activation",
-                                        order_id: data.order_id,
-                                        handler: function (response) {
-                                            // Verify payment signature
-                                            fetch("{{ route('dashboard.business.verify-payment') }}", {
-                                                method: "POST",
-                                                headers: {
-                                                    "Content-Type": "application/json",
-                                                    "X-CSRF-TOKEN": csrfToken
-                                                },
-                                                body: JSON.stringify({
-                                                    razorpay_payment_id: response.razorpay_payment_id,
-                                                    razorpay_order_id: response.razorpay_order_id,
-                                                    razorpay_signature: response.razorpay_signature,
-                                                    transaction_id: data.transaction_id
-                                                })
-                                            })
-                                            .then(verifyRes => verifyRes.json())
-                                            .then(verifyData => {
-                                                if (verifyData.success) {
-                                                    alert("Subscription activated successfully!");
-                                                    window.location.reload();
-                                                } else {
-                                                    alert(verifyData.message || "Payment verification failed.");
-                                                }
-                                            })
-                                            .catch(err => {
-                                                console.error(err);
-                                                alert("Payment verification request failed.");
-                                            });
-                                        },
-                                        prefill: {
-                                            name: "{{ $user->name }}",
-                                            email: "{{ $user->email }}",
-                                            contact: "{{ $user->phone }}"
-                                        },
-                                        theme: {
-                                            color: "#ff4757"
-                                        }
-                                    };
-
-                                    const rzp = new Razorpay(options);
-                                    rzp.open();
+                                    redirectToCCAvenue(data);
                                 })
                                 .catch(err => {
                                     console.error(err);

@@ -13,9 +13,9 @@
 
     <style>
         :root { 
-            --primary: #ff4757; 
-            --primary-dark: #ff2a3b;
-            --accent: #ff7a59; 
+            --primary: #84144f; 
+            --primary-dark: #630837;
+            --accent: #aa1262; 
             --light-bg: #f4f3f0;
             --glass: rgba(255, 255, 255, 0.95);
         }

@@ -317,11 +317,11 @@
         border-radius: 10px;
     }
     #comments-container::-webkit-scrollbar-thumb {
-        background: #ff4757;
+        background: #84144f;
         border-radius: 10px;
     }
     #comments-container::-webkit-scrollbar-thumb:hover {
-        background: #ff2a3b;
+        background: #aa1262;
     }
 </style>
 @endsection
@@ -653,7 +653,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 text: "You won't be able to revert this!",
                 icon: 'warning',
                 showCancelButton: true,
-                confirmButtonColor: '#ff4757',
+                confirmButtonColor: '#84144f',
                 cancelButtonColor: '#718096',
                 confirmButtonText: 'Yes, delete it!'
             }).then((result) => {

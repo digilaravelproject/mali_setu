@@ -16,6 +16,10 @@ return Application::configure(basePath: dirname(__DIR__))
             'role' => \App\Http\Middleware\RoleMiddleware::class,
             'redirect.admin' => \App\Http\Middleware\RedirectAdmin::class,
         ]);
+        $middleware->validateCsrfTokens(except: [
+            '/ccavenue/callback',
+            'ccavenue/callback',
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //

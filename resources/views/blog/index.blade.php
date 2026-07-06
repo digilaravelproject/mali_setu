@@ -361,7 +361,7 @@
         border-radius: 10px !important;
     }
     #blogTabs::-webkit-scrollbar-thumb:hover {
-        background: var(--primary-dark, #ff2a3b) !important;
+        background: var(--primary-dark, #630837) !important;
     }
     #blogTabs .nav-item {
         flex-shrink: 0 !important;
@@ -375,7 +375,7 @@
         font-weight: 700;
     }
     .nav-pills .nav-link.active {
-        background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%) !important;
+        background: linear-gradient(135deg, #84144f 0%, #aa1262 100%) !important;
         color: white !important;
         border-color: transparent !important;
         box-shadow: 0 4px 15px rgba(255, 71, 87, 0.3) !important;

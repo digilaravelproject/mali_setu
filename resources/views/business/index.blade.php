@@ -224,10 +224,7 @@
                                     </div>
                                 </div>
                             @endforeach
-                        </div>
-
-                        <!-- Razorpay SDK & Loader/Modal JS script -->
-                        <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+                        </div>                        <!-- CCAvenue Checkout Integration -->
                         <script>
                             function startRazorpayPayment(planId, price) {
                                 const csrfToken = '{{ csrf_token() }}';
@@ -243,57 +240,10 @@
                                 .then(res => res.json())
                                 .then(data => {
                                     if (!data.success) {
-                                        alert(data.message || "Failed to create Razorpay Order.");
+                                        alert(data.message || "Failed to create Order.");
                                         return;
                                     }
-
-                                    const options = {
-                                        key: data.key_id,
-                                        amount: data.amount,
-                                        currency: data.currency,
-                                        name: "Mali Setu Enterprise",
-                                        description: "Business Premium Plan Activation",
-                                        order_id: data.order_id,
-                                        handler: function (response) {
-                                            fetch("{{ route('dashboard.business.verify-payment') }}", {
-                                                method: "POST",
-                                                headers: {
-                                                    "Content-Type": "application/json",
-                                                    "X-CSRF-TOKEN": csrfToken
-                                                },
-                                                body: JSON.stringify({
-                                                    razorpay_payment_id: response.razorpay_payment_id,
-                                                    razorpay_order_id: response.razorpay_order_id,
-                                                    razorpay_signature: response.razorpay_signature,
-                                                    transaction_id: data.transaction_id
-                                                })
-                                            })
-                                            .then(verifyRes => verifyRes.json())
-                                            .then(verifyData => {
-                                                if (verifyData.success) {
-                                                    alert("Subscription activated successfully!");
-                                                    window.location.reload();
-                                                } else {
-                                                    alert(verifyData.message || "Payment verification failed.");
-                                                }
-                                            })
-                                            .catch(err => {
-                                                console.error(err);
-                                                alert("Payment verification request failed.");
-                                            });
-                                        },
-                                        prefill: {
-                                            name: "{{ $user->name }}",
-                                            email: "{{ $user->email }}",
-                                            contact: "{{ $user->phone }}"
-                                        },
-                                        theme: {
-                                            color: "#0d9488"
-                                        }
-                                    };
-
-                                    const rzp = new Razorpay(options);
-                                    rzp.open();
+                                    redirectToCCAvenue(data);
                                 })
                                 .catch(err => {
                                     console.error(err);
@@ -1000,7 +950,7 @@
                                 $quickBenefits = ['Health insurance', 'Flexible working hours', 'Paid time off', 'Remote work options', 'Professional development', 'Stock options', 'Performance Bonus', 'Gym Membership', 'Free Meals'];
                             @endphp
                             @foreach($quickBenefits as $qb)
-                                <button type="button" class="btn btn-sm py-1.5 px-3 rounded-pill" style="background: rgba(255, 71, 87, 0.05); color: var(--primary); border: 1px solid rgba(255,71,87,0.15); font-size: 0.82rem; font-weight: 600;" onclick="selectQuickBenefit('{{ addslashes($qb) }}')">
+                                <button type="button" class="btn btn-sm py-1.5 px-3 rounded-pill" style="background: rgba(132, 20, 79, 0.05); color: var(--primary); border: 1px solid rgba(132,20,79,0.15); font-size: 0.82rem; font-weight: 600;" onclick="selectQuickBenefit('{{ addslashes($qb) }}')">
                                     {{ $qb }}
                                 </button>
                             @endforeach
@@ -1031,7 +981,7 @@
                                 $quickSkills = ['PHP', 'Laravel', 'MySQL', 'REST API', 'Flutter', 'Dart', 'Android', 'React Native', 'Java', 'Python', 'Node.js', 'UI/UX Design'];
                             @endphp
                             @foreach($quickSkills as $qs)
-                                <button type="button" class="btn btn-sm py-1.5 px-3 rounded-pill" style="background: rgba(255, 71, 87, 0.05); color: var(--primary); border: 1px solid rgba(255,71,87,0.15); font-size: 0.82rem; font-weight: 600;" onclick="selectQuickSkill('{{ addslashes($qs) }}')">
+                                <button type="button" class="btn btn-sm py-1.5 px-3 rounded-pill" style="background: rgba(132, 20, 79, 0.05); color: var(--primary); border: 1px solid rgba(132,20,79,0.15); font-size: 0.82rem; font-weight: 600;" onclick="selectQuickSkill('{{ addslashes($qs) }}')">
                                     {{ $qs }}
                                 </button>
                             @endforeach

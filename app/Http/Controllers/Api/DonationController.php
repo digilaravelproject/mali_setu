@@ -10,16 +10,16 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
-use Razorpay\Api\Api;
+use App\Services\CCAvenue;
 use Exception;
 
 class DonationController extends Controller
 {
-    private $razorpay;
+    private $ccavenue;
 
-    public function __construct()
+    public function __construct(CCAvenue $ccavenue)
     {
-        $this->razorpay = new Api(config('services.razorpay.key'), config('services.razorpay.secret'));
+        $this->ccavenue = $ccavenue;
     }
 
     /**
@@ -155,19 +155,8 @@ class DonationController extends Controller
                 ], 400);
             }
 
-            // Create Razorpay order
-            $orderData = [
-                'amount' => $request->amount * 100, // Convert to paise
-                'currency' => 'INR',
-                'receipt' => 'donation_' . time() . '_' . $user->id,
-                'notes' => [
-                    'cause_id' => $cause->id,
-                    'user_id' => $user->id,
-                    'purpose' => 'donation'
-                ]
-            ];
-
-            $razorpayOrder = $this->razorpay->order->create($orderData);
+            // Generate unique local Order ID for CCAvenue
+            $orderId = 'DON-' . time() . '-' . mt_rand(1000, 9999);
 
             // Create donation record
             $donation = Donation::create([
@@ -175,7 +164,7 @@ class DonationController extends Controller
                 'cause_id' => $cause->id,
                 'amount' => $request->amount,
                 'currency' => 'INR',
-                'razorpay_order_id' => $razorpayOrder['id'],
+                'razorpay_order_id' => $orderId,
                 'status' => 'pending',
                 'message' => $request->message,
                 'anonymous' => $request->get('anonymous', false)
@@ -187,7 +176,7 @@ class DonationController extends Controller
                 'amount' => $request->amount,
                 'currency' => 'INR',
                 'purpose' => 'donation',
-                'razorpay_order_id' => $razorpayOrder['id'],
+                'razorpay_order_id' => $orderId,
                 'status' => 'pending',
                 'metadata' => json_encode([
                     'donation_id' => $donation->id,
@@ -196,14 +185,30 @@ class DonationController extends Controller
                 ])
             ]);
 
+            // Prepare CCAvenue parameters
+            $params = [
+                'order_id' => $orderId,
+                'amount' => number_format($request->amount, 2, '.', ''),
+                'currency' => 'INR',
+                'redirect_url' => route('ccavenue.callback'),
+                'cancel_url' => route('ccavenue.callback'),
+                'language' => 'EN',
+                'billing_name' => $user->name ?? '',
+                'billing_email' => $user->email ?? '',
+                'billing_tel' => $user->phone ?? ''
+            ];
+
             return response()->json([
                 'success' => true,
                 'data' => [
+                    'payment_way' => 'ccavenue',
+                    'payment_url' => $this->ccavenue->getPaymentUrl(),
+                    'encRequest' => $this->ccavenue->encrypt($params),
+                    'access_code' => $this->ccavenue->getAccessCode(),
                     'donation_id' => $donation->id,
-                    'order_id' => $razorpayOrder['id'],
+                    'order_id' => $orderId,
                     'amount' => $request->amount,
                     'currency' => 'INR',
-                    'key' => config('services.razorpay.key'),
                     'cause' => [
                         'id' => $cause->id,
                         'title' => $cause->title,
@@ -213,13 +218,11 @@ class DonationController extends Controller
             ]);
 
         } catch (Exception $e) {
-
-            Log::error($e); // full error log
+            Log::error('CCAvenue api donation initiation failed: ' . $e->getMessage());
 
             return response()->json([
                 'success' => false,
-                'message' => $e->getMessage(), // TEMP for debugging
-                'trace' => $e->getTraceAsString()
+                'message' => $e->getMessage()
             ], 500);
         }
     }
@@ -230,10 +233,10 @@ class DonationController extends Controller
     public function verifyDonationPayment(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'razorpay_payment_id' => 'required|string',
-            'razorpay_order_id' => 'required|string',
-            'razorpay_signature' => 'required|string',
-            'donation_id' => 'required|exists:donations,id'
+            'donation_id' => 'required|exists:donations,id',
+            'razorpay_payment_id' => 'nullable|string',
+            'razorpay_order_id' => 'nullable|string',
+            'razorpay_signature' => 'nullable|string',
         ]);
 
         if ($validator->fails()) {
@@ -249,59 +252,28 @@ class DonationController extends Controller
         try {
             $donation = Donation::findOrFail($request->donation_id);
             
-            // Verify signature
-            $attributes = [
-                'razorpay_order_id' => $request->razorpay_order_id,
-                'razorpay_payment_id' => $request->razorpay_payment_id,
-                'razorpay_signature' => $request->razorpay_signature
-            ];
-
-            $this->razorpay->utility->verifyPaymentSignature($attributes);
-
-            // Update donation
-            $donation->update([
-                'razorpay_payment_id' => $request->razorpay_payment_id,
-                'status' => 'completed',
-                'payment_method' => 'razorpay'
-            ]);
-
-            // Update transaction
-            $transaction = Transaction::where('razorpay_order_id', $request->razorpay_order_id)->first();
-            if ($transaction) {
-                $transaction->update([
-                    'razorpay_payment_id' => $request->razorpay_payment_id,
-                    'status' => 'completed'
+            if ($donation->status === 'completed') {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Donation completed successfully',
+                    'data' => [
+                        'donation' => $donation->load('cause'),
+                        'receipt_url' => $donation->receipt_url
+                    ]
                 ]);
-            }
-
-            // Update cause raised amount
-            $donation->cause->updateRaisedAmount();
-
-            // Generate receipt (placeholder for now)
-            $receiptUrl = $this->generateDonationReceipt($donation);
-            $donation->update(['receipt_url' => $receiptUrl]);
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Donation completed successfully',
-                'data' => [
-                    'donation' => $donation->load('cause'),
-                    'receipt_url' => $receiptUrl
-                ]
-            ]);
-
-        } catch (Exception $e) {
-            Log::error('Error verifying donation payment: ' . $e->getMessage());
-            
-            // Update donation as failed
-            if (isset($donation)) {
-                $donation->update(['status' => 'failed']);
             }
 
             return response()->json([
                 'success' => false,
-                'message' => 'Payment verification failed'
+                'message' => 'Donation is ' . $donation->status,
+                'status' => $donation->status
             ], 400);
+
+        } catch (Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Payment verification failed: ' . $e->getMessage()
+            ], 500);
         }
     }
 

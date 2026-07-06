@@ -82,7 +82,7 @@
                                 <label class="form-label fw-bold text-dark">Tags <span class="text-danger">*</span></label>
                                 <div class="input-group">
                                     <input type="text" id="tagInput" class="form-control border-2 @error('tags') is-invalid @enderror" placeholder="Add a tag" style="border-top-left-radius: 12px; border-bottom-left-radius: 12px; border-right: none; border-color: #e5cbd6;">
-                                    <button class="btn btn-primary d-flex align-items-center justify-content-center" type="button" id="addTagBtn" style="border-top-right-radius: 12px; border-bottom-right-radius: 12px; background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%) !important; color: white; border: none; border-left: none; width: 48px; font-size: 1.2rem;">
+                                    <button class="btn btn-primary d-flex align-items-center justify-content-center" type="button" id="addTagBtn" style="border-top-right-radius: 12px; border-bottom-right-radius: 12px; background: linear-gradient(135deg, #84144f 0%, #aa1262 100%) !important; color: white; border: none; border-left: none; width: 48px; font-size: 1.2rem;">
                                         <i class="fa-solid fa-plus"></i>
                                     </button>
                                 </div>

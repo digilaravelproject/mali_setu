@@ -15,10 +15,10 @@
 
     <style>
         :root { 
-            --primary: #ff4757; 
-            --primary-dark: #ff2a3b;
-            --accent: #ff7a59; 
-            --accent-dark: #e05e3d;
+            --primary: #84144f; 
+            --primary-dark: #630837;
+            --accent: #aa1262; 
+            --accent-dark: #84144f;
             --light-bg: #f4f3f0;
             --glass: rgba(255, 255, 255, 0.9);
             --gold: #d4af37;
@@ -387,7 +387,7 @@
             bottom: 4px;
             left: 4px;
             width: calc(50% - 4px);
-            background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+            background: linear-gradient(135deg, #84144f 0%, #aa1262 100%);
             border-radius: 50px;
             transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
             z-index: 1;
@@ -517,7 +517,7 @@
             transition: all 0.3s;
         }
         .plan-tabs .nav-link.active {
-            background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%) !important;
+            background: linear-gradient(135deg, #84144f 0%, #aa1262 100%) !important;
             color: #ffffff !important;
             box-shadow: 0 8px 20px rgba(255, 71, 87, 0.2);
             border-color: transparent;
@@ -532,7 +532,7 @@
             font-weight: 700;
         }
         #landingBlogTabs.nav-pills .nav-link.active {
-            background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%) !important;
+            background: linear-gradient(135deg, #84144f 0%, #aa1262 100%) !important;
             color: white !important;
             border-color: transparent !important;
             box-shadow: 0 4px 15px rgba(255, 71, 87, 0.3) !important;
@@ -713,7 +713,7 @@
             border-radius: 10px !important;
         }
         #landingBlogTabs::-webkit-scrollbar-thumb:hover {
-            background: var(--primary-dark, #ff2a3b) !important;
+            background: var(--primary-dark, #630837) !important;
         }
         #landingBlogTabs .nav-item {
             flex-shrink: 0 !important;
@@ -728,7 +728,7 @@
             user-select: none;
         }
         #landingBlogTabs .nav-link.active {
-            background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%) !important;
+            background: linear-gradient(135deg, #84144f 0%, #aa1262 100%) !important;
             color: white !important;
             border-color: transparent !important;
             box-shadow: 0 4px 15px rgba(255, 71, 87, 0.3) !important;
@@ -1140,7 +1140,7 @@
             </div>
             <div class="col-md-4" data-aos="fade-up" data-aos-delay="200">
                 <div class="glass-card p-4">
-                    <div class="bg-accent bg-opacity-10 text-accent rounded-3 d-flex align-items-center justify-content-center mb-4" style="width:50px; height:50px; background:rgba(255,122,89,0.1); color:#ff7a59;">
+                    <div class="bg-accent bg-opacity-10 text-accent rounded-3 d-flex align-items-center justify-content-center mb-4" style="width:50px; height:50px; background:rgba(170,18,98,0.1); color:#aa1262;">
                         <i class="fa-solid fa-lock fs-4"></i>
                     </div>
                     <h5 class="fw-bold text-dark">Strict Privacy Controls</h5>

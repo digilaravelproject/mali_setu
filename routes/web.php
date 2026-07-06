@@ -45,6 +45,7 @@ Route::get('/', function () {
 Route::get('/privacy-policy', [PageController::class, 'privacyPolicy'])->name('privacy-policy');
 Route::get('/terms-condition', [PageController::class, 'termsCondition'])->name('terms-condition');
 Route::get('/contact-us', [PageController::class, 'contactUs'])->name('contact-us');
+Route::post('/ccavenue/callback', [\App\Http\Controllers\CCAvenueController::class, 'handleCallback'])->name('ccavenue.callback');
 
 // Public Blog Routes
 Route::get('/blogs/{id}', [\App\Http\Controllers\BlogController::class, 'showPublic'])->name('blogs.public.show');

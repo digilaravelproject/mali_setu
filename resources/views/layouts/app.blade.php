@@ -14,13 +14,13 @@
 
     <style>
         :root {
-            --primary: #ff4757;
-            --primary-dark: #ff2a3b;
-            --primary-rgb: 255,71,87;
-            --accent: #ff7a59;
+            --primary: #84144f;
+            --primary-dark: #630837;
+            --primary-rgb: 132,20,79;
+            --accent: #aa1262;
             --light-bg: #f4f3f0;
             --glass: #ffffff;
-            --border-glow: rgba(255, 71, 87, 0.1);
+            --border-glow: rgba(132, 20, 79, 0.1);
             --sidebar-width: 280px;
         }
 
@@ -108,7 +108,7 @@
 
         .nav-link-navbar.active {
             color: #fff !important;
-            background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%) !important;
+            background: linear-gradient(135deg, #84144f 0%, #aa1262 100%) !important;
             box-shadow: 0 4px 12px rgba(255, 71, 87, 0.15) !important;
         }
 
@@ -295,17 +295,17 @@
         }
 
         .drawer-menu-item:hover, .drawer-menu-item.active {
-            background: rgba(255, 71, 87, 0.05);
+            background: rgba(132, 20, 79, 0.05);
             color: var(--primary);
         }
 
         /* Header Card */
         .welcome-banner {
-            background: linear-gradient(135deg, #ff4757 0%, #ff7a59 100%);
+            background: linear-gradient(135deg, #84144f 0%, #aa1262 100%);
             color: #fff;
             border-radius: 24px;
             padding: 40px;
-            box-shadow: 0 15px 35px rgba(255, 71, 87, 0.15);
+            box-shadow: 0 15px 35px rgba(132, 20, 79, 0.15);
             margin-bottom: 35px;
             position: relative;
             overflow: hidden;
@@ -389,7 +389,7 @@
 
         /* Buttons consistent with active dashboard color scheme */
         .btn-primary {
-            background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%) !important;
+            background: linear-gradient(135deg, #84144f 0%, #aa1262 100%) !important;
             border: none !important;
             color: #fff !important;
             box-shadow: 0 4px 12px rgba(255, 71, 87, 0.15) !important;
@@ -412,7 +412,7 @@
         .btn-outline-primary:hover, .btn-outline-primary:focus, .btn-outline-primary:active,
         .btn-outline-teal:hover, .btn-outline-teal:focus, .btn-outline-teal:active,
         .btn-outline-secondary:hover, .btn-outline-secondary:focus, .btn-outline-secondary:active {
-            background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%) !important;
+            background: linear-gradient(135deg, #84144f 0%, #aa1262 100%) !important;
             border-color: transparent !important;
             color: #fff !important;
         }
@@ -657,7 +657,29 @@
 
     </style>
     @yield('styles')
-    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+    <!-- CCAvenue Redirect Script Helper -->
+    <script>
+        function redirectToCCAvenue(data) {
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = data.payment_url;
+
+            const encReq = document.createElement('input');
+            encReq.type = 'hidden';
+            encReq.name = 'encRequest';
+            encReq.value = data.encRequest;
+            form.appendChild(encReq);
+
+            const accessCode = document.createElement('input');
+            accessCode.type = 'hidden';
+            accessCode.name = 'access_code';
+            accessCode.value = data.access_code;
+            form.appendChild(accessCode);
+
+            document.body.appendChild(form);
+            form.submit();
+        }
+    </script>
 </head>
 <body>
 
@@ -871,7 +893,7 @@
                     text: "You won't be able to revert this deletion!",
                     icon: 'warning',
                     showCancelButton: true,
-                    confirmButtonColor: '#ff4757',
+                    confirmButtonColor: '#84144f',
                     cancelButtonColor: '#6c757d',
                     confirmButtonText: 'Yes, delete it!',
                     cancelButtonText: 'Cancel',
@@ -1398,62 +1420,7 @@
         .then(res => res.json())
         .then(data => {
             if (data.success) {
-                // Initialize Razorpay
-                const options = {
-                    key: data.key,
-                    amount: data.amount * 100,
-                    currency: data.currency,
-                    name: 'Mali Setu Noble Cause',
-                    description: `Support: ${data.cause_title}`,
-                    order_id: data.order_id,
-                    handler: function (response) {
-                        // Verify signature
-                        fetch('/dashboard/donations/verify', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                            },
-                            body: JSON.stringify({
-                                razorpay_payment_id: response.razorpay_payment_id,
-                                razorpay_order_id: response.razorpay_order_id,
-                                razorpay_signature: response.razorpay_signature,
-                                donation_id: data.donation_id
-                            })
-                        })
-                        .then(res => res.json())
-                        .then(verifyData => {
-                            if (verifyData.success) {
-                                Swal.fire({
-                                    title: 'Thank You!',
-                                    text: 'Your noble contribution was received successfully. God bless you!',
-                                    icon: 'success',
-                                    confirmButtonText: isLogoutTriggered ? 'Proceed to Sign Out' : 'Close',
-                                    confirmButtonColor: '#ff4757',
-                                    allowOutsideClick: false
-                                }).then(() => {
-                                    if (isLogoutTriggered) {
-                                        executeLogout();
-                                    } else {
-                                        const modalEl = document.getElementById('donationPaymentFormModal');
-                                        const modal = bootstrap.Modal.getInstance(modalEl);
-                                        if (modal) modal.hide();
-                                    }
-                                });
-                            } else {
-                                Swal.fire('Error', verifyData.message || 'Signature verification failed', 'error');
-                            }
-                        });
-                    },
-                    theme: {
-                        color: '#ff4757'
-                    }
-                };
-                const rzp = new Razorpay(options);
-                rzp.on('payment.failed', function (response){
-                    Swal.fire('Payment Failed', response.error.description || 'Contribution could not be completed.', 'error');
-                });
-                rzp.open();
+                redirectToCCAvenue(data);
             } else {
                 Swal.fire('Error', data.message || 'Failed to initiate order', 'error');
             }

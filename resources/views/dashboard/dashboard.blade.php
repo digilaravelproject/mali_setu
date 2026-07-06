@@ -276,7 +276,7 @@
         <div class="tab-panel active" id="tab-overview">
             
             <!-- Welcome Banner -->
-            <div class="welcome-banner mb-4 text-start shadow-sm border border-white border-opacity-10 d-none" style="background: linear-gradient(135deg, #ff4757 0%, #ff7a59 100%);">
+            <div class="welcome-banner mb-4 text-start shadow-sm border border-white border-opacity-10 d-none" style="background: linear-gradient(135deg, #84144f 0%, #aa1262 100%);">
                 <div class="row align-items-center">
                     <div class="col-md-8">
                         <span class="badge bg-white bg-opacity-20 text-black mb-3 px-3 py-1.5 rounded-pill fw-bold text-uppercase small"><i class="fa-solid fa-crown me-1 text-warning"></i> {{ ucfirst($user->user_type) }} Profile</span>
@@ -580,7 +580,7 @@
                     <div class="quick-access-card">
                         <div>
                             <div class="d-flex align-items-center justify-content-between mb-3">
-                                <div class="quick-icon-square" style="background-color: #ff4757;">
+                                <div class="quick-icon-square" style="background-color: #84144f;">
                                     <i class="fa-solid fa-heart fs-5 text-white"></i>
                                 </div>
                                 @if($user->is_matrimony)
@@ -603,7 +603,7 @@
                     <div class="quick-access-card">
                         <div>
                             <div class="d-flex align-items-center justify-content-between mb-3">
-                                <div class="quick-icon-square" style="background-color: #ff4757;">
+                                <div class="quick-icon-square" style="background-color: #84144f;">
                                     <i class="fa-solid fa-briefcase fs-5 text-white"></i>
                                 </div>
                                 @if($user->is_business)
@@ -1021,7 +1021,7 @@
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content modal-glassmorphic border-0 p-3 text-center">
             <div class="modal-body p-4">
-                <div class="text-primary mb-4 d-inline-flex align-items-center justify-content-center" style="width: 80px; height: 80px; background: rgba(255,71,87,0.08); border-radius: 50%; font-size: 2.2rem;">
+                <div class="text-primary mb-4 d-inline-flex align-items-center justify-content-center" style="width: 80px; height: 80px; background: rgba(132, 20, 79, 0.08); border-radius: 50%; font-size: 2.2rem;">
                     <i class="fa-solid fa-briefcase text-primary"></i>
                 </div>
                 <h3 class="fw-bold text-dark mb-2">Establish Your Enterprise</h3>

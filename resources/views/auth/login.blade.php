@@ -13,12 +13,12 @@
 
     <style>
         :root {
-            --primary: #ff4757;
-            --primary-dark: #ff2a3b;
-            --accent: #ff7a59;
+            --primary: #84144f;
+            --primary-dark: #630837;
+            --accent: #aa1262;
             --light-bg: #f4f3f0;
             --glass: rgba(255, 255, 255, 0.95);
-            --border-glow: rgba(255, 71, 87, 0.15);
+            --border-glow: rgba(132, 20, 79, 0.15);
         }
 
         body {
@@ -43,13 +43,13 @@
             backdrop-filter: blur(20px);
             border: 1px solid rgba(255, 255, 255, 0.4);
             border-radius: 30px;
-            box-shadow: 0 30px 60px rgba(255, 71, 87, 0.1);
+            box-shadow: 0 30px 60px rgba(132, 20, 79, 0.1);
             overflow: hidden;
             transition: all 0.4s ease;
         }
 
         .auth-banner {
-            background: linear-gradient(135deg, #ff4757, #ff2a3b);
+            background: linear-gradient(135deg, #84144f, #aa1262);
             color: #fff;
             padding: 50px;
             display: flex;

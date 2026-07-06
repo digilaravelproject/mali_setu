@@ -2,10 +2,10 @@
 
 @section('content')
 <style>
-.convo-card { border-radius: 16px; background: rgba(255,255,255,0.8); border: 1px solid rgba(255,71,87,0.08); padding: 14px 18px; transition: all 0.3s ease; cursor: pointer; text-decoration: none; color: inherit; display: block; }
+.convo-card { border-radius: 16px; background: rgba(255,255,255,0.8); border: 1px solid rgba(132,20,79,0.08); padding: 14px 18px; transition: all 0.3s ease; cursor: pointer; text-decoration: none; color: inherit; display: block; }
 .convo-card:hover { transform: translateX(4px); border-color: var(--primary); color: inherit; }
 .convo-avatar { width: 52px; height: 52px; border-radius: 14px; object-fit: cover; }
-.convo-avatar-placeholder { width: 52px; height: 52px; border-radius: 14px; background: linear-gradient(135deg,#ffe3e5,#ffcbd1); display: flex; align-items: center; justify-content: center; color: var(--primary); font-size: 1.3rem; }
+.convo-avatar-placeholder { width: 52px; height: 52px; border-radius: 14px; background: linear-gradient(135deg,#fff2f6,#ffe4ec); display: flex; align-items: center; justify-content: center; color: var(--primary); font-size: 1.3rem; }
 .unread-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--primary); }
 </style>
 

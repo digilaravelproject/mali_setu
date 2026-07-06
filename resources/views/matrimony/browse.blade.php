@@ -177,7 +177,7 @@
     }
 
     .apply-filter-btn {
-        background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%) !important;
+        background: linear-gradient(135deg, #84144f 0%, #aa1262 100%) !important;
         border: none;
         color: #ffffff;
         font-weight: 700;
@@ -279,7 +279,7 @@
         {{-- LEFT DISCOVER FILTER CARD --}}
         <div class="col-lg-4 col-md-5">
             {{-- Mobile Discover Filter Toggle Button --}}
-            <button class="btn btn-primary d-md-none w-100 mb-3 rounded-3 fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#discoverFilterCollapse" aria-expanded="false" aria-controls="discoverFilterCollapse" style="background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%) !important; border: none !important; padding: 12px 20px; box-shadow: 0 4px 12px rgba(var(--primary-rgb), 0.15);">
+            <button class="btn btn-primary d-md-none w-100 mb-3 rounded-3 fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#discoverFilterCollapse" aria-expanded="false" aria-controls="discoverFilterCollapse" style="background: linear-gradient(135deg, #84144f 0%, #aa1262 100%) !important; border: none !important; padding: 12px 20px; box-shadow: 0 4px 12px rgba(var(--primary-rgb), 0.15);">
                 <i class="fa-solid fa-sliders me-2"></i> Show / Hide Filters
             </button>
 

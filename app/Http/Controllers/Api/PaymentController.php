@@ -12,19 +12,19 @@ use App\Models\MatrimonyPlan;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Log;
-use Razorpay\Api\Api;
+use App\Services\CCAvenue;
 
 class PaymentController extends Controller
 {
-    private $razorpay;
+    private $ccavenue;
 
-    public function __construct()
+    public function __construct(CCAvenue $ccavenue)
     {
-        $this->razorpay = new Api(env('RAZORPAY_KEY_ID'), env('RAZORPAY_KEY_SECRET'));
+        $this->ccavenue = $ccavenue;
     }
 
     /**
-     * Create Razorpay order
+     * Create CCAvenue order
      */
     public function createOrder(Request $request)
     {
@@ -45,14 +45,13 @@ class PaymentController extends Controller
         }
 
         try {
-            $orderData = [
-                'receipt' => 'order_' . time(),
-                'amount' => $request->amount * 100, // Convert to paise
-                'currency' => 'INR',
-                'payment_capture' => 1
-            ];
-
-            $razorpayOrder = $this->razorpay->order->create($orderData);
+            $prefix = match($request->purpose) {
+                'business_registration' => 'BIZ-',
+                'matrimony_profile' => 'MAT-',
+                'donation' => 'DON-',
+                default => 'GEN-'
+            };
+            $orderId = $prefix . time() . '-' . mt_rand(1000, 9999);
 
             // Create transaction record
             $transaction = Transaction::create([
@@ -60,29 +59,45 @@ class PaymentController extends Controller
                 'amount' => $request->amount,
                 'currency' => 'INR',
                 'purpose' => $request->purpose,
-                'razorpay_order_id' => $razorpayOrder['id'],
+                'razorpay_order_id' => $orderId,
                 'status' => 'pending',
                 'subscription_period' => $request->subscription_period,
             ]);
+
+            // Prepare CCAvenue parameters
+            $params = [
+                'order_id' => $orderId,
+                'amount' => number_format($request->amount, 2, '.', ''),
+                'currency' => 'INR',
+                'redirect_url' => route('ccavenue.callback'),
+                'cancel_url' => route('ccavenue.callback'),
+                'language' => 'EN',
+                'billing_name' => $request->user()->name ?? '',
+                'billing_email' => $request->user()->email ?? '',
+                'billing_tel' => $request->user()->phone ?? ''
+            ];
 
             return response()->json([
                 'success' => true,
                 'message' => 'Order created successfully',
                 'data' => [
-                    'order_id' => $razorpayOrder['id'],
-                    'amount' => $razorpayOrder['amount'],
-                    'currency' => $razorpayOrder['currency'],
-                    'transaction_id' => $transaction->id,
-                    'key_id' => env('RAZORPAY_KEY_ID')
+                    'payment_way' => 'ccavenue',
+                    'payment_url' => $this->ccavenue->getPaymentUrl(),
+                    'encRequest' => $this->ccavenue->encrypt($params),
+                    'access_code' => $this->ccavenue->getAccessCode(),
+                    'order_id' => $orderId,
+                    'amount' => $request->amount,
+                    'currency' => 'INR',
+                    'transaction_id' => $transaction->id
                 ]
             ], 201);
 
         } catch (\Exception $e) {
-            Log::error('Razorpay order creation failed: ' . $e->getMessage());
+            Log::error('CCAvenue order creation failed: ' . $e->getMessage());
             
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to create payment order'
+                'message' => 'Failed to create payment order: ' . $e->getMessage()
             ], 500);
         }
     }
@@ -118,43 +133,52 @@ class PaymentController extends Controller
         $subscriptionMonths = intval($plan->duration_years) * 12;
 
         try {
-            $orderData = [
-                'receipt' => 'business_plan_' . $plan->id . '_' . time(),
-                'amount' => $amount * 100,
-                'currency' => 'INR',
-                'payment_capture' => 1
-            ];
-
-            $razorpayOrder = $this->razorpay->order->create($orderData);
+            $orderId = 'BIZ-' . time() . '-' . mt_rand(1000, 9999);
 
             $transaction = Transaction::create([
                 'user_id' => $request->user()->id,
                 'amount' => $amount,
                 'currency' => 'INR',
                 'purpose' => 'business_registration',
-                'razorpay_order_id' => $razorpayOrder['id'],
+                'razorpay_order_id' => $orderId,
                 'status' => 'pending',
                 'subscription_period' => $subscriptionMonths,
                 'meta' => json_encode(['plan_id' => $plan->id])
             ]);
 
+            // Prepare CCAvenue parameters
+            $params = [
+                'order_id' => $orderId,
+                'amount' => number_format($amount, 2, '.', ''),
+                'currency' => 'INR',
+                'redirect_url' => route('ccavenue.callback'),
+                'cancel_url' => route('ccavenue.callback'),
+                'language' => 'EN',
+                'billing_name' => $request->user()->name ?? '',
+                'billing_email' => $request->user()->email ?? '',
+                'billing_tel' => $request->user()->phone ?? ''
+            ];
+
             return response()->json([
                 'success' => true,
                 'message' => 'Order created successfully',
                 'data' => [
-                    'order_id' => $razorpayOrder['id'],
-                    'amount' => $razorpayOrder['amount'],
-                    'currency' => $razorpayOrder['currency'],
-                    'transaction_id' => $transaction->id,
-                    'key_id' => env('RAZORPAY_KEY_ID')
+                    'payment_way' => 'ccavenue',
+                    'payment_url' => $this->ccavenue->getPaymentUrl(),
+                    'encRequest' => $this->ccavenue->encrypt($params),
+                    'access_code' => $this->ccavenue->getAccessCode(),
+                    'order_id' => $orderId,
+                    'amount' => $amount,
+                    'currency' => 'INR',
+                    'transaction_id' => $transaction->id
                 ]
             ], 201);
 
         } catch (\Exception $e) {
-            Log::error('Razorpay business order creation failed: ' . $e->getMessage());
+            Log::error('CCAvenue business order creation failed: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to create payment order'
+                'message' => 'Failed to create payment order: ' . $e->getMessage()
             ], 500);
         }
     }
@@ -190,43 +214,52 @@ class PaymentController extends Controller
         $subscriptionMonths = intval($plan->duration_years) * 12;
 
         try {
-            $orderData = [
-                'receipt' => 'matrimony_plan_' . $plan->id . '_' . time(),
-                'amount' => $amount * 100,
-                'currency' => 'INR',
-                'payment_capture' => 1
-            ];
-
-            $razorpayOrder = $this->razorpay->order->create($orderData);
+            $orderId = 'MAT-' . time() . '-' . mt_rand(1000, 9999);
 
             $transaction = Transaction::create([
                 'user_id' => $request->user()->id,
                 'amount' => $amount,
                 'currency' => 'INR',
                 'purpose' => 'matrimony_profile',
-                'razorpay_order_id' => $razorpayOrder['id'],
+                'razorpay_order_id' => $orderId,
                 'status' => 'pending',
                 'subscription_period' => $subscriptionMonths,
                 'meta' => json_encode(['plan_id' => $plan->id])
             ]);
 
+            // Prepare CCAvenue parameters
+            $params = [
+                'order_id' => $orderId,
+                'amount' => number_format($amount, 2, '.', ''),
+                'currency' => 'INR',
+                'redirect_url' => route('ccavenue.callback'),
+                'cancel_url' => route('ccavenue.callback'),
+                'language' => 'EN',
+                'billing_name' => $request->user()->name ?? '',
+                'billing_email' => $request->user()->email ?? '',
+                'billing_tel' => $request->user()->phone ?? ''
+            ];
+
             return response()->json([
                 'success' => true,
                 'message' => 'Order created successfully',
                 'data' => [
-                    'order_id' => $razorpayOrder['id'],
-                    'amount' => $razorpayOrder['amount'],
-                    'currency' => $razorpayOrder['currency'],
-                    'transaction_id' => $transaction->id,
-                    'key_id' => env('RAZORPAY_KEY_ID')
+                    'payment_way' => 'ccavenue',
+                    'payment_url' => $this->ccavenue->getPaymentUrl(),
+                    'encRequest' => $this->ccavenue->encrypt($params),
+                    'access_code' => $this->ccavenue->getAccessCode(),
+                    'order_id' => $orderId,
+                    'amount' => $amount,
+                    'currency' => 'INR',
+                    'transaction_id' => $transaction->id
                 ]
             ], 201);
 
         } catch (\Exception $e) {
-            Log::error('Razorpay matrimony order creation failed: ' . $e->getMessage());
+            Log::error('CCAvenue matrimony order creation failed: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to create payment order'
+                'message' => 'Failed to create payment order: ' . $e->getMessage()
             ], 500);
         }
     }
@@ -237,10 +270,10 @@ class PaymentController extends Controller
     public function verifyPayment(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'razorpay_payment_id' => 'required|string',
-            'razorpay_order_id' => 'required|string',
-            'razorpay_signature' => 'required|string',
             'transaction_id' => 'required|integer|exists:transactions,id',
+            'razorpay_payment_id' => 'nullable|string',
+            'razorpay_order_id' => 'nullable|string',
+            'razorpay_signature' => 'nullable|string',
         ]);
 
         if ($validator->fails()) {
@@ -253,127 +286,36 @@ class PaymentController extends Controller
             ], 422);
         }
 
-        $transaction = null;
         try {
-            // Verify signature
-            $attributes = [
-                'razorpay_order_id' => $request->razorpay_order_id,
-                'razorpay_payment_id' => $request->razorpay_payment_id,
-                'razorpay_signature' => $request->razorpay_signature
-            ];
-
-            try {
-                $this->razorpay->utility->verifyPaymentSignature($attributes);
-            } catch (\Exception $signatureError) {
-                Log::error('Razorpay signature verification failed: ' . $signatureError->getMessage());
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Payment signature verification failed. Invalid payment credentials.'
-                ], 400);
-            }
-
             // Get transaction
             $transaction = Transaction::where('id', $request->transaction_id)
                 ->where('user_id', $request->user()->id)
                 ->firstOrFail();
 
-            Log::info('Transaction found - ID: ' . $transaction->id . ', User: ' . $request->user()->id);
-
-            // Update transaction
-            $updatedTransaction = $transaction->update([
-                'razorpay_payment_id' => $request->razorpay_payment_id,
-                'status' => 'completed',
-            ]);
-
-            Log::info('Transaction updated with payment ID and completed status');
-
-            // Check if payment already exists for this transaction
-            $existingPayment = Payment::where('transaction_id', $transaction->id)->first();
-            
-            if (!$existingPayment) {
-                // Map purpose to payment_type enum
-                $paymentType = match($transaction->purpose) {
-                    'matrimony_profile' => 'matrimony_subscription',
-                    default => $transaction->purpose
-                };
-
-                // Prepare payment data with proper type conversions
-                $paymentData = [
-                    'user_id' => (int)$request->user()->id,
-                    'transaction_id' => (string)$transaction->id,
-                    'payment_id' => (string)$request->razorpay_payment_id,
-                    'order_id' => (string)$request->razorpay_order_id,
-                    'payment_type' => $paymentType,
-                    'amount' => (float)$transaction->amount,
-                    'currency' => (string)$transaction->currency,
-                    'payment_method' => 'razorpay',
-                    'status' => 'completed',
-                    'metadata' => [
-                        'razorpay_order_id' => $request->razorpay_order_id,
-                        'subscription_period' => $transaction->subscription_period ?? 1,
-                        'original_purpose' => $transaction->purpose
-                    ],
-                    'paid_at' => now(),
-                    'razorpay_response' => [
-                        'razorpay_payment_id' => $request->razorpay_payment_id,
-                        'razorpay_order_id' => $request->razorpay_order_id,
-                        'razorpay_signature' => $request->razorpay_signature
-                    ]
-                ];
-
-                Log::info('Creating payment with data: ' . json_encode($paymentData));
-
-                try {
-                    $payment = Payment::create($paymentData);
-                    Log::info('Payment record created successfully - Payment ID: ' . $payment->id);
-                } catch (\Exception $paymentError) {
-                    Log::error('Payment record creation failed: ' . $paymentError->getMessage());
-                    Log::error('Payment error code: ' . $paymentError->getCode());
-                    Log::error('Payment data attempted: ' . json_encode($paymentData));
-                    Log::error('Stack trace: ' . $paymentError->getTraceAsString());
-                    throw $paymentError;
-                }
-            } else {
-                Log::info('Payment already exists for transaction ID: ' . $transaction->id);
+            if ($transaction->status === 'completed') {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Payment verified successfully',
+                    'data' => ['transaction' => $transaction]
+                ]);
             }
 
-            // Refresh transaction to get updated data
-            $transaction->refresh();
-
-            // Process based on purpose
-            $this->processPaymentPurpose($transaction);
-
-            Log::info('Payment verified successfully for transaction ID: ' . $transaction->id);
-
             return response()->json([
-                'success' => true,
-                'message' => 'Payment verified successfully',
-                'data' => ['transaction' => $transaction]
-            ]);
+                'success' => false,
+                'message' => 'Payment is ' . $transaction->status,
+                'status' => $transaction->status
+            ], 400);
 
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
-            Log::error('Transaction not found - Transaction ID: ' . $request->transaction_id . ', User: ' . $request->user()->id);
             return response()->json([
                 'success' => false,
                 'message' => 'Transaction not found or unauthorized'
             ], 404);
         } catch (\Exception $e) {
-            Log::error('Payment verification error: ' . get_class($e) . ' - ' . $e->getMessage());
-            Log::error('Stack trace: ' . $e->getTraceAsString());
-            
-            // Update transaction as failed
-            if ($transaction) {
-                $transaction->update(['status' => 'failed']);
-                Log::info('Transaction marked as failed - ID: ' . $transaction->id);
-            }
-
-            // Return error with details for debugging
-            $errorMessage = env('APP_DEBUG') ? $e->getMessage() : 'Payment verification failed';
-            
             return response()->json([
                 'success' => false,
-                'message' => $errorMessage
-            ], 400);
+                'message' => 'Payment verification failed: ' . $e->getMessage()
+            ], 500);
         }
     }
 

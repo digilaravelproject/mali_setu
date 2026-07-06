@@ -182,7 +182,7 @@
                             @if($cover)
                                 <img src="{{ asset('storage/' . $cover) }}" class="w-100 h-100" style="object-fit: cover;">
                             @else
-                                <div class="w-100 h-100 d-flex align-items-center justify-content-center text-white" style="background: linear-gradient(135deg, rgba(255,71,87,0.12), rgba(255,71,87,0.06));">
+                                <div class="w-100 h-100 d-flex align-items-center justify-content-center text-white" style="background: linear-gradient(135deg, rgba(132,20,79,0.12), rgba(132,20,79,0.06));">
                                     <i class="fa-solid fa-store"></i>
                                 </div>
                             @endif

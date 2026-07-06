@@ -467,38 +467,44 @@ class BusinessController extends Controller
         $subscriptionMonths = intval($plan->duration_years) * 12;
 
         try {
-            $razorpay = new \Razorpay\Api\Api(env('RAZORPAY_KEY_ID'), env('RAZORPAY_KEY_SECRET'));
-            $orderData = [
-                'receipt' => 'business_plan_' . $plan->id . '_' . time(),
-                'amount' => $amount * 100,
-                'currency' => 'INR',
-                'payment_capture' => 1
-            ];
-
-            $razorpayOrder = $razorpay->order->create($orderData);
+            $ccavenue = app(\App\Services\CCAvenue::class);
+            $orderId = 'BIZ-' . time() . '-' . mt_rand(1000, 9999);
 
             $transaction = Transaction::create([
                 'user_id' => $request->user()->id,
                 'amount' => $amount,
                 'currency' => 'INR',
                 'purpose' => 'business_registration',
-                'razorpay_order_id' => $razorpayOrder['id'],
+                'razorpay_order_id' => $orderId,
                 'status' => 'pending',
                 'subscription_period' => $subscriptionMonths,
                 'meta' => json_encode(['plan_id' => $plan->id])
             ]);
 
+            // Prepare CCAvenue parameters
+            $params = [
+                'order_id' => $orderId,
+                'amount' => number_format($amount, 2, '.', ''),
+                'currency' => 'INR',
+                'redirect_url' => route('ccavenue.callback'),
+                'cancel_url' => route('ccavenue.callback'),
+                'language' => 'EN',
+                'billing_name' => $request->user()->name ?? '',
+                'billing_email' => $request->user()->email ?? '',
+                'billing_tel' => $request->user()->phone ?? ''
+            ];
+
             return response()->json([
                 'success' => true,
-                'order_id' => $razorpayOrder['id'],
-                'amount' => $razorpayOrder['amount'],
-                'currency' => $razorpayOrder['currency'],
-                'transaction_id' => $transaction->id,
-                'key_id' => env('RAZORPAY_KEY_ID')
+                'payment_way' => 'ccavenue',
+                'payment_url' => $ccavenue->getPaymentUrl(),
+                'encRequest' => $ccavenue->encrypt($params),
+                'access_code' => $ccavenue->getAccessCode(),
+                'transaction_id' => $transaction->id
             ], 201);
 
         } catch (\Exception $e) {
-            \Log::error('Razorpay web business order creation failed: ' . $e->getMessage());
+            \Log::error('CCAvenue web business order initiation failed: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to create payment order: ' . $e->getMessage()
@@ -507,98 +513,14 @@ class BusinessController extends Controller
     }
 
     /**
-     * Verify Razorpay Payment Signature
+     * Verify Razorpay Payment Signature (Legacy Razorpay route)
      */
     public function verifyBusinessPayment(Request $request)
     {
-        $request->validate([
-            'razorpay_payment_id' => 'required|string',
-            'razorpay_order_id' => 'required|string',
-            'razorpay_signature' => 'required|string',
-            'transaction_id' => 'required|integer|exists:transactions,id',
-        ]);
-
-        $transaction = null;
-        try {
-            $attributes = [
-                'razorpay_order_id' => $request->razorpay_order_id,
-                'razorpay_payment_id' => $request->razorpay_payment_id,
-                'razorpay_signature' => $request->razorpay_signature
-            ];
-
-            $razorpay = new \Razorpay\Api\Api(env('RAZORPAY_KEY_ID'), env('RAZORPAY_KEY_SECRET'));
-            try {
-                $razorpay->utility->verifyPaymentSignature($attributes);
-            } catch (\Exception $signatureError) {
-                \Log::error('Razorpay signature verification failed on web: ' . $signatureError->getMessage());
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Payment signature verification failed. Invalid credentials.'
-                ], 400);
-            }
-
-            $transaction = Transaction::where('id', $request->transaction_id)
-                ->where('user_id', $request->user()->id)
-                ->firstOrFail();
-
-            $transaction->update([
-                'razorpay_payment_id' => $request->razorpay_payment_id,
-                'status' => 'completed',
-            ]);
-
-            $existingPayment = Payment::where('transaction_id', $transaction->id)->first();
-            if (!$existingPayment) {
-                Payment::create([
-                    'user_id' => $request->user()->id,
-                    'transaction_id' => $transaction->id,
-                    'payment_id' => $request->razorpay_payment_id,
-                    'order_id' => $request->razorpay_order_id,
-                    'payment_type' => 'business_registration',
-                    'amount' => $transaction->amount,
-                    'currency' => $transaction->currency,
-                    'payment_method' => 'razorpay',
-                    'status' => 'completed',
-                    'metadata' => json_encode([
-                        'razorpay_order_id' => $request->razorpay_order_id,
-                        'subscription_period' => $transaction->subscription_period ?? 1,
-                        'original_purpose' => $transaction->purpose
-                    ]),
-                    'paid_at' => now(),
-                    'razorpay_response' => json_encode([
-                        'razorpay_payment_id' => $request->razorpay_payment_id,
-                        'razorpay_order_id' => $request->razorpay_order_id,
-                        'razorpay_signature' => $request->razorpay_signature
-                    ])
-                ]);
-            }
-
-            $business = Business::where('user_id', $transaction->user_id)
-                ->latest()
-                ->first();
-
-            if ($business) {
-                $expiresAt = now()->addMonths($transaction->subscription_period ?? 1);
-                $business->update([
-                    'subscription_status' => 'active',
-                    'subscription_expires_at' => $expiresAt,
-                ]);
-            }
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Payment verified and subscription activated successfully!'
-            ]);
-
-        } catch (\Exception $e) {
-            \Log::error('Razorpay verification error: ' . $e->getMessage());
-            if ($transaction) {
-                $transaction->update(['status' => 'failed']);
-            }
-            return response()->json([
-                'success' => false,
-                'message' => 'Verification failed: ' . $e->getMessage()
-            ], 400);
-        }
+        return response()->json([
+            'success' => false,
+            'message' => 'This payment verification endpoint is deprecated. Payment is processed via callback.'
+        ], 400);
     }
 
     /**

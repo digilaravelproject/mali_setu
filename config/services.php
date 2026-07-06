@@ -34,6 +34,13 @@ return [
         'secret' => env('RAZORPAY_KEY_SECRET'),
     ],
 
+    'ccavenue' => [
+        'merchant_id' => env('CCAVENUE_MERCHANT_ID'),
+        'working_key' => env('CCAVENUE_WORKING_KEY'),
+        'access_code' => env('CCAVENUE_ACCESS_CODE'),
+        'sandbox'     => env('CCAVENUE_SANDBOX', true),
+    ],
+
     'slack' => [
         'notifications' => [
             'bot_user_oauth_token' => env('SLACK_BOT_USER_OAUTH_TOKEN'),

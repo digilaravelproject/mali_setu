@@ -11,7 +11,7 @@
     <div class="col-xl-12 col-12">
         
         <!-- Header Banner -->
-        <div class="welcome-banner mb-4 text-start shadow-sm border border-white border-opacity-10 d-none" style="background: linear-gradient(135deg, #ff4757 0%, #ff7a59 100%);">
+        <div class="welcome-banner mb-4 text-start shadow-sm border border-white border-opacity-10 d-none" style="background: linear-gradient(135deg, #84144f 0%, #aa1262 100%);">
             <span class="badge bg-white bg-opacity-20 text-black mb-3 px-3 py-1.5 rounded-pill fw-bold text-uppercase small"><i class="fa-solid fa-briefcase me-1 text-warning"></i> Careers Hub</span>
             <h1 class="fw-extrabold text-white mb-2 fs-2">Total Jobs Center</h1>
             <p class="opacity-90 mb-0 font-medium small" style="line-height:1.6;">Browse active career opportunities published by verified local businesses or track your submitted job applications.</p>
@@ -241,9 +241,9 @@
             title: `Feedback: ${jobTitle}`,
             text: feedback,
             icon: 'info',
-            confirmButtonColor: '#ff4757',
+            confirmButtonColor: '#84144f',
             background: 'rgba(255, 255, 255, 0.95)',
-            backdrop: `rgba(255, 71, 87, 0.2)`
+            backdrop: `rgba(132, 20, 79, 0.2)`
         });
     }
 </script>

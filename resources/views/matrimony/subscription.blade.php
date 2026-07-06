@@ -3,10 +3,10 @@
 @section('content')
 <style>
     .premium-gradient-card {
-        background: linear-gradient(135deg, #ff4757 0%, #ff6b81 100%);
+        background: linear-gradient(135deg, #84144f 0%, #aa1262 100%);
         border-radius: 24px;
         color: white;
-        box-shadow: 0 15px 35px rgba(255, 71, 87, 0.15);
+        box-shadow: 0 15px 35px rgba(132, 20, 79, 0.15);
         border: none;
         overflow: hidden;
         position: relative;
@@ -119,18 +119,18 @@
                                     <div>
                                         <h5 class="fw-bold text-dark mb-3">{{ $plan->plan_name }}</h5>
                                         <div class="my-4">
-                                            <h1 class="fw-extrabold text-primary mb-0 font-monospace" style="color: #ff4757 !important;">₹{{ number_format($plan->price, 0) }}</h1>
+                                            <h1 class="fw-extrabold text-primary mb-0 font-monospace" style="color: #84144f !important;">₹{{ number_format($plan->price, 0) }}</h1>
                                             <small class="text-muted">Subscription valid for {{ $plan->duration_years }} Year(s)</small>
                                         </div>
                                         <hr class="opacity-10 my-4">
                                         <ul class="list-unstyled text-start mb-4">
-                                            <li class="mb-2.5 small text-secondary"><i class="fa-solid fa-circle-check text-primary me-2" style="color: #ff4757 !important;"></i> Direct profile highlights</li>
-                                            <li class="mb-2.5 small text-secondary"><i class="fa-solid fa-circle-check text-primary me-2" style="color: #ff4757 !important;"></i> View matches contact phone</li>
-                                            <li class="mb-2.5 small text-secondary"><i class="fa-solid fa-circle-check text-primary me-2" style="color: #ff4757 !important;"></i> Unlimited matches requests</li>
-                                            <li class="mb-2.5 small text-secondary"><i class="fa-solid fa-circle-check text-primary me-2" style="color: #ff4757 !important;"></i> Verified member badge</li>
+                                            <li class="mb-2.5 small text-secondary"><i class="fa-solid fa-circle-check text-primary me-2" style="color: #84144f !important;"></i> Direct profile highlights</li>
+                                            <li class="mb-2.5 small text-secondary"><i class="fa-solid fa-circle-check text-primary me-2" style="color: #84144f !important;"></i> View matches contact phone</li>
+                                            <li class="mb-2.5 small text-secondary"><i class="fa-solid fa-circle-check text-primary me-2" style="color: #84144f !important;"></i> Unlimited matches requests</li>
+                                            <li class="mb-2.5 small text-secondary"><i class="fa-solid fa-circle-check text-primary me-2" style="color: #84144f !important;"></i> Verified member badge</li>
                                         </ul>
                                     </div>
-                                    <button class="btn btn-primary w-100 py-3 rounded-3 fw-bold shadow-sm" style="background-color: #ff4757 !important; border-color: #ff4757 !important;" onclick="startMatrimonyPayment({{ $plan->id }}, {{ $plan->price }})">
+                                    <button class="btn btn-primary w-100 py-3 rounded-3 fw-bold shadow-sm" style="background-color: #84144f !important; border-color: #84144f !important;" onclick="startMatrimonyPayment({{ $plan->id }}, {{ $plan->price }})">
                                         Subscribe Now <i class="fa-solid fa-arrow-right ms-1"></i>
                                     </button>
                                 </div>
@@ -143,7 +143,7 @@
             <!-- Skip and Proceed Flow -->
             <div class="text-center mt-4">
                 <p class="text-secondary small mb-3">Not ready to subscribe yet? You can start with your trial console first.</p>
-                <a href="{{ route('matrimony.index') }}" class="btn btn-outline-secondary px-5 py-3 rounded-3 fw-bold border-2" style="color: #ff4757; border-color: #ff4757 !important;">
+                <a href="{{ route('matrimony.index') }}" class="btn btn-outline-secondary px-5 py-3 rounded-3 fw-bold border-2" style="color: #84144f; border-color: #84144f !important;">
                     Skip & Go to Dashboard <i class="fa-solid fa-arrow-right-to-bracket ms-1"></i>
                 </a>
             </div>
@@ -152,8 +152,7 @@
     </div>
 </div>
 
-<!-- Razorpay Checkout Integration -->
-<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<!-- CCAvenue Checkout Integration -->
 <script>
 function startMatrimonyPayment(planId, price) {
     fetch("{{ route('matrimony.subscribe') }}", {
@@ -162,28 +161,7 @@ function startMatrimonyPayment(planId, price) {
         body: JSON.stringify({ plan_id: planId })
     }).then(r => r.json()).then(data => {
         if (!data.success) { alert(data.message || "Failed to create order."); return; }
-        const rzp = new Razorpay({
-            key: data.key_id, amount: data.amount, currency: data.currency,
-            name: "Mali Setu Matrimony", description: "Premium Matrimony Plan",
-            order_id: data.order_id,
-            handler: function(response) {
-                fetch("{{ route('matrimony.verify-payment') }}", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json", "X-CSRF-TOKEN": "{{ csrf_token() }}" },
-                    body: JSON.stringify({ ...response, transaction_id: data.transaction_id })
-                }).then(r => r.json()).then(v => {
-                    if (v.success) {
-                        alert("Subscription activated successfully!");
-                        window.location.href = "{{ route('matrimony.index') }}";
-                    } else {
-                        alert(v.message);
-                    }
-                });
-            },
-            prefill: { name: "{{ $user->name }}", email: "{{ $user->email }}", contact: "{{ $user->phone }}" },
-            theme: { color: "#ff4757" }
-        });
-        rzp.open();
+        redirectToCCAvenue(data);
     }).catch(() => alert("Payment initialization failed."));
 }
 </script>

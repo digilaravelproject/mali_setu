@@ -3,7 +3,7 @@
 @section('content')
 <style>
     .premium-gradient-card {
-        background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+        background: linear-gradient(135deg, #84144f 0%, #aa1262 100%);
         border-radius: 24px;
         color: white;
         box-shadow: 0 15px 35px rgba(13, 148, 136, 0.18);
@@ -86,12 +86,12 @@
                                     <div>
                                         <h5 class="fw-bold text-dark mb-3">{{ $plan->company_type }}</h5>
                                         <div class="my-4">
-                                            <h2 class="fw-extrabold mb-0" style="color: #ff4757 !important;">₹{{ number_format($plan->price, 0) }}</h2>
+                                            <h2 class="fw-extrabold mb-0" style="color: #84144f !important;">₹{{ number_format($plan->price, 0) }}</h2>
                                             <small class="text-muted">for {{ $plan->duration_years }} year(s)</small>
                                         </div>
                                         <p class="small text-secondary mb-4">{{ $plan->description ?? 'List products, publish active jobs, accept applicants, and get verified.' }}</p>
                                     </div>
-                                    <button class="btn btn-primary w-100 py-2.5 rounded-3 fw-bold shadow-sm" style="background-color: #ff4757 !important; border-color: #ff4757 !important;" onclick="startRazorpayPayment({{ $plan->id }}, {{ $plan->price }})">
+                                    <button class="btn btn-primary w-100 py-2.5 rounded-3 fw-bold shadow-sm" style="background-color: #84144f !important; border-color: #84144f !important;" onclick="startRazorpayPayment({{ $plan->id }}, {{ $plan->price }})">
                                         Select Plan <i class="fa-solid fa-arrow-right ms-1"></i>
                                     </button>
                                 </div>
@@ -113,8 +113,7 @@
     </div>
 </div>
 
-<!-- Razorpay Checkout Integration -->
-<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<!-- CCAvenue Checkout Integration -->
 <script>
     function startRazorpayPayment(planId, price) {
         const csrfToken = '{{ csrf_token() }}';
@@ -130,57 +129,10 @@
         .then(res => res.json())
         .then(data => {
             if (!data.success) {
-                alert(data.message || "Failed to create Razorpay Order.");
+                alert(data.message || "Failed to create Order.");
                 return;
             }
-
-            const options = {
-                key: data.key_id,
-                amount: data.amount,
-                currency: data.currency,
-                name: "Mali Setu Enterprise",
-                description: "Business Premium Plan Activation",
-                order_id: data.order_id,
-                handler: function (response) {
-                    fetch("{{ route('dashboard.business.verify-payment') }}", {
-                        method: "POST",
-                        headers: {
-                            "Content-Type": "application/json",
-                            "X-CSRF-TOKEN": csrfToken
-                        },
-                        body: JSON.stringify({
-                            razorpay_payment_id: response.razorpay_payment_id,
-                            razorpay_order_id: response.razorpay_order_id,
-                            razorpay_signature: response.razorpay_signature,
-                            transaction_id: data.transaction_id
-                        })
-                    })
-                    .then(verifyRes => verifyRes.json())
-                    .then(verifyData => {
-                        if (verifyData.success) {
-                            alert("Subscription activated successfully!");
-                            window.location.href = "{{ route('dashboard.business.index') }}";
-                        } else {
-                            alert(verifyData.message || "Payment verification failed.");
-                        }
-                    })
-                    .catch(err => {
-                        console.error(err);
-                        alert("Payment verification request failed.");
-                    });
-                },
-                prefill: {
-                    name: "{{ $user->name }}",
-                    email: "{{ $user->email }}",
-                    contact: "{{ $user->phone }}"
-                },
-                theme: {
-                    color: "#0d9488"
-                }
-            };
-
-            const rzp = new Razorpay(options);
-            rzp.open();
+            redirectToCCAvenue(data);
         })
         .catch(err => {
             console.error(err);

@@ -6,16 +6,16 @@
 <style>
     /* Brand Color Overrides & Step Wizard Styles */
     :root {
-        --brand-primary: #ff4757;
-        --brand-light: #fff5f6;
+        --brand-primary: #84144f;
+        --brand-light: #fef0f6;
         --text-muted: #8898aa;
     }
     
     .wizard-card {
         background: #ffffff;
-        border: 1px solid rgba(255, 71, 87, 0.08);
+        border: 1px solid rgba(132, 20, 79, 0.08);
         border-radius: 24px;
-        box-shadow: 0 15px 35px rgba(255, 71, 87, 0.04);
+        box-shadow: 0 15px 35px rgba(132, 20, 79, 0.04);
         padding: 35px;
         transition: all 0.3s ease;
     }
@@ -297,13 +297,13 @@
         font-weight: 700;
         font-size: 0.95rem;
         transition: all 0.3s ease;
-        box-shadow: 0 4px 12px rgba(255, 71, 87, 0.15);
+        box-shadow: 0 4px 12px rgba(132, 20, 79, 0.15);
     }
 
     .btn-brand:hover {
-        background: #ff2a3b;
+        background: #630837;
         transform: translateY(-1px);
-        box-shadow: 0 6px 15px rgba(255, 71, 87, 0.25);
+        box-shadow: 0 6px 15px rgba(132, 20, 79, 0.25);
     }
 
     .btn-brand-outline {

@@ -5,7 +5,7 @@
 .profile-hero-photo { width: 120px; height: 120px; border-radius: 20px; object-fit: cover; border: 4px solid #fff; box-shadow: 0 8px 20px rgba(0,0,0,0.1); }
 .info-label { font-size: 0.75rem; font-weight: 700; color: #adb5bd; text-transform: uppercase; letter-spacing: 0.5px; }
 .info-value { font-weight: 600; color: #2d3748; }
-.section-title { font-size: 0.9rem; font-weight: 700; color: var(--primary); text-transform: uppercase; letter-spacing: 1px; border-bottom: 2px solid rgba(255,71,87,0.1); padding-bottom: 8px; margin-bottom: 16px; }
+.section-title { font-size: 0.9rem; font-weight: 700; color: var(--primary); text-transform: uppercase; letter-spacing: 1px; border-bottom: 2px solid rgba(132,20,79,0.1); padding-bottom: 8px; margin-bottom: 16px; }
 .photo-grid img { width: 80px; height: 80px; border-radius: 12px; object-fit: cover; cursor: pointer; }
 </style>
 

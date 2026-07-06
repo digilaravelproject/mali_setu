@@ -2,7 +2,7 @@
 
 @section('content')
 <style>
-.req-card { border-radius: 16px; background: rgba(255,255,255,0.8); border: 1px solid rgba(255,71,87,0.08); padding: 16px; }
+.req-card { border-radius: 16px; background: rgba(255,255,255,0.8); border: 1px solid rgba(132,20,79,0.08); padding: 16px; }
 .req-photo { width: 52px; height: 52px; border-radius: 12px; object-fit: cover; }
 .status-pill { font-size: 0.72rem; padding: 4px 12px; border-radius: 50px; font-weight: 700; }
 </style>

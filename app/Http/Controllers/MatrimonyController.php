@@ -830,86 +830,65 @@ class MatrimonyController extends Controller
         return response()->json(['success' => true, 'messages' => $messages]);
     }
 
-    /** Create Razorpay Order for matrimony plan */
-    public function createOrder(Request $request)
+    /** Create CCAvenue Order for matrimony plan */
+    public function subscribe(Request $request)
     {
-        $request->validate(['plan_id' => 'required|integer|exists:matrimony_plans,id']);
-
-        $plan = MatrimonyPlan::findOrFail($request->plan_id);
-        if (!$plan->active) {
-            return response()->json(['success' => false, 'message' => 'Plan not available.'], 404);
-        }
+        $request->validate([
+            'plan_id' => 'required|integer|exists:matrimony_plans,id',
+        ]);
 
         try {
-            $razorpay = new \Razorpay\Api\Api(env('RAZORPAY_KEY_ID'), env('RAZORPAY_KEY_SECRET'));
-            $order = $razorpay->order->create([
-                'receipt'         => 'matrimony_' . $plan->id . '_' . time(),
-                'amount'          => $plan->price * 100,
-                'currency'        => 'INR',
-                'payment_capture' => 1,
-            ]);
+            $plan = MatrimonyPlan::find($request->plan_id);
+            if (!$plan || !$plan->active) {
+                return response()->json(['success' => false, 'message' => 'Selected plan is not available.'], 404);
+            }
+
+            $ccavenue = app(\App\Services\CCAvenue::class);
+            $orderId = 'MAT-' . time() . '-' . mt_rand(1000, 9999);
 
             $transaction = Transaction::create([
                 'user_id'             => Auth::id(),
                 'amount'              => $plan->price,
                 'currency'            => 'INR',
                 'purpose'             => 'matrimony_profile',
-                'razorpay_order_id'   => $order['id'],
+                'razorpay_order_id'   => $orderId,
                 'status'              => 'pending',
                 'subscription_period' => intval($plan->duration_years) * 12,
                 'meta'                => json_encode(['plan_id' => $plan->id]),
             ]);
 
+            // Prepare CCAvenue parameters
+            $params = [
+                'order_id' => $orderId,
+                'amount' => number_format($plan->price, 2, '.', ''),
+                'currency' => 'INR',
+                'redirect_url' => route('ccavenue.callback'),
+                'cancel_url' => route('ccavenue.callback'),
+                'language' => 'EN',
+                'billing_name' => Auth::user()->name ?? '',
+                'billing_email' => Auth::user()->email ?? '',
+                'billing_tel' => Auth::user()->phone ?? ''
+            ];
+
             return response()->json([
                 'success'        => true,
-                'order_id'       => $order['id'],
-                'amount'         => $order['amount'],
-                'currency'       => $order['currency'],
+                'payment_way'    => 'ccavenue',
+                'payment_url'    => $ccavenue->getPaymentUrl(),
+                'encRequest'     => $ccavenue->encrypt($params),
+                'access_code'    => $ccavenue->getAccessCode(),
                 'transaction_id' => $transaction->id,
-                'key_id'         => env('RAZORPAY_KEY_ID'),
             ]);
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
     }
 
-    /** Verify Razorpay Payment */
+    /** Verify Razorpay Payment (Legacy Razorpay route) */
     public function verifyPayment(Request $request)
     {
-        $request->validate([
-            'razorpay_payment_id' => 'required|string',
-            'razorpay_order_id'   => 'required|string',
-            'razorpay_signature'  => 'required|string',
-            'transaction_id'      => 'required|integer|exists:transactions,id',
-        ]);
-
-        try {
-            $razorpay = new \Razorpay\Api\Api(env('RAZORPAY_KEY_ID'), env('RAZORPAY_KEY_SECRET'));
-            $razorpay->utility->verifyPaymentSignature([
-                'razorpay_order_id'   => $request->razorpay_order_id,
-                'razorpay_payment_id' => $request->razorpay_payment_id,
-                'razorpay_signature'  => $request->razorpay_signature,
-            ]);
-
-            $transaction = Transaction::where('id', $request->transaction_id)
-                ->where('user_id', Auth::id())->firstOrFail();
-            $transaction->update([
-                'razorpay_payment_id' => $request->razorpay_payment_id,
-                'status'              => 'completed',
-            ]);
-
-            // Activate matrimony profile expiry & auto-approve
-            $profile = MatrimonyProfile::where('user_id', Auth::id())->first();
-            if ($profile) {
-                $profile->update([
-                    'profile_expires_at' => now()->addMonths($transaction->subscription_period ?? 12),
-                    'approval_status'    => 'approved',
-                ]);
-            }
-
-            return response()->json(['success' => true, 'message' => 'Payment verified! Your profile is now active.']);
-        } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => $e->getMessage()], 400);
-        }
+        return response()->json([
+            'success' => false,
+            'message' => 'This payment verification endpoint is deprecated. Payment is processed via callback.'
+        ], 400);
     }
 }
