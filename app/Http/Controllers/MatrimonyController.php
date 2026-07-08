@@ -552,57 +552,79 @@ class MatrimonyController extends Controller
 
         // 2. Professional Details
         if ($request->filled('employment_type') && $request->employment_type !== 'Any') {
-            $query->where('professional_details->employment_type', $request->employment_type);
+            $query->where(function($q) use ($request) {
+                $q->where('professional_details->employment_type', 'like', $request->employment_type)
+                  ->orWhere('personal_details->employment_type', 'like', $request->employment_type);
+            });
         }
         if ($request->filled('occupation') && $request->occupation !== 'Any') {
-            $query->where('professional_details->occupation', $request->occupation);
+            $query->where(function($q) use ($request) {
+                $q->where('professional_details->occupation', 'like', $request->occupation)
+                  ->orWhere('personal_details->occupation', 'like', $request->occupation);
+            });
         }
 
         // 3. Religion Details
         if ($request->filled('manglik') && $request->manglik !== "Doesn't Matter") {
             $query->where(function($q) use ($request) {
                 $q->where('personal_details->star_details', 'like', '%manglik-' . strtolower($request->manglik) . '%')
-                  ->orWhere('personal_details->manglik', $request->manglik);
+                  ->orWhere('personal_details->manglik', 'like', $request->manglik);
             });
         }
         if ($request->filled('dosh') && $request->dosh !== "Doesn't Matter") {
             $query->where(function($q) use ($request) {
-                $q->where('personal_details->dosh', $request->dosh)
+                $q->where('personal_details->dosh', 'like', $request->dosh)
                   ->orWhere('personal_details->star_details', 'like', '%' . $request->dosh . '%');
             });
         }
 
         // 4. Family Details
         if ($request->filled('family_type') && $request->family_type !== "Doesn't Matter") {
-            $query->where('family_details->family_type', $request->family_type);
+            $query->where('family_details->family_type', 'like', $request->family_type);
         }
         if ($request->filled('family_value') && $request->family_value !== "Doesn't Matter") {
-            $query->where('family_details->family_value', $request->family_value);
+            $query->where('family_details->family_value', 'like', $request->family_value);
         }
         if ($request->filled('family_class') && $request->family_class !== "Doesn't Matter") {
-            $query->where('family_details->family_class', $request->family_class);
+            $query->where('family_details->family_class', 'like', $request->family_class);
         }
 
         // 5. Location Details
         if ($request->filled('country') && $request->country !== 'Any') {
-            $query->where('location_details->country', $request->country);
+            $query->where('location_details->country', 'like', $request->country);
         }
         if ($request->filled('state') && $request->state !== 'Any') {
-            $query->where('location_details->state', $request->state);
+            $query->where('location_details->state', 'like', $request->state);
         }
         if ($request->filled('city') && $request->city !== 'Any') {
-            $query->where('location_details->city', $request->city);
+            $query->where('location_details->city', 'like', '%' . $request->city . '%');
         }
 
         // 6. Lifestyle Details
         if ($request->filled('diet') && $request->diet !== 'Any') {
-            $query->where('lifestyle_details->diet', $request->diet);
+            $query->where(function($q) use ($request) {
+                $q->where('lifestyle_details->diet', 'like', $request->diet)
+                  ->orWhere('personal_details->diet', 'like', $request->diet);
+            });
         }
         if ($request->filled('smoking') && $request->smoking !== 'Any') {
-            $query->where('lifestyle_details->smoking', $request->smoking);
+            $query->where(function($q) use ($request) {
+                if ($request->smoking === 'No') {
+                    $q->where('lifestyle_details->smoking', 'like', 'No')
+                      ->orWhere('lifestyle_details->smoking', 'like', 'Non-Smoker')
+                      ->orWhere('personal_details->smoking', 'like', 'No')
+                      ->orWhere('personal_details->smoking', 'like', 'Non-Smoker');
+                } else {
+                    $q->where('lifestyle_details->smoking', 'like', $request->smoking)
+                      ->orWhere('personal_details->smoking', 'like', $request->smoking);
+                }
+            });
         }
         if ($request->filled('drinking') && $request->drinking !== 'Any') {
-            $query->where('lifestyle_details->drinking', $request->drinking);
+            $query->where(function($q) use ($request) {
+                $q->where('lifestyle_details->drinking', 'like', $request->drinking)
+                  ->orWhere('personal_details->drinking', 'like', $request->drinking);
+            });
         }
 
         // 7. Profile Type

@@ -1144,7 +1144,7 @@
                             <div class="card h-100 border rounded-4 shadow-sm bg-white overflow-hidden hover-card transition" style="transition: all 0.3s ease;">
                                 <div class="position-relative">
                                     @if($cause->image_url)
-                                        <img src="{{ asset('storage/' . $cause->image_url) }}" alt="{{ $cause->title }}" style="height: 160px; width: 100%; object-fit: cover;">
+                                        <img src="{{ asset($cause->image_url) }}" alt="{{ $cause->title }}" style="height: 160px; width: 100%; object-fit: cover;">
                                     @else
                                         <div class="d-flex align-items-center justify-content-center" style="height: 160px; width: 100%; background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%); color: #fff;">
                                             <i class="fa-solid fa-hands-holding fs-1"></i>

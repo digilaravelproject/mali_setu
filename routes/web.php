@@ -133,7 +133,7 @@ Route::middleware(['auth', 'redirect.admin'])->group(function () {
         Route::get('/chat/{conversationId}',     [\App\Http\Controllers\MatrimonyController::class, 'chat'])->name('chat');
         Route::post('/chat/send',                [\App\Http\Controllers\MatrimonyController::class, 'sendMessage'])->name('chat.send');
         Route::get('/chat/{conversationId}/fetch', [\App\Http\Controllers\MatrimonyController::class, 'fetchMessages'])->name('chat.fetch');
-        Route::post('/subscribe',                [\App\Http\Controllers\MatrimonyController::class, 'createOrder'])->name('subscribe');
+        Route::post('/subscribe',                [\App\Http\Controllers\MatrimonyController::class, 'subscribe'])->name('subscribe');
         Route::post('/verify-payment',           [\App\Http\Controllers\MatrimonyController::class, 'verifyPayment'])->name('verify-payment');
     });
 

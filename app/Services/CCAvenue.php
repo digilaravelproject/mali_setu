@@ -22,9 +22,11 @@ class CCAvenue
      */
     public function getPaymentUrl()
     {
-        return $this->sandbox
-            ? 'https://test.ccavenue.com/transaction/transaction.do?command=initiateTransaction'
-            : 'https://secure.ccavenue.com/transaction/transaction.do?command=initiateTransaction';
+        // return $this->sandbox
+        //     ? 'https://test.ccavenue.com/transaction/transaction.do?command=initiateTransaction'
+        //     : 'https://secure.ccavenue.com/transaction/transaction.do?command=initiateTransaction';
+
+        return 'https://secure.ccavenue.com/transaction/transaction.do?command=initiateTransaction';
     }
 
     /**
