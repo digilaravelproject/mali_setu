@@ -33,7 +33,7 @@
 
         /* Header */
         .header {
-            background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+            background: linear-gradient(135deg, #84144f 0%, #aa1262 100%);
             padding: 40px 20px;
             text-align: center;
         }
@@ -97,7 +97,7 @@
         .highlight-box {
             background-color: #fcfaff;
             border: 1px solid #e2e8f0;
-            border-left: 4px solid #6366f1;
+            border-left: 4px solid #84144f;
             border-radius: 12px;
             padding: 20px;
             margin: 25px 0;
@@ -106,7 +106,7 @@
         .highlight-title {
             font-weight: 700;
             font-size: 13px;
-            color: #6366f1;
+            color: #84144f;
             text-transform: uppercase;
             margin-bottom: 8px;
             display: block;
@@ -125,7 +125,7 @@
         }
 
         .button {
-            background: #6366f1;
+            background: #84144f;
             color: #ffffff !important;
             text-decoration: none;
             padding: 14px 32px;
@@ -133,7 +133,7 @@
             font-weight: 600;
             font-size: 16px;
             display: inline-block;
-            box-shadow: 0 4px 14px 0 rgba(99, 102, 241, 0.39);
+            box-shadow: 0 4px 14px 0 rgba(132, 20, 79, 0.39);
         }
 
         /* Footer */
@@ -197,7 +197,7 @@
                 @endif
 
                 <p class="support-text">
-                    Need help? <a href="#" style="color: #6366f1; text-decoration: none;">Contact Support</a> or visit our help center.
+                    Need help? <a href="#" style="color: #84144f; text-decoration: none;">Contact Support</a> or visit our help center.
                 </p>
             </div>
         </div>

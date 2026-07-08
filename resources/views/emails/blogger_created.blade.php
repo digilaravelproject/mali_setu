@@ -19,7 +19,7 @@
             box-shadow: 0 4px 8px rgba(0,0,0,0.05);
         }
         h2 {
-            color: #b61315;
+            color: #84144f;
             text-align: center;
             letter-spacing: 1px;
             font-size: 24px;
@@ -42,7 +42,7 @@
             margin: 20px 0;
             font-size: 16px;
             color: #333;
-            border-left: 4px solid #b61315;
+            border-left: 4px solid #84144f;
         }
         .credentials-row {
             margin-bottom: 10px;
@@ -53,7 +53,7 @@
         }
         .button {
             display: block;
-            background-color: #b61315;
+            background-color: #84144f;
             color: #fff !important;
             text-decoration: none;
             padding: 12px 24px;
@@ -64,7 +64,7 @@
             width: 200px;
         }
         .button:hover {
-            background-color: #8b0000;
+            background-color: #aa1262;
         }
         .footer {
             font-size: 13px;
@@ -82,7 +82,7 @@
     <p>An administrator has created a Blogger account for you on <strong>Mali Setu</strong>. You now have complete access to write, manage, and publish articles on our blog portal.</p>
 
     <div class="credentials-box">
-        <h5 style="margin-top:0; margin-bottom:15px; font-size:16px; color:#b61315; font-weight:bold;">Your Login Credentials</h5>
+        <h5 style="margin-top:0; margin-bottom:15px; font-size:16px; color:#84144f; font-weight:bold;">Your Login Credentials</h5>
         <div class="credentials-row">
             <strong>Email:</strong> {{ $email }}
         </div>

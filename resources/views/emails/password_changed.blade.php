@@ -40,7 +40,7 @@
             font-size: 20px;
             font-weight: bold;
             letter-spacing: 1px;
-            color: #0d6efd;
+            color: #84144f;
         }
         .footer {
             font-size: 13px;

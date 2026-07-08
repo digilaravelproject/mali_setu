@@ -19,7 +19,7 @@
             box-shadow: 0 4px 8px rgba(0,0,0,0.05);
         }
         h2 {
-            color: #0d6efd;
+            color: #84144f;
             text-align: center;
             letter-spacing: 1px;
             font-size: 28px;
@@ -47,7 +47,7 @@
         }
         .button {
             display: inline-block;
-            background-color: #0d6efd;
+            background-color: #84144f;
             color: #fff !important;
             text-decoration: none;
             padding: 12px 24px;
@@ -58,7 +58,7 @@
             transition: background-color 0.3s;
         }
         .button:hover {
-            background-color: #0b5ed7;
+            background-color: #aa1262;
         }
         .footer {
             font-size: 13px;
