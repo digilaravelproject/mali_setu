@@ -51,6 +51,11 @@
                 </a>
             </li>
             <li>
+                <a href="{{ route('dashboard.business.index') }}" class="drawer-menu-item {{ Request::routeIs('dashboard.business.index') ? 'active' : '' }}">
+                    <i class="fa-solid fa-briefcase text-primary"></i> My Business
+                </a>
+            </li>
+            <li>
                 <a href="{{ route('dashboard.business.browse') }}" class="drawer-menu-item {{ Request::routeIs('dashboard.business.browse') || Request::routeIs('dashboard.business.show') ? 'active' : '' }}">
                     <i class="fa-solid fa-magnifying-glass text-primary"></i> All Business
                 </a>

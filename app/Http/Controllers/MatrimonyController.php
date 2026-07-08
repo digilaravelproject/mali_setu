@@ -260,7 +260,7 @@ class MatrimonyController extends Controller
             'approval_status'     => 'pending',
         ]);
 
-        \App\Jobs\SendPaymentPendingEmail::dispatch('matrimony', $profile->id)->delay(now()->addMinutes(10));
+        \App\Jobs\SendPaymentPendingEmail::dispatch('matrimony', $profile->id)->delay(now()->addMinutes(11));
 
         $user->update([
             'user_type' => 'matrimony',

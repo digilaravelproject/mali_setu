@@ -152,6 +152,8 @@ class MatrimonyController extends Controller
             ]);
         }
 
+        \App\Jobs\SendPaymentPendingEmail::dispatch('matrimony', $profile->id)->delay(now()->addMinutes(11));
+
         // Email: matrimony profile created
         $this->notifications->createNotification(
             $user->id,

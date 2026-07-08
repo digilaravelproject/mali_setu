@@ -74,6 +74,9 @@
                         <a href="{{ route('dashboard.business.create') }}" class="dropdown-item-navbar {{ Request::routeIs('dashboard.business.create') ? 'active' : '' }}">
                             <i class="fa-solid fa-plus-circle text-primary"></i> Create Business
                         </a>
+                        <a href="{{ route('dashboard.business.index') }}" class="dropdown-item-navbar {{ Request::routeIs('dashboard.business.index') ? 'active' : '' }}">
+                            <i class="fa-solid fa-briefcase text-primary"></i> My Business
+                        </a>
                         <a href="{{ route('dashboard.business.browse') }}" class="dropdown-item-navbar {{ Request::routeIs('dashboard.business.browse') || Request::routeIs('dashboard.business.show') ? 'active' : '' }}">
                             <i class="fa-solid fa-magnifying-glass text-primary"></i> All Businesses
                         </a>

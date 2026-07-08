@@ -129,29 +129,39 @@
                                         {{ count($jobs) }}
                                     </td>
                                     <td class="text-center">
-                                        @if($user->business->subscription_status === 'active')
-                                            <span class="badge bg-success bg-opacity-10 text-success py-1 px-2.5 rounded-pill"><i class="fa-solid fa-circle-check me-1"></i> Active</span>
-                                        @else
-                                            <span class="badge bg-warning bg-opacity-10 text-warning py-1 px-2.5 rounded-pill"><i class="fa-solid fa-triangle-exclamation me-1"></i> Inactive</span>
-                                        @endif
-                                    </td>
-                                    <td class="text-center">
-                                        <div class="d-flex gap-2 justify-content-center">
-                                            <button class="btn btn-outline-success btn-sm rounded-3 cursor-pointer" onclick="toggleBusinessSection('console')" title="View Details">
-                                                <i class="fa-solid fa-eye"></i>
-                                            </button>
-                                            <button class="btn btn-outline-primary btn-sm rounded-3 cursor-pointer" onclick="toggleBusinessSection('edit')" title="Edit Profile">
-                                                <i class="fa-solid fa-pen-to-square"></i>
-                                            </button>
-                                            <form action="{{ route('dashboard.business.delete') }}" method="POST" class="d-inline" onsubmit="return confirm('Are you absolutely sure you want to permanently delete this business? All products, services, jobs, and applicants will be lost forever.');">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="submit" class="btn btn-outline-danger btn-sm rounded-3 cursor-pointer" title="Delete Business">
-                                                    <i class="fa-solid fa-trash-can"></i>
-                                                </button>
-                                            </form>
-                                        </div>
-                                    </td>
+                                         @if($user->business->subscription_status === 'active')
+                                             <span class="badge bg-success bg-opacity-10 text-success py-1 px-2.5 rounded-pill"><i class="fa-solid fa-circle-check me-1"></i> Active</span>
+                                         @else
+                                             <span class="badge bg-warning bg-opacity-10 text-warning py-1 px-2.5 rounded-pill"><i class="fa-solid fa-triangle-exclamation me-1"></i> Trial/Inactive</span>
+                                             <div class="mt-1">
+                                                 <a href="{{ route('dashboard.business.subscription', ['business_id' => $user->business->id]) }}" class="text-decoration-none small text-primary fw-bold" style="font-size: 0.72rem;">
+                                                     <i class="fa-solid fa-arrow-up-right-from-square me-0.5"></i> Get Subscription
+                                                 </a>
+                                             </div>
+                                         @endif
+                                     </td>
+                                     <td class="text-center">
+                                         <div class="d-flex gap-2 justify-content-center">
+                                             @if($user->business->subscription_status !== 'active')
+                                                 <a href="{{ route('dashboard.business.subscription', ['business_id' => $user->business->id]) }}" class="btn btn-outline-warning btn-sm rounded-3 cursor-pointer" title="Get Subscription">
+                                                     <i class="fa-solid fa-credit-card"></i>
+                                                 </a>
+                                             @endif
+                                             <button class="btn btn-outline-success btn-sm rounded-3 cursor-pointer" onclick="toggleBusinessSection('console')" title="View Details">
+                                                 <i class="fa-solid fa-eye"></i>
+                                             </button>
+                                             <button class="btn btn-outline-primary btn-sm rounded-3 cursor-pointer" onclick="toggleBusinessSection('edit')" title="Edit Profile">
+                                                 <i class="fa-solid fa-pen-to-square"></i>
+                                             </button>
+                                             <form action="{{ route('dashboard.business.delete') }}" method="POST" class="d-inline" onsubmit="return confirm('Are you absolutely sure you want to permanently delete this business? All products, services, jobs, and applicants will be lost forever.');">
+                                                 @csrf
+                                                 @method('DELETE')
+                                                 <button type="submit" class="btn btn-outline-danger btn-sm rounded-3 cursor-pointer" title="Delete Business">
+                                                     <i class="fa-solid fa-trash-can"></i>
+                                                 </button>
+                                             </form>
+                                         </div>
+                                     </td>
                                 </tr>
                             </tbody>
                         </table>

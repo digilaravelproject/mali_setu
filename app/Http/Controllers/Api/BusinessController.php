@@ -155,6 +155,8 @@ class BusinessController extends Controller
             ]);
         }
 
+        \App\Jobs\SendPaymentPendingEmail::dispatch('business', $business->id)->delay(now()->addMinutes(11));
+
         // Email: business registered
         $this->notifications->createNotification(
             $user->id,
