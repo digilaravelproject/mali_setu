@@ -112,10 +112,20 @@
                                             {{ $biz->jobPostings ? $biz->jobPostings->count() : 0 }}
                                         </td>
                                         <td class="text-center">
-                                            @if($biz->subscription_status === 'active')
+                                            @php
+                                                $isPaid = $biz->subscription_status === 'active' && 
+                                                          $biz->subscription_expires_at && 
+                                                          \Carbon\Carbon::parse($biz->subscription_expires_at)->isFuture();
+                                            @endphp
+                                            @if($isPaid)
                                                 <span class="badge bg-success bg-opacity-10 text-success py-1 px-2.5 rounded-pill"><i class="fa-solid fa-circle-check me-1"></i> Active</span>
                                             @else
                                                 <span class="badge bg-warning bg-opacity-10 text-warning py-1 px-2.5 rounded-pill"><i class="fa-solid fa-triangle-exclamation me-1"></i> Trial/Inactive</span>
+                                                <div class="mt-1">
+                                                    <a href="{{ route('dashboard.business.subscription', ['business_id' => $biz->id]) }}" class="text-decoration-none small text-primary fw-bold" style="font-size: 0.72rem;">
+                                                        <i class="fa-solid fa-arrow-up-right-from-square me-0.5"></i> Get/Renew
+                                                    </a>
+                                                </div>
                                             @endif
                                         </td>
                                         <td class="text-center">
@@ -129,6 +139,11 @@
                                         </td>
                                         <td class="text-center">
                                             <div class="d-flex gap-2 justify-content-center">
+                                                @if(!$isPaid)
+                                                    <a href="{{ route('dashboard.business.subscription', ['business_id' => $biz->id]) }}" class="btn btn-outline-warning btn-sm rounded-3 cursor-pointer" title="Get/Renew Subscription">
+                                                        <i class="fa-solid fa-credit-card"></i>
+                                                    </a>
+                                                @endif
                                                 <a href="{{ route('dashboard.business.index', ['business_id' => $biz->id]) }}" class="btn btn-outline-success btn-sm rounded-3 @if($activeBusiness && $activeBusiness->id == $biz->id) active bg-success text-white @endif">
                                                     <i class="fa-solid fa-eye"></i>
                                                 </a>
