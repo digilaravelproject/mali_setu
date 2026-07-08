@@ -797,7 +797,7 @@
                 <div class="p-4 p-md-5">
                     <!-- Category/Tags -->
                     <div class="mb-3 d-flex flex-wrap gap-2">
-                        <span class="badge bg-primary bg-opacity-10 text-primary px-3 py-2 rounded-pill small fw-bold">
+                        <span class="badge bg-primary bg-opacity-10 text-primary px-3 py-2 rounded-pill small fw-bold" style="color: white !important;">
                             {{ $blog->category->name ?? $blog->blog_type }}
                         </span>
                         @if($blog->tags)

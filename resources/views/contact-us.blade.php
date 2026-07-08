@@ -51,7 +51,7 @@
             padding: 50px 40px;
             box-shadow: 0 15px 35px rgba(255, 71, 87, 0.03);
             margin: 60px auto;
-            max-width: 900px;
+            /* max-width: 900px; */
             width: 100%;
         }
 
