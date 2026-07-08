@@ -227,11 +227,17 @@
                             if (geoData && geoData.address) {
                                 const addr = geoData.address;
                                 const pincode = addr.postcode || '';
+                                const country = addr.country || 'India';
                                 const state = addr.state || addr.region || '';
-                                const city = addr.city || addr.town || addr.village || addr.municipality || addr.county || addr.state_district || addr.district || '';
+                                const city = addr.city || addr.town || addr.municipality || addr.city_district || addr.state_district || addr.district || '';
+                                const taluka = addr.subdistrict || addr.county || addr.taluk || addr.tehsil || addr.suburb || addr.neighbourhood || '';
+                                const village = addr.village || addr.hamlet || '';
                                 
                                 if (pincode) {
                                     document.getElementById('pincode').value = pincode.replace(/\s+/g, '');
+                                }
+                                if (country) {
+                                    document.getElementById('country').value = country;
                                 }
                                 if (state) {
                                     document.getElementById('state').value = state;
@@ -239,13 +245,11 @@
                                 if (city) {
                                     document.getElementById('city').value = city;
                                 }
-                                const talukaField = document.getElementById('taluka');
-                                if (talukaField && (addr.suburb || addr.neighbourhood)) {
-                                    talukaField.value = addr.suburb || addr.neighbourhood || '';
+                                if (taluka) {
+                                    document.getElementById('taluka').value = taluka;
                                 }
-                                const villageField = document.getElementById('village');
-                                if (villageField && addr.village) {
-                                    villageField.value = addr.village;
+                                if (village) {
+                                    document.getElementById('village').value = village;
                                 }
                                 const addressField = document.getElementById('address');
                                 if (addressField && geoData.display_name) {

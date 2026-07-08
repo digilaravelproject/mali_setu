@@ -408,8 +408,8 @@
                         <label class="form-label">Gender<span class="required-star">*</span></label>
                         <select name="gender" class="form-select" required>
                             <option value="">Select Gender</option>
-                            <option value="male" {{ old('gender') == 'male' ? 'selected' : '' }}>Male</option>
-                            <option value="female" {{ old('gender') == 'female' ? 'selected' : '' }}>Female</option>
+                            <option value="Male" {{ old('gender') == 'Male' ? 'selected' : '' }}>Male</option>
+                            <option value="Female" {{ old('gender') == 'Female' ? 'selected' : '' }}>Female</option>
                         </select>
                         <span class="invalid-feedback">Please select gender</span>
                     </div>
@@ -442,7 +442,6 @@
                             <option value="Fair" {{ old('complexion') == 'Fair' ? 'selected' : '' }}>Fair</option>
                             <option value="Wheatish" {{ old('complexion') == 'Wheatish' ? 'selected' : '' }}>Wheatish</option>
                             <option value="Dark" {{ old('complexion') == 'Dark' ? 'selected' : '' }}>Dark</option>
-                            <option value="Very Fair" {{ old('complexion') == 'Very Fair' ? 'selected' : '' }}>Very Fair</option>
                         </select>
                     </div>
 
@@ -467,16 +466,20 @@
                     </div>
 
                     <div class="col-md-4 mb-4">
-                        <label class="form-label">Mother Tongue</label>
+                        <label class="form-label">Language</label>
                         <select name="mother_tongue" class="form-select">
-                            <option value="">Select Mother Tongue</option>
-                            <option value="Marathi" {{ old('mother_tongue', 'Marathi') == 'Marathi' ? 'selected' : '' }}>Marathi</option>
+                            <option value="">Select Language</option>
                             <option value="Hindi" {{ old('mother_tongue') == 'Hindi' ? 'selected' : '' }}>Hindi</option>
                             <option value="English" {{ old('mother_tongue') == 'English' ? 'selected' : '' }}>English</option>
+                            <option value="Marathi" {{ old('mother_tongue', 'Marathi') == 'Marathi' ? 'selected' : '' }}>Marathi</option>
                             <option value="Gujarati" {{ old('mother_tongue') == 'Gujarati' ? 'selected' : '' }}>Gujarati</option>
-                            <option value="Kannada" {{ old('mother_tongue') == 'Kannada' ? 'selected' : '' }}>Kannada</option>
-                            <option value="Telugu" {{ old('mother_tongue') == 'Telugu' ? 'selected' : '' }}>Telugu</option>
+                            <option value="Punjabi" {{ old('mother_tongue') == 'Punjabi' ? 'selected' : '' }}>Punjabi</option>
+                            <option value="Bengali" {{ old('mother_tongue') == 'Bengali' ? 'selected' : '' }}>Bengali</option>
                             <option value="Tamil" {{ old('mother_tongue') == 'Tamil' ? 'selected' : '' }}>Tamil</option>
+                            <option value="Telugu" {{ old('mother_tongue') == 'Telugu' ? 'selected' : '' }}>Telugu</option>
+                            <option value="Kannada" {{ old('mother_tongue') == 'Kannada' ? 'selected' : '' }}>Kannada</option>
+                            <option value="Malayalam" {{ old('mother_tongue') == 'Malayalam' ? 'selected' : '' }}>Malayalam</option>
+                            <option value="Urdu" {{ old('mother_tongue') == 'Urdu' ? 'selected' : '' }}>Urdu</option>
                             <option value="Other" {{ old('mother_tongue') == 'Other' ? 'selected' : '' }}>Other</option>
                         </select>
                     </div>
@@ -486,6 +489,7 @@
                         <select name="citizenship" class="form-select">
                             <option value="">Select Citizenship</option>
                             <option value="Indian" {{ old('citizenship', 'Indian') == 'Indian' ? 'selected' : '' }}>Indian</option>
+                            <option value="NRI" {{ old('citizenship') == 'NRI' ? 'selected' : '' }}>NRI</option>
                             <option value="Other" {{ old('citizenship') == 'Other' ? 'selected' : '' }}>Other</option>
                         </select>
                     </div>
@@ -508,11 +512,6 @@
                     <div class="col-12 mb-4">
                         <label class="form-label">Referral Name</label>
                         <input type="text" name="referral_name" class="form-control" placeholder="Enter Your Referral name" value="{{ old('referral_name') }}">
-                    </div>
-
-                    <div class="col-12 mb-4">
-                        <label class="form-label">About Me</label>
-                        <textarea name="about_me" class="form-control" rows="3" placeholder="Describe yourself, your interests, and personality...">{{ old('about_me') }}</textarea>
                     </div>
                 </div>
 
@@ -565,7 +564,7 @@
                             <option value="Uttara Phalguni">Uttara Phalguni</option>
                             <option value="Hasta">Hasta</option>
                             <option value="Chitra">Chitra</option>
-                            <option value="Svati">Svati</option>
+                            <option value="Swati">Swati</option>
                             <option value="Vishakha">Vishakha</option>
                             <option value="Anuradha">Anuradha</option>
                             <option value="Jyeshtha">Jyeshtha</option>
@@ -592,7 +591,7 @@
                             <option value="Simha (Leo)">Simha (Leo)</option>
                             <option value="Kanya (Virgo)">Kanya (Virgo)</option>
                             <option value="Tula (Libra)">Tula (Libra)</option>
-                            <option value="Vrischika (Scorpio)">Vrischika (Scorpio)</option>
+                            <option value="Vrishchika (Scorpio)">Vrishchika (Scorpio)</option>
                             <option value="Dhanu (Sagittarius)">Dhanu (Sagittarius)</option>
                             <option value="Makara (Capricorn)">Makara (Capricorn)</option>
                             <option value="Kumbha (Aquarius)">Kumbha (Aquarius)</option>
@@ -812,8 +811,15 @@
 
                     <div class="col-md-6 mb-4">
                         <label class="form-label">Country<span class="required-star">*</span></label>
-                        <input type="text" name="country" class="form-control" id="countryInput" placeholder="Enter Your Country" value="{{ old('country', 'India') }}" required>
-                        <span class="invalid-feedback">Please enter country</span>
+                        <select name="country" class="form-select" id="countryInput" required>
+                            <option value="India" {{ old('country', 'India') == 'India' ? 'selected' : '' }}>India</option>
+                            <option value="USA" {{ old('country') == 'USA' ? 'selected' : '' }}>USA</option>
+                            <option value="UK" {{ old('country') == 'UK' ? 'selected' : '' }}>UK</option>
+                            <option value="Canada" {{ old('country') == 'Canada' ? 'selected' : '' }}>Canada</option>
+                            <option value="Australia" {{ old('country') == 'Australia' ? 'selected' : '' }}>Australia</option>
+                            <option value="Other" {{ old('country') == 'Other' ? 'selected' : '' }}>Other</option>
+                        </select>
+                        <span class="invalid-feedback">Please select country</span>
                     </div>
 
                     <div class="col-md-4 mb-4">

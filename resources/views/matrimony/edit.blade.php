@@ -424,8 +424,8 @@
                         <label class="form-label">Gender<span class="required-star">*</span></label>
                         <select name="gender" class="form-select" required>
                             <option value="">Select Gender</option>
-                            <option value="male" {{ old('gender', $pd['gender'] ?? '') == 'male' ? 'selected' : '' }}>Male</option>
-                            <option value="female" {{ old('gender', $pd['gender'] ?? '') == 'female' ? 'selected' : '' }}>Female</option>
+                            <option value="Male" {{ old('gender', $pd['gender'] ?? '') == 'Male' || old('gender', $pd['gender'] ?? '') == 'male' ? 'selected' : '' }}>Male</option>
+                            <option value="Female" {{ old('gender', $pd['gender'] ?? '') == 'Female' || old('gender', $pd['gender'] ?? '') == 'female' ? 'selected' : '' }}>Female</option>
                         </select>
                         <span class="invalid-feedback">Please select gender</span>
                     </div>
@@ -458,7 +458,6 @@
                             <option value="Fair" {{ old('complexion', $profile->complexion ?? '') == 'Fair' ? 'selected' : '' }}>Fair</option>
                             <option value="Wheatish" {{ old('complexion', $profile->complexion ?? '') == 'Wheatish' ? 'selected' : '' }}>Wheatish</option>
                             <option value="Dark" {{ old('complexion', $profile->complexion ?? '') == 'Dark' ? 'selected' : '' }}>Dark</option>
-                            <option value="Very Fair" {{ old('complexion', $profile->complexion ?? '') == 'Very Fair' ? 'selected' : '' }}>Very Fair</option>
                         </select>
                     </div>
 
@@ -483,16 +482,20 @@
                     </div>
 
                     <div class="col-md-4 mb-4">
-                        <label class="form-label">Mother Tongue</label>
+                        <label class="form-label">Language</label>
                         <select name="mother_tongue" class="form-select">
-                            <option value="">Select Mother Tongue</option>
-                            <option value="Marathi" {{ old('mother_tongue', $pd['mother_tongue'] ?? 'Marathi') == 'Marathi' ? 'selected' : '' }}>Marathi</option>
+                            <option value="">Select Language</option>
                             <option value="Hindi" {{ old('mother_tongue', $pd['mother_tongue'] ?? '') == 'Hindi' ? 'selected' : '' }}>Hindi</option>
                             <option value="English" {{ old('mother_tongue', $pd['mother_tongue'] ?? '') == 'English' ? 'selected' : '' }}>English</option>
+                            <option value="Marathi" {{ old('mother_tongue', $pd['mother_tongue'] ?? 'Marathi') == 'Marathi' ? 'selected' : '' }}>Marathi</option>
                             <option value="Gujarati" {{ old('mother_tongue', $pd['mother_tongue'] ?? '') == 'Gujarati' ? 'selected' : '' }}>Gujarati</option>
-                            <option value="Kannada" {{ old('mother_tongue', $pd['mother_tongue'] ?? '') == 'Kannada' ? 'selected' : '' }}>Kannada</option>
-                            <option value="Telugu" {{ old('mother_tongue', $pd['mother_tongue'] ?? '') == 'Telugu' ? 'selected' : '' }}>Telugu</option>
+                            <option value="Punjabi" {{ old('mother_tongue', $pd['mother_tongue'] ?? '') == 'Punjabi' ? 'selected' : '' }}>Punjabi</option>
+                            <option value="Bengali" {{ old('mother_tongue', $pd['mother_tongue'] ?? '') == 'Bengali' ? 'selected' : '' }}>Bengali</option>
                             <option value="Tamil" {{ old('mother_tongue', $pd['mother_tongue'] ?? '') == 'Tamil' ? 'selected' : '' }}>Tamil</option>
+                            <option value="Telugu" {{ old('mother_tongue', $pd['mother_tongue'] ?? '') == 'Telugu' ? 'selected' : '' }}>Telugu</option>
+                            <option value="Kannada" {{ old('mother_tongue', $pd['mother_tongue'] ?? '') == 'Kannada' ? 'selected' : '' }}>Kannada</option>
+                            <option value="Malayalam" {{ old('mother_tongue', $pd['mother_tongue'] ?? '') == 'Malayalam' ? 'selected' : '' }}>Malayalam</option>
+                            <option value="Urdu" {{ old('mother_tongue', $pd['mother_tongue'] ?? '') == 'Urdu' ? 'selected' : '' }}>Urdu</option>
                             <option value="Other" {{ old('mother_tongue', $pd['mother_tongue'] ?? '') == 'Other' ? 'selected' : '' }}>Other</option>
                         </select>
                     </div>
@@ -502,6 +505,7 @@
                         <select name="citizenship" class="form-select">
                             <option value="">Select Citizenship</option>
                             <option value="Indian" {{ old('citizenship', $pd['citizenship'] ?? 'Indian') == 'Indian' ? 'selected' : '' }}>Indian</option>
+                            <option value="NRI" {{ old('citizenship', $pd['citizenship'] ?? '') == 'NRI' ? 'selected' : '' }}>NRI</option>
                             <option value="Other" {{ old('citizenship', $pd['citizenship'] ?? '') == 'Other' ? 'selected' : '' }}>Other</option>
                         </select>
                     </div>
@@ -524,11 +528,6 @@
                     <div class="col-12 mb-4">
                         <label class="form-label">Referral Name</label>
                         <input type="text" name="referral_name" class="form-control" placeholder="Enter Your Referral name" value="{{ old('referral_name', $pd['referral_name'] ?? $pd['refferal_name'] ?? '') }}">
-                    </div>
-
-                    <div class="col-12 mb-4">
-                        <label class="form-label">About Me</label>
-                        <textarea name="about_me" class="form-control" rows="3" placeholder="Describe yourself, your interests, and personality...">{{ old('about_me', $pd['about_me'] ?? '') }}</textarea>
                     </div>
                 </div>
 
@@ -568,7 +567,7 @@
                         <select name="star" class="form-select">
                             <option value="">Select Star</option>
                             @php
-                                $starsList = ['Ashwini', 'Bharani', 'Krittika', 'Rohini', 'Mrigashirsha', 'Ardra', 'Punarvasu', 'Pushya', 'Ashlesha', 'Magha', 'Purva Phalguni', 'Uttara Phalguni', 'Hasta', 'Chitra', 'Svati', 'Vishakha', 'Anuradha', 'Jyeshtha', 'Mula', 'Purva Ashadha', 'Uttara Ashadha', 'Shravana', 'Dhanishta', 'Shatabhisha', 'Purva Bhadrapada', 'Uttara Bhadrapada', 'Revati'];
+                                $starsList = ['Ashwini', 'Bharani', 'Krittika', 'Rohini', 'Mrigashirsha', 'Ardra', 'Punarvasu', 'Pushya', 'Ashlesha', 'Magha', 'Purva Phalguni', 'Uttara Phalguni', 'Hasta', 'Chitra', 'Swati', 'Vishakha', 'Anuradha', 'Jyeshtha', 'Mula', 'Purva Ashadha', 'Uttara Ashadha', 'Shravana', 'Dhanishta', 'Shatabhisha', 'Purva Bhadrapada', 'Uttara Bhadrapada', 'Revati'];
                                 $savedStar = $pd['star_details'][0] ?? '';
                             @endphp
                             @foreach($starsList as $st)
@@ -582,7 +581,7 @@
                         <select name="raasi" class="form-select">
                             <option value="">Select Raasi</option>
                             @php
-                                $raasiList = ['Mesha (Aries)', 'Vrishabha (Taurus)', 'Mithuna (Gemini)', 'Karka (Cancer)', 'Simha (Leo)', 'Kanya (Virgo)', 'Tula (Libra)', 'Vrischika (Scorpio)', 'Dhanu (Sagittarius)', 'Makara (Capricorn)', 'Kumbha (Aquarius)', 'Meena (Pisces)'];
+                                $raasiList = ['Mesha (Aries)', 'Vrishabha (Taurus)', 'Mithuna (Gemini)', 'Karka (Cancer)', 'Simha (Leo)', 'Kanya (Virgo)', 'Tula (Libra)', 'Vrishchika (Scorpio)', 'Dhanu (Sagittarius)', 'Makara (Capricorn)', 'Kumbha (Aquarius)', 'Meena (Pisces)'];
                                 $savedRaasi = $pd['star_details'][1] ?? '';
                             @endphp
                             @foreach($raasiList as $rs)
@@ -818,8 +817,18 @@
 
                     <div class="col-md-6 mb-4">
                         <label class="form-label">Country<span class="required-star">*</span></label>
-                        <input type="text" name="country" class="form-control" id="countryInput" placeholder="Enter Your Country" value="{{ old('country', $ld['country'] ?? 'India') }}" required>
-                        <span class="invalid-feedback">Please enter country</span>
+                        @php
+                            $savedCountry = $ld['country'] ?? 'India';
+                        @endphp
+                        <select name="country" class="form-select" id="countryInput" required>
+                            <option value="India" {{ old('country', $savedCountry) == 'India' ? 'selected' : '' }}>India</option>
+                            <option value="USA" {{ old('country', $savedCountry) == 'USA' ? 'selected' : '' }}>USA</option>
+                            <option value="UK" {{ old('country', $savedCountry) == 'UK' ? 'selected' : '' }}>UK</option>
+                            <option value="Canada" {{ old('country', $savedCountry) == 'Canada' ? 'selected' : '' }}>Canada</option>
+                            <option value="Australia" {{ old('country', $savedCountry) == 'Australia' ? 'selected' : '' }}>Australia</option>
+                            <option value="Other" {{ old('country', $savedCountry) == 'Other' ? 'selected' : '' }}>Other</option>
+                        </select>
+                        <span class="invalid-feedback">Please select country</span>
                     </div>
 
                     <div class="col-md-4 mb-4">

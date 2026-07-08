@@ -51,6 +51,7 @@ Route::get('/contact-us', [PageController::class, 'contactUs'])->name('contact-u
 Route::post('/ccavenue/callback', [\App\Http\Controllers\CCAvenueController::class, 'handleCallback'])->name('ccavenue.callback');
 
 // Public Blog Routes
+Route::get('/blog/{id}', [\App\Http\Controllers\BlogController::class, 'showPublic'])->name('blogs.public.show');
 Route::get('/blogs/{id}', [\App\Http\Controllers\BlogController::class, 'showPublic'])->name('blogs.public.show');
 Route::post('/blogs/{id}/like', [\App\Http\Controllers\BlogController::class, 'likePublic'])->name('blogs.public.like');
 

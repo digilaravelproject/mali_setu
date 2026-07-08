@@ -179,7 +179,7 @@ class MatrimonyManagementController extends Controller
         $request->validate([
             'user_id' => 'required|integer|exists:users,id|unique:matrimony_profiles,user_id',
             'age' => 'required|integer|min:18|max:100',
-            'gender' => 'required|string|in:male,female,other',
+            'gender' => 'required|string|in:male,female,other,Male,Female,Other',
             'date_of_birth' => 'nullable|date',
             'time_of_birth' => 'nullable|string',
             'height' => 'nullable|string|max:10',
@@ -212,6 +212,11 @@ class MatrimonyManagementController extends Controller
         $personal = $request->personal_details;
         $personal['gender'] = $request->gender;
         $personal['photos'] = $photoPaths;
+        
+        $first = $personal['first_name'] ?? '';
+        $middle = $personal['middle_name'] ?? '';
+        $last = $personal['last_name'] ?? '';
+        $personal['name'] = trim($first . ' ' . ($middle ? $middle . ' ' : '') . $last);
 
         $profile = MatrimonyProfile::create([
             'user_id' => $request->user_id,
@@ -267,7 +272,7 @@ class MatrimonyManagementController extends Controller
 
         $request->validate([
             'age' => 'required|integer|min:18|max:100',
-            'gender' => 'required|string|in:male,female,other',
+            'gender' => 'required|string|in:male,female,other,Male,Female,Other',
             'date_of_birth' => 'nullable|date',
             'time_of_birth' => 'nullable|string',
             'height' => 'nullable|string|max:10',
@@ -322,6 +327,11 @@ class MatrimonyManagementController extends Controller
         $personal = $request->personal_details;
         $personal['gender'] = $request->gender;
         $personal['photos'] = $photoPaths;
+        
+        $first = $personal['first_name'] ?? '';
+        $middle = $personal['middle_name'] ?? '';
+        $last = $personal['last_name'] ?? '';
+        $personal['name'] = trim($first . ' ' . ($middle ? $middle . ' ' : '') . $last);
 
         $profile->update([
             'gender' => $request->gender,
