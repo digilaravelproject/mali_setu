@@ -18,33 +18,32 @@ class SocialAuthController extends Controller
         return Socialite::driver('google')->stateless()->redirect();
     }
 
-    // Handle Google callback
     public function handleGoogleCallback(Request $request)
     {
         try {
             $googleUser = Socialite::driver('google')->stateless()->user();
+            $email = $googleUser->getEmail();
+            $user = User::where('email', $email)->first();
 
-            $user = User::where('email', $googleUser->getEmail())->first();
-
-            if ($user) {
-                $user->update([
-                    'google_id' => $googleUser->getId(),
-                ]);
-            } else {
-                $user = User::create([
-                    'email' => $googleUser->getEmail(),
-                    'name' => $googleUser->getName(),
-                    'google_id' => $googleUser->getId(),
-                    'password' => bcrypt(Str::random(12)),
-                    'caste_verification_status' => 'approved',
-                ]);
-            }
-
-            Auth::login($user);
-
-            $token = $user->createToken('auth_token')->plainTextToken;
-
+            // API Flow
             if ($request->expectsJson() || $request->wantsJson()) {
+                if ($user) {
+                    $user->update([
+                        'google_id' => $googleUser->getId(),
+                    ]);
+                } else {
+                    $user = User::create([
+                        'email' => $email,
+                        'name' => $googleUser->getName(),
+                        'google_id' => $googleUser->getId(),
+                        'password' => bcrypt(Str::random(12)),
+                        'caste_verification_status' => 'approved',
+                    ]);
+                }
+
+                Auth::login($user);
+                $token = $user->createToken('auth_token')->plainTextToken;
+
                 return response()->json([
                     'status' => true,
                     'message' => 'Google login successful',
@@ -53,7 +52,35 @@ class SocialAuthController extends Controller
                 ]);
             }
 
-            return redirect()->route('dashboard')->with('success', 'Google login successful');
+            // Web Flow
+            if (!$user) {
+                // Auto-register user with user type general
+                User::create([
+                    'name' => $googleUser->getName(),
+                    'email' => $email,
+                    'google_id' => $googleUser->getId(),
+                    'user_type' => 'general',
+                    'password' => bcrypt(Str::random(16)),
+                    'caste_verification_status' => 'approved',
+                ]);
+
+                return redirect()->route('register')->withErrors([
+                    'email' => 'Account does not exist. Please complete your registration.'
+                ]);
+            }
+
+            if (!$user->google_id) {
+                $user->update(['google_id' => $googleUser->getId()]);
+            }
+
+            if ($user->caste_verification_status === 'pending' || $user->caste_verification_status === 'rejected') {
+                return redirect()->route('login')->withErrors([
+                    'email' => 'Your caste verification status is not approved yet.'
+                ]);
+            }
+
+            Auth::login($user);
+            return redirect()->route('dashboard')->with('success', 'Successfully logged in with Google!');
         } catch (Exception $e) {
             if ($request->expectsJson() || $request->wantsJson()) {
                 return response()->json(['error' => $e->getMessage()], 500);

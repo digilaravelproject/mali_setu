@@ -312,17 +312,25 @@ class WebAuthController extends Controller
         return Socialite::driver('google')->redirect();
     }
 
-    /**
-     * Obtain the user information from Google.
-     */
     public function handleGoogleCallback(Request $request)
     {
         try {
             if ($request->has('sandbox') || !config('services.google.client_id')) {
-                $user = User::where('email', 'sandbox.google@malisetu.com')->first();
+                $email = 'sandbox.google@malisetu.com';
+                $user = User::where('email', $email)->first();
                 if (!$user) {
-                    return redirect()->route('login')->withErrors([
-                        'email' => 'No account found for this Google email. Please register first.'
+                    // Auto-register sandbox user with user type general
+                    User::create([
+                        'name' => 'Sandbox Google User',
+                        'email' => $email,
+                        'google_id' => 'sandbox_google_id_12345',
+                        'user_type' => 'general',
+                        'password' => Hash::make('sandbox123'),
+                        'caste_verification_status' => 'approved',
+                    ]);
+
+                    return redirect()->route('register')->withErrors([
+                        'email' => 'Account does not exist. Please complete your registration.'
                     ]);
                 }
                 Auth::login($user);
@@ -330,11 +338,22 @@ class WebAuthController extends Controller
             }
 
             $googleUser = Socialite::driver('google')->user();
-            $user = User::where('email', $googleUser->getEmail())->first();
+            $email = $googleUser->getEmail();
+            $user = User::where('email', $email)->first();
 
             if (!$user) {
-                return redirect()->route('login')->withErrors([
-                    'email' => 'No account found for this Google email. Please register first to join Mali Setu.'
+                // Auto-register user with user type general
+                User::create([
+                    'name' => $googleUser->getName(),
+                    'email' => $email,
+                    'google_id' => $googleUser->getId(),
+                    'user_type' => 'general',
+                    'password' => Hash::make(Str::random(16)),
+                    'caste_verification_status' => 'approved',
+                ]);
+
+                return redirect()->route('register')->withErrors([
+                    'email' => 'Account does not exist. Please complete your registration.'
                 ]);
             }
 
