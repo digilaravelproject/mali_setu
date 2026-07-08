@@ -200,15 +200,12 @@
                         </div>
 
                         <div class="row mb-4">
+                            <input type="hidden" name="district" id="district_field" value="{{ old('district') }}">
                             <div class="col-md-6 mb-3">
-                                <label class="form-label fw-semibold text-secondary small">District <span class="text-danger">*</span></label>
-                                <input type="text" name="district" id="district_field" class="form-control" placeholder="District" required value="{{ old('district') }}">
-                            </div>
-                            <div class="col-md-3 mb-3">
                                 <label class="form-label fw-semibold text-secondary small">Taluka</label>
                                 <input type="text" name="taluka" id="taluka_field" class="form-control" placeholder="Taluka" value="{{ old('taluka') }}">
                             </div>
-                            <div class="col-md-3 mb-3">
+                            <div class="col-md-6 mb-3">
                                 <label class="form-label fw-semibold text-secondary small">Village</label>
                                 <input type="text" name="village" id="village_field" class="form-control" placeholder="Village" value="{{ old('village') }}">
                             </div>

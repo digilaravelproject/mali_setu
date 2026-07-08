@@ -137,15 +137,12 @@
                 </div>
 
                 <div class="row">
+                    <input type="hidden" name="district" id="district_field" value="{{ old('district', $business->district) }}">
                     <div class="col-md-6 mb-3">
-                        <label class="form-label fw-semibold text-secondary small">District *</label>
-                        <input type="text" name="district" id="district_field" class="form-control" value="{{ old('district', $business->district) }}" required>
-                    </div>
-                    <div class="col-md-3 mb-3">
                         <label class="form-label fw-semibold text-secondary small">Taluka</label>
                         <input type="text" name="taluka" id="taluka_field" class="form-control" value="{{ old('taluka', $business->taluka) }}">
                     </div>
-                    <div class="col-md-3 mb-3">
+                    <div class="col-md-6 mb-3">
                         <label class="form-label fw-semibold text-secondary small">Village</label>
                         <input type="text" name="village" id="village_field" class="form-control" value="{{ old('village', $business->village) }}">
                     </div>

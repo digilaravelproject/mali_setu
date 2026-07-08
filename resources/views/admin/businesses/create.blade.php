@@ -95,17 +95,13 @@
                         <!-- Address & Location info -->
                         <h6 class="font-weight-bold text-primary mt-4 mb-3"><i class="fas fa-location-dot me-2"></i>Location Details</h6>
                         <div class="row">
-                            <div class="col-md-4 mb-3">
+                            <div class="col-md-6 mb-3">
                                 <label for="country" class="form-label font-weight-bold small">Country <span class="text-danger">*</span></label>
                                 <input type="text" class="form-control" id="country" name="country" value="{{ old('country', 'India') }}" required>
                             </div>
-                            <div class="col-md-4 mb-3">
+                            <div class="col-md-6 mb-3">
                                 <label for="state" class="form-label font-weight-bold small">State <span class="text-danger">*</span></label>
                                 <input type="text" class="form-control" id="state" name="state" value="{{ old('state') }}" required placeholder="e.g. Maharashtra">
-                            </div>
-                            <div class="col-md-4 mb-3">
-                                <label for="district" class="form-label font-weight-bold small">District <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" id="district" name="district" value="{{ old('district') }}" required placeholder="e.g. Pune">
                             </div>
                         </div>
 
@@ -116,7 +112,12 @@
                             </div>
                             <div class="col-md-3 mb-3">
                                 <label for="pincode" class="form-label font-weight-bold small">Pincode <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" id="pincode" name="pincode" value="{{ old('pincode') }}" required placeholder="6 digits" pattern="\d{6}">
+                                <div class="input-group">
+                                    <input type="text" class="form-control" id="pincode" name="pincode" value="{{ old('pincode') }}" required placeholder="6 digits" pattern="\d{6}">
+                                    <button class="btn btn-outline-secondary" type="button" id="get_gps_location_btn" title="Get GPS Location">
+                                        <i class="fa-solid fa-location-crosshairs text-primary"></i>
+                                    </button>
+                                </div>
                             </div>
                             <div class="col-md-3 mb-3">
                                 <label for="village" class="form-label font-weight-bold small">Village</label>
@@ -137,22 +138,16 @@
 
                         <!-- Timing & Coordinates -->
                         <div class="row">
-                            <div class="col-md-3 mb-3">
+                            <div class="col-md-6 mb-3">
                                 <label for="opening_time" class="form-label font-weight-bold small">Opening Time</label>
                                 <input type="time" class="form-control" id="opening_time" name="opening_time" value="{{ old('opening_time') }}">
                             </div>
-                            <div class="col-md-3 mb-3">
+                            <div class="col-md-6 mb-3">
                                 <label for="closing_time" class="form-label font-weight-bold small">Closing Time</label>
                                 <input type="time" class="form-control" id="closing_time" name="closing_time" value="{{ old('closing_time') }}">
                             </div>
-                            <div class="col-md-3 mb-3">
-                                <label for="latitude" class="form-label font-weight-bold small">Latitude</label>
-                                <input type="text" class="form-control" id="latitude" name="latitude" value="{{ old('latitude') }}" placeholder="e.g. 18.52">
-                            </div>
-                            <div class="col-md-3 mb-3">
-                                <label for="longitude" class="form-label font-weight-bold small">Longitude</label>
-                                <input type="text" class="form-control" id="longitude" name="longitude" value="{{ old('longitude') }}" placeholder="e.g. 73.85">
-                            </div>
+                            <input type="hidden" id="latitude" name="latitude" value="{{ old('latitude') }}">
+                            <input type="hidden" id="longitude" name="longitude" value="{{ old('longitude') }}">
                         </div>
 
                         <!-- Description & Image upload -->
@@ -201,4 +196,82 @@
         </div>
     </div>
 </div>
+@endsection
+
+@section('scripts')
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const getGpsBtn = document.getElementById('get_gps_location_btn');
+        if (getGpsBtn) {
+            getGpsBtn.addEventListener('click', function() {
+                const icon = getGpsBtn.querySelector('i');
+                const oldClass = icon.className;
+                icon.className = 'fa-solid fa-spinner fa-spin text-primary';
+                
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(function(position) {
+                        icon.className = 'fa-solid fa-circle-check text-success';
+                        const lat = position.coords.latitude;
+                        const lon = position.coords.longitude;
+                        document.getElementById('latitude').value = lat;
+                        document.getElementById('longitude').value = lon;
+                        
+                        // Fetch reverse geocoding from OpenStreetMap Nominatim
+                        fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&addressdetails=1`, {
+                            headers: {
+                                'User-Agent': 'MaliSetuApp/1.0'
+                            }
+                        })
+                        .then(res => res.json())
+                        .then(geoData => {
+                            if (geoData && geoData.address) {
+                                const addr = geoData.address;
+                                const pincode = addr.postcode || '';
+                                const state = addr.state || addr.region || '';
+                                const city = addr.city || addr.town || addr.village || addr.municipality || addr.county || addr.state_district || addr.district || '';
+                                
+                                if (pincode) {
+                                    document.getElementById('pincode').value = pincode.replace(/\s+/g, '');
+                                }
+                                if (state) {
+                                    document.getElementById('state').value = state;
+                                }
+                                if (city) {
+                                    document.getElementById('city').value = city;
+                                }
+                                const talukaField = document.getElementById('taluka');
+                                if (talukaField && (addr.suburb || addr.neighbourhood)) {
+                                    talukaField.value = addr.suburb || addr.neighbourhood || '';
+                                }
+                                const villageField = document.getElementById('village');
+                                if (villageField && addr.village) {
+                                    villageField.value = addr.village;
+                                }
+                                const addressField = document.getElementById('address');
+                                if (addressField && geoData.display_name) {
+                                    addressField.value = geoData.display_name;
+                                }
+                            }
+                        })
+                        .catch(err => {
+                            console.error('Reverse geocoding error:', err);
+                        });
+                        
+                        alert('Location coordinates fetched successfully!');
+                    }, function(error) {
+                        icon.className = oldClass;
+                        alert('Error fetching location: ' + error.message);
+                    }, {
+                        enableHighAccuracy: true,
+                        timeout: 10000,
+                        maximumAge: 0
+                    });
+                } else {
+                    icon.className = oldClass;
+                    alert('Geolocation is not supported by this browser.');
+                }
+            });
+        }
+    });
+</script>
 @endsection

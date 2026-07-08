@@ -270,4 +270,11 @@ class BlogManagementController extends Controller
             return redirect()->back()->with('error', 'Failed to delete comment: ' . $e->getMessage());
         }
     }
+
+    public function show($id)
+    {
+        $blog = Blog::findOrFail($id);
+
+        return view('blogs.show', compact('blog'));
+    }
 }

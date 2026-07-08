@@ -262,15 +262,12 @@
                     </div>
 
                     <div class="row">
+                        <input type="hidden" name="district" value="">
                         <div class="col-md-6 mb-3">
-                            <label class="form-label">District *</label>
-                            <input type="text" name="district" class="form-control" placeholder="District" required>
-                        </div>
-                        <div class="col-md-3 mb-3">
                             <label class="form-label">Taluka</label>
                             <input type="text" name="taluka" class="form-control" placeholder="Taluka">
                         </div>
-                        <div class="col-md-3 mb-3">
+                        <div class="col-md-6 mb-3">
                             <label class="form-label">Village</label>
                             <input type="text" name="village" class="form-control" placeholder="Village">
                         </div>
@@ -717,15 +714,12 @@
                         </div>
 
                         <div class="row">
+                            <input type="hidden" name="district" value="{{ $user->business->district }}">
                             <div class="col-md-6 mb-3">
-                                <label class="form-label">District *</label>
-                                <input type="text" name="district" class="form-control" value="{{ $user->business->district }}" required>
-                            </div>
-                            <div class="col-md-3 mb-3">
                                 <label class="form-label">Taluka</label>
                                 <input type="text" name="taluka" class="form-control" value="{{ $user->business->taluka }}">
                             </div>
-                            <div class="col-md-3 mb-3">
+                            <div class="col-md-6 mb-3">
                                 <label class="form-label">Village</label>
                                 <input type="text" name="village" class="form-control" value="{{ $user->business->village }}">
                             </div>

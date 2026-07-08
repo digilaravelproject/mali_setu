@@ -519,7 +519,10 @@ class MatrimonyController extends Controller
 
         // 1. Basic Details
         if ($request->filled('gender')) {
-            $query->where('personal_details->gender', $request->gender);
+            $query->where(function($q) use ($request) {
+                $q->where('personal_details->gender', 'like', $request->gender)
+                  ->orWhereRaw('LOWER(JSON_UNQUOTE(JSON_EXTRACT(personal_details, "$.gender"))) = ?', [strtolower($request->gender)]);
+            });
         }
         if ($request->filled('age_min') || $request->filled('age_max')) {
             $query->whereBetween('age', [$request->age_min ?? 18, $request->age_max ?? 100]);

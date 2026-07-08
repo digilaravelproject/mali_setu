@@ -42,6 +42,9 @@ Route::get('/', function () {
     return view('landing_page');
 });
 
+// Route::get('/blog/{id}', [BlogManagementController::class, 'show'])
+//     ->name('blog.show');
+
 Route::get('/privacy-policy', [PageController::class, 'privacyPolicy'])->name('privacy-policy');
 Route::get('/terms-condition', [PageController::class, 'termsCondition'])->name('terms-condition');
 Route::get('/contact-us', [PageController::class, 'contactUs'])->name('contact-us');
