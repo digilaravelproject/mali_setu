@@ -56,12 +56,20 @@
                         <a href="{{ route('matrimony.browse') }}" class="dropdown-item-navbar {{ Request::routeIs('matrimony.browse') ? 'active' : '' }}">
                             <i class="fa-solid fa-magnifying-glass text-primary"></i> Matrimony Profiles
                         </a>
-                        <a href="{{ route('matrimony.requests') }}" class="dropdown-item-navbar {{ Request::routeIs('matrimony.requests') ? 'active' : '' }}">
-                            <i class="fa-solid fa-paper-plane text-primary"></i> Requests
-                        </a>
-                        <a href="{{ route('matrimony.conversations') }}" class="dropdown-item-navbar {{ Request::routeIs('matrimony.conversations') || Request::routeIs('matrimony.chat') ? 'active' : '' }}">
-                            <i class="fa-solid fa-comments text-primary"></i> Messages
-                        </a>
+                        @php
+                            $hasMatriSubscription = auth()->check() && 
+                                                    auth()->user()->matrimonyProfile && 
+                                                    auth()->user()->matrimonyProfile->profile_expires_at && 
+                                                    \Carbon\Carbon::parse(auth()->user()->matrimonyProfile->profile_expires_at)->isFuture();
+                        @endphp
+                        @if($hasMatriSubscription)
+                            <a href="{{ route('matrimony.requests') }}" class="dropdown-item-navbar {{ Request::routeIs('matrimony.requests') ? 'active' : '' }}">
+                                <i class="fa-solid fa-paper-plane text-primary"></i> Requests
+                            </a>
+                            <a href="{{ route('matrimony.conversations') }}" class="dropdown-item-navbar {{ Request::routeIs('matrimony.conversations') || Request::routeIs('matrimony.chat') ? 'active' : '' }}">
+                                <i class="fa-solid fa-comments text-primary"></i> Messages
+                            </a>
+                        @endif
                     </div>
                 </div>
 

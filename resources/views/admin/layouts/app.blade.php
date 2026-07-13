@@ -17,8 +17,8 @@
     
     <style>
         :root {
-            --primary-color: #b61315;
-            --secondary-color: #F59E0B;
+            --primary-color: #84144f;
+            --secondary-color: #aa1262;
             --sidebar-width: 280px;
             --header-height: 70px;
         }
@@ -34,7 +34,7 @@
             left: 0;
             height: 100vh;
             width: var(--sidebar-width);
-            background: linear-gradient(135deg, var(--primary-color) 0%, #8b0000 100%);
+            background: linear-gradient(135deg, var(--primary-color) 0%, #630837 100%);
             color: white;
             z-index: 1000;
             transition: all 0.3s ease;
@@ -172,8 +172,8 @@
         }
         
         .btn-primary:hover {
-            background-color: #8b0000;
-            border-color: #8b0000;
+            background-color: #630837;
+            border-color: #630837;
         }
         
         .table {

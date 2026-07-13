@@ -139,7 +139,7 @@
                 <h6 class="fw-bold mb-4 text-white text-uppercase tracking-wider">Platform</h6>
                 <ul class="list-unstyled opacity-75">
                     <li class="mb-2"><a href="{{ url('/#directory') }}" class="text-white text-decoration-none hover-text-primary">Business Directory</a></li>
-                    <li class="mb-2"><a href="{{ url('/#matrimony') }}" class="text-white text-decoration-none hover-text-primary">Matrimony</a></li>
+                    <li class="mb-2"><a href="{{ url('/#matrimony-how') }}" class="text-white text-decoration-none hover-text-primary">Matrimony</a></li>
                     <li class="mb-2"><a href="{{ route('register') }}" class="text-white text-decoration-none hover-text-primary">Join Today</a></li>
                 </ul>
             </div>

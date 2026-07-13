@@ -176,8 +176,10 @@
                 </div>
                 <div class="d-flex gap-2 flex-wrap mt-3">
                     <a href="{{ route('matrimony.browse') }}" class="btn btn-primary btn-sm profile-action-btn"><i class="fa-solid fa-magnifying-glass me-1"></i> Browse Profiles</a>
-                    <a href="{{ route('matrimony.requests') }}" class="btn btn-outline-primary btn-sm profile-action-btn"><i class="fa-solid fa-paper-plane me-1"></i> Requests</a>
-                    <a href="{{ route('matrimony.conversations') }}" class="btn btn-outline-secondary btn-sm profile-action-btn"><i class="fa-solid fa-comments me-1"></i> Messages</a>
+                    @if($hasPaid && $profile->profile_expires_at && \Carbon\Carbon::parse($profile->profile_expires_at)->isFuture())
+                        <a href="{{ route('matrimony.requests') }}" class="btn btn-outline-primary btn-sm profile-action-btn"><i class="fa-solid fa-paper-plane me-1"></i> Requests</a>
+                        <a href="{{ route('matrimony.conversations') }}" class="btn btn-outline-secondary btn-sm profile-action-btn"><i class="fa-solid fa-comments me-1"></i> Messages</a>
+                    @endif
                 </div>
             </div>
         </div>
@@ -243,20 +245,44 @@ function startMatrimonyPayment(planId, price) {
             <div class="modal-content border-0 rounded-4 shadow-lg">
                 <div class="modal-header border-0 bg-light p-4">
                     <h5 class="modal-title fw-bold text-dark" id="renewMatrimonyModalLabel">
-                        <i class="fa-solid fa-heart-crack text-danger me-2"></i> Subscription Expired
+                        @if(!$hasPaid)
+                            <i class="fa-solid fa-crown text-warning me-2"></i> Subscription Required
+                        @else
+                            <i class="fa-solid fa-heart-crack text-danger me-2"></i> Subscription Expired
+                        @endif
                     </h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" onclick="closeRenewModal()"></button>
                 </div>
                 <div class="modal-body p-4 text-center">
                     <div class="mb-3" style="font-size: 3rem; color: var(--primary);">
-                        <i class="fa-solid fa-clock-rotate-left"></i>
+                        @if(!$hasPaid)
+                            <i class="fa-solid fa-crown text-warning"></i>
+                        @else
+                            <i class="fa-solid fa-clock-rotate-left"></i>
+                        @endif
                     </div>
-                    <h5 class="fw-bold mb-2">Renew Matrimony Subscription</h5>
-                    <p class="text-secondary mb-4">Your matrimony subscription has expired. Please renew your subscription to continue connecting with potential life partners.</p>
+                    <h5 class="fw-bold mb-2">
+                        @if(!$hasPaid)
+                            Subscribe to Matrimony Premium
+                        @else
+                            Renew Matrimony Subscription
+                        @endif
+                    </h5>
+                    <p class="text-secondary mb-4">
+                        @if(!$hasPaid)
+                            Please select a premium plan to continue connecting with potential life partners.
+                        @else
+                            Your matrimony subscription has expired. Please renew your subscription to continue connecting with potential life partners.
+                        @endif
+                    </p>
                     
                     <div class="d-grid gap-2">
                         <a href="{{ route('matrimony.subscription') }}" class="btn btn-primary rounded-3 py-2 fw-bold">
-                            <i class="fa-solid fa-arrows-rotate me-1"></i> Renew Now
+                            @if(!$hasPaid)
+                                <i class="fa-solid fa-crown me-1"></i> Subscribe Now
+                            @else
+                                <i class="fa-solid fa-arrows-rotate me-1"></i> Renew Now
+                            @endif
                         </a>
                         <button type="button" class="btn btn-outline-secondary rounded-3 py-2 fw-semibold" data-bs-dismiss="modal" onclick="closeRenewModal()">
                             Cancel

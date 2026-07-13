@@ -74,8 +74,7 @@ class UserManagementController extends Controller
      */
     public function pendingVerifications(Request $request)
     {
-        $query = User::with(['casteCertificate'])
-            ->where('caste_verification_status', 'pending');
+        $query = User::with(['casteCertificate']);
             
         // Search functionality
         if ($request->has('search') && $request->search !== '') {
@@ -85,7 +84,9 @@ class UserManagementController extends Controller
             });
         }
         
-        $pendingVerifications = $query->latest()->paginate(15);
+        $pendingVerifications = $query->orderByRaw("FIELD(caste_verification_status, 'pending', 'approved', 'rejected')")
+            ->latest()
+            ->paginate(15);
         
         $stats = [
             'pending_count' => User::where('caste_verification_status', 'pending')->count(),

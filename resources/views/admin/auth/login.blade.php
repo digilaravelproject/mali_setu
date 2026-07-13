@@ -10,16 +10,18 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- Google Fonts (Nunito) -->
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     
     <style>
         :root {
-            --primary-color: #b61315;
-            --secondary-color: #F59E0B;
+            --primary-color: #84144f;
+            --secondary-color: #aa1262;
         }
         
         body {
-            font-family: 'Inter', sans-serif;
-            background: linear-gradient(135deg, var(--primary-color) 0%, #8b0000 100%);
+            font-family: 'Nunito', sans-serif;
+            background: linear-gradient(135deg, var(--primary-color) 0%, #630837 100%);
             min-height: 100vh;
             display: flex;
             align-items: center;
@@ -36,7 +38,7 @@
         }
         
         .login-header {
-            background: linear-gradient(135deg, var(--primary-color) 0%, #8b0000 100%);
+            background: linear-gradient(135deg, var(--primary-color) 0%, #630837 100%);
             color: white;
             padding: 2rem;
             text-align: center;
@@ -70,11 +72,11 @@
         
         .form-control:focus {
             border-color: var(--primary-color);
-            box-shadow: 0 0 0 0.2rem rgba(182, 19, 21, 0.25);
+            box-shadow: 0 0 0 0.2rem rgba(132, 20, 79, 0.25);
         }
         
         .btn-primary {
-            background: linear-gradient(135deg, var(--primary-color) 0%, #8b0000 100%);
+            background: linear-gradient(135deg, var(--primary-color) 0%, #630837 100%);
             border: none;
             border-radius: 12px;
             padding: 0.75rem 2rem;
@@ -86,7 +88,7 @@
         
         .btn-primary:hover {
             transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(182, 19, 21, 0.3);
+            box-shadow: 0 10px 20px rgba(132, 20, 79, 0.3);
         }
         
         .alert {

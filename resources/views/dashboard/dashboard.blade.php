@@ -93,12 +93,12 @@
     .banner-slide-wrapper {
         border-radius: 24px;
         overflow: hidden;
-        height: 250px;
+        height: 180px;
     }
     @media (min-width: 768px) {
         .banner-slide-wrapper {
-            height: auto;
-            aspect-ratio: 1920 / 700;
+            height: 350px;
+            aspect-ratio: auto;
         }
     }
  
@@ -354,9 +354,9 @@
                             <div class="carousel-item {{ $index === 0 ? 'active' : '' }}" data-bs-interval="4500">
                                 <div class="banner-slide-wrapper position-relative w-100 overflow-hidden">
                                     <!-- Web Banner (Desktops and Laptops) -->
-                                    <img src="{{ asset('storage/' . $banner->web_image_path) }}" class="d-none d-md-block w-100 h-100" style="object-fit: cover; object-position: center;" alt="{{ $banner->title }}">
+                                    <img src="{{ asset('storage/' . $banner->web_image_path) }}" class="d-none d-md-block w-100 h-100" style="object-fit: fill;" alt="{{ $banner->title }}">
                                     <!-- Mobile Banner (Smartphones and Tablets) -->
-                                    <img src="{{ asset('storage/' . $banner->image_path) }}" class="d-md-none w-100 h-100" style="object-fit: cover; object-position: center;" alt="{{ $banner->title }}">
+                                    <img src="{{ asset('storage/' . $banner->image_path) }}" class="d-md-none w-100 h-100" style="object-fit: fill;" alt="{{ $banner->title }}">
                                     
                                     <div class="banner-overlay position-absolute w-100 h-100 top-0 start-0 d-flex flex-column justify-content-end p-4 text-start" style="background: linear-gradient(180deg, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.75) 100%); z-index: 2;">
                                         <h3 class="fw-bold text-white mb-2">{{ $banner->title }}</h3>
@@ -578,7 +578,7 @@
             <div class="row g-4" id="directory-listings-grid"></div>
 
             <!-- Quick Access Section -->
-            <div class="row g-4 mb-4 text-start">
+            <div class="row g-4 mb-4 text-start mt-2">
                 <!-- Matrimony Seeker Profile Card -->
                 <div class="col-6 col-md-6 col-lg-4">
                     <div class="quick-access-card">
@@ -724,12 +724,12 @@
                             <input type="text" name="phone" value="{{ old('phone', $user->phone) }}" class="form-control" required>
                         </div>
                         <div class="col-md-3 mb-4">
-                            <label class="form-label">Age</label>
-                            <input type="number" name="age" value="{{ old('age', $user->age) }}" class="form-control" min="18" max="100">
+                            <label class="form-label">Date of Birth</label>
+                            <input type="date" name="dob" value="{{ old('dob', $user->dob ? \Carbon\Carbon::parse($user->dob)->format('Y-m-d') : '') }}" class="form-control">
                         </div>
                         <div class="col-md-3 mb-4">
-                            <label class="form-label">Date of Birth</label>
-                            <input type="date" name="dob" value="{{ old('dob', $user->dob) }}" class="form-control">
+                            <label class="form-label">Age</label>
+                            <input type="number" name="age" value="{{ old('age', $user->age) }}" class="form-control" min="18" max="100" readonly>
                         </div>
                     </div>
 
@@ -1308,6 +1308,32 @@
                 }, 1200);
             }
         @endif
+
+        // Auto-calculate Age from DOB in profile form
+        const dobInput = document.querySelector('input[name="dob"]');
+        const ageInput = document.querySelector('input[name="age"]');
+        
+        function calculateAgeFromDob() {
+            if (dobInput && dobInput.value) {
+                const dob = new Date(dobInput.value);
+                const today = new Date();
+                let age = today.getFullYear() - dob.getFullYear();
+                const monthDiff = today.getMonth() - dob.getMonth();
+                if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) {
+                    age--;
+                }
+                if (ageInput) {
+                    ageInput.value = age >= 0 ? age : '';
+                }
+            }
+        }
+        
+        if (dobInput && ageInput) {
+            dobInput.addEventListener('change', calculateAgeFromDob);
+            dobInput.addEventListener('input', calculateAgeFromDob);
+            // Run on load if DOB is already populated
+            calculateAgeFromDob();
+        }
     });
 </script>
 @endsection

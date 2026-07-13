@@ -92,8 +92,7 @@ class BusinessManagementController extends Controller
                 'businessRegistrationTransactions as pending_business_registrations_count' => function ($query) {
                     $query->where('status', 'pending');
                 },
-            ])
-            ->where('verification_status', 'pending');
+            ]);
             
         // Search functionality
         if ($request->has('search') && $request->search !== '') {
@@ -105,7 +104,9 @@ class BusinessManagementController extends Controller
             });
         }
         
-        $pendingBusinesses = $query->latest()->paginate(15);
+        $pendingBusinesses = $query->orderByRaw("FIELD(verification_status, 'pending', 'approved', 'rejected')")
+            ->latest()
+            ->paginate(15);
         
         $stats = [
             'pending_count' => Business::where('verification_status', 'pending')->count(),

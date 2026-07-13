@@ -1439,7 +1439,7 @@
                     <div class="glass-card text-center p-5">
                         <i class="fa-solid fa-quote-left fs-1 text-primary opacity-20 mb-4"></i>
                         <p class="fs-5 text-secondary" style="font-style: italic;">"Listing our logistics firm under the LLP plan has given us great exposure. We now recruit local talent and provide services within the community."</p>
-                        <h6 class="fw-bold mt-4 mb-0">Karan Solanki</h6>
+                        <h6 class="fw-bold mt-4 mb-0">Karan Thorat</h6>
                         <span class="small text-muted">Logistics LLP Partner, Nagpur</span>
                     </div>
                 </div>
@@ -1638,8 +1638,8 @@
             <div class="col-md-2 offset-lg-1">
                 <h6 class="fw-bold mb-4 text-white text-uppercase tracking-wider">Platform</h6>
                 <ul class="list-unstyled opacity-75">
-                    <li class="mb-2"><a href="#directory" class="text-white text-decoration-none hover-text-primary">Business Directory</a></li>
-                    <li class="mb-2"><a href="#matrimony" class="text-white text-decoration-none hover-text-primary">Matrimony</a></li>
+                    <li class="mb-2"><a href="#business-how" class="text-white text-decoration-none hover-text-primary">Business Directory</a></li>
+                    <li class="mb-2"><a href="#matrimony-how" class="text-white text-decoration-none hover-text-primary">Matrimony</a></li>
                     <li class="mb-2"><a href="{{ route('register') }}" class="text-white text-decoration-none hover-text-primary">Join Today</a></li>
                 </ul>
             </div>

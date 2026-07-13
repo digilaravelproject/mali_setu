@@ -58,8 +58,7 @@ class MatrimonyManagementController extends Controller
      */
     public function moderation(Request $request)
     {
-        $query = MatrimonyProfile::with(['user'])
-            ->where('approval_status', 'pending');
+        $query = MatrimonyProfile::with(['user']);
             
         // Search functionality
         if ($request->has('search') && $request->search !== '') {
@@ -69,7 +68,9 @@ class MatrimonyManagementController extends Controller
             });
         }
         
-        $pendingProfiles = $query->latest()->paginate(15);
+        $pendingProfiles = $query->orderByRaw("FIELD(approval_status, 'pending', 'approved', 'rejected')")
+            ->latest()
+            ->paginate(15);
         
         $stats = [
             'pending_count' => MatrimonyProfile::where('approval_status', 'pending')->count(),

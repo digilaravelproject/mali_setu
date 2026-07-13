@@ -104,7 +104,7 @@
             <!-- Skip and Proceed Flow -->
             <div class="text-center mt-4">
                 <p class="text-secondary small mb-3">Not ready to subscribe yet? You can start with your trial console dashboard first.</p>
-                <a href="{{ route('dashboard.business.index') }}" class="btn btn-outline-secondary skip-btn px-5 py-3 rounded-3 fw-bold border-2">
+                <a href="{{ route('dashboard') }}" class="btn btn-outline-secondary skip-btn px-5 py-3 rounded-3 fw-bold border-2">
                     Skip & Go to Dashboard <i class="fa-solid fa-arrow-right-to-bracket ms-1"></i>
                 </a>
             </div>

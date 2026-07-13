@@ -143,7 +143,7 @@
             <!-- Skip and Proceed Flow -->
             <div class="text-center mt-4">
                 <p class="text-secondary small mb-3">Not ready to subscribe yet? You can start with your trial console first.</p>
-                <a href="{{ route('matrimony.index') }}" class="btn btn-outline-secondary px-5 py-3 rounded-3 fw-bold border-2" style="color: #84144f; border-color: #84144f !important;">
+                <a href="{{ route('dashboard') }}" class="btn btn-outline-secondary px-5 py-3 rounded-3 fw-bold border-2" style="color: #84144f; border-color: #84144f !important;">
                     Skip & Go to Dashboard <i class="fa-solid fa-arrow-right-to-bracket ms-1"></i>
                 </a>
             </div>

@@ -115,6 +115,14 @@
                                         <td>{{ $business->user->email }}</td>
                                         <td>
                                             <span class="badge badge-info text-black">{{ ucfirst($business->business_type) }}</span>
+                                            <br>
+                                            @if($business->verification_status === 'approved')
+                                                <span class="badge bg-success text-white mt-1">Approved</span>
+                                            @elseif($business->verification_status === 'rejected')
+                                                <span class="badge bg-danger text-white mt-1">Rejected</span>
+                                            @else
+                                                <span class="badge bg-warning text-dark mt-1">Pending</span>
+                                            @endif
                                         </td>
                                         <td>
                                             @if($business->category)
@@ -146,7 +154,11 @@
                                                 <a href="{{ route('admin.businesses.edit', $business->id) }}" class="btn btn-sm btn-warning text-white" title="Edit business">
                                                     <i class="fas fa-edit"></i>
                                                 </a>
-                                                @if($business->completed_business_registrations_count > 0)
+                                                @if($business->verification_status === 'approved')
+                                                    <button type="button" class="btn btn-sm btn-success" disabled title="Approved">
+                                                        <i class="fas fa-check"></i>
+                                                    </button>
+                                                @elseif($business->completed_business_registrations_count > 0)
                                                     <button type="button" class="btn btn-sm btn-success" 
                                                             onclick="approveBusiness({{ $business->id }})" title="Approve">
                                                         <i class="fas fa-check"></i>
@@ -157,7 +169,8 @@
                                                     </button>
                                                 @endif
                                                 <button type="button" class="btn btn-sm btn-danger" 
-                                                        onclick="rejectBusiness({{ $business->id }})" title="Reject">
+                                                        onclick="rejectBusiness({{ $business->id }})" title="Reject"
+                                                        {{ $business->verification_status === 'rejected' ? 'disabled' : '' }}>
                                                     <i class="fas fa-times"></i>
                                                 </button>
                                             </div>

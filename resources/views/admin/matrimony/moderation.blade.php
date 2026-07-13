@@ -139,6 +139,13 @@
                                             <div class="font-weight-bold">{{ $profile->user->name ?? 'N/A' }}</div>
                                             <div class="text-xs text-gray-500">{{ $profile->user->email ?? 'N/A' }}</div>
                                             <div class="text-xs text-gray-500">ID: {{ $profile->id }}</div>
+                                            @if($profile->approval_status === 'approved')
+                                                <span class="badge bg-success text-white mt-1" style="font-size: 0.65rem;">Approved</span>
+                                            @elseif($profile->approval_status === 'rejected')
+                                                <span class="badge bg-danger text-white mt-1" style="font-size: 0.65rem;">Rejected</span>
+                                            @else
+                                                <span class="badge bg-warning text-dark mt-1" style="font-size: 0.65rem;">Pending</span>
+                                            @endif
                                         </div>
                                     </div>
                                 </td>
@@ -180,7 +187,8 @@
                                             @csrf
                                             <button type="submit" class="btn btn-success btn-sm" 
                                                     onclick="return confirm('Are you sure you want to approve this matrimony profile?')" 
-                                                    data-toggle="tooltip" title="Approve">
+                                                    data-toggle="tooltip" title="Approve"
+                                                    {{ $profile->approval_status === 'approved' ? 'disabled' : '' }}>
                                                 <i class="fas fa-check"></i>
                                             </button>
                                         </form>
@@ -191,7 +199,8 @@
                                             <input type="hidden" name="rejection_reason" id="rejection_reason_{{ $profile->id }}">
                                             <button type="submit" class="btn btn-danger btn-sm" 
                                                     onclick="var reason = prompt('Please provide a reason for rejection:'); if (reason && reason.trim() !== '') { document.getElementById('rejection_reason_{{ $profile->id }}').value = reason.trim(); return true; } else { return false; }" 
-                                                    data-toggle="tooltip" title="Reject">
+                                                    data-toggle="tooltip" title="Reject"
+                                                    {{ $profile->approval_status === 'rejected' ? 'disabled' : '' }}>
                                                 <i class="fas fa-times"></i>
                                             </button>
                                         </form>

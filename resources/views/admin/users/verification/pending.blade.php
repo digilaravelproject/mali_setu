@@ -145,6 +145,14 @@
                                 <td>{{ $user->phone ?? 'N/A' }}</td>
                                 <td>
                                     <span class="badge badge-secondary text-black">{{ ucfirst($user->user_type ?? 'general') }}</span>
+                                    <br>
+                                    @if($user->caste_verification_status === 'approved')
+                                        <span class="badge bg-success text-white mt-1">Approved</span>
+                                    @elseif($user->caste_verification_status === 'rejected')
+                                        <span class="badge bg-danger text-white mt-1">Rejected</span>
+                                    @else
+                                        <span class="badge bg-warning text-dark mt-1">Pending</span>
+                                    @endif
                                 </td>
                                 <td>
                                     @if($user->casteCertificate && $user->casteCertificate->file_path)
@@ -165,12 +173,14 @@
                                     <div class="btn-group" role="group">
                                         <button type="button" class="btn btn-success btn-sm" 
                                                 onclick="approveVerification({{ $user->id }})" 
-                                                data-toggle="tooltip" title="Approve">
+                                                data-toggle="tooltip" title="Approve"
+                                                {{ $user->caste_verification_status === 'approved' ? 'disabled' : '' }}>
                                             <i class="fas fa-check"></i>
                                         </button>
                                         <button type="button" class="btn btn-danger btn-sm" 
                                                 onclick="rejectVerification({{ $user->id }})" 
-                                                data-toggle="tooltip" title="Reject">
+                                                data-toggle="tooltip" title="Reject"
+                                                {{ $user->caste_verification_status === 'rejected' ? 'disabled' : '' }}>
                                             <i class="fas fa-times"></i>
                                         </button>
                                         <a href="{{ route('admin.users.edit', $user->id) }}" class="btn btn-warning btn-sm" 

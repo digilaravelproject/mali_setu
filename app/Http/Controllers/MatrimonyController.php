@@ -47,6 +47,10 @@ class MatrimonyController extends Controller
             ->latest()->first();
         $hasPaid = !is_null($matrimonyPayment);
 
+        if ($profile && !$hasPaid) {
+            return redirect()->route('matrimony.subscription');
+        }
+
         return view('matrimony.index', compact('user', 'profile', 'plans', 'hasPaid', 'sentRequests', 'receivedRequests', 'conversations'));
     }
 
@@ -479,6 +483,16 @@ class MatrimonyController extends Controller
             'longitude' => $request->longitude,
         ]);
 
+        $matrimonyPayment = Transaction::where('user_id', $user->id)
+            ->where('purpose', 'matrimony_profile')
+            ->whereNotNull('razorpay_payment_id')
+            ->latest()->first();
+        $hasPaid = !is_null($matrimonyPayment);
+
+        if (!$hasPaid) {
+            return redirect()->route('matrimony.subscription')->with('success', 'Profile updated successfully! Please select a subscription plan to proceed.');
+        }
+
         return redirect()->route('matrimony.index')->with('success', 'Profile updated successfully!');
     }
 
@@ -503,13 +517,7 @@ class MatrimonyController extends Controller
     {
         $user = Auth::user();
 
-        $myProfile = $user->matrimonyProfile;
-        $hasSubscription = $user->user_type === 'admin' || (
-                           $myProfile && 
-                           $myProfile->profile_expires_at && 
-                           \Carbon\Carbon::parse($myProfile->profile_expires_at)->isFuture());
-
-        if (!$hasSubscription) {
+        if (!$this->checkSubscription()) {
             return redirect()->route('matrimony.index')->with('error', 'Subscription required to browse matrimonial profiles.');
         }
 
@@ -688,13 +696,7 @@ class MatrimonyController extends Controller
 
         // Block viewing other users' profiles if not subscribed (except for admins or viewing own profile)
         if ($profile->user_id !== $user->id) {
-            $myProfile = $user->matrimonyProfile;
-            $hasSubscription = $user->user_type === 'admin' || (
-                               $myProfile && 
-                               $myProfile->profile_expires_at && 
-                               \Carbon\Carbon::parse($myProfile->profile_expires_at)->isFuture());
-
-            if (!$hasSubscription) {
+            if (!$this->checkSubscription()) {
                 return redirect()->route('matrimony.index')->with('error', 'Subscription required to view matrimonial profiles.');
             }
         }
@@ -724,6 +726,9 @@ class MatrimonyController extends Controller
     /** Send connection request */
     public function sendRequest(Request $request)
     {
+        if (!$this->checkSubscription()) {
+            return redirect()->route('matrimony.index')->with('error', 'Subscription required to send connection requests.');
+        }
         $request->validate([
             'receiver_id' => 'required|integer|exists:users,id',
             'message'     => 'nullable|string|max:500',
@@ -750,6 +755,9 @@ class MatrimonyController extends Controller
     /** View all requests */
     public function requests()
     {
+        if (!$this->checkSubscription()) {
+            return redirect()->route('matrimony.index')->with('error', 'Subscription required to view connection requests.');
+        }
         $user = Auth::user();
         $sentRequests = ConnectionRequest::where('sender_id', $user->id)
             ->with(['receiver.matrimonyProfile'])->latest()->get();
@@ -787,6 +795,9 @@ class MatrimonyController extends Controller
     /** Accept or Reject a connection request */
     public function respondRequest(Request $request, $id)
     {
+        if (!$this->checkSubscription()) {
+            return redirect()->route('matrimony.index')->with('error', 'Subscription required.');
+        }
         $request->validate([
             'status' => 'required|in:accepted,rejected',
         ]);
@@ -814,6 +825,9 @@ class MatrimonyController extends Controller
     /** List all conversations */
     public function conversations()
     {
+        if (!$this->checkSubscription()) {
+            return redirect()->route('matrimony.index')->with('error', 'Subscription required to view messages.');
+        }
         $user = Auth::user();
         $conversations = ChatConversation::where('user1_id', $user->id)
             ->orWhere('user2_id', $user->id)
@@ -827,6 +841,9 @@ class MatrimonyController extends Controller
     /** Show chat for a specific conversation */
     public function chat($conversationId)
     {
+        if (!$this->checkSubscription()) {
+            return redirect()->route('matrimony.index')->with('error', 'Subscription required to chat.');
+        }
         $user = Auth::user();
         $conversation = ChatConversation::where('id', $conversationId)
             ->where(function($q) use ($user) {
@@ -850,6 +867,9 @@ class MatrimonyController extends Controller
     /** AJAX: Send a message */
     public function sendMessage(Request $request)
     {
+        if (!$this->checkSubscription()) {
+            return response()->json(['success' => false, 'message' => 'Subscription required.'], 403);
+        }
         $request->validate([
             'conversation_id' => 'required|integer|exists:chat_conversations,id',
             'message_text'    => 'required|string|max:1000',
@@ -879,6 +899,9 @@ class MatrimonyController extends Controller
     /** Fetch latest messages (AJAX polling) */
     public function fetchMessages(Request $request, $conversationId)
     {
+        if (!$this->checkSubscription()) {
+            return response()->json(['success' => false, 'message' => 'Subscription required.'], 403);
+        }
         $user = Auth::user();
         $after = $request->get('after_id', 0);
 
@@ -956,5 +979,17 @@ class MatrimonyController extends Controller
             'success' => false,
             'message' => 'This payment verification endpoint is deprecated. Payment is processed via callback.'
         ], 400);
+    }
+
+    private function checkSubscription()
+    {
+        $user = Auth::user();
+        if ($user->user_type === 'admin') {
+            return true;
+        }
+        $profile = $user->matrimonyProfile;
+        return $profile && 
+               $profile->profile_expires_at && 
+               \Carbon\Carbon::parse($profile->profile_expires_at)->isFuture();
     }
 }
