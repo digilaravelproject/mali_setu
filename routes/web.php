@@ -415,7 +415,11 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::patch('/{id}/toggle-status', [EducationManagementController::class, 'toggleStatus'])->name('toggle-status');
         });
         
-        // Settings and Reports
+        // Profile
+         Route::get('profile', [AdminDashboardController::class, 'profile'])->name('profile');
+         Route::post('profile', [AdminDashboardController::class, 'updateProfile'])->name('profile.update');
+
+         // Settings and Reports
          Route::get('settings', [AdminDashboardController::class, 'settings'])->name('settings');
          Route::post('settings', [AdminDashboardController::class, 'updateSettings'])->name('settings.update');
          Route::get('reports', [AdminDashboardController::class, 'reports'])->name('reports');

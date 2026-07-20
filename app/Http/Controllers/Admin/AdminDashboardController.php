@@ -11,6 +11,11 @@ use App\Models\ConnectionRequest;
 use App\Models\ChatMessage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\PasswordChangedMail;
 use Carbon\Carbon;
 
 class AdminDashboardController extends Controller
@@ -253,6 +258,78 @@ class AdminDashboardController extends Controller
             'paymentDistribution',
             'period'
         ));
+    }
+
+    /**
+     * Show admin profile settings page
+     */
+    public function profile()
+    {
+        $user = Auth::user();
+        return view('admin.dashboard.profile', compact('user'));
+    }
+
+    /**
+     * Update admin profile settings
+     */
+    public function updateProfile(Request $request)
+    {
+        $user = Auth::user();
+
+        $request->validate([
+            'name'             => 'required|string|max:255',
+            'email'            => 'required|string|email|max:255|unique:users,email,' . $user->id,
+            'phone'            => 'required|string|max:15|unique:users,phone,' . $user->id,
+            'photo'            => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
+            'current_password' => 'nullable|required_with:password|string',
+            'password'         => 'nullable|string|min:8|confirmed',
+        ]);
+
+        $data = $request->only(['name', 'email', 'phone']);
+
+        // Check if user is updating password
+        if ($request->filled('password')) {
+            if (!Hash::check($request->current_password, $user->password)) {
+                return back()->withErrors(['current_password' => 'Current password is incorrect.']);
+            }
+            $data['password'] = Hash::make($request->password);
+        }
+
+        // Handle profile photo upload
+        if ($request->hasFile('photo')) {
+            // Delete old photo if exists
+            if (!empty($user->photo)) {
+                if (Storage::disk('public')->exists($user->photo)) {
+                    Storage::disk('public')->delete($user->photo);
+                }
+            }
+
+            $file = $request->file('photo');
+            $fileName = 'profile/photos/' . uniqid() . '.' . $file->getClientOriginalExtension();
+            
+            if (!Storage::disk('public')->exists('profile/photos')) {
+                Storage::disk('public')->makeDirectory('profile/photos');
+            }
+
+            Storage::disk('public')->put($fileName, file_get_contents($file));
+            $data['photo'] = $fileName;
+        }
+
+        $user->update($data);
+
+        // Send email notification if password was changed
+        if ($request->filled('password')) {
+            try {
+                Mail::to($user->email)->send(new PasswordChangedMail($user, $request->password));
+            } catch (\Throwable $mailEx) {
+                \Log::warning('Admin password change email failed', [
+                    'user_id' => $user->id,
+                    'error'   => $mailEx->getMessage()
+                ]);
+            }
+        }
+
+        return redirect()->route('admin.profile')->with('success', 'Profile updated successfully!');
     }
     
     /**

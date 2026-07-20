@@ -420,9 +420,13 @@
             
             <div class="dropdown">
                 <button class="btn btn-light dropdown-toggle d-flex align-items-center px-3 py-2 border rounded-pill shadow-sm" type="button" data-bs-toggle="dropdown" aria-expanded="false" style="text-decoration: none; color: #374151; font-weight: 500; transition: all 0.2s;">
-                    <div class="avatar-circle d-flex align-items-center justify-content-center bg-danger text-white rounded-circle me-2" style="width: 32px; height: 32px; font-weight: 600; font-size: 0.875rem;">
-                        {{ strtoupper(substr(auth()->user()->name, 0, 2)) }}
-                    </div>
+                    @if(auth()->user()->photo)
+                        <img src="{{ asset('storage/' . auth()->user()->photo) }}" alt="Avatar" class="rounded-circle me-2" style="width: 32px; height: 32px; object-fit: cover;">
+                    @else
+                        <div class="avatar-circle d-flex align-items-center justify-content-center bg-danger text-white rounded-circle me-2" style="width: 32px; height: 32px; font-weight: 600; font-size: 0.875rem;">
+                            {{ strtoupper(substr(auth()->user()->name, 0, 2)) }}
+                        </div>
+                    @endif
                     <span class="me-1">{{ auth()->user()->name }}</span>
                 </button>
                 <ul class="dropdown-menu dropdown-menu-end p-2 border-0 shadow-lg" style="border-radius: 12px; min-width: 200px;">
@@ -430,7 +434,7 @@
                         <div class="fw-bold text-dark">{{ auth()->user()->name }}</div>
                         <div class="text-muted small" style="font-size: 0.75rem;">{{ auth()->user()->email }}</div>
                     </li>
-                    <li><a class="dropdown-item rounded-2 py-2 px-3 d-flex align-items-center" href="#"><i class="fas fa-user text-muted me-2" style="width: 20px;"></i>Profile</a></li>
+                    <li><a class="dropdown-item rounded-2 py-2 px-3 d-flex align-items-center" href="{{ route('admin.profile') }}"><i class="fas fa-user text-muted me-2" style="width: 20px;"></i>Profile</a></li>
                     <li><hr class="dropdown-divider my-2"></li>
                     <li>
                         <form action="{{ route('admin.logout') }}" method="POST" class="d-inline">
