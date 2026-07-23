@@ -263,11 +263,123 @@ class DonationController extends Controller
                 ]);
             }
 
+            if ($donation->status === 'failed' || $donation->status === 'refunded') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Donation is ' . $donation->status,
+                    'status' => $donation->status
+                ], 400);
+            }
+
+            // Verify payment status with Razorpay API (or direct capture if in sandbox/test mode)
+            $paymentId = $request->razorpay_payment_id;
+            $orderId = $request->razorpay_order_id ?? $donation->razorpay_order_id;
+            $paymentMethod = 'other';
+
+            if ($request->filled('razorpay_signature')) {
+                try {
+                    $api = new \Razorpay\Api\Api(config('services.razorpay.key'), config('services.razorpay.secret'));
+                    $api->utility->verifyPaymentSignature([
+                        'razorpay_order_id' => $orderId,
+                        'razorpay_payment_id' => $paymentId,
+                        'razorpay_signature' => $request->razorpay_signature
+                    ]);
+                    
+                    try {
+                        $payment = $api->payment->fetch($paymentId);
+                        $paymentMethod = $payment->method ?? 'other';
+                    } catch (\Exception $e) {
+                        Log::error('Razorpay payment fetch failed after signature verification: ' . $e->getMessage());
+                    }
+                } catch (\Exception $e) {
+                    Log::error('Razorpay signature verification failed: ' . $e->getMessage());
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Payment verification failed: invalid signature'
+                    ], 400);
+                }
+            } elseif ($paymentId) {
+                try {
+                    $api = new \Razorpay\Api\Api(config('services.razorpay.key'), config('services.razorpay.secret'));
+                    $payment = $api->payment->fetch($paymentId);
+                    if ($payment->status !== 'captured' && $payment->status !== 'authorized') {
+                        return response()->json([
+                            'success' => false,
+                            'message' => 'Payment is not completed. Status: ' . $payment->status
+                        ], 400);
+                    }
+                    $paymentMethod = $payment->method ?? 'other';
+                } catch (\Exception $e) {
+                    Log::error('Razorpay payment fetch failed: ' . $e->getMessage());
+                    if (config('app.env') !== 'production') {
+                        Log::warning('Razorpay API fetch failed in non-production, proceeding with local completion.');
+                        $paymentMethod = 'upi'; // Default to upi in local/sandbox
+                    } else {
+                        return response()->json([
+                            'success' => false,
+                            'message' => 'Payment verification failed: ' . $e->getMessage()
+                        ], 400);
+                    }
+                }
+            } else {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Payment ID is required for verification'
+                ], 400);
+            }
+
+            // Map payment method to valid enum value
+            $paymentMethod = in_array(strtolower($paymentMethod), ['razorpay', 'upi', 'card', 'netbanking', 'wallet', 'other']) ? strtolower($paymentMethod) : 'other';
+
+            // Update Donation Record
+            $donation->update([
+                'razorpay_payment_id' => $paymentId,
+                'status' => 'completed',
+                'payment_method' => $paymentMethod
+            ]);
+
+            // Update corresponding Transaction Record (if exists)
+            $transaction = Transaction::where('razorpay_order_id', $orderId)->first();
+            if ($transaction) {
+                $transaction->update([
+                    'razorpay_payment_id' => $paymentId,
+                    'status' => 'completed'
+                ]);
+
+                // Create Payment record
+                $existingPayment = \App\Models\Payment::where('transaction_id', $transaction->id)->first();
+                if (!$existingPayment) {
+                    \App\Models\Payment::create([
+                        'user_id' => $transaction->user_id,
+                        'transaction_id' => $transaction->id,
+                        'payment_id' => $paymentId ?? ('pay_' . time() . '_' . mt_rand(1000, 9999)),
+                        'order_id' => $orderId,
+                        'payment_type' => 'donation',
+                        'amount' => $transaction->amount,
+                        'currency' => $transaction->currency,
+                        'payment_method' => $paymentMethod,
+                        'status' => 'completed',
+                        'metadata' => json_encode([
+                            'cause_id' => $donation->cause_id,
+                            'original_purpose' => $transaction->purpose
+                        ]),
+                        'paid_at' => now(),
+                        'razorpay_response' => json_encode($request->all())
+                    ]);
+                }
+            }
+
+            // Update cause raised amount
+            $donation->cause->updateRaisedAmount();
+
             return response()->json([
-                'success' => false,
-                'message' => 'Donation is ' . $donation->status,
-                'status' => $donation->status
-            ], 400);
+                'success' => true,
+                'message' => 'Donation verified successfully',
+                'data' => [
+                    'donation' => $donation->load('cause'),
+                    'receipt_url' => $donation->receipt_url
+                ]
+            ]);
 
         } catch (Exception $e) {
             return response()->json([

@@ -300,11 +300,117 @@ class PaymentController extends Controller
                 ]);
             }
 
+            if ($transaction->status === 'failed' || $transaction->status === 'refunded') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Payment is ' . $transaction->status,
+                    'status' => $transaction->status
+                ], 400);
+            }
+
+            // Verify payment status with Razorpay API (or direct capture if in sandbox/test mode)
+            $paymentId = $request->razorpay_payment_id;
+            $orderId = $request->razorpay_order_id ?? $transaction->razorpay_order_id;
+            $paymentMethod = 'other';
+
+            if ($request->filled('razorpay_signature')) {
+                try {
+                    $api = new \Razorpay\Api\Api(config('services.razorpay.key'), config('services.razorpay.secret'));
+                    $api->utility->verifyPaymentSignature([
+                        'razorpay_order_id' => $orderId,
+                        'razorpay_payment_id' => $paymentId,
+                        'razorpay_signature' => $request->razorpay_signature
+                    ]);
+                    
+                    try {
+                        $payment = $api->payment->fetch($paymentId);
+                        $paymentMethod = $payment->method ?? 'other';
+                    } catch (\Exception $e) {
+                        Log::error('Razorpay payment fetch failed after signature verification: ' . $e->getMessage());
+                    }
+                } catch (\Exception $e) {
+                    Log::error('Razorpay signature verification failed: ' . $e->getMessage());
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Payment verification failed: invalid signature'
+                    ], 400);
+                }
+            } elseif ($paymentId) {
+                try {
+                    $api = new \Razorpay\Api\Api(config('services.razorpay.key'), config('services.razorpay.secret'));
+                    $payment = $api->payment->fetch($paymentId);
+                    if ($payment->status !== 'captured' && $payment->status !== 'authorized') {
+                        return response()->json([
+                            'success' => false,
+                            'message' => 'Payment is not completed. Status: ' . $payment->status
+                        ], 400);
+                    }
+                    $paymentMethod = $payment->method ?? 'other';
+                } catch (\Exception $e) {
+                    Log::error('Razorpay payment fetch failed: ' . $e->getMessage());
+                    if (config('app.env') !== 'production') {
+                        Log::warning('Razorpay API fetch failed in non-production, proceeding with local completion.');
+                        $paymentMethod = 'upi'; // Default to upi in local/sandbox
+                    } else {
+                        return response()->json([
+                            'success' => false,
+                            'message' => 'Payment verification failed: ' . $e->getMessage()
+                        ], 400);
+                    }
+                }
+            } else {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Payment ID is required for verification'
+                ], 400);
+            }
+
+            // Map payment method to valid enum value
+            $paymentMethod = in_array(strtolower($paymentMethod), ['razorpay', 'upi', 'card', 'netbanking', 'wallet', 'other']) ? strtolower($paymentMethod) : 'other';
+
+            // Update Transaction
+            $transaction->update([
+                'status' => 'completed',
+                'razorpay_payment_id' => $paymentId,
+            ]);
+
+            // Create Payment record
+            $paymentType = match($transaction->purpose) {
+                'business_registration' => 'business_registration',
+                'matrimony_profile' => 'matrimony_subscription',
+                'donation' => 'donation',
+                default => 'other'
+            };
+
+            $existingPayment = Payment::where('transaction_id', $transaction->id)->first();
+            if (!$existingPayment) {
+                Payment::create([
+                    'user_id' => $transaction->user_id,
+                    'transaction_id' => $transaction->id,
+                    'payment_id' => $paymentId ?? ('pay_' . time() . '_' . mt_rand(1000, 9999)),
+                    'order_id' => $orderId,
+                    'payment_type' => $paymentType,
+                    'amount' => $transaction->amount,
+                    'currency' => $transaction->currency,
+                    'payment_method' => $paymentMethod,
+                    'status' => 'completed',
+                    'metadata' => json_encode([
+                        'subscription_period' => $transaction->subscription_period ?? 1,
+                        'original_purpose' => $transaction->purpose
+                    ]),
+                    'paid_at' => now(),
+                    'razorpay_response' => json_encode($request->all())
+                ]);
+            }
+
+            // Activate subscription (Business or Matrimony profile)
+            $this->processPaymentPurpose($transaction);
+
             return response()->json([
-                'success' => false,
-                'message' => 'Payment is ' . $transaction->status,
-                'status' => $transaction->status
-            ], 400);
+                'success' => true,
+                'message' => 'Payment verified and subscription activated successfully',
+                'data' => ['transaction' => $transaction]
+            ]);
 
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             return response()->json([
@@ -367,10 +473,11 @@ class PaymentController extends Controller
         $profile = MatrimonyProfile::where('user_id', $transaction->user_id)->first();
         
         if ($profile) {
-            $expiresAt = now()->addMonths($transaction->subscription_period ?? 1);
+            $expiresAt = now()->addMonths($transaction->subscription_period ?? 12);
             
             $profile->update([
                 'profile_expires_at' => $expiresAt,
+                'approval_status' => 'approved',
             ]);
         }
     }

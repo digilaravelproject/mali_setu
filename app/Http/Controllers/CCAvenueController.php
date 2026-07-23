@@ -91,6 +91,19 @@ class CCAvenueController extends Controller
                         'status' => 'completed',
                     ]);
 
+                    // Map payment method
+                    $rawPaymentMethod = strtolower($decryptedParams['payment_mode'] ?? '');
+                    $paymentMethod = 'other';
+                    if (strpos($rawPaymentMethod, 'upi') !== false) {
+                        $paymentMethod = 'upi';
+                    } elseif (strpos($rawPaymentMethod, 'card') !== false || strpos($rawPaymentMethod, 'credit') !== false || strpos($rawPaymentMethod, 'debit') !== false) {
+                        $paymentMethod = 'card';
+                    } elseif (strpos($rawPaymentMethod, 'net') !== false || strpos($rawPaymentMethod, 'banking') !== false) {
+                        $paymentMethod = 'netbanking';
+                    } elseif (strpos($rawPaymentMethod, 'wallet') !== false) {
+                        $paymentMethod = 'wallet';
+                    }
+
                     // Create Payment record
                     $existingPayment = Payment::where('transaction_id', $transaction->id)->first();
                     if (!$existingPayment) {
@@ -102,7 +115,7 @@ class CCAvenueController extends Controller
                             'payment_type' => 'business_registration',
                             'amount' => $transaction->amount,
                             'currency' => $transaction->currency,
-                            'payment_method' => 'ccavenue',
+                            'payment_method' => $paymentMethod,
                             'status' => 'completed',
                             'metadata' => json_encode([
                                 'ccavenue_order_id' => $orderId,
@@ -148,6 +161,19 @@ class CCAvenueController extends Controller
                         'status' => 'completed',
                     ]);
 
+                    // Map payment method
+                    $rawPaymentMethod = strtolower($decryptedParams['payment_mode'] ?? '');
+                    $paymentMethod = 'other';
+                    if (strpos($rawPaymentMethod, 'upi') !== false) {
+                        $paymentMethod = 'upi';
+                    } elseif (strpos($rawPaymentMethod, 'card') !== false || strpos($rawPaymentMethod, 'credit') !== false || strpos($rawPaymentMethod, 'debit') !== false) {
+                        $paymentMethod = 'card';
+                    } elseif (strpos($rawPaymentMethod, 'net') !== false || strpos($rawPaymentMethod, 'banking') !== false) {
+                        $paymentMethod = 'netbanking';
+                    } elseif (strpos($rawPaymentMethod, 'wallet') !== false) {
+                        $paymentMethod = 'wallet';
+                    }
+
                     // Create Payment record
                     $existingPayment = Payment::where('transaction_id', $transaction->id)->first();
                     if (!$existingPayment) {
@@ -159,7 +185,7 @@ class CCAvenueController extends Controller
                             'payment_type' => 'matrimony_subscription',
                             'amount' => $transaction->amount,
                             'currency' => $transaction->currency,
-                            'payment_method' => 'ccavenue',
+                            'payment_method' => $paymentMethod,
                             'status' => 'completed',
                             'metadata' => json_encode([
                                 'ccavenue_order_id' => $orderId,
