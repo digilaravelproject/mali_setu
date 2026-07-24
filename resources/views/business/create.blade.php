@@ -329,6 +329,12 @@
 
         function lookupPincode() {
             const pincode = pincodeField.value.trim();
+            const stateInput = document.getElementById('state_field');
+            const cityInput = document.getElementById('city_field');
+            const districtInput = document.getElementById('district_field');
+            const talukaInput = document.getElementById('taluka_field');
+            const villageInput = document.getElementById('village_field');
+
             if (pincode.length === 6 && /^\d+$/.test(pincode)) {
                 spinner.style.display = 'inline-block';
                 pincodeField.classList.remove('is-invalid');
@@ -342,25 +348,50 @@
                             const state = postOffice.State;
                             const city = postOffice.District; 
                             
-                            const stateInput = document.getElementById('state_field');
-                            const cityInput = document.getElementById('city_field');
-                            const districtInput = document.getElementById('district_field');
-                            
-                            if (stateInput) stateInput.value = state;
-                            if (cityInput) cityInput.value = city;
-                            if (districtInput) districtInput.value = city;
+                            if (stateInput) {
+                                stateInput.value = state;
+                                stateInput.classList.add('is-valid');
+                                stateInput.classList.remove('is-invalid');
+                            }
+                            if (cityInput) {
+                                cityInput.value = city;
+                                cityInput.classList.add('is-valid');
+                                cityInput.classList.remove('is-invalid');
+                            }
+                            if (districtInput) {
+                                districtInput.value = city;
+                                districtInput.classList.add('is-valid');
+                                districtInput.classList.remove('is-invalid');
+                            }
                             
                             pincodeField.classList.add('is-valid');
+                            pincodeField.classList.remove('is-invalid');
                         } else {
+                            pincodeField.value = '';
+                            pincodeField.classList.remove('is-valid');
                             pincodeField.classList.add('is-invalid');
+                            if (stateInput) stateInput.value = '';
+                            if (cityInput) cityInput.value = '';
+                            if (districtInput) districtInput.value = '';
+                            if (talukaInput) talukaInput.value = '';
+                            if (villageInput) villageInput.value = '';
                             alert("Invalid pincode. Please try again.");
                         }
                     })
                     .catch(err => {
                         spinner.style.display = 'none';
+                        pincodeField.value = '';
+                        pincodeField.classList.remove('is-valid');
+                        pincodeField.classList.add('is-invalid');
+                        if (stateInput) stateInput.value = '';
+                        if (cityInput) cityInput.value = '';
+                        if (districtInput) districtInput.value = '';
                         console.error('Error auto-populating pincode info:', err);
+                        alert("Error auto-populating pincode info. Please enter manually.");
                     });
             } else {
+                pincodeField.value = '';
+                pincodeField.classList.remove('is-valid');
                 pincodeField.classList.add('is-invalid');
                 alert("Please enter a valid 6-digit pincode.");
             }
@@ -439,6 +470,11 @@
                     alert('GPS Coordinates fetched successfully: ' + lat.toFixed(4) + ', ' + lon.toFixed(4));
                 }, function(error) {
                     icon.className = oldClass;
+                    const pincodeField = document.getElementById('pincode_field');
+                    if (pincodeField) {
+                        pincodeField.value = '';
+                        pincodeField.classList.remove('is-valid', 'is-invalid');
+                    }
                     alert('Geolocation Error: ' + error.message);
                 }, {
                     enableHighAccuracy: true,

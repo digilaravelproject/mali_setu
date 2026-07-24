@@ -1093,38 +1093,84 @@
         document.querySelectorAll('input[name="pincode"]').forEach(input => {
             input.addEventListener('input', function() {
                 const pincode = this.value.trim();
-                if (pincode.length === 6 && /^\d+$/.test(pincode)) {
-                    const form = this.closest('form');
-                    this.classList.add('is-valid');
-                    
-                    fetch(`https://api.postalpincode.in/pincode/${pincode}`)
-                        .then(res => res.json())
-                        .then(data => {
-                            if (data && data[0] && data[0].Status === 'Success') {
-                                const postOffice = data[0].PostOffice[0];
-                                const state = postOffice.State;
-                                const city = postOffice.District; 
-                                
-                                const stateInput = form.querySelector('input[name="state"]');
-                                const cityInput = form.querySelector('input[name="city"]');
-                                const districtInput = form.querySelector('input[name="district"]');
-                                
-                                if (stateInput) {
-                                    stateInput.value = state;
-                                    stateInput.classList.add('is-valid');
-                                }
-                                if (cityInput) {
-                                    cityInput.value = city;
-                                    cityInput.classList.add('is-valid');
-                                }
-                                if (districtInput) {
-                                    districtInput.value = city;
-                                    districtInput.classList.add('is-valid');
-                                }
-                            }
-                        })
-                        .catch(err => console.error('Error auto-populating pincode info:', err));
+                const form = this.closest('form');
+                const stateInput = form.querySelector('input[name="state"]');
+                const cityInput = form.querySelector('input[name="city"]');
+                const districtInput = form.querySelector('input[name="district"]');
+                const talukaInput = form.querySelector('input[name="taluka"]');
+                const villageInput = form.querySelector('input[name="village"]');
+
+                if (pincode.length !== 6 || !/^\d+$/.test(pincode)) {
+                    this.classList.remove('is-valid', 'is-invalid');
+                    return;
                 }
+
+                this.classList.remove('is-invalid');
+                
+                fetch(`https://api.postalpincode.in/pincode/${pincode}`)
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data && data[0] && data[0].Status === 'Success') {
+                            const postOffice = data[0].PostOffice[0];
+                            const state = postOffice.State;
+                            const city = postOffice.District; 
+                            
+                            input.classList.add('is-valid');
+                            input.classList.remove('is-invalid');
+                            
+                            if (stateInput) {
+                                stateInput.value = state;
+                                stateInput.classList.add('is-valid');
+                                stateInput.classList.remove('is-invalid');
+                            }
+                            if (cityInput) {
+                                cityInput.value = city;
+                                cityInput.classList.add('is-valid');
+                                cityInput.classList.remove('is-invalid');
+                            }
+                            if (districtInput) {
+                                districtInput.value = city;
+                                districtInput.classList.add('is-valid');
+                                districtInput.classList.remove('is-invalid');
+                            }
+                        } else {
+                            input.value = '';
+                            input.classList.remove('is-valid');
+                            input.classList.add('is-invalid');
+                            
+                            if (stateInput) {
+                                stateInput.value = '';
+                                stateInput.classList.remove('is-valid', 'is-invalid');
+                            }
+                            if (cityInput) {
+                                cityInput.value = '';
+                                cityInput.classList.remove('is-valid', 'is-invalid');
+                            }
+                            if (districtInput) {
+                                districtInput.value = '';
+                                districtInput.classList.remove('is-valid', 'is-invalid');
+                            }
+                            if (talukaInput) {
+                                talukaInput.value = '';
+                                talukaInput.classList.remove('is-valid', 'is-invalid');
+                            }
+                            if (villageInput) {
+                                villageInput.value = '';
+                                villageInput.classList.remove('is-valid', 'is-invalid');
+                            }
+                            alert("Invalid pincode. Please try again.");
+                        }
+                    })
+                    .catch(err => {
+                        console.error('Error auto-populating pincode info:', err);
+                        input.value = '';
+                        input.classList.remove('is-valid');
+                        input.classList.add('is-invalid');
+                        if (stateInput) stateInput.value = '';
+                        if (cityInput) cityInput.value = '';
+                        if (districtInput) districtInput.value = '';
+                        alert("Error auto-populating pincode info.");
+                    });
             });
         });
     });

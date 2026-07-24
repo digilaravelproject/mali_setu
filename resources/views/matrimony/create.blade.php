@@ -1005,6 +1005,13 @@
     function lookupPincode(isClick = false) {
         const pinInput = document.getElementById('pincodeInput');
         const pin = pinInput.value.trim();
+        const countryInput = document.getElementById('countryInput');
+        const stateInput = document.getElementById('stateInput');
+        const cityInput = document.getElementById('cityInput');
+        const talukaInput = document.getElementById('talukaInput');
+        const villageInput = document.getElementById('villageInput');
+        const addressInput = document.querySelector('input[name="address"]');
+
         if (pin.length === 6 && /^\d+$/.test(pin)) {
             const icon = document.querySelector('.location-icon');
             icon.classList.remove('fa-location-dot');
@@ -1019,41 +1026,46 @@
                     if (data && data[0] && data[0].Status === 'Success') {
                         const po = data[0].PostOffice[0];
                         
-                        const countryInput = document.getElementById('countryInput');
                         if (countryInput) countryInput.value = "India";
-                        
-                        const stateInput = document.getElementById('stateInput');
                         if (stateInput) stateInput.value = po.State || '';
-                        
-                        const cityInput = document.getElementById('cityInput');
                         if (cityInput) cityInput.value = po.District || '';
-
-                        const talukaInput = document.getElementById('talukaInput');
                         if (talukaInput) talukaInput.value = (po.Block && po.Block !== 'N.A.') ? po.Block : '';
-
-                        const villageInput = document.getElementById('villageInput');
                         if (villageInput) villageInput.value = po.Name || '';
-
-                        const addressInput = document.querySelector('input[name="address"]');
                         if (addressInput && po.Name && po.District) {
                             addressInput.value = po.Name + ", " + po.District;
                         }
+                        
+                        pinInput.classList.add('is-valid');
+                        pinInput.classList.remove('is-invalid');
                     } else {
-                        if (isClick === true) {
-                            alert("Invalid Pincode or no records found.");
-                        }
+                        pinInput.value = '';
+                        pinInput.classList.remove('is-valid');
+                        pinInput.classList.add('is-invalid');
+                        if (stateInput) stateInput.value = '';
+                        if (cityInput) cityInput.value = '';
+                        if (talukaInput) talukaInput.value = '';
+                        if (villageInput) villageInput.value = '';
+                        alert("Invalid Pincode or no records found.");
                     }
                 })
                 .catch(err => {
                     icon.classList.remove('fa-spinner', 'fa-spin');
                     icon.classList.add('fa-location-dot');
                     console.error('Pincode lookup error:', err);
-                    if (isClick === true) {
-                        alert("Error searching pincode. Please try again.");
-                    }
+                    pinInput.value = '';
+                    pinInput.classList.remove('is-valid');
+                    pinInput.classList.add('is-invalid');
+                    if (stateInput) stateInput.value = '';
+                    if (cityInput) cityInput.value = '';
+                    if (talukaInput) talukaInput.value = '';
+                    if (villageInput) villageInput.value = '';
+                    alert("Error searching pincode. Please try again.");
                 });
         } else {
             if (isClick === true) {
+                pinInput.value = '';
+                pinInput.classList.remove('is-valid');
+                pinInput.classList.add('is-invalid');
                 alert("Please enter a valid 6-digit Pincode first.");
             }
         }
@@ -1127,13 +1139,20 @@
                 alert('GPS Coordinates fetched successfully: ' + lat.toFixed(4) + ', ' + lon.toFixed(4));
             }, function(error) {
                 locIcon.className = oldClass;
-                // Fallback to normal pincode lookup if pincode is present
-                const pin = document.getElementById('pincodeInput').value.trim();
-                if (pin.length === 6 && /^\d+$/.test(pin)) {
-                    lookupPincode(true);
-                } else {
-                    alert('Geolocation Error: ' + error.message + '. Please enter Pincode manually.');
+                const pinInput = document.getElementById('pincodeInput');
+                if (pinInput) {
+                    pinInput.value = '';
+                    pinInput.classList.remove('is-valid', 'is-invalid');
                 }
+                const stateInput = document.getElementById('stateInput');
+                const cityInput = document.getElementById('cityInput');
+                const talukaInput = document.getElementById('talukaInput');
+                const villageInput = document.getElementById('villageInput');
+                if (stateInput) stateInput.value = '';
+                if (cityInput) cityInput.value = '';
+                if (talukaInput) talukaInput.value = '';
+                if (villageInput) villageInput.value = '';
+                alert('Geolocation Error: ' + error.message + '. Please enter details manually.');
             }, {
                 enableHighAccuracy: true,
                 timeout: 10000,

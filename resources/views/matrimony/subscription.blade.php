@@ -73,6 +73,79 @@
                 </div>
             </div>
 
+            @if($user->matrimonyProfile)
+                @php
+                    $profile = $user->matrimonyProfile;
+                    $pd = $profile->personal_details ?? [];
+                    $fd = $profile->family_details ?? [];
+                    $ed = $profile->education_details ?? [];
+                    $pro = $profile->professional_details ?? [];
+                    $ld = $profile->location_details ?? [];
+                    
+                    $profilePhoto = !empty($pd['photos'][0]) ? asset('storage/' . $pd['photos'][0]) : asset('default-avatar.png');
+                @endphp
+                
+                <!-- Profile Details Card -->
+                <div class="card border-0 shadow-sm rounded-4 mb-5" style="background: #fff; border: 1px solid rgba(132, 20, 79, 0.1) !important;">
+                    <div class="card-body p-4">
+                        <div class="row align-items-center">
+                            <div class="col-md-auto text-center mb-3 mb-md-0">
+                                <img src="{{ $profilePhoto }}" alt="Profile Photo" class="rounded-4" style="width: 120px; height: 120px; object-fit: cover; border: 3px solid #84144f;">
+                            </div>
+                            <div class="col-md">
+                                <span class="badge bg-secondary mb-2 text-uppercase" style="background-color: #84144f !important; font-size: 0.75rem;">Your Matrimony Profile</span>
+                                <h3 class="fw-bold text-dark mb-1">{{ $pd['name'] ?? $user->name }}</h3>
+                                <p class="text-secondary mb-2">
+                                    {{ $profile->age ?? 'N/A' }} Yrs • {{ ucfirst($profile->gender ?? $pd['gender'] ?? 'N/A') }} • {{ $profile->height ?? 'N/A' }} • {{ $profile->weight ?? 'N/A' }}
+                                </p>
+                                <div class="d-flex flex-wrap gap-2 align-items-center">
+                                    <span class="badge rounded-pill px-3 py-1.5 small text-dark" style="background-color: rgba(132, 20, 79, 0.08); border: 1px solid rgba(132, 20, 79, 0.15);">
+                                        <strong>Caste:</strong> {{ $pd['caste'] ?? 'N/A' }} ({{ $pd['sub_caste'] ?? 'N/A' }})
+                                    </span>
+                                    <span class="badge rounded-pill px-3 py-1.5 small text-dark" style="background-color: rgba(132, 20, 79, 0.08); border: 1px solid rgba(132, 20, 79, 0.15);">
+                                        <strong>Location:</strong> {{ $ld['city'] ?? 'N/A' }}, {{ $ld['state'] ?? 'N/A' }}
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="col-md-auto text-md-end mt-3 mt-md-0">
+                                <a href="{{ route('matrimony.edit') }}" class="btn btn-outline-primary rounded-3 btn-sm" style="color: #84144f; border-color: #84144f;">
+                                    <i class="fa-solid fa-pen-to-square me-1"></i> Edit Profile
+                                </a>
+                            </div>
+                        </div>
+                        
+                        <hr class="my-4 opacity-10">
+                        
+                        <div class="row g-3">
+                            <div class="col-sm-6 col-md-3">
+                                <div class="text-muted small fw-bold text-uppercase mb-1" style="font-size: 0.75rem;">Education</div>
+                                <div class="text-dark fw-semibold">{{ $ed['highest_qualification'] ?? 'N/A' }}</div>
+                                <div class="text-secondary small">{{ $ed['college_name'] ?? '' }}</div>
+                            </div>
+                            <div class="col-sm-6 col-md-3">
+                                <div class="text-muted small fw-bold text-uppercase mb-1" style="font-size: 0.75rem;">Profession</div>
+                                <div class="text-dark fw-semibold">{{ $pro['occupation'] ?? 'N/A' }}</div>
+                                <div class="text-secondary small">{{ $pro['employment_type'] ?? '' }}</div>
+                            </div>
+                            <div class="col-sm-6 col-md-3">
+                                <div class="text-muted small fw-bold text-uppercase mb-1" style="font-size: 0.75rem;">Annual Income</div>
+                                <div class="text-dark fw-semibold">{{ $pro['annual_income'] ?? 'N/A' }}</div>
+                            </div>
+                            <div class="col-sm-6 col-md-3">
+                                <div class="text-muted small fw-bold text-uppercase mb-1" style="font-size: 0.75rem;">Profile Status</div>
+                                <div>
+                                    @if($profile->approval_status === 'approved')
+                                        <span class="badge bg-success rounded-pill px-3 py-1"><i class="fa-solid fa-check-circle me-1"></i> Verified</span>
+                                    @else
+                                        <span class="badge bg-warning text-dark rounded-pill px-3 py-1"><i class="fa-solid fa-clock me-1"></i> Pending Approval</span>
+                                    @endif
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            @endif
+
             <!-- Plans Grid -->
             <h4 class="fw-bold text-center text-dark mb-4">Choose Your Premium Plan</h4>
             <div class="row g-4 justify-content-center mb-5 text-start">

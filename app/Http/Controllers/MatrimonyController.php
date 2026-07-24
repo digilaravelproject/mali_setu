@@ -281,7 +281,7 @@ class MatrimonyController extends Controller
      */
     public function selectSubscription(Request $request)
     {
-        $user = Auth::user();
+        $user = Auth::user()->load('matrimonyProfile');
         $plans = MatrimonyPlan::where('active', true)->get();
         return view('matrimony.subscription', compact('user', 'plans'));
     }

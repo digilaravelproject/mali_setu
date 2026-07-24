@@ -19,17 +19,17 @@ class DonationManagementController extends Controller
         $query = Donation::with('user', 'cause');
         
         // Filter by status
-        if ($request->has('status') && $request->status !== '') {
+        if ($request->filled('status')) {
             $query->where('status', $request->status);
         }
         
         // Filter by cause
-        if ($request->has('cause_id') && $request->cause_id !== '') {
+        if ($request->filled('cause_id')) {
             $query->where('cause_id', $request->cause_id);
         }
         
         // Search by user name or email
-        if ($request->has('search') && $request->search !== '') {
+        if ($request->filled('search')) {
             $query->whereHas('user', function($q) use ($request) {
                 $q->where('name', 'like', '%' . $request->search . '%')
                   ->orWhere('email', 'like', '%' . $request->search . '%');
@@ -37,10 +37,10 @@ class DonationManagementController extends Controller
         }
         
         // Filter by date range
-        if ($request->has('date_from') && $request->date_from !== '') {
+        if ($request->filled('date_from')) {
             $query->whereDate('created_at', '>=', $request->date_from);
         }
-        if ($request->has('date_to') && $request->date_to !== '') {
+        if ($request->filled('date_to')) {
             $query->whereDate('created_at', '<=', $request->date_to);
         }
         

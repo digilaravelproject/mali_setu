@@ -24,20 +24,20 @@ class PaymentManagementController extends Controller
         $query = Payment::with(['user.business', 'user.matrimonyProfile']);
         
         // Filter by payment status
-        if ($request->has('status') && $request->status !== '') {
+        if ($request->filled('status')) {
             $query->where('status', $request->status);
         }
         
         // Filter by payment method
-        if ($request->has('payment_method') && $request->payment_method !== '') {
+        if ($request->filled('payment_method')) {
             $query->where('payment_method', $request->payment_method);
         }
         
         // Filter by date range
-        if ($request->has('date_from') && $request->date_from !== '') {
+        if ($request->filled('date_from')) {
             $query->whereDate('created_at', '>=', $request->date_from);
         }
-        if ($request->has('date_to') && $request->date_to !== '') {
+        if ($request->filled('date_to')) {
             $query->whereDate('created_at', '<=', $request->date_to);
         }
         
@@ -194,11 +194,11 @@ class PaymentManagementController extends Controller
             $query->where('payment_type', $request->payment_type);
         }
         
-        if ($request->has('date_from') && $request->date_from !== '') {
+        if ($request->filled('date_from')) {
             $query->whereDate('created_at', '>=', $request->date_from);
         }
         
-        if ($request->has('date_to') && $request->date_to !== '') {
+        if ($request->filled('date_to')) {
             $query->whereDate('created_at', '<=', $request->date_to);
         }
         
@@ -250,10 +250,10 @@ class PaymentManagementController extends Controller
             $query->where('status', $request->status);
         }
 
-        if ($request->has('date_from') && $request->date_from !== '') {
+        if ($request->filled('date_from')) {
             $query->whereDate('created_at', '>=', $request->date_from);
         }
-        if ($request->has('date_to') && $request->date_to !== '') {
+        if ($request->filled('date_to')) {
             $query->whereDate('created_at', '<=', $request->date_to);
         }
 
@@ -280,10 +280,10 @@ class PaymentManagementController extends Controller
     {
         $query = Transaction::with(['user.business', 'user.matrimonyProfile'])->where('purpose', 'business_registration');
 
-        if ($request->has('date_from') && $request->date_from !== '') {
+        if ($request->filled('date_from')) {
             $query->whereDate('created_at', '>=', $request->date_from);
         }
-        if ($request->has('date_to') && $request->date_to !== '') {
+        if ($request->filled('date_to')) {
             $query->whereDate('created_at', '<=', $request->date_to);
         }
 
@@ -326,10 +326,10 @@ class PaymentManagementController extends Controller
             $query->where('status', $request->status);
         }
 
-        if ($request->has('date_from') && $request->date_from !== '') {
+        if ($request->filled('date_from')) {
             $query->whereDate('created_at', '>=', $request->date_from);
         }
-        if ($request->has('date_to') && $request->date_to !== '') {
+        if ($request->filled('date_to')) {
             $query->whereDate('created_at', '<=', $request->date_to);
         }
 
@@ -356,10 +356,10 @@ class PaymentManagementController extends Controller
     {
         $query = Transaction::with(['user.business', 'user.matrimonyProfile'])->where('purpose', 'matrimony_profile');
 
-        if ($request->has('date_from') && $request->date_from !== '') {
+        if ($request->filled('date_from')) {
             $query->whereDate('created_at', '>=', $request->date_from);
         }
-        if ($request->has('date_to') && $request->date_to !== '') {
+        if ($request->filled('date_to')) {
             $query->whereDate('created_at', '<=', $request->date_to);
         }
 
@@ -428,10 +428,10 @@ class PaymentManagementController extends Controller
     {
         $query = Transaction::with(['user.business', 'user.matrimonyProfile'])->where('purpose', 'business_registration');
 
-        if ($request->has('date_from') && $request->date_from !== '') {
+        if ($request->filled('date_from')) {
             $query->whereDate('created_at', '>=', $request->date_from);
         }
-        if ($request->has('date_to') && $request->date_to !== '') {
+        if ($request->filled('date_to')) {
             $query->whereDate('created_at', '<=', $request->date_to);
         }
 
@@ -448,10 +448,10 @@ class PaymentManagementController extends Controller
     {
         $query = Transaction::with(['user.business', 'user.matrimonyProfile'])->where('purpose', 'matrimony_profile');
 
-        if ($request->has('date_from') && $request->date_from !== '') {
+        if ($request->filled('date_from')) {
             $query->whereDate('created_at', '>=', $request->date_from);
         }
-        if ($request->has('date_to') && $request->date_to !== '') {
+        if ($request->filled('date_to')) {
             $query->whereDate('created_at', '<=', $request->date_to);
         }
 
@@ -472,10 +472,10 @@ class PaymentManagementController extends Controller
             $query->where('status', $request->status);
         }
 
-        if ($request->has('date_from') && $request->date_from !== '') {
+        if ($request->filled('date_from')) {
             $query->whereDate('created_at', '>=', $request->date_from);
         }
-        if ($request->has('date_to') && $request->date_to !== '') {
+        if ($request->filled('date_to')) {
             $query->whereDate('created_at', '<=', $request->date_to);
         }
 
@@ -496,10 +496,10 @@ class PaymentManagementController extends Controller
             $query->where('status', $request->status);
         }
 
-        if ($request->has('date_from') && $request->date_from !== '') {
+        if ($request->filled('date_from')) {
             $query->whereDate('created_at', '>=', $request->date_from);
         }
-        if ($request->has('date_to') && $request->date_to !== '') {
+        if ($request->filled('date_to')) {
             $query->whereDate('created_at', '<=', $request->date_to);
         }
 
@@ -540,10 +540,10 @@ class PaymentManagementController extends Controller
     {
         $query = Transaction::with(['user.business', 'user.matrimonyProfile'])->where('purpose', 'business_registration');
 
-        if ($request->has('date_from') && $request->date_from !== '') {
+        if ($request->filled('date_from')) {
             $query->whereDate('created_at', '>=', $request->date_from);
         }
-        if ($request->has('date_to') && $request->date_to !== '') {
+        if ($request->filled('date_to')) {
             $query->whereDate('created_at', '<=', $request->date_to);
         }
 
@@ -580,10 +580,10 @@ class PaymentManagementController extends Controller
     {
         $query = Transaction::with(['user.business', 'user.matrimonyProfile'])->where('purpose', 'matrimony_profile');
 
-        if ($request->has('date_from') && $request->date_from !== '') {
+        if ($request->filled('date_from')) {
             $query->whereDate('created_at', '>=', $request->date_from);
         }
-        if ($request->has('date_to') && $request->date_to !== '') {
+        if ($request->filled('date_to')) {
             $query->whereDate('created_at', '<=', $request->date_to);
         }
 

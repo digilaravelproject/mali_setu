@@ -89,6 +89,10 @@
             background: #fff;
         }
 
+        .form-control-lg[readonly] {
+            background: rgba(255, 255, 255, 0.8);
+        }
+
         .btn-primary {
             background: var(--primary) !important;
             border: none;
@@ -293,7 +297,7 @@
                             <!-- Email -->
                             <div class="col-md-6 mb-3">
                                 <label class="form-label small fw-bold text-secondary">Email Address <span class="text-danger">*</span></label>
-                                <input type="email" name="email" value="{{ old('email') }}" class="form-control form-control-lg @error('email') is-invalid @enderror" placeholder="name@example.com" required>
+                                <input type="email" name="email" value="{{ old('email') }}" class="form-control form-control-lg @error('email') is-invalid @enderror" placeholder="name@example.com" required autocomplete="new-email" readonly onfocus="this.removeAttribute('readonly');">
                                 @error('email')
                                     <div class="text-danger small mt-1">{{ $message }}</div>
                                 @enderror
@@ -329,8 +333,8 @@
                         <p class="small text-secondary mb-4">Please upload a valid Caste Certificate or other proof (Father's Caste Document) to verify community authenticity. Supported: JPG, JPEG, PNG, PDF (Max: 5MB).</p>
                         
                         <div class="mb-2">
-                            <label class="form-label small fw-bold text-secondary">Caste Certificate File <span class="text-danger">*</span></label>
-                            <input type="file" name="cast_certificate" class="form-control form-control-lg @error('cast_certificate') is-invalid @enderror" accept=".jpg,.jpeg,.png,.pdf" required>
+                            <label class="form-label small fw-bold text-secondary">Caste Certificate File</label>
+                            <input type="file" name="cast_certificate" class="form-control form-control-lg @error('cast_certificate') is-invalid @enderror" accept=".jpg,.jpeg,.png,.pdf">
                             @error('cast_certificate')
                                 <div class="text-danger small mt-1">{{ $message }}</div>
                             @enderror
@@ -503,6 +507,7 @@
                                         class="form-control form-control-lg @error('password') is-invalid @enderror" 
                                         placeholder="Min 8 characters" 
                                         required
+                                        autocomplete="new-password"
                                     >
                                     <button type="button" class="btn btn-outline-secondary border-start-0 bg-white" onclick="togglePasswordVisibility('reg-password', this)" style="border-top-right-radius: 8px; border-bottom-right-radius: 8px;">
                                         <i class="fa-solid fa-eye text-secondary"></i>
@@ -524,6 +529,7 @@
                                         class="form-control form-control-lg" 
                                         placeholder="Repeat password" 
                                         required
+                                        autocomplete="new-password"
                                     >
                                     <button type="button" class="btn btn-outline-secondary border-start-0 bg-white" onclick="togglePasswordVisibility('reg-confirm-password', this)" style="border-top-right-radius: 8px; border-bottom-right-radius: 8px;">
                                         <i class="fa-solid fa-eye text-secondary"></i>
@@ -615,32 +621,72 @@
         if (pincodeInput) {
             pincodeInput.addEventListener('input', function() {
                 const pincode = this.value.trim();
-                if (pincode.length === 6 && /^\d+$/.test(pincode)) {
-                    pincodeInput.classList.add('is-valid');
-                    
-                    fetch(`https://api.postalpincode.in/pincode/${pincode}`)
-                        .then(res => res.json())
-                        .then(data => {
-                            if (data && data[0] && data[0].Status === 'Success') {
-                                const postOffice = data[0].PostOffice[0];
-                                const state = postOffice.State;
-                                const city = postOffice.District; 
-                                
-                                const stateInput = document.querySelector('input[name="state"]');
-                                const cityInput = document.querySelector('input[name="city"]');
-                                
-                                if (stateInput) {
-                                    stateInput.value = state;
-                                    stateInput.classList.add('is-valid');
-                                }
-                                if (cityInput) {
-                                    cityInput.value = city;
-                                    cityInput.classList.add('is-valid');
-                                }
-                            }
-                        })
-                        .catch(err => console.error('Error fetching pincode details:', err));
+                const stateInput = document.querySelector('input[name="state"]');
+                const cityInput = document.querySelector('input[name="city"]');
+                const talukaInput = document.querySelector('input[name="taluka"]');
+                const villageInput = document.querySelector('input[name="village"]');
+
+                if (pincode.length !== 6 || !/^\d+$/.test(pincode)) {
+                    pincodeInput.classList.remove('is-valid', 'is-invalid');
+                    return;
                 }
+
+                pincodeInput.classList.remove('is-invalid');
+                
+                fetch(`https://api.postalpincode.in/pincode/${pincode}`)
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data && data[0] && data[0].Status === 'Success') {
+                            const postOffice = data[0].PostOffice[0];
+                            const state = postOffice.State;
+                            const city = postOffice.District; 
+                            
+                            pincodeInput.classList.add('is-valid');
+                            pincodeInput.classList.remove('is-invalid');
+                            
+                            if (stateInput) {
+                                stateInput.value = state;
+                                stateInput.classList.add('is-valid');
+                                stateInput.classList.remove('is-invalid');
+                            }
+                            if (cityInput) {
+                                cityInput.value = city;
+                                cityInput.classList.add('is-valid');
+                                cityInput.classList.remove('is-invalid');
+                            }
+                        } else {
+                            pincodeInput.value = '';
+                            pincodeInput.classList.remove('is-valid');
+                            pincodeInput.classList.add('is-invalid');
+                            
+                            if (stateInput) {
+                                stateInput.value = '';
+                                stateInput.classList.remove('is-valid', 'is-invalid');
+                            }
+                            if (cityInput) {
+                                cityInput.value = '';
+                                cityInput.classList.remove('is-valid', 'is-invalid');
+                            }
+                            if (talukaInput) {
+                                talukaInput.value = '';
+                                talukaInput.classList.remove('is-valid', 'is-invalid');
+                            }
+                            if (villageInput) {
+                                villageInput.value = '';
+                                villageInput.classList.remove('is-valid', 'is-invalid');
+                            }
+                            alert('Location lookup error: Invalid Pincode or no records found.');
+                        }
+                    })
+                    .catch(err => {
+                        console.error('Error fetching pincode details:', err);
+                        pincodeInput.value = '';
+                        pincodeInput.classList.remove('is-valid');
+                        pincodeInput.classList.add('is-invalid');
+                        if (stateInput) stateInput.value = '';
+                        if (cityInput) cityInput.value = '';
+                        alert('Location lookup error: Failed to fetch location details.');
+                    });
             });
         }
 
@@ -658,6 +704,11 @@
                     alert('GPS Coordinates fetched successfully: ' + position.coords.latitude.toFixed(4) + ', ' + position.coords.longitude.toFixed(4));
                 }, function(error) {
                     icon.className = oldClass;
+                    const pincodeInput = document.querySelector('input[name="pincode"]');
+                    if (pincodeInput) {
+                        pincodeInput.value = '';
+                        pincodeInput.classList.remove('is-valid', 'is-invalid');
+                    }
                     alert('Geolocation Error: ' + error.message);
                 }, {
                     enableHighAccuracy: true,
@@ -672,6 +723,44 @@
 <script>
     // Global jQuery Form Validation Script
     $(document).ready(function() {
+        // Character & input length constraints
+        $(document).on('input', 'input[name="first_name"], input[name="middle_name"], input[name="last_name"], input[name="name"]', function() {
+            let id = $(this).attr('id') || '';
+            let placeholder = $(this).attr('placeholder') || '';
+            if (id.includes('product') || id.includes('service') || id.includes('category') || id.includes('cast') || id.includes('blog') || id.includes('cause') || id.includes('plan')) {
+                return;
+            }
+            if (placeholder.toLowerCase().includes('product') || placeholder.toLowerCase().includes('service') || placeholder.toLowerCase().includes('category') || placeholder.toLowerCase().includes('cast') || placeholder.toLowerCase().includes('blog') || placeholder.toLowerCase().includes('cause') || placeholder.toLowerCase().includes('plan')) {
+                return;
+            }
+            let form = $(this).closest('form');
+            if (form.length) {
+                let action = form.attr('action') || '';
+                if (action.includes('product') || action.includes('service') || action.includes('category') || action.includes('blog') || action.includes('cause') || action.includes('plan')) {
+                    return;
+                }
+            }
+            this.value = this.value.replace(/[0-9]/g, '');
+        });
+
+        $(document).on('input', 'input[name="phone"], input[name="mobile"], input[name="contact_phone"], input[type="tel"]', function() {
+            this.value = this.value.replace(/[^0-9]/g, '');
+            if (this.value.length > 10) {
+                this.value = this.value.slice(0, 10);
+            }
+        });
+
+        $(document).on('input', 'input[name="pincode"]', function() {
+            this.value = this.value.replace(/[^0-9]/g, '');
+            if (this.value.length > 6) {
+                this.value = this.value.slice(0, 6);
+            }
+        });
+
+        $(document).on('input', 'input[name="country"], input[name="state"], input[name="city"], input[name="taluka"], input[name="village"]', function() {
+            this.value = this.value.replace(/[0-9]/g, '');
+        });
+
         // Disable native browser validation tooltips (bubbles)
         $('form').attr('novalidate', 'novalidate');
 

@@ -931,19 +931,19 @@ class AdminController extends Controller
     {
         $query = Donation::with(['user:id,name,email', 'cause:id,title,organization']);
 
-        if ($request->has('status')) {
+        if ($request->filled('status')) {
             $query->where('status', $request->status);
         }
 
-        if ($request->has('cause_id')) {
+        if ($request->filled('cause_id')) {
             $query->where('cause_id', $request->cause_id);
         }
 
-        if ($request->has('date_from')) {
+        if ($request->filled('date_from')) {
             $query->whereDate('created_at', '>=', $request->date_from);
         }
 
-        if ($request->has('date_to')) {
+        if ($request->filled('date_to')) {
             $query->whereDate('created_at', '<=', $request->date_to);
         }
 
@@ -1107,19 +1107,19 @@ class AdminController extends Controller
     {
         $query = JobApplication::with(['user:id,name,email', 'jobPosting:id,title,business_id', 'jobPosting.business:id,business_name']);
 
-        if ($request->has('status')) {
+        if ($request->filled('status')) {
             $query->where('status', $request->status);
         }
 
-        if ($request->has('job_id')) {
+        if ($request->filled('job_id')) {
             $query->where('job_posting_id', $request->job_id);
         }
 
-        if ($request->has('date_from')) {
+        if ($request->filled('date_from')) {
             $query->whereDate('applied_at', '>=', $request->date_from);
         }
 
-        if ($request->has('date_to')) {
+        if ($request->filled('date_to')) {
             $query->whereDate('applied_at', '<=', $request->date_to);
         }
 

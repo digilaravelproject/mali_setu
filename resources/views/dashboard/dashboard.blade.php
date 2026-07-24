@@ -700,7 +700,7 @@
                         </div>
                         <div class="col-md-6">
                             <label class="form-label small fw-bold">Update Profile Photo</label>
-                            <input type="file" name="photo" class="form-control">
+                            <input type="file" name="photo" id="profilePhotoInput" class="form-control" accept="image/jpeg,image/png,image/webp">
                             <small class="text-muted">JPEG, PNG or WEBP formats up to 2MB allowed.</small>
                         </div>
                     </div>
@@ -1237,37 +1237,73 @@
         if (pincodeInput) {
             pincodeInput.addEventListener('input', function() {
                 const pincode = this.value.trim();
-                if (pincode.length === 6 && /^\d+$/.test(pincode)) {
-                    pincodeInput.classList.add('is-valid');
-                    
-                    fetch(`https://api.postalpincode.in/pincode/${pincode}`)
-                        .then(res => res.json())
-                        .then(data => {
-                            if (data && data[0] && data[0].Status === 'Success') {
-                                const postOffice = data[0].PostOffice[0];
-                                const state = postOffice.State;
-                                const city = postOffice.District; 
-                                
-                                const stateInput = document.querySelector('input[name="state"]');
-                                const cityInput = document.querySelector('input[name="city"]');
-                                const districtInput = document.querySelector('input[name="district"]');
-                                
-                                if (stateInput) {
-                                    stateInput.value = state;
-                                    stateInput.classList.add('is-valid');
-                                }
-                                if (cityInput) {
-                                    cityInput.value = city;
-                                    cityInput.classList.add('is-valid');
-                                }
-                                if (districtInput) {
-                                    districtInput.value = city;
-                                    districtInput.classList.add('is-valid');
-                                }
-                            }
-                        })
-                        .catch(err => console.error('Pincode fetch coordinate error:', err));
+                const stateInput = document.querySelector('input[name="state"]');
+                const cityInput = document.querySelector('input[name="city"]');
+                const districtInput = document.querySelector('input[name="district"]');
+
+                if (pincode.length !== 6 || !/^\d+$/.test(pincode)) {
+                    pincodeInput.classList.remove('is-valid', 'is-invalid');
+                    return;
                 }
+
+                pincodeInput.classList.remove('is-invalid');
+                
+                fetch(`https://api.postalpincode.in/pincode/${pincode}`)
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data && data[0] && data[0].Status === 'Success') {
+                            const postOffice = data[0].PostOffice[0];
+                            const state = postOffice.State;
+                            const city = postOffice.District; 
+                            
+                            pincodeInput.classList.add('is-valid');
+                            pincodeInput.classList.remove('is-invalid');
+                            
+                            if (stateInput) {
+                                stateInput.value = state;
+                                stateInput.classList.add('is-valid');
+                                stateInput.classList.remove('is-invalid');
+                            }
+                            if (cityInput) {
+                                cityInput.value = city;
+                                cityInput.classList.add('is-valid');
+                                cityInput.classList.remove('is-invalid');
+                            }
+                            if (districtInput) {
+                                districtInput.value = city;
+                                districtInput.classList.add('is-valid');
+                                districtInput.classList.remove('is-invalid');
+                            }
+                        } else {
+                            pincodeInput.value = '';
+                            pincodeInput.classList.remove('is-valid');
+                            pincodeInput.classList.add('is-invalid');
+                            
+                            if (stateInput) {
+                                stateInput.value = '';
+                                stateInput.classList.remove('is-valid', 'is-invalid');
+                            }
+                            if (cityInput) {
+                                cityInput.value = '';
+                                cityInput.classList.remove('is-valid', 'is-invalid');
+                            }
+                            if (districtInput) {
+                                districtInput.value = '';
+                                districtInput.classList.remove('is-valid', 'is-invalid');
+                            }
+                            alert('Location lookup error: Invalid Pincode or no records found.');
+                        }
+                    })
+                    .catch(err => {
+                        console.error('Pincode fetch coordinate error:', err);
+                        pincodeInput.value = '';
+                        pincodeInput.classList.remove('is-valid');
+                        pincodeInput.classList.add('is-invalid');
+                        if (stateInput) stateInput.value = '';
+                        if (cityInput) cityInput.value = '';
+                        if (districtInput) districtInput.value = '';
+                        alert('Location lookup error: Failed to fetch location details.');
+                    });
             });
         }
 
@@ -1285,6 +1321,11 @@
                     alert('GPS Coordinates fetched successfully: ' + position.coords.latitude.toFixed(4) + ', ' + position.coords.longitude.toFixed(4));
                 }, function(error) {
                     icon.className = oldClass;
+                    const pincodeInput = document.querySelector('#profilePincodeInput');
+                    if (pincodeInput) {
+                        pincodeInput.value = '';
+                        pincodeInput.classList.remove('is-valid', 'is-invalid');
+                    }
                     alert('Geolocation Error: ' + error.message);
                 }, {
                     enableHighAccuracy: true,
@@ -1333,6 +1374,24 @@
             dobInput.addEventListener('input', calculateAgeFromDob);
             // Run on load if DOB is already populated
             calculateAgeFromDob();
+        }
+
+        // Profile photo validation
+        const photoInput = document.getElementById('profilePhotoInput');
+        if (photoInput) {
+            photoInput.addEventListener('change', function() {
+                const file = this.files[0];
+                if (file) {
+                    const validTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/jpg'];
+                    if (!validTypes.includes(file.type)) {
+                        alert('Error: Unsupported file format. Please upload only image files (JPEG, PNG, or WEBP).');
+                        this.value = ''; // Reset file input
+                    } else if (file.size > 2 * 1024 * 1024) {
+                        alert('Error: File size exceeds 2MB limit.');
+                        this.value = ''; // Reset file input
+                    }
+                }
+            });
         }
     });
 </script>

@@ -497,6 +497,39 @@
                 bsAlert.close();
             });
         }, 5000);
+
+        $(document).ready(function() {
+            // Character & input length constraints
+            $(document).on('input', 'input[name="first_name"], input[name="middle_name"], input[name="last_name"], input[name="name"]', function() {
+                let id = $(this).attr('id') || '';
+                let placeholder = $(this).attr('placeholder') || '';
+                if (id.includes('product') || id.includes('service') || id.includes('category') || id.includes('cast') || id.includes('blog') || id.includes('cause') || id.includes('plan')) {
+                    return;
+                }
+                if (placeholder.toLowerCase().includes('product') || placeholder.toLowerCase().includes('service') || placeholder.toLowerCase().includes('category') || placeholder.toLowerCase().includes('cast') || placeholder.toLowerCase().includes('blog') || placeholder.toLowerCase().includes('cause') || placeholder.toLowerCase().includes('plan')) {
+                    return;
+                }
+                let form = $(this).closest('form');
+                if (form.length) {
+                    let action = form.attr('action') || '';
+                    if (action.includes('product') || action.includes('service') || action.includes('category') || action.includes('blog') || action.includes('cause') || action.includes('plan')) {
+                        return;
+                    }
+                }
+                this.value = this.value.replace(/[0-9]/g, '');
+            });
+
+            $(document).on('input', 'input[name="phone"], input[name="mobile"], input[name="contact_phone"], input[type="tel"]', function() {
+                this.value = this.value.replace(/[^0-9]/g, '');
+                if (this.value.length > 10) {
+                    this.value = this.value.slice(0, 10);
+                }
+            });
+
+            $(document).on('input', 'input[name="country"], input[name="state"], input[name="city"], input[name="taluka"], input[name="village"]', function() {
+                this.value = this.value.replace(/[0-9]/g, '');
+            });
+        });
     </script>
     
     @stack('scripts')

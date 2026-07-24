@@ -81,7 +81,7 @@ class WebAuthController extends Controller
             'email'            => 'required|string|email|max:255|unique:users,email',
             'phone'            => 'required|string|max:15|unique:users,phone',
             'dob'              => 'required|date',
-            'cast_certificate' => 'required|file|mimes:jpeg,png,jpg,pdf|max:5120',
+            'cast_certificate' => 'nullable|file|mimes:jpeg,png,jpg,pdf|max:5120',
             'address'          => 'required|string|max:500',
             'pincode'          => 'required|digits:6',
             'state'            => 'required|string|max:100',
