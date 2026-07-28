@@ -22,6 +22,11 @@
             <i class="fa-solid fa-circle-check me-2"></i> {{ session('success') }}
         </div>
     @endif
+    @if(session('error'))
+        <div class="alert alert-danger border-0 rounded-4 shadow-sm mb-4">
+            <i class="fa-solid fa-triangle-exclamation me-2"></i> {{ session('error') }}
+        </div>
+    @endif
     @if($errors->any())
         <div class="alert alert-danger border-0 rounded-4 shadow-sm mb-4">
             <i class="fa-solid fa-triangle-exclamation me-2"></i> {{ $errors->first() }}

@@ -699,6 +699,16 @@
             </div>
         @endif
 
+        @if(session('error'))
+            <div class="alert alert-danger border-0 rounded-4 shadow-sm p-3 mb-4 d-flex align-items-center justify-content-between" role="alert" style="background: rgba(255,74,74,0.1); color: #ff4a4a;">
+                <div class="d-flex align-items-center gap-2">
+                    <i class="fa-solid fa-circle-exclamation fs-5"></i>
+                    <span class="small fw-semibold">{{ session('error') }}</span>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close" style="font-size: 0.8rem;"></button>
+            </div>
+        @endif
+
         @if($errors->any())
             <div class="alert alert-danger border-0 rounded-4 shadow-sm p-3 mb-4" role="alert" style="background: rgba(255,74,74,0.1); color: #ff4a4a;">
                 <div class="d-flex align-items-center gap-2 mb-2">

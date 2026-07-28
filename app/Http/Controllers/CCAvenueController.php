@@ -24,7 +24,7 @@ class CCAvenueController extends Controller
     {
         if (!$request->has('encResp')) {
             Log::error('CCAvenue callback missing encResp');
-            return redirect()->route('dashboard')->with('error', 'Payment response missing.');
+            return redirect()->route('payment.redirect-back', ['status' => 'failed', 'message' => 'Payment response missing.']);
         }
 
         try {
@@ -37,7 +37,7 @@ class CCAvenueController extends Controller
 
             if (!$orderId) {
                 Log::error('CCAvenue callback response missing order_id');
-                return redirect()->route('dashboard')->with('error', 'Invalid payment response.');
+                return redirect()->route('payment.redirect-back', ['status' => 'failed', 'message' => 'Invalid payment response.']);
             }
 
             $isSuccess = (strcasecmp($orderStatus, 'Success') === 0);
@@ -47,7 +47,7 @@ class CCAvenueController extends Controller
                 $donation = Donation::where('razorpay_order_id', $orderId)->first();
                 if (!$donation) {
                     Log::error('Donation not found for order ID: ' . $orderId);
-                    return redirect()->route('dashboard')->with('error', 'Donation record not found.');
+                    return redirect()->route('payment.redirect-back', ['order_id' => $orderId, 'status' => 'failed', 'message' => 'Donation record not found.']);
                 }
 
                 if ($isSuccess) {
@@ -66,14 +66,14 @@ class CCAvenueController extends Controller
                     }
 
                     $donation->cause->updateRaisedAmount();
-                    return redirect()->route('dashboard')->with('success', 'Thank you! Your donation was completed successfully.');
+                    return redirect()->route('payment.redirect-back', ['order_id' => $orderId, 'status' => 'success']);
                 } else {
                     $donation->update(['status' => 'failed']);
                     $transaction = Transaction::where('razorpay_order_id', $orderId)->first();
                     if ($transaction) {
                         $transaction->update(['status' => 'failed']);
                     }
-                    return redirect()->route('dashboard')->with('error', 'Donation payment failed/cancelled.');
+                    return redirect()->route('payment.redirect-back', ['order_id' => $orderId, 'status' => 'failed', 'message' => 'Donation payment failed/cancelled.']);
                 }
             }
 
@@ -82,7 +82,7 @@ class CCAvenueController extends Controller
                 $transaction = Transaction::where('razorpay_order_id', $orderId)->first();
                 if (!$transaction) {
                     Log::error('Business transaction not found for order ID: ' . $orderId);
-                    return redirect()->route('dashboard.business.index')->with('error', 'Transaction record not found.');
+                    return redirect()->route('payment.redirect-back', ['order_id' => $orderId, 'status' => 'failed', 'message' => 'Transaction record not found.']);
                 }
 
                 if ($isSuccess) {
@@ -140,10 +140,10 @@ class CCAvenueController extends Controller
                         ]);
                     }
 
-                    return redirect()->route('dashboard.business.index')->with('success', 'Subscription activated successfully!');
+                    return redirect()->route('payment.redirect-back', ['order_id' => $orderId, 'status' => 'success']);
                 } else {
                     $transaction->update(['status' => 'failed']);
-                    return redirect()->route('dashboard.business.index')->with('error', 'Business subscription payment failed/cancelled.');
+                    return redirect()->route('payment.redirect-back', ['order_id' => $orderId, 'status' => 'failed', 'message' => 'Business subscription payment failed/cancelled.']);
                 }
             }
 
@@ -152,7 +152,7 @@ class CCAvenueController extends Controller
                 $transaction = Transaction::where('razorpay_order_id', $orderId)->first();
                 if (!$transaction) {
                     Log::error('Matrimony transaction not found for order ID: ' . $orderId);
-                    return redirect()->route('matrimony.index')->with('error', 'Transaction record not found.');
+                    return redirect()->route('payment.redirect-back', ['order_id' => $orderId, 'status' => 'failed', 'message' => 'Transaction record not found.']);
                 }
 
                 if ($isSuccess) {
@@ -206,19 +206,118 @@ class CCAvenueController extends Controller
                         ]);
                     }
 
-                    return redirect()->route('matrimony.index')->with('success', 'Matrimony plan activated successfully!');
+                    return redirect()->route('payment.redirect-back', ['order_id' => $orderId, 'status' => 'success']);
                 } else {
                     $transaction->update(['status' => 'failed']);
-                    return redirect()->route('matrimony.index')->with('error', 'Matrimony subscription payment failed/cancelled.');
+                    return redirect()->route('payment.redirect-back', ['order_id' => $orderId, 'status' => 'failed', 'message' => 'Matrimony subscription payment failed/cancelled.']);
                 }
             }
 
             Log::warning('Unknown CCAvenue order prefix: ' . $orderId);
-            return redirect()->route('dashboard')->with('error', 'Payment processed, but order type is unrecognized.');
+            return redirect()->route('payment.redirect-back', ['order_id' => $orderId, 'status' => 'failed', 'message' => 'Payment processed, but order type is unrecognized.']);
 
         } catch (\Exception $e) {
             Log::error('CCAvenue Callback Exception: ' . $e->getMessage());
-            return redirect()->route('dashboard')->with('error', 'An error occurred while processing the payment response: ' . $e->getMessage());
+            return redirect()->route('payment.redirect-back', ['status' => 'failed', 'message' => 'An error occurred while processing the payment response: ' . $e->getMessage()]);
         }
+    }
+
+    public function paymentRedirectBack(Request $request)
+    {
+        $orderId = $request->query('order_id');
+        $transaction = null;
+        $status = $request->query('status', 'failed');
+        $message = $request->query('message');
+
+        if ($orderId) {
+            $transaction = Transaction::where('razorpay_order_id', $orderId)->first();
+            if ($transaction && $transaction->status === 'completed') {
+                $status = 'success';
+            }
+        }
+
+        // Set default friendly success/error messages if not set in query
+        if (!$message) {
+            if ($status === 'success') {
+                if ($transaction && $transaction->purpose === 'donation') {
+                    $message = 'Thank you! Your donation was completed successfully.';
+                } elseif ($transaction && $transaction->purpose === 'business_registration') {
+                    $message = 'Your business subscription has been activated successfully!';
+                } elseif ($transaction && $transaction->purpose === 'matrimony_profile') {
+                    $message = 'Your matrimony plan has been activated successfully!';
+                } else {
+                    $message = 'Payment completed successfully!';
+                }
+            } else {
+                $message = 'Payment failed or was cancelled.';
+            }
+        }
+
+        if ($status === 'success') {
+            session()->flash('success', $message);
+        } else {
+            session()->flash('error', $message);
+        }
+
+        // Determine final destination based on orderId prefix
+        if ($orderId) {
+            if (strpos($orderId, 'MAT-') === 0) {
+                return redirect()->route('matrimony.index');
+            } elseif (strpos($orderId, 'BIZ-') === 0) {
+                return redirect()->route('dashboard.business.index');
+            } elseif (strpos($orderId, 'DON-') === 0) {
+                return redirect()->route('login');
+            }
+        }
+
+        // Fallback
+        return redirect()->route('dashboard');
+    }
+
+    public function paymentStatus(Request $request, $order_id = null)
+    {
+        $status = $request->query('status');
+        $message = $request->query('message');
+        $transaction = null;
+
+        if ($order_id) {
+            $transaction = Transaction::where('razorpay_order_id', $order_id)->first();
+            if ($transaction) {
+                if ($transaction->status === 'completed') {
+                    $status = 'completed';
+                } elseif ($transaction->status === 'failed') {
+                    $status = 'failed';
+                }
+                
+                if (!$message) {
+                    if ($status === 'completed') {
+                        if ($transaction->purpose === 'donation') {
+                            $message = 'Thank you! Your donation was completed successfully.';
+                        } elseif ($transaction->purpose === 'business_registration') {
+                            $message = 'Your business subscription has been activated successfully!';
+                        } elseif ($transaction->purpose === 'matrimony_profile') {
+                            $message = 'Your matrimony plan has been activated successfully!';
+                        } else {
+                            $message = 'Your payment was completed successfully.';
+                        }
+                    } elseif ($status === 'failed') {
+                        $message = 'Your payment failed or was cancelled.';
+                    } else {
+                        $message = 'Your payment status is pending verification.';
+                    }
+                }
+            }
+        }
+
+        if (!$status && $message) {
+            $status = 'failed';
+        }
+
+        return view('payment.status', [
+            'status' => $status ?? 'pending',
+            'message' => $message ?? 'No payment details available.',
+            'transaction' => $transaction,
+            'order_id' => $order_id
+        ]);
     }
 }
