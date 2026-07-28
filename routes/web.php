@@ -49,6 +49,9 @@ Route::get('/privacy-policy', [PageController::class, 'privacyPolicy'])->name('p
 Route::get('/terms-condition', [PageController::class, 'termsCondition'])->name('terms-condition');
 Route::get('/contact-us', [PageController::class, 'contactUs'])->name('contact-us');
 Route::get('/payment/redirect-back', [\App\Http\Controllers\CCAvenueController::class, 'paymentRedirectBack'])->name('payment.redirect-back');
+Route::get('/payment/summary/{order_id}', [\App\Http\Controllers\CCAvenueController::class, 'paymentSummary'])->name('payment.summary');
+Route::get('/payment/summary/{order_id}/back', [\App\Http\Controllers\CCAvenueController::class, 'paymentSummaryBack'])->name('payment.summary.back');
+
 
 // Public Blog Routes
 Route::get('/blog/{id}', [\App\Http\Controllers\BlogController::class, 'showPublic'])->name('blogs.public.show');

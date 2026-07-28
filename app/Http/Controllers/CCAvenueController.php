@@ -254,6 +254,9 @@ class CCAvenueController extends Controller
         }
 
         if ($status === 'success') {
+            if ($orderId) {
+                return redirect()->route('payment.summary', ['order_id' => $orderId]);
+            }
             session()->flash('success', $message);
         } else {
             session()->flash('error', $message);
@@ -319,5 +322,101 @@ class CCAvenueController extends Controller
             'transaction' => $transaction,
             'order_id' => $order_id
         ]);
+    }
+
+    public function paymentSummary(Request $request, $order_id)
+    {
+        $transaction = Transaction::where('razorpay_order_id', $order_id)->first();
+
+        if (!$transaction) {
+            return redirect()->route('dashboard')->with('error', 'Transaction not found.');
+        }
+
+        if ($transaction->status !== 'completed') {
+            return redirect()->route('dashboard')->with('error', 'Transaction is not completed.');
+        }
+
+        $details = [];
+        $purpose = $transaction->purpose;
+        $paymentMethod = 'Online Payment';
+
+        if ($purpose === 'business_registration') {
+            $business = Business::where('user_id', $transaction->user_id)->latest()->first();
+            $payment = Payment::where('transaction_id', $transaction->id)->first();
+            if ($payment && $payment->payment_method) {
+                $paymentMethod = $payment->payment_method;
+            }
+            $details = [
+                'type' => 'business',
+                'title' => 'Business Subscription',
+                'name' => $business ? $business->business_name : 'N/A',
+                'period' => $transaction->subscription_period ? ($transaction->subscription_period / 12) . ' Year(s)' : 'N/A',
+                'expires_at' => $business && $business->subscription_expires_at 
+                    ? \Carbon\Carbon::parse($business->subscription_expires_at)->format('d M Y, h:i A') 
+                    : 'N/A',
+            ];
+        } elseif ($purpose === 'matrimony_profile') {
+            $profile = MatrimonyProfile::where('user_id', $transaction->user_id)->first();
+            $pd = $profile ? ($profile->personal_details ?? []) : [];
+            $payment = Payment::where('transaction_id', $transaction->id)->first();
+            if ($payment && $payment->payment_method) {
+                $paymentMethod = $payment->payment_method;
+            }
+            $details = [
+                'type' => 'matrimony',
+                'title' => 'Matrimony Premium Plan',
+                'name' => !empty($pd['name']) ? $pd['name'] : ($profile ? $profile->first_name . ' ' . $profile->last_name : 'N/A'),
+                'period' => $transaction->subscription_period ? ($transaction->subscription_period / 12) . ' Year(s)' : 'N/A',
+                'expires_at' => $profile && $profile->profile_expires_at 
+                    ? \Carbon\Carbon::parse($profile->profile_expires_at)->format('d M Y, h:i A') 
+                    : 'N/A',
+            ];
+        } elseif ($purpose === 'donation') {
+            $donation = Donation::where('razorpay_order_id', $order_id)->first();
+            if ($donation && $donation->payment_method) {
+                $paymentMethod = $donation->payment_method;
+            }
+            $details = [
+                'type' => 'donation',
+                'title' => 'Cause Donation',
+                'cause_title' => $donation && $donation->cause ? $donation->cause->title : ($transaction->metadata['cause_title'] ?? 'N/A'),
+                'organization' => $donation && $donation->cause ? $donation->cause->organization : 'N/A',
+                'is_anonymous' => $donation ? $donation->anonymous : false,
+                'message' => $donation ? $donation->message : null,
+            ];
+        }
+
+        return view('payment.summary', [
+            'transaction' => $transaction,
+            'details' => $details,
+            'payment_method' => $paymentMethod,
+            'order_id' => $order_id
+        ]);
+    }
+
+    public function paymentSummaryBack(Request $request, $order_id)
+    {
+        $transaction = Transaction::where('razorpay_order_id', $order_id)->first();
+
+        if (!$transaction) {
+            return redirect()->route('dashboard');
+        }
+
+        $purpose = $transaction->purpose;
+        $message = 'Payment completed successfully!';
+        $routeName = 'dashboard';
+
+        if ($purpose === 'business_registration') {
+            $message = 'Your business subscription has been activated successfully!';
+            $routeName = 'dashboard.business.index';
+        } elseif ($purpose === 'matrimony_profile') {
+            $message = 'Your matrimony plan has been activated successfully!';
+            $routeName = 'matrimony.index';
+        } elseif ($purpose === 'donation') {
+            $message = 'Thank you! Your donation was completed successfully.';
+            $routeName = 'dashboard';
+        }
+
+        return redirect()->route($routeName)->with('success', $message);
     }
 }
