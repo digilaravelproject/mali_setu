@@ -134,6 +134,7 @@ Route::prefix('location')->group(function () {
 
 // Payment webhook (public)
 Route::post('payment/webhook', [PaymentController::class, 'webhook']);
+Route::post('ccavenue/callback', [\App\Http\Controllers\CCAvenueController::class, 'handleCallback'])->name('ccavenue.callback');
 
 // Public search routes
 Route::prefix('search')->group(function () {

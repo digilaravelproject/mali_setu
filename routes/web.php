@@ -48,15 +48,6 @@ Route::get('/', function () {
 Route::get('/privacy-policy', [PageController::class, 'privacyPolicy'])->name('privacy-policy');
 Route::get('/terms-condition', [PageController::class, 'termsCondition'])->name('terms-condition');
 Route::get('/contact-us', [PageController::class, 'contactUs'])->name('contact-us');
-Route::post('/ccavenue/callback', [\App\Http\Controllers\CCAvenueController::class, 'handleCallback'])
-    ->name('ccavenue.callback')
-    ->withoutMiddleware([
-        \Illuminate\Session\Middleware\StartSession::class,
-        \Illuminate\Cookie\Middleware\EncryptCookies::class,
-        \Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse::class,
-        \Illuminate\View\Middleware\ShareErrorsFromSession::class,
-    ]);
-
 Route::get('/payment/redirect-back', [\App\Http\Controllers\CCAvenueController::class, 'paymentRedirectBack'])->name('payment.redirect-back');
 
 // Public Blog Routes
