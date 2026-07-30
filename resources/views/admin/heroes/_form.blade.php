@@ -8,7 +8,7 @@
 <div class="mb-3">
     <label class="form-label">Mobile Hero Image <span class="text-danger">*</span></label>
     <input type="file" name="mobile_image" class="form-control" accept="image/*" {{ isset($hero) ? '' : 'required' }}>
-    <div class="form-text text-muted mt-1">Required dimensions: 1080x1350 px. Max size: 3 MB. Supported formats: JPG, JPEG, PNG, WEBP.</div>
+    <div class="form-text text-muted mt-1">Required dimensions: 300x168 px. Max size: 3 MB. Supported formats: JPG, JPEG, PNG, WEBP.</div>
     @error('mobile_image') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
 
     @if(!empty($hero?->image_path))
@@ -21,7 +21,7 @@
 <div class="mb-3">
     <label class="form-label">Desktop Hero Image <span class="text-danger">*</span></label>
     <input type="file" name="web_image" class="form-control" accept="image/*" {{ isset($hero) ? '' : 'required' }}>
-    <div class="form-text text-muted mt-1">Required dimensions: 1920x700 px. Max size: 5 MB. Supported formats: JPG, JPEG, PNG, WEBP.</div>
+    <div class="form-text text-muted mt-1">Required dimensions: 617x324 px. Max size: 5 MB. Supported formats: JPG, JPEG, PNG, WEBP.</div>
     @error('web_image') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
 
     @if(!empty($hero?->web_image_path))

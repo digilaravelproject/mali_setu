@@ -23,8 +23,8 @@ class UpdateHomepageHeroRequest extends FormRequest
     {
         return [
             'title' => ['required','string','max:255'],
-            'mobile_image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:3072|dimensions:width=1080,height=1350',
-            'web_image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:5120|dimensions:width=1920,height=700',
+            'mobile_image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:3072',
+            'web_image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:5120',
         ];
     }
 }
