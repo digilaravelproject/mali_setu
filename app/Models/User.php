@@ -42,6 +42,7 @@ class User extends Authenticatable
         'pincode',
         'road_number',
         'state',
+        'country',
         'city',
         'sector',
         'district',

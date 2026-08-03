@@ -194,6 +194,7 @@ class DashboardController extends Controller
             'pincode'          => 'nullable|digits:6',
             'road_number'      => 'nullable|string|max:50',
             'state'            => 'nullable|string|max:100',
+            'country'          => 'nullable|string|max:100',
             'city'             => 'nullable|string|max:100',
             'sector'           => 'nullable|string|max:100',
             'district'         => 'nullable|string|max:100',
@@ -207,7 +208,7 @@ class DashboardController extends Controller
         $data = $request->only([
             'name', 'email', 'phone', 'age', 'occupation', 'company_name',
             'dept_name', 'dob', 'designation', 'address', 'nearby_location',
-            'pincode', 'road_number', 'state', 'city', 'sector', 'district',
+            'pincode', 'road_number', 'state', 'country', 'city', 'sector', 'district',
             'village', 'destination', 'latitude', 'longitude'
         ]);
 

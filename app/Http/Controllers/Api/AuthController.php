@@ -67,12 +67,23 @@ class AuthController extends Controller
 
             if ($request->cast_certificate) {
                 $data = $request->cast_certificate;
+                
+                $extension = 'pdf'; // default fallback
+                if (str_contains($data, 'data:') && str_contains($data, ';base64,')) {
+                    [$meta, $encoded] = explode(';base64,', $data);
+                    $mime = str_replace('data:', '', $meta);
+                    $extension = explode('/', $mime)[1] ?? 'pdf';
+                    // Clean up extension names
+                    if ($extension === 'jpeg') {
+                        $extension = 'jpg';
+                    }
+                }
 
                 // strip the "data:..." part
                 $data = preg_replace('#^data:.*?;base64,#', '', $data);
                 $fileData = base64_decode($data);
 
-                $fileName = uniqid() . '.pdf';
+                $fileName = uniqid() . '.' . $extension;
 
                 // Ensure the folder exists
                 if (!Storage::disk('public')->exists('certificates')) {
@@ -256,6 +267,8 @@ class AuthController extends Controller
             $user->blog_category_name = $user->blogCategory ? $user->blogCategory->name : null;
         }
 
+        $user->country = $user->country ?? 'India';
+
         $transaction = null;
 
         // Check if matrimony profile exists
@@ -321,6 +334,7 @@ class AuthController extends Controller
             'pincode'          => 'nullable|digits:6',
             'road_number'      => 'nullable|string|max:50',
             'state'            => 'nullable|string|max:100',
+            'country'          => 'nullable|string|max:100',
             'city'             => 'nullable|string|max:100',
             'sector'           => 'nullable|string|max:100',
             'district'         => 'nullable|string|max:100',
@@ -363,7 +377,7 @@ class AuthController extends Controller
             'name', 'email', 'age', 'phone', 'cast_certificate', 'occupation',
             'company_name', 'dept_name', 'dob', 'designation',
             'address', 'nearby_location', 'pincode', 'road_number',
-            'state', 'city', 'sector', 'district', 'village', 'destination',
+            'state', 'country', 'city', 'sector', 'district', 'village', 'destination',
             'latitude', 'longitude'
         ]);
         

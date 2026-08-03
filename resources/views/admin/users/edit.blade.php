@@ -272,21 +272,25 @@
                                         </div>
 
                                         <div class="row">
-                                            <div class="col-md-3 mb-3">
+                                            <div class="col-md-2 mb-3">
                                                 <label for="village" class="form-label font-weight-bold small">Village</label>
                                                 <input type="text" class="form-control" id="village" name="village" value="{{ old('village', $user->village) }}" placeholder="Village Name">
                                             </div>
-                                            <div class="col-md-3 mb-3">
+                                            <div class="col-md-2 mb-3">
                                                 <label for="city" class="form-label font-weight-bold small">City</label>
                                                 <input type="text" class="form-control" id="city" name="city" value="{{ old('city', $user->city) }}" placeholder="Pune">
                                             </div>
-                                            <div class="col-md-3 mb-3">
+                                            <div class="col-md-2 mb-3">
                                                 <label for="district" class="form-label font-weight-bold small">District</label>
                                                 <input type="text" class="form-control" id="district" name="district" value="{{ old('district', $user->district) }}" placeholder="Pune District">
                                             </div>
                                             <div class="col-md-3 mb-3">
                                                 <label for="state" class="form-label font-weight-bold small">State</label>
                                                 <input type="text" class="form-control" id="state" name="state" value="{{ old('state', $user->state) }}" placeholder="Maharashtra">
+                                            </div>
+                                            <div class="col-md-3 mb-3">
+                                                <label for="country" class="form-label font-weight-bold small">Country</label>
+                                                <input type="text" class="form-control" id="country" name="country" value="{{ old('country', $user->country ?? 'India') }}" placeholder="India">
                                             </div>
                                         </div>
 

@@ -203,6 +203,10 @@
                                                     <td>{{ $user->district ?? 'N/A' }}{{ $user->district && $user->state ? ', ' : '' }}{{ $user->state ?? 'N/A' }}</td>
                                                 </tr>
                                                 <tr>
+                                                    <td><strong>Country:</strong></td>
+                                                    <td>{{ $user->country ?? 'N/A' }}</td>
+                                                </tr>
+                                                <tr>
                                                     <td><strong>Pincode:</strong></td>
                                                     <td>{{ $user->pincode ?? 'N/A' }}</td>
                                                 </tr>

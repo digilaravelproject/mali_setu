@@ -777,17 +777,21 @@
                     </div>
 
                     <div class="row">
-                        <div class="col-md-4 mb-4">
+                        <div class="col-md-3 mb-4">
                             <label class="form-label">City</label>
                             <input type="text" name="city" value="{{ old('city', $user->city) }}" class="form-control">
                         </div>
-                        <div class="col-md-4 mb-4">
+                        <div class="col-md-3 mb-4">
                             <label class="form-label">District</label>
                             <input type="text" name="district" value="{{ old('district', $user->district) }}" class="form-control">
                         </div>
-                        <div class="col-md-4 mb-4">
+                        <div class="col-md-3 mb-4">
                             <label class="form-label">State</label>
                             <input type="text" name="state" value="{{ old('state', $user->state) }}" class="form-control">
+                        </div>
+                        <div class="col-md-3 mb-4">
+                            <label class="form-label">Country</label>
+                            <input type="text" name="country" value="{{ old('country', $user->country ?? 'India') }}" class="form-control">
                         </div>
                     </div>
 
