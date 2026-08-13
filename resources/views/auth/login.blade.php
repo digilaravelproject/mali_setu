@@ -266,6 +266,21 @@
                 </div>
             @endif
 
+            <!-- Social Logins -->
+            <div class="row g-3">
+                <div class="col-12">
+                    <a href="{{ route('auth.google') }}" class="social-btn border border-opacity-50 shadow-sm py-3 text-center d-flex align-items-center justify-content-center gap-2">
+                        <i class="fa-brands fa-google text-danger fs-5"></i> Continue with Google
+                    </a>
+                </div>
+            </div>
+
+            <!-- Social Authentication Divider -->
+            <div class="text-center my-4 position-relative">
+                <hr class="text-muted opacity-25">
+                <span class="position-absolute top-50 start-50 translate-middle bg-white px-3 text-secondary small">Or connect with</span>
+            </div>
+
             <form action="{{ route('login') }}" method="POST" class="mt-4">
                 @csrf
                 
@@ -318,21 +333,6 @@
                     Sign In <i class="fa-solid fa-arrow-right-to-bracket ms-2"></i>
                 </button>
             </form>
-
-            <!-- Social Authentication Divider -->
-            <div class="text-center my-4 position-relative">
-                <hr class="text-muted opacity-25">
-                <span class="position-absolute top-50 start-50 translate-middle bg-white px-3 text-secondary small">Or connect with</span>
-            </div>
-
-            <!-- Social Logins -->
-            <div class="row g-3">
-                <div class="col-12">
-                    <a href="{{ route('auth.google') }}" class="social-btn border border-opacity-50 shadow-sm py-3 text-center d-flex align-items-center justify-content-center gap-2">
-                        <i class="fa-brands fa-google text-danger fs-5"></i> Continue with Google
-                    </a>
-                </div>
-            </div>
         </div>
     </div>
 </div>
