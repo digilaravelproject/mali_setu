@@ -264,11 +264,19 @@ class SearchController extends Controller
         
         $authUserId = $request->user()->id;
 
-        // foreach (['location', 'caste', 'education', 'occupation', 'gender'] as $field) {
-        //     if ($request->filled($field)) {
-        //         $query->where($field, $request->$field);
-        //     }
-        // }
+        if ($request->filled('gender') && $request->gender !== 'Any') {
+            $query->where(function($q) use ($request) {
+                $q->where('personal_details->gender', 'like', $request->gender)
+                  ->orWhereRaw('LOWER(JSON_UNQUOTE(JSON_EXTRACT(personal_details, "$.gender"))) = ?', [strtolower($request->gender)]);
+            });
+        }
+
+        if ($request->filled('occupation') && $request->occupation !== 'Any') {
+            $query->where(function($q) use ($request) {
+                $q->where('professional_details->occupation', 'like', $request->occupation)
+                  ->orWhere('personal_details->occupation', 'like', $request->occupation);
+            });
+        }
         
         $query->where('user_id', '!=', $authUserId);
 
@@ -308,12 +316,9 @@ class SearchController extends Controller
             
                 if ($connection) {
                     $usr->connection_status = $connection->status;
-            
-                    // ❌ remove user if removed
-                    return $connection->status !== 'removed';
+                } else {
+                    $usr->connection_status = 'not_connected';
                 }
-            
-                $usr->connection_status = 'not_connected';
                 return true;
             });
             
