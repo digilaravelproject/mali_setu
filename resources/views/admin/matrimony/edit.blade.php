@@ -163,7 +163,7 @@
                         <select class="form-select" id="gender" name="gender" required>
                             <option value="" disabled>Select Gender</option>
                             @php
-                                $genderVal = ucfirst(strtolower($profile->gender ?? ''));
+                                $genderVal = ucfirst(strtolower($pd['gender'] ?? $profile->gender ?? ''));
                             @endphp
                             <option value="Male" {{ old('gender', $genderVal) == 'Male' ? 'selected' : '' }}>Male</option>
                             <option value="Female" {{ old('gender', $genderVal) == 'Female' ? 'selected' : '' }}>Female</option>
@@ -171,7 +171,21 @@
                     </div>
                     <div class="col-md-4 mb-3">
                         <label for="date_of_birth" class="form-label font-weight-bold small">Date of Birth <span class="required-star">*</span></label>
-                        <input type="date" class="form-control" id="date_of_birth" name="date_of_birth" value="{{ old('date_of_birth', $profile->date_of_birth ? \Carbon\Carbon::parse($profile->date_of_birth)->format('Y-m-d') : '') }}" required>
+                        @php
+                            $dobVal = '';
+                            if (!empty($pd['dob'])) {
+                                $dobVal = $pd['dob'];
+                            } elseif (!empty($pd['date_of_birth'])) {
+                                $dobVal = $pd['date_of_birth'];
+                            }
+                            if (!empty($dobVal)) {
+                                try {
+                                    $dobVal = \Carbon\Carbon::parse($dobVal)->format('Y-m-d');
+                                } catch (\Exception $e) {
+                                }
+                            }
+                        @endphp
+                        <input type="date" class="form-control" id="date_of_birth" name="date_of_birth" value="{{ old('date_of_birth', $dobVal) }}" required>
                     </div>
                 </div>
 
