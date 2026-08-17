@@ -219,20 +219,53 @@ class MatrimonyManagementController extends Controller
         $last = $personal['last_name'] ?? '';
         $personal['name'] = trim($first . ' ' . ($middle ? $middle . ' ' : '') . $last);
 
+        // Ensure front-end keys compatibility
+        $personal['dob'] = $request->date_of_birth;
+        $personal['date_of_birth'] = $request->date_of_birth;
+        $personal['language'] = $personal['mother_tongue'] ?? '';
+        $personal['religion'] = ['Hindu', $personal['caste'] ?? ''];
+        $personal['star_details'] = [
+            $personal['star'] ?? '',
+            $personal['raasi'] ?? '',
+            'manglik-' . strtolower($personal['manglik'] ?? 'no')
+        ];
+        $personal['refferal_name'] = $personal['referral_name'] ?? '';
+
+        // Synchronize family details compatibility
+        $family = $request->family_details;
+        $family['father'] = $family['father_occupation'] ?? '';
+        $family['mother'] = $family['mother_occupation'] ?? '';
+        $family['father_occupation'] = $family['father_occupation'] ?? '';
+        $family['mother_occupation'] = $family['mother_occupation'] ?? '';
+        $family['family_type'] = $family['family_type'] ?? '';
+        $family['family_class'] = $family['family_class'] ?? '';
+        $family['family_value'] = $family['family_value'] ?? '';
+
+        // Synchronize education details compatibility
+        $education = $request->education_details;
+        $education['college'] = $education['college_name'] ?? '';
+        $education['college_name'] = $education['college_name'] ?? '';
+
+        // Synchronize professional details compatibility
+        $professional = $request->professional_details;
+        $professional['job_title'] = $professional['occupation'] ?? '';
+        $professional['occupation'] = $professional['occupation'] ?? '';
+        $professional['company'] = $professional['company_name'] ?? '';
+        $professional['company_name'] = $professional['company_name'] ?? '';
+        $professional['employment_type'] = $personal['employment_type'] ?? '';
+        $professional['annual_income'] = $personal['annual_income'] ?? '';
+
         $profile = MatrimonyProfile::create([
             'user_id' => $request->user_id,
-            'gender' => $request->gender,
-            'date_of_birth' => $request->date_of_birth,
-            'time_of_birth' => $request->time_of_birth,
             'age' => $request->age,
             'height' => $request->height,
             'weight' => $request->weight,
             'complexion' => $request->complexion,
             'physical_status' => $request->physical_status,
             'personal_details' => $personal,
-            'family_details' => $request->family_details,
-            'education_details' => $request->education_details,
-            'professional_details' => $request->professional_details,
+            'family_details' => $family,
+            'education_details' => $education,
+            'professional_details' => $professional,
             'lifestyle_details' => $request->lifestyle_details ?? [],
             'location_details' => $request->location_details,
             'partner_preferences' => $request->partner_preferences,
@@ -289,7 +322,7 @@ class MatrimonyManagementController extends Controller
             'professional_details' => 'required|array',
             'lifestyle_details' => 'nullable|array',
             'location_details' => 'required|array',
-            'partner_preferences' => 'required|array',
+            // 'partner_preferences' => 'required|array',
             'privacy_settings' => 'nullable|array',
             'photos' => 'nullable|array|max:5',
             'photos.*' => 'image|mimes:jpeg,png,jpg|max:5120',
@@ -334,23 +367,68 @@ class MatrimonyManagementController extends Controller
         $last = $personal['last_name'] ?? '';
         $personal['name'] = trim($first . ' ' . ($middle ? $middle . ' ' : '') . $last);
 
+        // Ensure front-end keys compatibility
+        $personal['dob'] = $request->date_of_birth;
+        $personal['date_of_birth'] = $request->date_of_birth;
+        $personal['language'] = $personal['mother_tongue'] ?? '';
+        $personal['religion'] = ['Hindu', $personal['caste'] ?? ''];
+        $personal['star_details'] = [
+            $personal['star'] ?? '',
+            $personal['raasi'] ?? '',
+            'manglik-' . strtolower($personal['manglik'] ?? 'no')
+        ];
+        $personal['refferal_name'] = $personal['referral_name'] ?? '';
+
+        // Synchronize family details compatibility
+        $family = $request->family_details;
+        $family['father'] = $family['father_occupation'] ?? '';
+        $family['mother'] = $family['mother_occupation'] ?? '';
+        $family['father_occupation'] = $family['father_occupation'] ?? '';
+        $family['mother_occupation'] = $family['mother_occupation'] ?? '';
+        $family['family_type'] = $family['family_type'] ?? '';
+        $family['family_class'] = $family['family_class'] ?? '';
+        $family['family_value'] = $family['family_value'] ?? '';
+        
+        // Preserve other existing family details keys if present in DB
+        $existingFamily = $profile->family_details ?? [];
+        foreach (['father_name', 'mother_name', 'about_family', 'no_of_brothers', 'no_of_sisters', 'siblings'] as $k) {
+            if (!isset($family[$k]) && isset($existingFamily[$k])) {
+                $family[$k] = $existingFamily[$k];
+            }
+        }
+
+        // Synchronize education details compatibility
+        $education = $request->education_details;
+        $education['college'] = $education['college_name'] ?? '';
+        $education['college_name'] = $education['college_name'] ?? '';
+        $existingEducation = $profile->education_details ?? [];
+        if (!isset($education['passing_year']) && isset($existingEducation['passing_year'])) {
+            $education['passing_year'] = $existingEducation['passing_year'];
+        }
+
+        // Synchronize professional details compatibility
+        $professional = $request->professional_details;
+        $professional['job_title'] = $professional['occupation'] ?? '';
+        $professional['occupation'] = $professional['occupation'] ?? '';
+        $professional['company'] = $professional['company_name'] ?? '';
+        $professional['company_name'] = $professional['company_name'] ?? '';
+        $professional['employment_type'] = $personal['employment_type'] ?? '';
+        $professional['annual_income'] = $personal['annual_income'] ?? '';
+
         $profile->update([
-            'gender' => $request->gender,
-            'date_of_birth' => $request->date_of_birth,
-            'time_of_birth' => $request->time_of_birth,
             'age' => $request->age,
             'height' => $request->height,
             'weight' => $request->weight,
             'complexion' => $request->complexion,
             'physical_status' => $request->physical_status,
             'personal_details' => $personal,
-            'family_details' => $request->family_details,
-            'education_details' => $request->education_details,
-            'professional_details' => $request->professional_details,
-            'lifestyle_details' => $request->lifestyle_details ?? [],
+            'family_details' => $family,
+            'education_details' => $education,
+            'professional_details' => $professional,
+            'lifestyle_details' => $request->lifestyle_details ?? $profile->lifestyle_details ?? [],
             'location_details' => $request->location_details,
-            'partner_preferences' => $request->partner_preferences,
-            'privacy_settings' => $request->privacy_settings ?? [],
+            'partner_preferences' => $request->partner_preferences ?? $profile->partner_preferences ?? [],
+            'privacy_settings' => $request->privacy_settings ?? $profile->privacy_settings ?? [],
             'approval_status' => $request->approval_status,
             'profile_expires_at' => $request->profile_expires_at,
         ]);

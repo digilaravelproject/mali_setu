@@ -351,7 +351,7 @@
                     </div>
                     <div class="col-md-4 mb-3">
                         <label for="college_name" class="form-label font-weight-bold small">College / University</label>
-                        <input type="text" class="form-control" id="college_name" name="education_details[college_name]" value="{{ old('education_details.college_name', $ed['college_name'] ?? '') }}" placeholder="Enter college name">
+                        <input type="text" class="form-control" id="college_name" name="education_details[college_name]" value="{{ old('education_details.college_name', $ed['college_name'] ?? $ed['college'] ?? '') }}" placeholder="Enter college name">
                     </div>
                     <div class="col-md-4 mb-3">
                         <label for="employment_type" class="form-label font-weight-bold small">Employment Type <span class="required-star">*</span></label>
@@ -361,7 +361,7 @@
                                 $empList = ['Private Sector', 'Government/Public Sector', 'Civil Service', 'Defense', 'Owner', 'Self Employed', 'Not Working'];
                             @endphp
                             @foreach($empList as $emp)
-                                <option value="{{ $emp }}" {{ old('personal_details.employment_type', $pd['employment_type'] ?? '') == $emp ? 'selected' : '' }}>{{ $emp }}</option>
+                                <option value="{{ $emp }}" {{ old('personal_details.employment_type', $pd['employment_type'] ?? $pro['employment_type'] ?? '') == $emp ? 'selected' : '' }}>{{ $emp }}</option>
                             @endforeach
                         </select>
                     </div>
@@ -370,15 +370,15 @@
                 <div class="row">
                     <div class="col-md-4 mb-3">
                         <label for="occupation" class="form-label font-weight-bold small">Job Title / Occupation</label>
-                        <input type="text" class="form-control" id="occupation" name="professional_details[occupation]" value="{{ old('professional_details.occupation', $pro['occupation'] ?? '') }}" placeholder="e.g. Software Engineer">
+                        <input type="text" class="form-control" id="occupation" name="professional_details[occupation]" value="{{ old('professional_details.occupation', $pro['occupation'] ?? $pro['job_title'] ?? '') }}" placeholder="e.g. Software Engineer">
                     </div>
                     <div class="col-md-4 mb-3">
                         <label for="company_name" class="form-label font-weight-bold small">Company Name</label>
-                        <input type="text" class="form-control" id="company_name" name="professional_details[company_name]" value="{{ old('professional_details.company_name', $pro['company_name'] ?? '') }}" placeholder="e.g. TCS Ltd">
+                        <input type="text" class="form-control" id="company_name" name="professional_details[company_name]" value="{{ old('professional_details.company_name', $pro['company_name'] ?? $pro['company'] ?? '') }}" placeholder="e.g. TCS Ltd">
                     </div>
                     <div class="col-md-4 mb-3">
                         <label for="annual_income" class="form-label font-weight-bold small">Annual Income (Lac)</label>
-                        <input type="text" class="form-control" id="annual_income" name="personal_details[annual_income]" value="{{ old('personal_details.annual_income', $pd['annual_income'] ?? '') }}" placeholder="e.g. 5 Lakh">
+                        <input type="text" class="form-control" id="annual_income" name="personal_details[annual_income]" value="{{ old('personal_details.annual_income', $pd['annual_income'] ?? $pro['annual_income'] ?? '') }}" placeholder="e.g. 5 Lakh">
                     </div>
                 </div>
             </div>
@@ -393,11 +393,11 @@
                 <div class="row">
                     <div class="col-md-6 mb-3">
                         <label for="father_occupation" class="form-label font-weight-bold small">Father's Occupation</label>
-                        <input type="text" class="form-control" id="father_occupation" name="family_details[father_occupation]" value="{{ old('family_details.father_occupation', $fd['father_occupation'] ?? '') }}" placeholder="Enter father's occupation">
+                        <input type="text" class="form-control" id="father_occupation" name="family_details[father_occupation]" value="{{ old('family_details.father_occupation', $fd['father_occupation'] ?? $fd['father'] ?? '') }}" placeholder="Enter father's occupation">
                     </div>
                     <div class="col-md-6 mb-3">
                         <label for="mother_occupation" class="form-label font-weight-bold small">Mother's Occupation</label>
-                        <input type="text" class="form-control" id="mother_occupation" name="family_details[mother_occupation]" value="{{ old('family_details.mother_occupation', $fd['mother_occupation'] ?? '') }}" placeholder="Enter mother's occupation">
+                        <input type="text" class="form-control" id="mother_occupation" name="family_details[mother_occupation]" value="{{ old('family_details.mother_occupation', $fd['mother_occupation'] ?? $fd['mother'] ?? '') }}" placeholder="Enter mother's occupation">
                     </div>
                 </div>
 
