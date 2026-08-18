@@ -2,25 +2,26 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Controllers\Controller;
-use App\Models\User;
+use App\Jobs\SendPaymentPendingEmail;
 use App\Models\Business;
 use App\Models\BusinessCategory;
 use App\Models\BusinessPlan;
+use App\Models\BusinessReview;
+use App\Models\JobApplication;
+use App\Models\JobPosting;
+use App\Models\Notification;
+use App\Models\Payment;
 use App\Models\Product;
 use App\Models\Service;
-use App\Models\JobPosting;
-use App\Models\JobApplication;
 use App\Models\Transaction;
-use App\Models\Payment;
-use App\Models\Notification;
-use App\Models\BusinessReview;
+use App\Models\User;
+use App\Services\CCAvenue;
+use App\Services\CCAvenuePaymentService;
+use App\Services\NotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 
 class BusinessController extends Controller
 {
@@ -30,7 +31,7 @@ class BusinessController extends Controller
     public function index(Request $request)
     {
         $user = Auth::user()->load([
-            'casteCertificate'
+            'casteCertificate',
         ]);
 
         $businesses = Business::where('user_id', $user->id)
@@ -43,7 +44,7 @@ class BusinessController extends Controller
         if ($request->filled('business_id')) {
             $activeBusiness = $businesses->where('id', $request->business_id)->first();
         }
-        if (!$activeBusiness) {
+        if (! $activeBusiness) {
             $activeBusiness = $businesses->first();
         }
 
@@ -55,11 +56,11 @@ class BusinessController extends Controller
                 ->latest()
                 ->first();
         }
-        $user->has_business_payment = !is_null($businessPayment);
+        $user->has_business_payment = ! is_null($businessPayment);
 
         $categories = BusinessCategory::where('is_active', true)->orderBy('sort_order', 'asc')->orderBy('id', 'asc')->get();
         $plans = BusinessPlan::where('active', true)->get();
-        
+
         $jobs = [];
         if ($activeBusiness) {
             $jobs = JobPosting::where('business_id', $activeBusiness->id)
@@ -84,22 +85,22 @@ class BusinessController extends Controller
                 'total_jobs' => JobPosting::where('business_id', $businessId)->count(),
                 'active_jobs' => JobPosting::where('business_id', $businessId)->where('is_active', true)->count(),
                 'pending_jobs' => JobPosting::where('business_id', $businessId)->where('status', 'pending')->count(),
-                'total_applications' => JobApplication::whereHas('jobPosting', function($q) use ($businessId) {
+                'total_applications' => JobApplication::whereHas('jobPosting', function ($q) use ($businessId) {
                     $q->where('business_id', $businessId);
                 })->count(),
-                'pending_applications' => JobApplication::whereHas('jobPosting', function($q) use ($businessId) {
+                'pending_applications' => JobApplication::whereHas('jobPosting', function ($q) use ($businessId) {
                     $q->where('business_id', $businessId);
                 })->where('status', 'pending')->count(),
-                'accepted_applications' => JobApplication::whereHas('jobPosting', function($q) use ($businessId) {
+                'accepted_applications' => JobApplication::whereHas('jobPosting', function ($q) use ($businessId) {
                     $q->where('business_id', $businessId);
                 })->where('status', 'accepted')->count(),
                 'recent_applications' => JobApplication::with(['user', 'jobPosting'])
-                    ->whereHas('jobPosting', function($q) use ($businessId) {
+                    ->whereHas('jobPosting', function ($q) use ($businessId) {
                         $q->where('business_id', $businessId);
                     })
                     ->latest('applied_at')
                     ->limit(5)
-                    ->get()
+                    ->get(),
             ];
         }
 
@@ -112,6 +113,7 @@ class BusinessController extends Controller
     public function create()
     {
         $categories = BusinessCategory::where('is_active', true)->orderBy('sort_order', 'asc')->orderBy('id', 'asc')->get();
+
         return view('business.create', compact('categories'));
     }
 
@@ -150,12 +152,12 @@ class BusinessController extends Controller
             $photoPaths = [];
             if ($request->hasFile('photos')) {
                 foreach ($request->file('photos') as $file) {
-                    $fileName = uniqid() . '.' . $file->getClientOriginalExtension();
-                    if (!Storage::disk('public')->exists('business/photos')) {
+                    $fileName = uniqid().'.'.$file->getClientOriginalExtension();
+                    if (! Storage::disk('public')->exists('business/photos')) {
                         Storage::disk('public')->makeDirectory('business/photos');
                     }
                     Storage::disk('public')->putFileAs('business/photos', $file, $fileName);
-                    $photoPaths[] = 'business/photos/' . $fileName;
+                    $photoPaths[] = 'business/photos/'.$fileName;
                 }
             }
 
@@ -180,23 +182,23 @@ class BusinessController extends Controller
                 'closing_time' => $request->closing_time,
                 'verification_status' => 'pending',
                 'subscription_status' => 'trial',
-                'photo' => !empty($photoPaths) ? implode(', ', $photoPaths) : null,
+                'photo' => ! empty($photoPaths) ? implode(', ', $photoPaths) : null,
                 'latitude' => $request->latitude,
                 'longitude' => $request->longitude,
             ]);
 
-            \App\Jobs\SendPaymentPendingEmail::dispatch('business', $business->id)->delay(now()->addMinutes(11));
+            SendPaymentPendingEmail::dispatch('business', $business->id)->delay(now()->addMinutes(11));
 
             if (empty($user->user_type) || $user->user_type != 'business') {
                 $user->update(['user_type' => 'business']);
             }
 
             try {
-                app(\App\Services\NotificationService::class)->createNotification(
+                app(NotificationService::class)->createNotification(
                     $user->id,
                     Notification::TYPE_BUSINESS_VERIFIED,
                     'Business registered',
-                    'Your business "' . $business->business_name . '" has been registered and is pending verification.',
+                    'Your business "'.$business->business_name.'" has been registered and is pending verification.',
                     ['business_id' => $business->id],
                     '/business/manage',
                     Notification::PRIORITY_MEDIUM,
@@ -204,14 +206,15 @@ class BusinessController extends Controller
                     ['in_app', 'email']
                 );
             } catch (\Exception $e) {
-                \Log::warning('Business registration notification failed: ' . $e->getMessage());
+                \Log::warning('Business registration notification failed: '.$e->getMessage());
             }
 
             return redirect()->route('dashboard.business.subscription', ['business_id' => $business->id])->with('success', 'Business registered successfully! Please select a subscription plan or skip to proceed.');
 
         } catch (\Exception $e) {
-            \Log::error('Web Business registration failure: ' . $e->getMessage() . "\n" . $e->getTraceAsString());
-            return back()->withErrors(['error' => 'Failed to register business: ' . $e->getMessage()])->withInput();
+            \Log::error('Web Business registration failure: '.$e->getMessage()."\n".$e->getTraceAsString());
+
+            return back()->withErrors(['error' => 'Failed to register business: '.$e->getMessage()])->withInput();
         }
     }
 
@@ -222,9 +225,9 @@ class BusinessController extends Controller
     {
         $user = Auth::user();
         $businessId = $request->query('business_id');
-        
+
         $business = Business::where('user_id', $user->id)
-            ->when($businessId, function($q) use ($businessId) {
+            ->when($businessId, function ($q) use ($businessId) {
                 return $q->where('id', $businessId);
             })
             ->firstOrFail();
@@ -234,8 +237,9 @@ class BusinessController extends Controller
         // Filter plans by business type if business exists
         if ($business && $business->business_type) {
             $businessType = trim(str_replace(' ', '', $business->business_type));
-            $plans = $plans->filter(function($p) use ($businessType) {
+            $plans = $plans->filter(function ($p) use ($businessType) {
                 $planType = trim(str_replace(' ', '', $p->company_type ?? ''));
+
                 return $planType === $businessType;
             });
         }
@@ -256,6 +260,7 @@ class BusinessController extends Controller
             $business = Business::where('user_id', $user->id)->firstOrFail();
         }
         $categories = BusinessCategory::where('is_active', true)->orderBy('sort_order', 'asc')->orderBy('id', 'asc')->get();
+
         return view('business.edit', compact('business', 'categories'));
     }
 
@@ -312,16 +317,16 @@ class BusinessController extends Controller
 
                 $photoPaths = [];
                 foreach ($request->file('photos') as $file) {
-                    $fileName = uniqid() . '.' . $file->getClientOriginalExtension();
-                    if (!Storage::disk('public')->exists('business/photos')) {
+                    $fileName = uniqid().'.'.$file->getClientOriginalExtension();
+                    if (! Storage::disk('public')->exists('business/photos')) {
                         Storage::disk('public')->makeDirectory('business/photos');
                     }
                     Storage::disk('public')->putFileAs('business/photos', $file, $fileName);
-                    $photoPaths[] = 'business/photos/' . $fileName;
+                    $photoPaths[] = 'business/photos/'.$fileName;
                 }
 
                 $business->update([
-                    'photo' => implode(', ', $photoPaths)
+                    'photo' => implode(', ', $photoPaths),
                 ]);
             }
 
@@ -329,14 +334,15 @@ class BusinessController extends Controller
                 'business_name', 'business_type', 'category_id', 'description',
                 'contact_phone', 'contact_email', 'country', 'state', 'district',
                 'village', 'taluka', 'address', 'city', 'pincode', 'website',
-                'opening_time', 'closing_time', 'latitude', 'longitude'
+                'opening_time', 'closing_time', 'latitude', 'longitude',
             ]));
 
             return redirect()->route('dashboard.business.index')->with('success', 'Business profile updated successfully!');
 
         } catch (\Exception $e) {
-            \Log::error('Web Business update failure: ' . $e->getMessage() . "\n" . $e->getTraceAsString());
-            return back()->withErrors(['error' => 'Failed to update business: ' . $e->getMessage()]);
+            \Log::error('Web Business update failure: '.$e->getMessage()."\n".$e->getTraceAsString());
+
+            return back()->withErrors(['error' => 'Failed to update business: '.$e->getMessage()]);
         }
     }
 
@@ -346,14 +352,14 @@ class BusinessController extends Controller
     public function browse(Request $request)
     {
         $categories = BusinessCategory::where('is_active', true)->orderBy('sort_order', 'asc')->orderBy('id', 'asc')->get();
-        
+
         $query = Business::where('verification_status', 'approved')
             ->with(['category', 'products', 'services']);
 
         // Quick Search Filters
         if ($request->filled('q')) {
             $q = $request->q;
-            $query->where(function($sub) use ($q) {
+            $query->where(function ($sub) use ($q) {
                 $sub->where('business_name', 'like', "%{$q}%")
                     ->orWhere('description', 'like', "%{$q}%")
                     ->orWhere('city', 'like', "%{$q}%")
@@ -369,7 +375,7 @@ class BusinessController extends Controller
         // Location Filter (City/State)
         if ($request->filled('location')) {
             $loc = $request->location;
-            $query->where(function($sub) use ($loc) {
+            $query->where(function ($sub) use ($loc) {
                 $sub->where('city', 'like', "%{$loc}%")
                     ->orWhere('state', 'like', "%{$loc}%");
             });
@@ -393,15 +399,15 @@ class BusinessController extends Controller
     public function show($id)
     {
         $business = Business::with([
-            'category', 
-            'products', 
-            'services', 
-            'jobPostings' => function($q) {
+            'category',
+            'products',
+            'services',
+            'jobPostings' => function ($q) {
                 $q->where('is_active', true)->where('status', 'approved');
-            }, 
-            'reviews' => function($q) {
+            },
+            'reviews' => function ($q) {
                 $q->where('status', 'approved')->with('user')->latest();
-            }
+            },
         ])->findOrFail($id);
 
         $user = Auth::user();
@@ -422,7 +428,7 @@ class BusinessController extends Controller
     {
         $request->validate([
             'business_id' => 'required|integer|exists:businesses,id',
-            'rating'      => 'required|integer|min:1|max:5',
+            'rating' => 'required|integer|min:1|max:5',
             'review_text' => 'nullable|string|max:1000',
         ]);
 
@@ -439,10 +445,10 @@ class BusinessController extends Controller
 
         BusinessReview::create([
             'business_id' => $request->business_id,
-            'user_id'     => $user->id,
-            'rating'      => $request->rating,
+            'user_id' => $user->id,
+            'rating' => $request->rating,
             'review_text' => $request->review_text,
-            'status'      => 'approved', // Auto-approved on web for better user interaction, or standard pending
+            'status' => 'approved', // Auto-approved on web for better user interaction, or standard pending
         ]);
 
         return back()->with('success', 'Your review has been submitted successfully!');
@@ -458,19 +464,19 @@ class BusinessController extends Controller
         ]);
 
         $plan = BusinessPlan::find($request->plan_id);
-        if (!$plan || !$plan->active) {
+        if (! $plan || ! $plan->active) {
             return response()->json([
                 'success' => false,
-                'message' => 'Selected plan is not available'
+                'message' => 'Selected plan is not available',
             ], 404);
         }
 
-        $amount = $plan->price; 
+        $amount = $plan->price;
         $subscriptionMonths = intval($plan->duration_years) * 12;
 
         try {
-            $ccavenue = app(\App\Services\CCAvenue::class);
-            $orderId = 'BIZ-' . time() . '-' . mt_rand(1000, 9999);
+            $ccavenue = app(CCAvenue::class);
+            $orderId = 'BIZ-'.time().'-'.mt_rand(1000, 9999);
 
             $transaction = Transaction::create([
                 'user_id' => $request->user()->id,
@@ -480,8 +486,10 @@ class BusinessController extends Controller
                 'razorpay_order_id' => $orderId,
                 'status' => 'pending',
                 'subscription_period' => $subscriptionMonths,
-                'meta' => json_encode(['plan_id' => $plan->id])
+                'metadata' => ['plan_id' => $plan->id],
             ]);
+
+            app(CCAvenuePaymentService::class)->createPendingPayment($transaction);
 
             // Prepare CCAvenue parameters
             $params = [
@@ -493,7 +501,7 @@ class BusinessController extends Controller
                 'language' => 'EN',
                 'billing_name' => $request->user()->name ?? '',
                 'billing_email' => $request->user()->email ?? '',
-                'billing_tel' => $request->user()->phone ?? ''
+                'billing_tel' => $request->user()->phone ?? '',
             ];
 
             return response()->json([
@@ -502,14 +510,15 @@ class BusinessController extends Controller
                 'payment_url' => $ccavenue->getPaymentUrl(),
                 'encRequest' => $ccavenue->encrypt($params),
                 'access_code' => $ccavenue->getAccessCode(),
-                'transaction_id' => $transaction->id
+                'transaction_id' => $transaction->id,
             ], 201);
 
         } catch (\Exception $e) {
-            \Log::error('CCAvenue web business order initiation failed: ' . $e->getMessage());
+            \Log::error('CCAvenue web business order initiation failed: '.$e->getMessage());
+
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to create payment order: ' . $e->getMessage()
+                'message' => 'Failed to create payment order: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -521,7 +530,7 @@ class BusinessController extends Controller
     {
         return response()->json([
             'success' => false,
-            'message' => 'This payment verification endpoint is deprecated. Payment is processed via callback.'
+            'message' => 'This payment verification endpoint is deprecated. Payment is processed via callback.',
         ], 400);
     }
 
@@ -540,7 +549,7 @@ class BusinessController extends Controller
             'image.required' => 'Product image is required.',
             'name.required' => 'Product name is required.',
             'description.required' => 'Product description is required.',
-            'cost.required' => 'Product cost is required.'
+            'cost.required' => 'Product cost is required.',
         ]);
 
         if ($validator->fails()) {
@@ -582,6 +591,7 @@ class BusinessController extends Controller
         }
 
         $product->delete();
+
         return redirect()->route('dashboard.business.index')->with('success', 'Product deleted successfully!');
     }
 
@@ -600,7 +610,7 @@ class BusinessController extends Controller
             'image.required' => 'Service image is required.',
             'name.required' => 'Service name is required.',
             'description.required' => 'Service description is required.',
-            'cost.required' => 'Service charge is required.'
+            'cost.required' => 'Service charge is required.',
         ]);
 
         if ($validator->fails()) {
@@ -642,6 +652,7 @@ class BusinessController extends Controller
         }
 
         $service->delete();
+
         return redirect()->route('dashboard.business.index')->with('success', 'Service deleted successfully!');
     }
 
@@ -654,7 +665,7 @@ class BusinessController extends Controller
             'job_posting_id' => 'required|exists:job_postings,id',
             'cover_letter' => 'required|string|max:2000',
             'resume' => 'nullable|file|mimes:pdf,doc,docx,jpg,jpeg,png,gif,bmp,webp,svg|max:5120', // 5MB max
-            'additional_info' => 'nullable|string|max:1000'
+            'additional_info' => 'nullable|string|max:1000',
         ]);
 
         $jobPosting = JobPosting::findOrFail($request->job_posting_id);
@@ -682,16 +693,16 @@ class BusinessController extends Controller
             'resume_url' => $resumePath,
             'additional_info' => $request->additional_info,
             'status' => 'pending',
-            'applied_at' => now()
+            'applied_at' => now(),
         ]);
 
         try {
             // Push Notification to Applicant
-            app(\App\Services\NotificationService::class)->createNotification(
+            app(NotificationService::class)->createNotification(
                 Auth::id(),
                 Notification::TYPE_JOB_APPLICATION,
                 'Job application submitted',
-                'You have applied for "' . $jobPosting->title . '" at ' . optional($jobPosting->business)->business_name . '.',
+                'You have applied for "'.$jobPosting->title.'" at '.optional($jobPosting->business)->business_name.'.',
                 [
                     'job_id' => $jobPosting->id,
                     'application_id' => $application->id,
@@ -704,10 +715,10 @@ class BusinessController extends Controller
 
             // Push Notification to Business Owner
             if ($jobPosting->business && $jobPosting->business->user_id) {
-                app(\App\Services\NotificationService::class)->notifyJobApplication($jobPosting, Auth::user());
+                app(NotificationService::class)->notifyJobApplication($jobPosting, Auth::user());
             }
         } catch (\Exception $e) {
-            \Log::warning('Web Job Application notification failed: ' . $e->getMessage());
+            \Log::warning('Web Job Application notification failed: '.$e->getMessage());
         }
 
         return back()->with('success', 'Your application has been submitted successfully!');
@@ -744,7 +755,7 @@ class BusinessController extends Controller
             'employment_type.required' => 'Please select employment type',
             'category.required' => 'Please select job category',
             'application_deadline.required' => 'Please enter Application Deadline',
-            'expires_at.required' => 'Please enter Job Expiry Date'
+            'expires_at.required' => 'Please enter Job Expiry Date',
         ]);
 
         if ($validator->fails()) {
@@ -767,7 +778,7 @@ class BusinessController extends Controller
             'employment_type' => $request->employment_type,
             'category' => $request->category,
             'is_active' => true,
-            'status' => 'approved', 
+            'status' => 'approved',
             'application_deadline' => $request->application_deadline,
             'expires_at' => $request->expires_at,
             'skills_required' => $request->skills_required ?? [],
@@ -801,7 +812,7 @@ class BusinessController extends Controller
 
         $jobPosting->update($request->only([
             'title', 'description', 'requirements', 'salary_range', 'job_type',
-            'location', 'experience_level', 'employment_type', 'category'
+            'location', 'experience_level', 'employment_type', 'category',
         ]));
 
         return redirect()->route('dashboard.business.index')->with('success', 'Job posting updated successfully!');
@@ -818,6 +829,7 @@ class BusinessController extends Controller
             ->firstOrFail();
 
         $jobPosting->delete();
+
         return redirect()->route('dashboard.business.index')->with('success', 'Job posting deleted successfully!');
     }
 
@@ -832,7 +844,7 @@ class BusinessController extends Controller
             ->firstOrFail();
 
         $jobPosting->update([
-            'is_active' => !$jobPosting->is_active
+            'is_active' => ! $jobPosting->is_active,
         ]);
 
         return redirect()->route('dashboard.business.index')->with('success', 'Job active status toggled successfully!');
@@ -850,26 +862,26 @@ class BusinessController extends Controller
 
         $request->validate([
             'status' => 'required|in:reviewed,accepted,rejected',
-            'employer_notes' => 'nullable|string|max:1000'
+            'employer_notes' => 'nullable|string|max:1000',
         ]);
 
         $application->update([
             'status' => $request->status,
             'employer_notes' => $request->employer_notes,
-            'reviewed_at' => now()
+            'reviewed_at' => now(),
         ]);
 
         $statusMessageMap = [
-            'accepted' => 'Congratulations! Your application for "' . $application->jobPosting->title . '" has been accepted.',
-            'rejected' => 'Your application for "' . $application->jobPosting->title . '" has been rejected.',
-            'reviewed' => 'Your application for "' . $application->jobPosting->title . '" has been reviewed.',
+            'accepted' => 'Congratulations! Your application for "'.$application->jobPosting->title.'" has been accepted.',
+            'rejected' => 'Your application for "'.$application->jobPosting->title.'" has been rejected.',
+            'reviewed' => 'Your application for "'.$application->jobPosting->title.'" has been reviewed.',
         ];
 
         try {
-            app(\App\Services\NotificationService::class)->createNotification(
+            app(NotificationService::class)->createNotification(
                 $application->user_id,
                 Notification::TYPE_JOB_APPLICATION_STATUS,
-                'Job application status: ' . ucfirst($request->status),
+                'Job application status: '.ucfirst($request->status),
                 $statusMessageMap[$request->status] ?? 'Your job application status has been updated.',
                 [
                     'job_id' => $application->jobPosting->id,
@@ -882,7 +894,7 @@ class BusinessController extends Controller
                 ['in_app', 'email']
             );
         } catch (\Exception $notifEx) {
-            \Log::warning('Web application status notification failed: ' . $notifEx->getMessage());
+            \Log::warning('Web application status notification failed: '.$notifEx->getMessage());
         }
 
         return redirect()->route('dashboard.business.index')->with('success', 'Candidate application status updated successfully!');
@@ -900,7 +912,7 @@ class BusinessController extends Controller
         } else {
             $business = Business::where('user_id', $user->id)->firstOrFail();
         }
- 
+
         try {
             foreach ($business->products as $product) {
                 if ($product->image_path && Storage::disk('public')->exists($product->image_path)) {
@@ -908,18 +920,18 @@ class BusinessController extends Controller
                 }
                 $product->delete();
             }
- 
+
             foreach ($business->services as $service) {
                 if ($service->image_path && Storage::disk('public')->exists($service->image_path)) {
                     Storage::disk('public')->delete($service->image_path);
                 }
                 $service->delete();
             }
- 
+
             foreach ($business->jobPostings ?? [] as $job) {
                 $job->delete();
             }
- 
+
             if ($business->photo) {
                 foreach (explode(',', $business->photo) as $oldP) {
                     $oldP = trim($oldP);
@@ -928,19 +940,20 @@ class BusinessController extends Controller
                     }
                 }
             }
- 
+
             $business->delete();
- 
+
             $hasOtherBusiness = Business::where('user_id', $user->id)->exists();
-            if (!$hasOtherBusiness && $user->user_type === 'business') {
+            if (! $hasOtherBusiness && $user->user_type === 'business') {
                 $user->update(['user_type' => 'general']);
             }
- 
+
             return redirect()->route('dashboard.business.index')->with('success', 'Business deleted successfully.');
- 
+
         } catch (\Exception $e) {
-            \Log::error('Web Business deletion failure: ' . $e->getMessage());
-            return back()->withErrors(['error' => 'Failed to delete business: ' . $e->getMessage()]);
+            \Log::error('Web Business deletion failure: '.$e->getMessage());
+
+            return back()->withErrors(['error' => 'Failed to delete business: '.$e->getMessage()]);
         }
     }
 

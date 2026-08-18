@@ -13,6 +13,7 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withSchedule(function (\Illuminate\Console\Scheduling\Schedule $schedule) {
         $schedule->command('subscriptions:send-reminders')->daily();
+        $schedule->command('payment:backfill-audit-rows')->everyFiveMinutes();
         $schedule->command('payment:pending-reminders')->everyMinute();
     })
     ->withMiddleware(function (Middleware $middleware) {

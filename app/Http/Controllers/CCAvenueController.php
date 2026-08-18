@@ -2,12 +2,14 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Donation;
-use App\Models\Transaction;
-use App\Models\Payment;
 use App\Models\Business;
+use App\Models\Donation;
 use App\Models\MatrimonyProfile;
+use App\Models\Payment;
+use App\Models\Transaction;
 use App\Services\CCAvenue;
+use App\Services\CCAvenuePaymentService;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
@@ -20,10 +22,69 @@ class CCAvenueController extends Controller
         $this->ccavenue = $ccavenue;
     }
 
+    /**
+     * Current idempotent CCAvenue callback handler.
+     */
+    public function handlePaymentCallback(Request $request, CCAvenuePaymentService $payments)
+    {
+        if (! $request->filled('encResp')) {
+            Log::error('CCAvenue callback missing encResp');
+
+            return redirect()->route('payment.redirect-back', [
+                'status' => 'failed',
+                'message' => 'Payment response missing.',
+            ]);
+        }
+
+        try {
+            $params = $this->ccavenue->decrypt($request->string('encResp')->toString());
+            Log::info('CCAvenue callback received', [
+                'order_id' => $params['order_id'] ?? null,
+                'tracking_id' => $params['tracking_id'] ?? null,
+                'order_status' => $params['order_status'] ?? null,
+            ]);
+
+            $result = $payments->processCallback($params);
+            $orderId = $result['transaction']->razorpay_order_id;
+
+            if ($result['status'] === 'completed') {
+                return redirect()->route('payment.redirect-back', [
+                    'order_id' => $orderId,
+                    'status' => 'success',
+                ]);
+            }
+
+            if ($result['status'] === 'pending') {
+                return redirect()->route('payment.redirect-back', [
+                    'order_id' => $orderId,
+                    'status' => 'pending',
+                    'message' => 'Your bank has accepted the payment. CCAvenue is still confirming it; your account will update after the final confirmation.',
+                ]);
+            }
+
+            return redirect()->route('payment.redirect-back', [
+                'order_id' => $orderId,
+                'status' => 'failed',
+                'message' => 'Payment failed or was cancelled.',
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('CCAvenue callback processing failed', [
+                'message' => $e->getMessage(),
+                'exception' => get_class($e),
+            ]);
+
+            return redirect()->route('payment.redirect-back', [
+                'status' => 'failed',
+                'message' => 'We could not verify the payment response. Please contact support before trying to pay again.',
+            ]);
+        }
+    }
+
     public function handleCallback(Request $request)
     {
-        if (!$request->has('encResp')) {
+        if (! $request->has('encResp')) {
             Log::error('CCAvenue callback missing encResp');
+
             return redirect()->route('payment.redirect-back', ['status' => 'failed', 'message' => 'Payment response missing.']);
         }
 
@@ -35,8 +96,9 @@ class CCAvenueController extends Controller
             $trackingId = $decryptedParams['tracking_id'] ?? null; // CCAvenue transaction ID
             $orderStatus = $decryptedParams['order_status'] ?? null;
 
-            if (!$orderId) {
+            if (! $orderId) {
                 Log::error('CCAvenue callback response missing order_id');
+
                 return redirect()->route('payment.redirect-back', ['status' => 'failed', 'message' => 'Invalid payment response.']);
             }
 
@@ -45,8 +107,9 @@ class CCAvenueController extends Controller
             // 1. Donation Payment Flow
             if (strpos($orderId, 'DON-') === 0) {
                 $donation = Donation::where('razorpay_order_id', $orderId)->first();
-                if (!$donation) {
-                    Log::error('Donation not found for order ID: ' . $orderId);
+                if (! $donation) {
+                    Log::error('Donation not found for order ID: '.$orderId);
+
                     return redirect()->route('payment.redirect-back', ['order_id' => $orderId, 'status' => 'failed', 'message' => 'Donation record not found.']);
                 }
 
@@ -54,18 +117,19 @@ class CCAvenueController extends Controller
                     $donation->update([
                         'razorpay_payment_id' => $trackingId,
                         'status' => 'completed',
-                        'payment_method' => 'ccavenue'
+                        'payment_method' => 'ccavenue',
                     ]);
 
                     $transaction = Transaction::where('razorpay_order_id', $orderId)->first();
                     if ($transaction) {
                         $transaction->update([
                             'razorpay_payment_id' => $trackingId,
-                            'status' => 'completed'
+                            'status' => 'completed',
                         ]);
                     }
 
                     $donation->cause->updateRaisedAmount();
+
                     return redirect()->route('payment.redirect-back', ['order_id' => $orderId, 'status' => 'success']);
                 } else {
                     $donation->update(['status' => 'failed']);
@@ -73,6 +137,7 @@ class CCAvenueController extends Controller
                     if ($transaction) {
                         $transaction->update(['status' => 'failed']);
                     }
+
                     return redirect()->route('payment.redirect-back', ['order_id' => $orderId, 'status' => 'failed', 'message' => 'Donation payment failed/cancelled.']);
                 }
             }
@@ -80,8 +145,9 @@ class CCAvenueController extends Controller
             // 2. Business Plan Payment Flow
             if (strpos($orderId, 'BIZ-') === 0) {
                 $transaction = Transaction::where('razorpay_order_id', $orderId)->first();
-                if (!$transaction) {
-                    Log::error('Business transaction not found for order ID: ' . $orderId);
+                if (! $transaction) {
+                    Log::error('Business transaction not found for order ID: '.$orderId);
+
                     return redirect()->route('payment.redirect-back', ['order_id' => $orderId, 'status' => 'failed', 'message' => 'Transaction record not found.']);
                 }
 
@@ -106,7 +172,7 @@ class CCAvenueController extends Controller
 
                     // Create Payment record
                     $existingPayment = Payment::where('transaction_id', $transaction->id)->first();
-                    if (!$existingPayment) {
+                    if (! $existingPayment) {
                         Payment::create([
                             'user_id' => $transaction->user_id,
                             'transaction_id' => $transaction->id,
@@ -120,10 +186,10 @@ class CCAvenueController extends Controller
                             'metadata' => json_encode([
                                 'ccavenue_order_id' => $orderId,
                                 'subscription_period' => $transaction->subscription_period ?? 1,
-                                'original_purpose' => $transaction->purpose
+                                'original_purpose' => $transaction->purpose,
                             ]),
                             'paid_at' => now(),
-                            'razorpay_response' => json_encode($decryptedParams)
+                            'razorpay_response' => json_encode($decryptedParams),
                         ]);
                     }
 
@@ -143,6 +209,7 @@ class CCAvenueController extends Controller
                     return redirect()->route('payment.redirect-back', ['order_id' => $orderId, 'status' => 'success']);
                 } else {
                     $transaction->update(['status' => 'failed']);
+
                     return redirect()->route('payment.redirect-back', ['order_id' => $orderId, 'status' => 'failed', 'message' => 'Business subscription payment failed/cancelled.']);
                 }
             }
@@ -150,8 +217,9 @@ class CCAvenueController extends Controller
             // 3. Matrimony Plan Payment Flow
             if (strpos($orderId, 'MAT-') === 0) {
                 $transaction = Transaction::where('razorpay_order_id', $orderId)->first();
-                if (!$transaction) {
-                    Log::error('Matrimony transaction not found for order ID: ' . $orderId);
+                if (! $transaction) {
+                    Log::error('Matrimony transaction not found for order ID: '.$orderId);
+
                     return redirect()->route('payment.redirect-back', ['order_id' => $orderId, 'status' => 'failed', 'message' => 'Transaction record not found.']);
                 }
 
@@ -176,7 +244,7 @@ class CCAvenueController extends Controller
 
                     // Create Payment record
                     $existingPayment = Payment::where('transaction_id', $transaction->id)->first();
-                    if (!$existingPayment) {
+                    if (! $existingPayment) {
                         Payment::create([
                             'user_id' => $transaction->user_id,
                             'transaction_id' => $transaction->id,
@@ -190,10 +258,10 @@ class CCAvenueController extends Controller
                             'metadata' => json_encode([
                                 'ccavenue_order_id' => $orderId,
                                 'subscription_period' => $transaction->subscription_period ?? 12,
-                                'original_purpose' => $transaction->purpose
+                                'original_purpose' => $transaction->purpose,
                             ]),
                             'paid_at' => now(),
-                            'razorpay_response' => json_encode($decryptedParams)
+                            'razorpay_response' => json_encode($decryptedParams),
                         ]);
                     }
 
@@ -209,16 +277,19 @@ class CCAvenueController extends Controller
                     return redirect()->route('payment.redirect-back', ['order_id' => $orderId, 'status' => 'success']);
                 } else {
                     $transaction->update(['status' => 'failed']);
+
                     return redirect()->route('payment.redirect-back', ['order_id' => $orderId, 'status' => 'failed', 'message' => 'Matrimony subscription payment failed/cancelled.']);
                 }
             }
 
-            Log::warning('Unknown CCAvenue order prefix: ' . $orderId);
+            Log::warning('Unknown CCAvenue order prefix: '.$orderId);
+
             return redirect()->route('payment.redirect-back', ['order_id' => $orderId, 'status' => 'failed', 'message' => 'Payment processed, but order type is unrecognized.']);
 
         } catch (\Exception $e) {
-            Log::error('CCAvenue Callback Exception: ' . $e->getMessage());
-            return redirect()->route('payment.redirect-back', ['status' => 'failed', 'message' => 'An error occurred while processing the payment response: ' . $e->getMessage()]);
+            Log::error('CCAvenue Callback Exception: '.$e->getMessage());
+
+            return redirect()->route('payment.redirect-back', ['status' => 'failed', 'message' => 'An error occurred while processing the payment response: '.$e->getMessage()]);
         }
     }
 
@@ -237,7 +308,7 @@ class CCAvenueController extends Controller
         }
 
         // Set default friendly success/error messages if not set in query
-        if (!$message) {
+        if (! $message) {
             if ($status === 'success') {
                 if ($transaction && $transaction->purpose === 'donation') {
                     $message = 'Thank you! Your donation was completed successfully.';
@@ -258,6 +329,8 @@ class CCAvenueController extends Controller
                 return redirect()->route('payment.summary', ['order_id' => $orderId]);
             }
             session()->flash('success', $message);
+        } elseif ($status === 'pending') {
+            session()->flash('warning', $message ?: 'Your payment is awaiting confirmation. Please do not pay again.');
         } else {
             session()->flash('error', $message);
         }
@@ -291,8 +364,8 @@ class CCAvenueController extends Controller
                 } elseif ($transaction->status === 'failed') {
                     $status = 'failed';
                 }
-                
-                if (!$message) {
+
+                if (! $message) {
                     if ($status === 'completed') {
                         if ($transaction->purpose === 'donation') {
                             $message = 'Thank you! Your donation was completed successfully.';
@@ -312,7 +385,7 @@ class CCAvenueController extends Controller
             }
         }
 
-        if (!$status && $message) {
+        if (! $status && $message) {
             $status = 'failed';
         }
 
@@ -320,7 +393,7 @@ class CCAvenueController extends Controller
             'status' => $status ?? 'pending',
             'message' => $message ?? 'No payment details available.',
             'transaction' => $transaction,
-            'order_id' => $order_id
+            'order_id' => $order_id,
         ]);
     }
 
@@ -328,7 +401,7 @@ class CCAvenueController extends Controller
     {
         $transaction = Transaction::where('razorpay_order_id', $order_id)->first();
 
-        if (!$transaction) {
+        if (! $transaction) {
             return redirect()->route('dashboard')->with('error', 'Transaction not found.');
         }
 
@@ -350,9 +423,9 @@ class CCAvenueController extends Controller
                 'type' => 'business',
                 'title' => 'Business Subscription',
                 'name' => $business ? $business->business_name : 'N/A',
-                'period' => $transaction->subscription_period ? ($transaction->subscription_period / 12) . ' Year(s)' : 'N/A',
-                'expires_at' => $business && $business->subscription_expires_at 
-                    ? \Carbon\Carbon::parse($business->subscription_expires_at)->format('d M Y, h:i A') 
+                'period' => $transaction->subscription_period ? ($transaction->subscription_period / 12).' Year(s)' : 'N/A',
+                'expires_at' => $business && $business->subscription_expires_at
+                    ? Carbon::parse($business->subscription_expires_at)->format('d M Y, h:i A')
                     : 'N/A',
             ];
         } elseif ($purpose === 'matrimony_profile') {
@@ -365,10 +438,10 @@ class CCAvenueController extends Controller
             $details = [
                 'type' => 'matrimony',
                 'title' => 'Matrimony Premium Plan',
-                'name' => !empty($pd['name']) ? $pd['name'] : ($profile ? $profile->first_name . ' ' . $profile->last_name : 'N/A'),
-                'period' => $transaction->subscription_period ? ($transaction->subscription_period / 12) . ' Year(s)' : 'N/A',
-                'expires_at' => $profile && $profile->profile_expires_at 
-                    ? \Carbon\Carbon::parse($profile->profile_expires_at)->format('d M Y, h:i A') 
+                'name' => ! empty($pd['name']) ? $pd['name'] : ($profile ? $profile->first_name.' '.$profile->last_name : 'N/A'),
+                'period' => $transaction->subscription_period ? ($transaction->subscription_period / 12).' Year(s)' : 'N/A',
+                'expires_at' => $profile && $profile->profile_expires_at
+                    ? Carbon::parse($profile->profile_expires_at)->format('d M Y, h:i A')
                     : 'N/A',
             ];
         } elseif ($purpose === 'donation') {
@@ -390,7 +463,7 @@ class CCAvenueController extends Controller
             'transaction' => $transaction,
             'details' => $details,
             'payment_method' => $paymentMethod,
-            'order_id' => $order_id
+            'order_id' => $order_id,
         ]);
     }
 
@@ -398,7 +471,7 @@ class CCAvenueController extends Controller
     {
         $transaction = Transaction::where('razorpay_order_id', $order_id)->first();
 
-        if (!$transaction) {
+        if (! $transaction) {
             return redirect()->route('dashboard');
         }
 

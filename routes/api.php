@@ -1,26 +1,26 @@
 <?php
 
+use App\Http\Controllers\Api\AdminController;
+use App\Http\Controllers\Api\AppleAuthController;
 use App\Http\Controllers\Api\AuthController;
-use App\Http\Controllers\Api\PasswordResetController;
+use App\Http\Controllers\Api\BlogController;
 use App\Http\Controllers\Api\BusinessController;
 use App\Http\Controllers\Api\CategoryController;
-use App\Http\Controllers\Api\MatrimonyController;
-use App\Http\Controllers\Api\PaymentController;
-use App\Http\Controllers\Api\AdminController;
-use App\Http\Controllers\Api\SearchController;
-use App\Http\Controllers\Api\NotificationController;
-use App\Http\Controllers\Api\VolunteerController;
 use App\Http\Controllers\Api\DonationController;
-use App\Http\Controllers\Api\JobController;
-use App\Http\Controllers\Api\SocialAuthController;
-use App\Http\Controllers\Api\HomepageHeroController;
-use App\Http\Controllers\Api\GoogleAuthController;
-use App\Http\Controllers\Api\AppleAuthController;
-use App\Http\Controllers\Api\PlanController;
-use App\Http\Controllers\Api\BlogController;
-use App\Http\Controllers\Api\LocationController;
 use App\Http\Controllers\Api\EducationController;
-
+use App\Http\Controllers\Api\GoogleAuthController;
+use App\Http\Controllers\Api\HomepageHeroController;
+use App\Http\Controllers\Api\JobController;
+use App\Http\Controllers\Api\LocationController;
+use App\Http\Controllers\Api\MatrimonyController;
+use App\Http\Controllers\Api\NotificationController;
+use App\Http\Controllers\Api\PasswordResetController;
+use App\Http\Controllers\Api\PaymentController;
+use App\Http\Controllers\Api\PlanController;
+use App\Http\Controllers\Api\SearchController;
+use App\Http\Controllers\Api\SocialAuthController;
+use App\Http\Controllers\Api\VolunteerController;
+use App\Http\Controllers\CCAvenueController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -35,13 +35,11 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-
-
 // Public authentication routes
 Route::prefix('auth')->group(function () {
     Route::post('register', [AuthController::class, 'register']);
     Route::post('login', [AuthController::class, 'login']);
-    
+
     Route::post('google-login', [GoogleAuthController::class, 'login']);
 
     Route::post('apple-login', [AppleAuthController::class, 'login']);
@@ -51,7 +49,7 @@ Route::prefix('auth')->group(function () {
 
     Route::get('facebook', [SocialAuthController::class, 'redirectToFacebook'])->middleware('web');
     Route::get('facebook/callback', [SocialAuthController::class, 'handleFacebookCallback'])->middleware('web');
-    
+
     // Forgot password (OTP) APIs
     Route::post('password/forgot', [PasswordResetController::class, 'sendOtp']);
     Route::post('password/verify-otp', [PasswordResetController::class, 'verifyOtp']);
@@ -59,10 +57,10 @@ Route::prefix('auth')->group(function () {
 });
 
 // Volunteer Routes
-    Route::prefix('banner')->group(function () {
-        Route::get('/', [HomepageHeroController::class, 'index']);   // list (paginated)
-        Route::get('/{hero}', [HomepageHeroController::class, 'show']); // single
-    });
+Route::prefix('banner')->group(function () {
+    Route::get('/', [HomepageHeroController::class, 'index']);   // list (paginated)
+    Route::get('/{hero}', [HomepageHeroController::class, 'show']); // single
+});
 
 // Public business routes (for browsing)
 Route::prefix('business')->group(function () {
@@ -78,12 +76,12 @@ Route::prefix('matrimony')->group(function () {
     Route::get('/search', [MatrimonyController::class, 'searchProfiles']);
     // Route::get('/profile/{id}', [MatrimonyController::class, 'showProfile']);
     Route::middleware('auth:sanctum')->get(
-    '/profile/{id}',
-    [MatrimonyController::class, 'showProfile']);
+        '/profile/{id}',
+        [MatrimonyController::class, 'showProfile']);
 
     Route::middleware('auth:sanctum')->get(
-    '/profile_user_id/{id}',
-    [MatrimonyController::class, 'showProfileOnUserId']);
+        '/profile_user_id/{id}',
+        [MatrimonyController::class, 'showProfileOnUserId']);
 
     // Cast and SubCast routes
     Route::get('/casts', [MatrimonyController::class, 'getCasts']);
@@ -102,7 +100,7 @@ Route::prefix('donation')->group(function () {
     Route::get('/causes', [DonationController::class, 'getCauses']);
     Route::get('/cause/{id}', [DonationController::class, 'getCause']);
 });
-    
+
 // Public plans routes
 Route::prefix('plans')->group(function () {
     Route::get('business', [PlanController::class, 'businessPlans']);
@@ -134,25 +132,25 @@ Route::prefix('location')->group(function () {
 
 // Payment webhook (public)
 Route::post('payment/webhook', [PaymentController::class, 'webhook']);
-Route::post('ccavenue/callback', [\App\Http\Controllers\CCAvenueController::class, 'handleCallback'])->name('ccavenue.callback');
+Route::post('ccavenue/callback', [CCAvenueController::class, 'handlePaymentCallback'])->name('ccavenue.callback');
 
 // Public search routes
 Route::prefix('search')->group(function () {
     Route::get('global', [SearchController::class, 'globalSearch']);
     Route::get('businesses', [SearchController::class, 'searchBusinesses']);
     // Route::post('matrimony', [SearchController::class, 'searchMatrimony']);
-    
+
     Route::middleware('auth:sanctum')->post(
-    'matrimony',
-    [SearchController::class, 'searchMatrimony']);
-    
+        'matrimony',
+        [SearchController::class, 'searchMatrimony']);
+
     Route::get('jobs', [SearchController::class, 'searchJobs']);
     Route::get('volunteers', [SearchController::class, 'searchVolunteers']);
     Route::get('volunteer-profiles', [SearchController::class, 'searchVolunteerProfiles']);
     Route::get('donations', [SearchController::class, 'searchDonations']);
     Route::get('suggestions', [SearchController::class, 'getSuggestions']);
     Route::get('location', [SearchController::class, 'locationSearch']);
-    
+
     Route::middleware('auth:sanctum')->post('/search_business', [SearchController::class, 'searchBusiness']);
 });
 
@@ -169,13 +167,13 @@ Route::middleware('auth:sanctum')->prefix('auth')->group(function () {
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return response()->json([
         'success' => true,
-        'data' => ['user' => $request->user()]
+        'data' => ['user' => $request->user()],
     ]);
 });
 
 // Protected routes for authenticated users
 Route::middleware(['auth:sanctum'])->group(function () {
-    
+
     // Business Management Routes
     Route::prefix('business')->group(function () {
         Route::post('register', [BusinessController::class, 'register']);
@@ -194,7 +192,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::put('{id}', [CategoryController::class, 'update']);
         Route::delete('{id}', [CategoryController::class, 'destroy']);
     });
-    
+
     // Matrimony Routes
     Route::prefix('matrimony')->group(function () {
         Route::post('profile', [MatrimonyController::class, 'createProfile']);
@@ -203,20 +201,20 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::get('profile/{id}', [MatrimonyController::class, 'getProfileById']);
         Route::post('profile/{id}', [MatrimonyController::class, 'updateProfileById']);
         Route::put('profile/{id}', [MatrimonyController::class, 'updateProfileById']);
-        
+
         // Connection requests
         Route::post('connection-request', [MatrimonyController::class, 'sendConnectionRequest']);
         Route::post('remove-request', [MatrimonyController::class, 'sendRemoveUser']);
         Route::put('connection-request/{id}', [MatrimonyController::class, 'respondToConnectionRequest']);
         Route::get('connection-requests', [MatrimonyController::class, 'getConnectionRequests']);
         Route::get('connected-users', [MatrimonyController::class, 'getConnectedUsers']);
-        
+
         // Chat system
         Route::get('conversations', [MatrimonyController::class, 'getConversations']);
         Route::get('messages/{conversationId}', [MatrimonyController::class, 'getMessages']);
         Route::post('send-message', [MatrimonyController::class, 'sendMessage']);
     });
-    
+
     // Payment Routes
     Route::prefix('payment')->group(function () {
         Route::post('create-order', [PaymentController::class, 'createOrder']);
@@ -227,7 +225,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::post('transaction/{id}', [PaymentController::class, 'getTransaction']);
         Route::post('refund', [PaymentController::class, 'initiateRefund']);
     });
-    
+
     // Notification Routes
     Route::prefix('notifications')->group(function () {
         Route::get('/', [NotificationController::class, 'index']);
@@ -244,34 +242,34 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::delete('{id}', [NotificationController::class, 'destroy']);
         Route::delete('/', [NotificationController::class, 'destroyMultiple']);
     });
-    
+
     // Volunteer Routes
     Route::prefix('volunteer')->group(function () {
         // Volunteer profile management
         Route::get('profile', [VolunteerController::class, 'getVolunteerProfile']);
         Route::post('profile', [VolunteerController::class, 'updateVolunteerProfile']);
         Route::put('profile', [VolunteerController::class, 'updateVolunteerProfile']);
-        
+
         // Volunteer opportunities management
         Route::post('opportunities', [VolunteerController::class, 'createOpportunity']);
         Route::put('opportunities/{id}', [VolunteerController::class, 'updateOpportunity']);
         Route::delete('opportunities/{id}', [VolunteerController::class, 'deleteOpportunity']);
-        
+
         // Volunteer applications
         Route::post('apply', [VolunteerController::class, 'applyForOpportunity']);
         Route::get('applications', [VolunteerController::class, 'getMyApplications']);
         Route::put('applications/{id}/withdraw', [VolunteerController::class, 'withdrawApplication']);
-        
+
         // Matching and recommendations
         Route::get('matched-opportunities', [VolunteerController::class, 'getMatchedOpportunities']);
     });
-    
+
     // Donation Routes
     Route::prefix('donation')->group(function () {
         // Donation management
         Route::post('create-order', [DonationController::class, 'createDonationOrder']);
         Route::post('verify-payment', [DonationController::class, 'verifyDonationPayment']);
-        
+
         // Donation history and analytics
         Route::get('history', [DonationController::class, 'getDonationHistory']);
         Route::get('analytics', [DonationController::class, 'getDonationAnalytics']);
@@ -287,7 +285,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::post('{id}/comments', [BlogController::class, 'storeComment']);
         Route::delete('comments/{commentId}', [BlogController::class, 'destroyComment']);
     });
-    
+
     // Job Management Routes
     Route::prefix('jobs')->group(function () {
         // Job posting management (Business users)
@@ -296,48 +294,48 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::delete('/{id}', [JobController::class, 'destroy']);
         Route::post('/my-jobs', [JobController::class, 'getUserJobs']);
         Route::post('/{id}/toggle-status', [JobController::class, 'toggleStatus']);
-        
+
         // Job application management
         Route::post('/apply', [JobController::class, 'apply']);
         Route::post('/my-applications', [JobController::class, 'getUserApplications']);
         Route::get('/{jobId}/applications', [JobController::class, 'getJobApplications']);
         Route::put('/applications/{applicationId}/status', [JobController::class, 'updateApplicationStatus']);
-        
+
         // Job analytics
         Route::post('/analytics', [JobController::class, 'getJobAnalytics']);
     });
-    
+
     // Admin Routes
     Route::prefix('admin')->group(function () {
         Route::get('dashboard', [AdminController::class, 'getDashboardStats']);
         Route::get('analytics', [AdminController::class, 'getAnalytics']);
-        
+
         // User management
         Route::get('users', [AdminController::class, 'getUsers']);
         Route::post('users/bulk-operation', [AdminController::class, 'bulkUserOperation']);
         Route::post('users/{id}/suspend', [AdminController::class, 'suspendUser']);
         Route::post('create-admin', [AdminController::class, 'createAdmin']);
-        
+
         // Caste certificate verification
         Route::get('pending-verifications', [AdminController::class, 'getPendingVerifications']);
         Route::put('verify-certificate/{id}', [AdminController::class, 'verifyCasteCertificate']);
-        
+
         // Business management
         Route::get('businesses', [AdminController::class, 'getBusinesses']);
         Route::put('verify-business/{id}', [AdminController::class, 'verifyBusiness']);
-        
+
         // Matrimony moderation
         Route::get('matrimony-profiles', [AdminController::class, 'getMatrimonyProfiles']);
         Route::put('moderate-profile/{id}', [AdminController::class, 'moderateMatrimonyProfile']);
-        
+
         // Transaction management
         Route::get('transactions', [AdminController::class, 'getTransactions']);
         Route::get('payment-stats', [PaymentController::class, 'getPaymentStats']);
-        
+
         // System settings
         Route::get('settings', [AdminController::class, 'getSystemSettings']);
         Route::put('settings', [AdminController::class, 'updateSystemSettings']);
-        
+
         // Volunteer management
         Route::get('volunteer/opportunities', [AdminController::class, 'getVolunteerOpportunities']);
         Route::put('volunteer/opportunities/{id}', [AdminController::class, 'manageVolunteerOpportunity']);
@@ -345,7 +343,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::get('volunteer/applications', [AdminController::class, 'getVolunteerApplications']);
         Route::put('volunteer/applications/{id}', [AdminController::class, 'manageVolunteerApplication']);
         Route::get('volunteer/analytics', [AdminController::class, 'getVolunteerAnalytics']);
-        
+
         // Donation management
         Route::get('donations/causes', [AdminController::class, 'getDonationCauses']);
         Route::post('donations/causes', [AdminController::class, 'createDonationCause']);
@@ -353,13 +351,13 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::delete('donations/causes/{id}', [AdminController::class, 'deleteDonationCause']);
         Route::get('donations/analytics', [AdminController::class, 'getDonationAnalytics']);
         Route::get('donations/transactions', [AdminController::class, 'getDonationTransactions']);
-        
+
         // Job management
-         Route::get('jobs', [AdminController::class, 'getJobPostings']);
-         Route::put('jobs/{id}/approve', [AdminController::class, 'approveJobPosting']);
-         Route::put('jobs/{id}/reject', [AdminController::class, 'rejectJobPosting']);
-         Route::get('jobs/analytics', [AdminController::class, 'getJobAnalytics']);
-         Route::get('jobs/applications', [AdminController::class, 'getJobApplications']);
-         Route::post('jobs/bulk-operation', [AdminController::class, 'bulkJobOperation']);
+        Route::get('jobs', [AdminController::class, 'getJobPostings']);
+        Route::put('jobs/{id}/approve', [AdminController::class, 'approveJobPosting']);
+        Route::put('jobs/{id}/reject', [AdminController::class, 'rejectJobPosting']);
+        Route::get('jobs/analytics', [AdminController::class, 'getJobAnalytics']);
+        Route::get('jobs/applications', [AdminController::class, 'getJobApplications']);
+        Route::post('jobs/bulk-operation', [AdminController::class, 'bulkJobOperation']);
     });
 });

@@ -2,23 +2,22 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Controllers\Controller;
-use App\Models\MatrimonyProfile;
-use App\Models\MatrimonyPlan;
-use App\Models\ConnectionRequest;
+use App\Jobs\SendPaymentPendingEmail;
+use App\Models\Cast;
 use App\Models\ChatConversation;
 use App\Models\ChatMessage;
-use App\Models\Cast;
-use App\Models\SubCast;
-use App\Models\Transaction;
+use App\Models\ConnectionRequest;
+use App\Models\Education;
+use App\Models\MatrimonyPlan;
+use App\Models\MatrimonyProfile;
 use App\Models\Payment;
-use App\Models\Notification;
+use App\Models\Transaction;
+use App\Services\CCAvenue;
+use App\Services\CCAvenuePaymentService;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Str;
 
 class MatrimonyController extends Controller
 {
@@ -45,9 +44,9 @@ class MatrimonyController extends Controller
             ->where('purpose', 'matrimony_profile')
             ->whereNotNull('razorpay_payment_id')
             ->latest()->first();
-        $hasPaid = !is_null($matrimonyPayment);
+        $hasPaid = ! is_null($matrimonyPayment);
 
-        if ($profile && !$hasPaid) {
+        if ($profile && ! $hasPaid) {
             return redirect()->route('matrimony.subscription');
         }
 
@@ -62,7 +61,8 @@ class MatrimonyController extends Controller
             return redirect()->route('matrimony.index')->with('success', 'You already have a matrimony profile.');
         }
         $casts = Cast::where('is_active', true)->get();
-        $educations = \App\Models\Education::where('is_active', true)->orderBy('highest_qualification')->get();
+        $educations = Education::where('is_active', true)->orderBy('highest_qualification')->get();
+
         return view('matrimony.create', compact('casts', 'educations'));
     }
 
@@ -78,7 +78,7 @@ class MatrimonyController extends Controller
         $age = null;
         if ($request->filled('date_of_birth')) {
             try {
-                $dob = \Carbon\Carbon::parse($request->date_of_birth);
+                $dob = Carbon::parse($request->date_of_birth);
                 $age = $dob->age;
             } catch (\Exception $e) {
                 // Ignore parsing errors, let validation handle it
@@ -87,63 +87,63 @@ class MatrimonyController extends Controller
         $request->merge(['age' => $age]);
 
         $request->validate([
-            'first_name'                   => 'required|string|max:100',
-            'middle_name'                  => 'nullable|string|max:100',
-            'last_name'                    => 'required|string|max:100',
-            'profile_created_by'           => 'required|string|max:100',
-            'gender'                       => 'required|in:male,female,Male,Female',
-            'date_of_birth'                => 'required|date',
-            'age'                          => 'required|integer|min:18|max:100',
-            'height'                       => 'nullable|string|max:10',
-            'weight'                       => 'nullable|string|max:10',
-            'complexion'                   => 'nullable|string|max:50',
-            'marital_status'               => 'nullable|string|max:100',
-            'physical_status'              => 'nullable|string|max:50',
-            'mother_tongue'                => 'nullable|string|max:100',
-            'citizenship'                  => 'nullable|string|max:100',
-            'blood_group'                  => 'nullable|string|max:20',
-            'referral_name'                => 'nullable|string|max:200',
-            
+            'first_name' => 'required|string|max:100',
+            'middle_name' => 'nullable|string|max:100',
+            'last_name' => 'required|string|max:100',
+            'profile_created_by' => 'required|string|max:100',
+            'gender' => 'required|in:male,female,Male,Female',
+            'date_of_birth' => 'required|date',
+            'age' => 'required|integer|min:18|max:100',
+            'height' => 'nullable|string|max:10',
+            'weight' => 'nullable|string|max:10',
+            'complexion' => 'nullable|string|max:50',
+            'marital_status' => 'nullable|string|max:100',
+            'physical_status' => 'nullable|string|max:50',
+            'mother_tongue' => 'nullable|string|max:100',
+            'citizenship' => 'nullable|string|max:100',
+            'blood_group' => 'nullable|string|max:20',
+            'referral_name' => 'nullable|string|max:200',
+
             // religious horoscope
-            'caste'                        => 'required|string|max:100',
-            'sub_caste'                    => 'required|string|max:100',
-            'star'                         => 'nullable|string|max:100',
-            'raasi'                        => 'nullable|string|max:100',
-            'manglik'                      => 'nullable|string|max:50',
-            'dosh'                         => 'nullable|string|max:50',
+            'caste' => 'required|string|max:100',
+            'sub_caste' => 'required|string|max:100',
+            'star' => 'nullable|string|max:100',
+            'raasi' => 'nullable|string|max:100',
+            'manglik' => 'nullable|string|max:50',
+            'dosh' => 'nullable|string|max:50',
 
             // family_details & Lifestyle
-            'family_type'                  => 'required|string|max:100',
-            'family_status'                => 'nullable|string|max:100',
-            'family_values'                => 'nullable|string|max:100',
-            'father_occupation'            => 'nullable|string|max:200',
-            'mother_occupation'            => 'nullable|string|max:200',
-            'diet'                         => 'nullable|string|max:50',
-            'smoking'                      => 'nullable|string|max:50',
-            'drinking'                     => 'nullable|string|max:50',
+            'family_type' => 'required|string|max:100',
+            'family_status' => 'nullable|string|max:100',
+            'family_values' => 'nullable|string|max:100',
+            'father_occupation' => 'nullable|string|max:200',
+            'mother_occupation' => 'nullable|string|max:200',
+            'diet' => 'nullable|string|max:50',
+            'smoking' => 'nullable|string|max:50',
+            'drinking' => 'nullable|string|max:50',
 
             // education_details & Career
-            'highest_qualification'        => 'required|string|max:200',
-            'college_name'                 => 'nullable|string|max:300',
-            'occupation'                   => 'nullable|string|max:200',
-            'employment_type'              => 'required|string|max:100',
-            'company_name'                 => 'nullable|string|max:300',
-            'annual_income'                => 'nullable|string|max:100',
+            'highest_qualification' => 'required|string|max:200',
+            'college_name' => 'nullable|string|max:300',
+            'occupation' => 'nullable|string|max:200',
+            'employment_type' => 'required|string|max:100',
+            'company_name' => 'nullable|string|max:300',
+            'annual_income' => 'nullable|string|max:100',
 
             // location_details
-            'address'                      => 'nullable|string|max:500',
-            'pincode'                      => 'required|digits:6',
-            'country'                      => 'required|string|max:100',
-            'state'                        => 'required|string|max:100',
-            'city'                         => 'required|string|max:100',
-            'taluka'                       => 'nullable|string|max:100',
-            'village'                      => 'nullable|string|max:100',
-            'latitude'                     => 'nullable|numeric|between:-90,90',
-            'longitude'                    => 'nullable|numeric|between:-180,180',
+            'address' => 'nullable|string|max:500',
+            'pincode' => 'required|digits:6',
+            'country' => 'required|string|max:100',
+            'state' => 'required|string|max:100',
+            'city' => 'required|string|max:100',
+            'taluka' => 'nullable|string|max:100',
+            'village' => 'nullable|string|max:100',
+            'latitude' => 'nullable|numeric|between:-90,90',
+            'longitude' => 'nullable|numeric|between:-180,180',
 
             // photos
-            'photos'                       => 'required|array|min:2|max:5',
-            'photos.*'                     => 'image|mimes:jpeg,png,jpg|max:5120',
+            'photos' => 'required|array|min:2|max:5',
+            'photos.*' => 'image|mimes:jpeg,png,jpg|max:5120',
         ]);
 
         // Handle photo uploads
@@ -155,120 +155,120 @@ class MatrimonyController extends Controller
             }
         }
 
-        $fullName = trim($request->first_name . ' ' . ($request->middle_name ? $request->middle_name . ' ' : '') . $request->last_name);
+        $fullName = trim($request->first_name.' '.($request->middle_name ? $request->middle_name.' ' : '').$request->last_name);
 
         $personalDetails = [
-            'first_name'         => $request->first_name,
-            'middle_name'        => $request->middle_name,
-            'last_name'          => $request->last_name,
-            'name'               => $fullName,
-            'gender'             => $request->gender,
-            'dob'                => $request->date_of_birth,
-            'marital_status'     => $request->marital_status,
-            'language'           => $request->mother_tongue,
-            'mother_tongue'      => $request->mother_tongue,
-            'religion'           => ['Hindu', $request->caste],
-            'caste'              => $request->caste,
-            'sub_caste'          => $request->sub_caste,
+            'first_name' => $request->first_name,
+            'middle_name' => $request->middle_name,
+            'last_name' => $request->last_name,
+            'name' => $fullName,
+            'gender' => $request->gender,
+            'dob' => $request->date_of_birth,
+            'marital_status' => $request->marital_status,
+            'language' => $request->mother_tongue,
+            'mother_tongue' => $request->mother_tongue,
+            'religion' => ['Hindu', $request->caste],
+            'caste' => $request->caste,
+            'sub_caste' => $request->sub_caste,
             'profile_created_by' => $request->profile_created_by,
-            'citizenship'        => $request->citizenship ?? 'Indian',
-            'blood_group'        => $request->blood_group,
-            'refferal_name'      => $request->referral_name,
-            'referral_name'      => $request->referral_name,
-            'star_details'       => [
+            'citizenship' => $request->citizenship ?? 'Indian',
+            'blood_group' => $request->blood_group,
+            'refferal_name' => $request->referral_name,
+            'referral_name' => $request->referral_name,
+            'star_details' => [
                 $request->star,
                 $request->raasi,
-                'manglik-' . strtolower($request->manglik ?? 'no')
+                'manglik-'.strtolower($request->manglik ?? 'no'),
             ],
-            'dosh'               => $request->dosh ?? 'No',
-            'about_me'           => $request->about_me,
-            'photos'             => $photoPaths,
+            'dosh' => $request->dosh ?? 'No',
+            'about_me' => $request->about_me,
+            'photos' => $photoPaths,
         ];
 
         $familyDetails = [
-            'father'            => $request->father_occupation,
-            'mother'            => $request->mother_occupation,
-            'father_name'       => $request->father_name,
+            'father' => $request->father_occupation,
+            'mother' => $request->mother_occupation,
+            'father_name' => $request->father_name,
             'father_occupation' => $request->father_occupation,
-            'mother_name'       => $request->mother_name,
+            'mother_name' => $request->mother_name,
             'mother_occupation' => $request->mother_occupation,
-            'no_of_brothers'    => 0,
-            'no_of_sisters'     => 0,
-            'siblings'          => 0,
-            'family_type'       => $request->family_type,
-            'family_class'      => $request->family_status,
-            'family_value'      => $request->family_values,
-            'about_family'      => $request->about_family,
+            'no_of_brothers' => 0,
+            'no_of_sisters' => 0,
+            'siblings' => 0,
+            'family_type' => $request->family_type,
+            'family_class' => $request->family_status,
+            'family_value' => $request->family_values,
+            'about_family' => $request->about_family,
         ];
 
         $educationDetails = [
             'highest_qualification' => $request->highest_qualification,
-            'college'               => $request->college_name,
-            'college_name'          => $request->college_name,
-            'passing_year'          => null,
+            'college' => $request->college_name,
+            'college_name' => $request->college_name,
+            'passing_year' => null,
         ];
 
         $professionalDetails = [
-            'occupation'       => $request->occupation,
-            'company_name'     => $request->company_name,
-            'annual_income'    => $request->annual_income,
-            'employment_type'  => $request->employment_type,
+            'occupation' => $request->occupation,
+            'company_name' => $request->company_name,
+            'annual_income' => $request->annual_income,
+            'employment_type' => $request->employment_type,
         ];
 
         $locationDetails = [
-            'address'   => $request->address,
-            'country'   => $request->country,
-            'state'     => $request->state,
-            'city'      => $request->city,
-            'pincode'   => $request->pincode,
-            'taluka'    => $request->taluka,
-            'village'   => $request->village,
-            'latitude'  => $request->latitude,
+            'address' => $request->address,
+            'country' => $request->country,
+            'state' => $request->state,
+            'city' => $request->city,
+            'pincode' => $request->pincode,
+            'taluka' => $request->taluka,
+            'village' => $request->village,
+            'latitude' => $request->latitude,
             'longitude' => $request->longitude,
         ];
 
         $lifestyleDetails = [
-            'diet'    => $request->diet,
+            'diet' => $request->diet,
             'smoking' => $request->smoking,
-            'drinking'=> $request->drinking,
+            'drinking' => $request->drinking,
             'hobbies' => null,
         ];
 
         $partnerPreferences = [
-            'age_min'   => 18,
-            'age_max'   => 40,
-            'height_min'=> null,
-            'religion'  => 'Hindu',
-            'caste'     => null,
+            'age_min' => 18,
+            'age_max' => 40,
+            'height_min' => null,
+            'religion' => 'Hindu',
+            'caste' => null,
             'education' => null,
-            'income'    => null,
-            'location'  => null,
+            'income' => null,
+            'location' => null,
             'about_partner' => null,
         ];
 
         $profile = MatrimonyProfile::create([
-            'user_id'             => $user->id,
-            'age'                 => $request->age,
-            'height'              => $request->height,
-            'weight'              => $request->weight,
-            'complexion'          => $request->complexion,
-            'physical_status'     => $request->physical_status,
-            'personal_details'    => $personalDetails,
-            'family_details'      => $familyDetails,
-            'education_details'   => $educationDetails,
-            'professional_details'=> $professionalDetails,
-            'lifestyle_details'   => $lifestyleDetails,
-            'location_details'    => $locationDetails,
+            'user_id' => $user->id,
+            'age' => $request->age,
+            'height' => $request->height,
+            'weight' => $request->weight,
+            'complexion' => $request->complexion,
+            'physical_status' => $request->physical_status,
+            'personal_details' => $personalDetails,
+            'family_details' => $familyDetails,
+            'education_details' => $educationDetails,
+            'professional_details' => $professionalDetails,
+            'lifestyle_details' => $lifestyleDetails,
+            'location_details' => $locationDetails,
             'partner_preferences' => $partnerPreferences,
-            'privacy_settings'    => [],
-            'approval_status'     => 'pending',
+            'privacy_settings' => [],
+            'approval_status' => 'pending',
         ]);
 
-        \App\Jobs\SendPaymentPendingEmail::dispatch('matrimony', $profile->id)->delay(now()->addMinutes(11));
+        SendPaymentPendingEmail::dispatch('matrimony', $profile->id)->delay(now()->addMinutes(11));
 
         $user->update([
             'user_type' => 'matrimony',
-            'latitude'  => $request->latitude,
+            'latitude' => $request->latitude,
             'longitude' => $request->longitude,
         ]);
 
@@ -283,6 +283,7 @@ class MatrimonyController extends Controller
     {
         $user = Auth::user()->load('matrimonyProfile');
         $plans = MatrimonyPlan::where('active', true)->get();
+
         return view('matrimony.subscription', compact('user', 'plans'));
     }
 
@@ -292,7 +293,8 @@ class MatrimonyController extends Controller
         $user = Auth::user();
         $profile = MatrimonyProfile::where('user_id', $user->id)->firstOrFail();
         $casts = Cast::where('is_active', true)->get();
-        $educations = \App\Models\Education::where('is_active', true)->orderBy('highest_qualification')->get();
+        $educations = Education::where('is_active', true)->orderBy('highest_qualification')->get();
+
         return view('matrimony.edit', compact('profile', 'casts', 'educations'));
     }
 
@@ -306,7 +308,7 @@ class MatrimonyController extends Controller
         $age = null;
         if ($request->filled('date_of_birth')) {
             try {
-                $dob = \Carbon\Carbon::parse($request->date_of_birth);
+                $dob = Carbon::parse($request->date_of_birth);
                 $age = $dob->age;
             } catch (\Exception $e) {
                 // Ignore parsing errors, let validation handle it
@@ -315,68 +317,68 @@ class MatrimonyController extends Controller
         $request->merge(['age' => $age]);
 
         $request->validate([
-            'first_name'                   => 'required|string|max:100',
-            'middle_name'                  => 'nullable|string|max:100',
-            'last_name'                    => 'required|string|max:100',
-            'profile_created_by'           => 'required|string|max:100',
-            'gender'                       => 'required|in:male,female,Male,Female',
-            'date_of_birth'                => 'required|date',
-            'age'                          => 'required|integer|min:18|max:100',
-            'height'                       => 'nullable|string|max:10',
-            'weight'                       => 'nullable|string|max:10',
-            'complexion'                   => 'nullable|string|max:50',
-            'marital_status'               => 'nullable|string|max:100',
-            'physical_status'              => 'nullable|string|max:50',
-            'mother_tongue'                => 'nullable|string|max:100',
-            'citizenship'                  => 'nullable|string|max:100',
-            'blood_group'                  => 'nullable|string|max:20',
-            'referral_name'                => 'nullable|string|max:200',
-            
+            'first_name' => 'required|string|max:100',
+            'middle_name' => 'nullable|string|max:100',
+            'last_name' => 'required|string|max:100',
+            'profile_created_by' => 'required|string|max:100',
+            'gender' => 'required|in:male,female,Male,Female',
+            'date_of_birth' => 'required|date',
+            'age' => 'required|integer|min:18|max:100',
+            'height' => 'nullable|string|max:10',
+            'weight' => 'nullable|string|max:10',
+            'complexion' => 'nullable|string|max:50',
+            'marital_status' => 'nullable|string|max:100',
+            'physical_status' => 'nullable|string|max:50',
+            'mother_tongue' => 'nullable|string|max:100',
+            'citizenship' => 'nullable|string|max:100',
+            'blood_group' => 'nullable|string|max:20',
+            'referral_name' => 'nullable|string|max:200',
+
             // religious horoscope
-            'caste'                        => 'required|string|max:100',
-            'sub_caste'                    => 'required|string|max:100',
-            'star'                         => 'nullable|string|max:100',
-            'raasi'                        => 'nullable|string|max:100',
-            'manglik'                      => 'nullable|string|max:50',
-            'dosh'                         => 'nullable|string|max:50',
+            'caste' => 'required|string|max:100',
+            'sub_caste' => 'required|string|max:100',
+            'star' => 'nullable|string|max:100',
+            'raasi' => 'nullable|string|max:100',
+            'manglik' => 'nullable|string|max:50',
+            'dosh' => 'nullable|string|max:50',
 
             // family_details & Lifestyle
-            'family_type'                  => 'required|string|max:100',
-            'family_status'                => 'nullable|string|max:100',
-            'family_values'                => 'nullable|string|max:100',
-            'father_occupation'            => 'nullable|string|max:200',
-            'mother_occupation'            => 'nullable|string|max:200',
-            'diet'                         => 'nullable|string|max:50',
-            'smoking'                      => 'nullable|string|max:50',
-            'drinking'                     => 'nullable|string|max:50',
+            'family_type' => 'required|string|max:100',
+            'family_status' => 'nullable|string|max:100',
+            'family_values' => 'nullable|string|max:100',
+            'father_occupation' => 'nullable|string|max:200',
+            'mother_occupation' => 'nullable|string|max:200',
+            'diet' => 'nullable|string|max:50',
+            'smoking' => 'nullable|string|max:50',
+            'drinking' => 'nullable|string|max:50',
 
             // education_details & Career
-            'highest_qualification'        => 'required|string|max:200',
-            'college_name'                 => 'nullable|string|max:300',
-            'occupation'                   => 'nullable|string|max:200',
-            'employment_type'              => 'required|string|max:100',
-            'company_name'                 => 'nullable|string|max:300',
-            'annual_income'                => 'nullable|string|max:100',
+            'highest_qualification' => 'required|string|max:200',
+            'college_name' => 'nullable|string|max:300',
+            'occupation' => 'nullable|string|max:200',
+            'employment_type' => 'required|string|max:100',
+            'company_name' => 'nullable|string|max:300',
+            'annual_income' => 'nullable|string|max:100',
 
             // location_details
-            'address'                      => 'nullable|string|max:500',
-            'pincode'                      => 'required|digits:6',
-            'country'                      => 'required|string|max:100',
-            'state'                        => 'required|string|max:100',
-            'city'                         => 'required|string|max:100',
-            'taluka'                       => 'nullable|string|max:100',
-            'village'                      => 'nullable|string|max:100',
-            'latitude'                     => 'nullable|numeric|between:-90,90',
-            'longitude'                    => 'nullable|numeric|between:-180,180',
+            'address' => 'nullable|string|max:500',
+            'pincode' => 'required|digits:6',
+            'country' => 'required|string|max:100',
+            'state' => 'required|string|max:100',
+            'city' => 'required|string|max:100',
+            'taluka' => 'nullable|string|max:100',
+            'village' => 'nullable|string|max:100',
+            'latitude' => 'nullable|numeric|between:-90,90',
+            'longitude' => 'nullable|numeric|between:-180,180',
 
             // photos
-            'photos'                       => 'nullable|array|max:5',
-            'photos.*'                     => 'image|mimes:jpeg,png,jpg|max:5120',
+            'photos' => 'nullable|array|max:5',
+            'photos.*' => 'image|mimes:jpeg,png,jpg|max:5120',
         ]);
 
         $photoPaths = $request->existing_photos ?? [];
         $newPhotosCount = $request->hasFile('photos') ? count($request->file('photos')) : 0;
-        
+
         if ((count($photoPaths) + $newPhotosCount) < 2) {
             return redirect()->back()->withInput()->withErrors(['photos' => 'At least 2 photos are required.']);
         }
@@ -388,98 +390,98 @@ class MatrimonyController extends Controller
         }
         $photoPaths = array_slice($photoPaths, 0, 5);
 
-        $fullName = trim($request->first_name . ' ' . ($request->middle_name ? $request->middle_name . ' ' : '') . $request->last_name);
+        $fullName = trim($request->first_name.' '.($request->middle_name ? $request->middle_name.' ' : '').$request->last_name);
 
         $personalDetails = [
-            'first_name'         => $request->first_name,
-            'middle_name'        => $request->middle_name,
-            'last_name'          => $request->last_name,
-            'name'               => $fullName,
-            'gender'             => $request->gender,
-            'dob'                => $request->date_of_birth,
-            'marital_status'     => $request->marital_status,
-            'language'           => $request->mother_tongue,
-            'mother_tongue'      => $request->mother_tongue,
-            'religion'           => ['Hindu', $request->caste],
-            'caste'              => $request->caste,
-            'sub_caste'          => $request->sub_caste,
+            'first_name' => $request->first_name,
+            'middle_name' => $request->middle_name,
+            'last_name' => $request->last_name,
+            'name' => $fullName,
+            'gender' => $request->gender,
+            'dob' => $request->date_of_birth,
+            'marital_status' => $request->marital_status,
+            'language' => $request->mother_tongue,
+            'mother_tongue' => $request->mother_tongue,
+            'religion' => ['Hindu', $request->caste],
+            'caste' => $request->caste,
+            'sub_caste' => $request->sub_caste,
             'profile_created_by' => $request->profile_created_by,
-            'citizenship'        => $request->citizenship ?? 'Indian',
-            'blood_group'        => $request->blood_group,
-            'referral_name'      => $request->referral_name,
-            'star_details'       => [
+            'citizenship' => $request->citizenship ?? 'Indian',
+            'blood_group' => $request->blood_group,
+            'referral_name' => $request->referral_name,
+            'star_details' => [
                 $request->star,
                 $request->raasi,
-                'manglik-' . strtolower($request->manglik ?? 'no')
+                'manglik-'.strtolower($request->manglik ?? 'no'),
             ],
-            'dosh'               => $request->dosh ?? 'No',
-            'about_me'           => $request->about_me,
-            'photos'             => $photoPaths,
+            'dosh' => $request->dosh ?? 'No',
+            'about_me' => $request->about_me,
+            'photos' => $photoPaths,
         ];
 
         $familyDetails = [
-            'father'            => $request->father_occupation,
-            'mother'            => $request->mother_occupation,
+            'father' => $request->father_occupation,
+            'mother' => $request->mother_occupation,
             'father_occupation' => $request->father_occupation,
             'mother_occupation' => $request->mother_occupation,
-            'no_of_brothers'    => 0,
-            'no_of_sisters'     => 0,
-            'siblings'          => 0,
-            'family_type'       => $request->family_type,
-            'family_class'      => $request->family_status,
-            'family_value'      => $request->family_values,
+            'no_of_brothers' => 0,
+            'no_of_sisters' => 0,
+            'siblings' => 0,
+            'family_type' => $request->family_type,
+            'family_class' => $request->family_status,
+            'family_value' => $request->family_values,
         ];
 
         $educationDetails = [
             'highest_qualification' => $request->highest_qualification,
-            'college'               => $request->college_name,
-            'college_name'          => $request->college_name,
-            'passing_year'          => null,
+            'college' => $request->college_name,
+            'college_name' => $request->college_name,
+            'passing_year' => null,
         ];
 
         $professionalDetails = [
-            'occupation'       => $request->occupation,
-            'company_name'     => $request->company_name,
-            'annual_income'    => $request->annual_income,
-            'employment_type'  => $request->employment_type,
+            'occupation' => $request->occupation,
+            'company_name' => $request->company_name,
+            'annual_income' => $request->annual_income,
+            'employment_type' => $request->employment_type,
         ];
 
         $locationDetails = [
-            'address'   => $request->address,
-            'country'   => $request->country,
-            'state'     => $request->state,
-            'city'      => $request->city,
-            'pincode'   => $request->pincode,
-            'taluka'    => $request->taluka,
-            'village'   => $request->village,
-            'latitude'  => $request->latitude,
+            'address' => $request->address,
+            'country' => $request->country,
+            'state' => $request->state,
+            'city' => $request->city,
+            'pincode' => $request->pincode,
+            'taluka' => $request->taluka,
+            'village' => $request->village,
+            'latitude' => $request->latitude,
             'longitude' => $request->longitude,
         ];
 
         $lifestyleDetails = [
-            'diet'    => $request->diet,
+            'diet' => $request->diet,
             'smoking' => $request->smoking,
-            'drinking'=> $request->drinking,
+            'drinking' => $request->drinking,
             'hobbies' => null,
         ];
 
         $profile->update([
-            'age'                  => $age,
-            'height'               => $request->height,
-            'weight'               => $request->weight,
-            'complexion'           => $request->complexion,
-            'physical_status'      => $request->physical_status,
-            'personal_details'     => $personalDetails,
-            'family_details'       => $familyDetails,
-            'education_details'    => $educationDetails,
+            'age' => $age,
+            'height' => $request->height,
+            'weight' => $request->weight,
+            'complexion' => $request->complexion,
+            'physical_status' => $request->physical_status,
+            'personal_details' => $personalDetails,
+            'family_details' => $familyDetails,
+            'education_details' => $educationDetails,
             'professional_details' => $professionalDetails,
-            'lifestyle_details'    => $lifestyleDetails,
-            'location_details'     => $locationDetails,
-            'partner_preferences'  => $profile->partner_preferences ?? [],
+            'lifestyle_details' => $lifestyleDetails,
+            'location_details' => $locationDetails,
+            'partner_preferences' => $profile->partner_preferences ?? [],
         ]);
 
         $user->update([
-            'latitude'  => $request->latitude,
+            'latitude' => $request->latitude,
             'longitude' => $request->longitude,
         ]);
 
@@ -487,9 +489,9 @@ class MatrimonyController extends Controller
             ->where('purpose', 'matrimony_profile')
             ->whereNotNull('razorpay_payment_id')
             ->latest()->first();
-        $hasPaid = !is_null($matrimonyPayment);
+        $hasPaid = ! is_null($matrimonyPayment);
 
-        if (!$hasPaid) {
+        if (! $hasPaid) {
             return redirect()->route('matrimony.subscription')->with('success', 'Profile updated successfully! Please select a subscription plan to proceed.');
         }
 
@@ -508,6 +510,7 @@ class MatrimonyController extends Controller
             }
         }
         $profile->delete();
+
         return redirect()->route('matrimony.index')->with('success', 'Matrimony profile deleted.');
     }
 
@@ -517,7 +520,7 @@ class MatrimonyController extends Controller
     {
         $user = Auth::user();
 
-        if (!$this->checkSubscription()) {
+        if (! $this->checkSubscription()) {
             return redirect()->route('matrimony.index')->with('error', 'Subscription required to browse matrimonial profiles.');
         }
 
@@ -527,9 +530,9 @@ class MatrimonyController extends Controller
 
         // 1. Basic Details
         if ($request->filled('gender')) {
-            $query->where(function($q) use ($request) {
+            $query->where(function ($q) use ($request) {
                 $q->where('personal_details->gender', 'like', $request->gender)
-                  ->orWhereRaw('LOWER(JSON_UNQUOTE(JSON_EXTRACT(personal_details, "$.gender"))) = ?', [strtolower($request->gender)]);
+                    ->orWhereRaw('LOWER(JSON_UNQUOTE(JSON_EXTRACT(personal_details, "$.gender"))) = ?', [strtolower($request->gender)]);
             });
         }
         if ($request->filled('age_min') || $request->filled('age_max')) {
@@ -538,7 +541,7 @@ class MatrimonyController extends Controller
         if ($request->filled('height_min') || $request->filled('height_max')) {
             $min = $request->filled('height_min') ? floatval($request->height_min) : 4.0;
             $max = $request->filled('height_max') ? floatval($request->height_max) : 7.0;
-            $query->where(function($q) use ($min, $max) {
+            $query->where(function ($q) use ($min, $max) {
                 $q->whereRaw('CAST(height AS DECIMAL(3,1)) BETWEEN ? AND ?', [$min, $max]);
             });
         }
@@ -549,43 +552,43 @@ class MatrimonyController extends Controller
             $query->where('personal_details->marital_status', $request->marital_status);
         }
         if ($request->filled('language') && $request->language !== 'Any') {
-            $query->where(function($q) use ($request) {
+            $query->where(function ($q) use ($request) {
                 $q->where('personal_details->language', $request->language)
-                  ->orWhere('personal_details->mother_tongue', $request->language);
+                    ->orWhere('personal_details->mother_tongue', $request->language);
             });
         }
         if ($request->filled('physical_status') && $request->physical_status !== "Doesn't Matter") {
-            $query->where(function($q) use ($request) {
+            $query->where(function ($q) use ($request) {
                 $q->where('physical_status', $request->physical_status)
-                  ->orWhere('personal_details->physical_status', $request->physical_status);
+                    ->orWhere('personal_details->physical_status', $request->physical_status);
             });
         }
 
         // 2. Professional Details
         if ($request->filled('employment_type') && $request->employment_type !== 'Any') {
-            $query->where(function($q) use ($request) {
+            $query->where(function ($q) use ($request) {
                 $q->where('professional_details->employment_type', 'like', $request->employment_type)
-                  ->orWhere('personal_details->employment_type', 'like', $request->employment_type);
+                    ->orWhere('personal_details->employment_type', 'like', $request->employment_type);
             });
         }
         if ($request->filled('occupation') && $request->occupation !== 'Any') {
-            $query->where(function($q) use ($request) {
+            $query->where(function ($q) use ($request) {
                 $q->where('professional_details->occupation', 'like', $request->occupation)
-                  ->orWhere('personal_details->occupation', 'like', $request->occupation);
+                    ->orWhere('personal_details->occupation', 'like', $request->occupation);
             });
         }
 
         // 3. Religion Details
         if ($request->filled('manglik') && $request->manglik !== "Doesn't Matter") {
-            $query->where(function($q) use ($request) {
-                $q->where('personal_details->star_details', 'like', '%manglik-' . strtolower($request->manglik) . '%')
-                  ->orWhere('personal_details->manglik', 'like', $request->manglik);
+            $query->where(function ($q) use ($request) {
+                $q->where('personal_details->star_details', 'like', '%manglik-'.strtolower($request->manglik).'%')
+                    ->orWhere('personal_details->manglik', 'like', $request->manglik);
             });
         }
         if ($request->filled('dosh') && $request->dosh !== "Doesn't Matter") {
-            $query->where(function($q) use ($request) {
+            $query->where(function ($q) use ($request) {
                 $q->where('personal_details->dosh', 'like', $request->dosh)
-                  ->orWhere('personal_details->star_details', 'like', '%' . $request->dosh . '%');
+                    ->orWhere('personal_details->star_details', 'like', '%'.$request->dosh.'%');
             });
         }
 
@@ -608,33 +611,33 @@ class MatrimonyController extends Controller
             $query->where('location_details->state', 'like', $request->state);
         }
         if ($request->filled('city') && $request->city !== 'Any') {
-            $query->where('location_details->city', 'like', '%' . $request->city . '%');
+            $query->where('location_details->city', 'like', '%'.$request->city.'%');
         }
 
         // 6. Lifestyle Details
         if ($request->filled('diet') && $request->diet !== 'Any') {
-            $query->where(function($q) use ($request) {
+            $query->where(function ($q) use ($request) {
                 $q->where('lifestyle_details->diet', 'like', $request->diet)
-                  ->orWhere('personal_details->diet', 'like', $request->diet);
+                    ->orWhere('personal_details->diet', 'like', $request->diet);
             });
         }
         if ($request->filled('smoking') && $request->smoking !== 'Any') {
-            $query->where(function($q) use ($request) {
+            $query->where(function ($q) use ($request) {
                 if ($request->smoking === 'No') {
                     $q->where('lifestyle_details->smoking', 'like', 'No')
-                      ->orWhere('lifestyle_details->smoking', 'like', 'Non-Smoker')
-                      ->orWhere('personal_details->smoking', 'like', 'No')
-                      ->orWhere('personal_details->smoking', 'like', 'Non-Smoker');
+                        ->orWhere('lifestyle_details->smoking', 'like', 'Non-Smoker')
+                        ->orWhere('personal_details->smoking', 'like', 'No')
+                        ->orWhere('personal_details->smoking', 'like', 'Non-Smoker');
                 } else {
                     $q->where('lifestyle_details->smoking', 'like', $request->smoking)
-                      ->orWhere('personal_details->smoking', 'like', $request->smoking);
+                        ->orWhere('personal_details->smoking', 'like', $request->smoking);
                 }
             });
         }
         if ($request->filled('drinking') && $request->drinking !== 'Any') {
-            $query->where(function($q) use ($request) {
+            $query->where(function ($q) use ($request) {
                 $q->where('lifestyle_details->drinking', 'like', $request->drinking)
-                  ->orWhere('personal_details->drinking', 'like', $request->drinking);
+                    ->orWhere('personal_details->drinking', 'like', $request->drinking);
             });
         }
 
@@ -669,17 +672,17 @@ class MatrimonyController extends Controller
         // Attach connection status for each profile
         $myId = $user->id;
         foreach ($profiles as $p) {
-            $conn = ConnectionRequest::where(function($q) use ($myId, $p) {
+            $conn = ConnectionRequest::where(function ($q) use ($myId, $p) {
                 $q->where('sender_id', $myId)->where('receiver_id', $p->user_id);
-            })->orWhere(function($q) use ($myId, $p) {
+            })->orWhere(function ($q) use ($myId, $p) {
                 $q->where('sender_id', $p->user_id)->where('receiver_id', $myId);
             })->orderBy('id', 'desc')->first();
             $p->my_connection_status = $conn ? $conn->status : 'none';
-            
+
             if ($p->my_connection_status === 'accepted') {
-                $conv = ChatConversation::where(function($q) use ($myId, $p) {
+                $conv = ChatConversation::where(function ($q) use ($myId, $p) {
                     $q->where('user1_id', min($myId, $p->user_id))
-                      ->where('user2_id', max($myId, $p->user_id));
+                        ->where('user2_id', max($myId, $p->user_id));
                 })->first();
                 $p->my_conversation_id = $conv ? $conv->id : null;
             }
@@ -696,15 +699,15 @@ class MatrimonyController extends Controller
 
         // Block viewing other users' profiles if not subscribed (except for admins or viewing own profile)
         if ($profile->user_id !== $user->id) {
-            if (!$this->checkSubscription()) {
+            if (! $this->checkSubscription()) {
                 return redirect()->route('matrimony.index')->with('error', 'Subscription required to view matrimonial profiles.');
             }
         }
 
         $myId = $user->id;
-        $conn = ConnectionRequest::where(function($q) use ($myId, $profile) {
+        $conn = ConnectionRequest::where(function ($q) use ($myId, $profile) {
             $q->where('sender_id', $myId)->where('receiver_id', $profile->user_id);
-        })->orWhere(function($q) use ($myId, $profile) {
+        })->orWhere(function ($q) use ($myId, $profile) {
             $q->where('sender_id', $profile->user_id)->where('receiver_id', $myId);
         })->orderBy('id', 'desc')->first();
 
@@ -714,9 +717,9 @@ class MatrimonyController extends Controller
         // Find conversation if accepted
         $conversation = null;
         if ($connectionStatus === 'accepted') {
-            $conversation = ChatConversation::where(function($q) use ($myId, $profile) {
+            $conversation = ChatConversation::where(function ($q) use ($myId, $profile) {
                 $q->where('user1_id', min($myId, $profile->user_id))
-                  ->where('user2_id', max($myId, $profile->user_id));
+                    ->where('user2_id', max($myId, $profile->user_id));
             })->first();
         }
 
@@ -726,12 +729,12 @@ class MatrimonyController extends Controller
     /** Send connection request */
     public function sendRequest(Request $request)
     {
-        if (!$this->checkSubscription()) {
+        if (! $this->checkSubscription()) {
             return redirect()->route('matrimony.index')->with('error', 'Subscription required to send connection requests.');
         }
         $request->validate([
             'receiver_id' => 'required|integer|exists:users,id',
-            'message'     => 'nullable|string|max:500',
+            'message' => 'nullable|string|max:500',
         ]);
 
         $existing = ConnectionRequest::where('sender_id', Auth::id())
@@ -743,10 +746,10 @@ class MatrimonyController extends Controller
         }
 
         ConnectionRequest::create([
-            'sender_id'   => Auth::id(),
+            'sender_id' => Auth::id(),
             'receiver_id' => $request->receiver_id,
-            'message'     => $request->message,
-            'status'      => 'pending',
+            'message' => $request->message,
+            'status' => 'pending',
         ]);
 
         return back()->with('success', 'Connection request sent successfully!');
@@ -755,7 +758,7 @@ class MatrimonyController extends Controller
     /** View all requests */
     public function requests()
     {
-        if (!$this->checkSubscription()) {
+        if (! $this->checkSubscription()) {
             return redirect()->route('matrimony.index')->with('error', 'Subscription required to view connection requests.');
         }
         $user = Auth::user();
@@ -767,7 +770,7 @@ class MatrimonyController extends Controller
         // Let's ensure conversations exist for all accepted requests!
         $acceptedSent = $sentRequests->where('status', 'accepted');
         $acceptedReceived = $receivedRequests->where('status', 'accepted');
-        
+
         foreach ($acceptedSent as $req) {
             ChatConversation::firstOrCreate([
                 'user1_id' => min($user->id, $req->receiver_id),
@@ -785,8 +788,8 @@ class MatrimonyController extends Controller
         $conversations = ChatConversation::where('user1_id', $user->id)
             ->orWhere('user2_id', $user->id)
             ->get()
-            ->keyBy(function($conv) use ($user) {
-                return (int)$conv->user1_id === (int)$user->id ? (int)$conv->user2_id : (int)$conv->user1_id;
+            ->keyBy(function ($conv) use ($user) {
+                return (int) $conv->user1_id === (int) $user->id ? (int) $conv->user2_id : (int) $conv->user1_id;
             });
 
         return view('matrimony.requests', compact('sentRequests', 'receivedRequests', 'conversations'));
@@ -795,7 +798,7 @@ class MatrimonyController extends Controller
     /** Accept or Reject a connection request */
     public function respondRequest(Request $request, $id)
     {
-        if (!$this->checkSubscription()) {
+        if (! $this->checkSubscription()) {
             return redirect()->route('matrimony.index')->with('error', 'Subscription required.');
         }
         $request->validate([
@@ -808,7 +811,7 @@ class MatrimonyController extends Controller
             ->firstOrFail();
 
         $conn->update([
-            'status'       => $request->status,
+            'status' => $request->status,
             'responded_at' => now(),
         ]);
 
@@ -819,13 +822,13 @@ class MatrimonyController extends Controller
             ]);
         }
 
-        return back()->with('success', 'Request ' . $request->status . ' successfully!');
+        return back()->with('success', 'Request '.$request->status.' successfully!');
     }
 
     /** List all conversations */
     public function conversations()
     {
-        if (!$this->checkSubscription()) {
+        if (! $this->checkSubscription()) {
             return redirect()->route('matrimony.index')->with('error', 'Subscription required to view messages.');
         }
         $user = Auth::user();
@@ -841,12 +844,12 @@ class MatrimonyController extends Controller
     /** Show chat for a specific conversation */
     public function chat($conversationId)
     {
-        if (!$this->checkSubscription()) {
+        if (! $this->checkSubscription()) {
             return redirect()->route('matrimony.index')->with('error', 'Subscription required to chat.');
         }
         $user = Auth::user();
         $conversation = ChatConversation::where('id', $conversationId)
-            ->where(function($q) use ($user) {
+            ->where(function ($q) use ($user) {
                 $q->where('user1_id', $user->id)->orWhere('user2_id', $user->id);
             })->with(['user1.matrimonyProfile', 'user2.matrimonyProfile'])->firstOrFail();
 
@@ -867,25 +870,25 @@ class MatrimonyController extends Controller
     /** AJAX: Send a message */
     public function sendMessage(Request $request)
     {
-        if (!$this->checkSubscription()) {
+        if (! $this->checkSubscription()) {
             return response()->json(['success' => false, 'message' => 'Subscription required.'], 403);
         }
         $request->validate([
             'conversation_id' => 'required|integer|exists:chat_conversations,id',
-            'message_text'    => 'required|string|max:1000',
+            'message_text' => 'required|string|max:1000',
         ]);
 
         $user = Auth::user();
         $conversation = ChatConversation::where('id', $request->conversation_id)
-            ->where(function($q) use ($user) {
+            ->where(function ($q) use ($user) {
                 $q->where('user1_id', $user->id)->orWhere('user2_id', $user->id);
             })->firstOrFail();
 
         $message = ChatMessage::create([
             'conversation_id' => $request->conversation_id,
-            'sender_id'       => $user->id,
-            'message_text'    => $request->message_text,
-            'message_type'    => 'text',
+            'sender_id' => $user->id,
+            'message_text' => $request->message_text,
+            'message_type' => 'text',
         ]);
 
         $conversation->update(['last_message_at' => now()]);
@@ -899,7 +902,7 @@ class MatrimonyController extends Controller
     /** Fetch latest messages (AJAX polling) */
     public function fetchMessages(Request $request, $conversationId)
     {
-        if (!$this->checkSubscription()) {
+        if (! $this->checkSubscription()) {
             return response()->json(['success' => false, 'message' => 'Subscription required.'], 403);
         }
         $user = Auth::user();
@@ -928,23 +931,25 @@ class MatrimonyController extends Controller
 
         try {
             $plan = MatrimonyPlan::find($request->plan_id);
-            if (!$plan || !$plan->active) {
+            if (! $plan || ! $plan->active) {
                 return response()->json(['success' => false, 'message' => 'Selected plan is not available.'], 404);
             }
 
-            $ccavenue = app(\App\Services\CCAvenue::class);
-            $orderId = 'MAT-' . time() . '-' . mt_rand(1000, 9999);
+            $ccavenue = app(CCAvenue::class);
+            $orderId = 'MAT-'.time().'-'.mt_rand(1000, 9999);
 
             $transaction = Transaction::create([
-                'user_id'             => Auth::id(),
-                'amount'              => $plan->price,
-                'currency'            => 'INR',
-                'purpose'             => 'matrimony_profile',
-                'razorpay_order_id'   => $orderId,
-                'status'              => 'pending',
+                'user_id' => Auth::id(),
+                'amount' => $plan->price,
+                'currency' => 'INR',
+                'purpose' => 'matrimony_profile',
+                'razorpay_order_id' => $orderId,
+                'status' => 'pending',
                 'subscription_period' => intval($plan->duration_years) * 12,
-                'meta'                => json_encode(['plan_id' => $plan->id]),
+                'metadata' => ['plan_id' => $plan->id],
             ]);
+
+            app(CCAvenuePaymentService::class)->createPendingPayment($transaction);
 
             // Prepare CCAvenue parameters
             $params = [
@@ -956,15 +961,15 @@ class MatrimonyController extends Controller
                 'language' => 'EN',
                 'billing_name' => Auth::user()->name ?? '',
                 'billing_email' => Auth::user()->email ?? '',
-                'billing_tel' => Auth::user()->phone ?? ''
+                'billing_tel' => Auth::user()->phone ?? '',
             ];
 
             return response()->json([
-                'success'        => true,
-                'payment_way'    => 'ccavenue',
-                'payment_url'    => $ccavenue->getPaymentUrl(),
-                'encRequest'     => $ccavenue->encrypt($params),
-                'access_code'    => $ccavenue->getAccessCode(),
+                'success' => true,
+                'payment_way' => 'ccavenue',
+                'payment_url' => $ccavenue->getPaymentUrl(),
+                'encRequest' => $ccavenue->encrypt($params),
+                'access_code' => $ccavenue->getAccessCode(),
                 'transaction_id' => $transaction->id,
             ]);
         } catch (\Exception $e) {
@@ -977,7 +982,7 @@ class MatrimonyController extends Controller
     {
         return response()->json([
             'success' => false,
-            'message' => 'This payment verification endpoint is deprecated. Payment is processed via callback.'
+            'message' => 'This payment verification endpoint is deprecated. Payment is processed via callback.',
         ], 400);
     }
 
@@ -988,8 +993,9 @@ class MatrimonyController extends Controller
             return true;
         }
         $profile = $user->matrimonyProfile;
-        return $profile && 
-               $profile->profile_expires_at && 
-               \Carbon\Carbon::parse($profile->profile_expires_at)->isFuture();
+
+        return $profile &&
+               $profile->profile_expires_at &&
+               Carbon::parse($profile->profile_expires_at)->isFuture();
     }
 }

@@ -2,16 +2,16 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Controllers\Controller;
 use App\Models\Donation;
 use App\Models\DonationCause;
 use App\Models\Transaction;
+use App\Services\CCAvenue;
+use App\Services\CCAvenuePaymentService;
+use Exception;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
-use App\Services\CCAvenue;
-use Exception;
+use Illuminate\Support\Facades\Validator;
 
 class DonationController extends Controller
 {
@@ -34,10 +34,10 @@ class DonationController extends Controller
                 ->latest()
                 ->first();
 
-            if (!$cause) {
+            if (! $cause) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'No active donation causes available'
+                    'message' => 'No active donation causes available',
                 ], 404);
             }
 
@@ -51,14 +51,14 @@ class DonationController extends Controller
                     'target_amount' => $cause->target_amount,
                     'raised_amount' => $cause->raised_amount,
                     'progress' => $cause->progress_percentage,
-                    'image' => $cause->image_url ? asset('storage/' . $cause->image_url) : null
-                ]
+                    'image' => $cause->image_url ? asset('storage/'.$cause->image_url) : null,
+                ],
             ]);
 
         } catch (Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to fetch suggested cause: ' . $e->getMessage()
+                'message' => 'Failed to fetch suggested cause: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -72,13 +72,13 @@ class DonationController extends Controller
             'cause_id' => 'required|exists:donation_causes,id',
             'amount' => 'required|numeric|min:1|max:100000',
             'message' => 'nullable|string|max:500',
-            'anonymous' => 'boolean'
+            'anonymous' => 'boolean',
         ]);
 
         if ($validator->fails()) {
             return response()->json([
                 'success' => false,
-                'message' => $validator->errors()->first()
+                'message' => $validator->errors()->first(),
             ], 422);
         }
 
@@ -89,12 +89,12 @@ class DonationController extends Controller
             if ($cause->status !== 'active') {
                 return response()->json([
                     'success' => false,
-                    'message' => 'This donation cause is no longer active'
+                    'message' => 'This donation cause is no longer active',
                 ], 400);
             }
 
             // Generate unique local Order ID for CCAvenue
-            $orderId = 'DON-' . time() . '-' . mt_rand(1000, 9999);
+            $orderId = 'DON-'.time().'-'.mt_rand(1000, 9999);
 
             // Create donation record
             $donation = Donation::create([
@@ -105,11 +105,11 @@ class DonationController extends Controller
                 'razorpay_order_id' => $orderId,
                 'status' => 'pending',
                 'message' => $request->message,
-                'anonymous' => $request->get('anonymous', false)
+                'anonymous' => $request->get('anonymous', false),
             ]);
 
             // Create transaction record
-            Transaction::create([
+            $transaction = Transaction::create([
                 'user_id' => $user->id,
                 'amount' => $request->amount,
                 'currency' => 'INR',
@@ -119,9 +119,11 @@ class DonationController extends Controller
                 'metadata' => json_encode([
                     'donation_id' => $donation->id,
                     'cause_id' => $cause->id,
-                    'cause_title' => $cause->title
-                ])
+                    'cause_title' => $cause->title,
+                ]),
             ]);
+
+            app(CCAvenuePaymentService::class)->createPendingPayment($transaction);
 
             // Prepare CCAvenue parameters
             $params = [
@@ -133,7 +135,7 @@ class DonationController extends Controller
                 'language' => 'EN',
                 'billing_name' => $user->name ?? '',
                 'billing_email' => $user->email ?? '',
-                'billing_tel' => $user->phone ?? ''
+                'billing_tel' => $user->phone ?? '',
             ];
 
             return response()->json([
@@ -144,14 +146,15 @@ class DonationController extends Controller
                 'access_code' => $this->ccavenue->getAccessCode(),
                 'donation_id' => $donation->id,
                 'cause_title' => $cause->title,
-                'organization' => $cause->organization
+                'organization' => $cause->organization,
             ]);
 
         } catch (Exception $e) {
-            Log::error('CCAvenue Web donation initiation failed: ' . $e->getMessage());
+            Log::error('CCAvenue Web donation initiation failed: '.$e->getMessage());
+
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to initiate donation payment: ' . $e->getMessage()
+                'message' => 'Failed to initiate donation payment: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -163,7 +166,7 @@ class DonationController extends Controller
     {
         return response()->json([
             'success' => false,
-            'message' => 'This payment verification endpoint is deprecated. Payment is processed via callback.'
+            'message' => 'This payment verification endpoint is deprecated. Payment is processed via callback.',
         ], 400);
     }
 }

@@ -15,6 +15,27 @@ Artisan::command('subscriptions:send-reminders', function () {
     $this->info('Subscription expiry reminders completed.');
 })->purpose('Send subscription expiry reminder emails to users.');
 
+Artisan::command('payment:backfill-audit-rows', function () {
+    $created = 0;
+
+    \App\Models\Transaction::query()
+        ->whereNotExists(function ($query) {
+            $query->selectRaw('1')
+                ->from('payments')
+                ->whereColumn('payments.transaction_id', 'transactions.id');
+        })
+        ->orderBy('id')
+        ->chunkById(100, function ($transactions) use (&$created) {
+            $service = app(\App\Services\CCAvenuePaymentService::class);
+            foreach ($transactions as $transaction) {
+                $service->createPendingPayment($transaction);
+                $created++;
+            }
+        });
+
+    $this->info("Created {$created} missing payment audit row(s).");
+})->purpose('Create missing payment audit rows without changing transaction status.');
+
 Artisan::command('payment:pending-reminders', function () {
     $this->info('Starting pending payment reminders check...');
 
