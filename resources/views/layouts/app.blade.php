@@ -4,7 +4,8 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>@yield('title', 'Dashboard — Mali Setu')</title>
-    <meta name="description" content="Manage your Mali Setu profile, settings, and community modules.">
+    <meta name="description" content="@yield('meta_description', 'Manage your Mali Setu profile, settings, and community modules.')">
+    @yield('meta')
 
     <!-- Bootstrap & Google Fonts -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">

@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class Blog extends Model
 {
@@ -66,6 +68,40 @@ class Blog extends Model
     public function comments(): HasMany
     {
         return $this->hasMany(BlogComment::class)->whereNull('parent_id')->latest();
+    }
+
+    /**
+     * Public URL used by social sharing and link-preview crawlers.
+     */
+    public function getPublicUrlAttribute(): string
+    {
+        return route('blogs.public.show', $this->id);
+    }
+
+    /**
+     * First uploaded image suitable for a social link preview.
+     */
+    public function getShareImageUrlAttribute(): ?string
+    {
+        $imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+
+        foreach ((array) $this->media_path as $path) {
+            if (!is_string($path) || !in_array(strtolower(pathinfo($path, PATHINFO_EXTENSION)), $imageExtensions, true)) {
+                continue;
+            }
+
+            if (Str::startsWith($path, ['http://', 'https://'])) {
+                return $path;
+            }
+
+            if (!Storage::disk('public')->exists($path)) {
+                continue;
+            }
+
+            return asset('storage/' . ltrim($path, '/'));
+        }
+
+        return null;
     }
 
     /**

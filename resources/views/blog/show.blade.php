@@ -2,6 +2,28 @@
 
 @section('title', $blog->title . ' — Mali Setu')
 
+@section('meta_description', \Illuminate\Support\Str::limit(trim(strip_tags($blog->description)), 160))
+
+@section('meta')
+    <link rel="canonical" href="{{ $blog->public_url }}">
+    <meta property="og:type" content="article">
+    <meta property="og:site_name" content="Mali Setu">
+    <meta property="og:title" content="{{ $blog->title }}">
+    <meta property="og:description" content="{{ \Illuminate\Support\Str::limit(trim(strip_tags($blog->description)), 200) }}">
+    <meta property="og:url" content="{{ $blog->public_url }}">
+    @if($blog->share_image_url)
+        <meta property="og:image" content="{{ $blog->share_image_url }}">
+        <meta property="og:image:secure_url" content="{{ $blog->share_image_url }}">
+        <meta property="og:image:alt" content="{{ $blog->title }}">
+        <meta name="twitter:card" content="summary_large_image">
+        <meta name="twitter:image" content="{{ $blog->share_image_url }}">
+    @else
+        <meta name="twitter:card" content="summary">
+    @endif
+    <meta name="twitter:title" content="{{ $blog->title }}">
+    <meta name="twitter:description" content="{{ \Illuminate\Support\Str::limit(trim(strip_tags($blog->description)), 200) }}">
+@endsection
+
 @section('content')
 <div class="container py-4">
     <!-- Back to Portal Link -->
@@ -243,8 +265,11 @@
                 <p class="text-muted small">Spread the word about this community story.</p>
                 <div class="d-flex gap-2">
                     <button onclick="copyArticleUrl()" class="btn btn-light rounded-circle shadow-sm" style="width: 44px; height: 44px;" title="Copy Link"><i class="fa-solid fa-link"></i></button>
-                    <a href="https://api.whatsapp.com/send?text={{ urlencode($blog->title . ' - ' . url()->current()) }}" target="_blank" class="btn btn-light rounded-circle shadow-sm d-inline-flex align-items-center justify-content-center" style="width: 44px; height: 44px; color:#25D366;" title="Share on WhatsApp"><i class="fa-brands fa-whatsapp fa-lg"></i></a>
-                    <a href="https://twitter.com/intent/tweet?url={{ urlencode(url()->current()) }}&text={{ urlencode($blog->title) }}" target="_blank" class="btn btn-light rounded-circle shadow-sm d-inline-flex align-items-center justify-content-center" style="width: 44px; height: 44px; color:#1DA1F2;" title="Share on X"><i class="fa-brands fa-x-twitter fa-lg"></i></a>
+                    @php
+                        $shareUrl = $blog->public_url . '?v=' . $blog->updated_at->timestamp;
+                    @endphp
+                    <a href="https://api.whatsapp.com/send?text={{ urlencode($blog->title . ' - ' . $shareUrl) }}" target="_blank" rel="noopener" class="btn btn-light rounded-circle shadow-sm d-inline-flex align-items-center justify-content-center" style="width: 44px; height: 44px; color:#25D366;" title="Share on WhatsApp"><i class="fa-brands fa-whatsapp fa-lg"></i></a>
+                    <a href="https://twitter.com/intent/tweet?url={{ urlencode($shareUrl) }}&text={{ urlencode($blog->title) }}" target="_blank" rel="noopener" class="btn btn-light rounded-circle shadow-sm d-inline-flex align-items-center justify-content-center" style="width: 44px; height: 44px; color:#1DA1F2;" title="Share on X"><i class="fa-brands fa-x-twitter fa-lg"></i></a>
                 </div>
             </div>
 
@@ -329,7 +354,7 @@
 @section('scripts')
 <script>
 function copyArticleUrl() {
-    navigator.clipboard.writeText(window.location.href);
+    navigator.clipboard.writeText(@json($shareUrl));
     Swal.fire({
         toast: true,
         position: 'top-end',
