@@ -107,10 +107,12 @@ Route::middleware(['auth', 'redirect.admin'])->group(function () {
 
         // Products Catalog CRUD
         Route::post('products', [BusinessController::class, 'addProduct'])->name('products.add');
+        Route::get('products/{id}', [BusinessController::class, 'showProduct'])->name('products.show');
         Route::delete('products/{id}', [BusinessController::class, 'deleteProduct'])->name('products.delete');
 
         // Services Catalog CRUD
         Route::post('services', [BusinessController::class, 'addService'])->name('services.add');
+        Route::get('services/{id}', [BusinessController::class, 'showService'])->name('services.show');
         Route::delete('services/{id}', [BusinessController::class, 'deleteService'])->name('services.delete');
 
         // Jobs Hub CRUD & Applicant tracking

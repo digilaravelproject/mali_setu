@@ -330,7 +330,8 @@ class UserManagementController extends Controller
             'destination' => 'nullable|string|max:255',
             'latitude' => 'nullable|numeric|between:-90,90',
             'longitude' => 'nullable|numeric|between:-180,180',
-            'caste_certificate' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:5120',
+            'respected_person_name' => 'nullable|string|max:255',
+            'respected_person_mobile_number' => 'nullable|digits:10',
         ]);
 
         $name = trim($request->title . ' ' . $request->first_name . ' ' . ($request->middle_name ? $request->middle_name . ' ' : '') . $request->last_name);
@@ -364,14 +365,12 @@ class UserManagementController extends Controller
             'destination' => $request->destination,
             'latitude' => $request->latitude,
             'longitude' => $request->longitude,
+            'respected_person_name' => $request->respected_person_name,
+            'respected_person_mobile_number' => $request->respected_person_mobile_number,
         ];
 
         if ($request->has('email_verified') && $request->email_verified) {
             $userData['email_verified_at'] = now();
-        }
-
-        if ($request->hasFile('caste_certificate')) {
-            $userData['cast_certificate'] = $request->file('caste_certificate')->store('certificates', 'public');
         }
 
         $user = User::create($userData);
@@ -430,7 +429,8 @@ class UserManagementController extends Controller
             'destination' => 'nullable|string|max:255',
             'latitude' => 'nullable|numeric|between:-90,90',
             'longitude' => 'nullable|numeric|between:-180,180',
-            'caste_certificate' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:5120',
+            'respected_person_name' => 'nullable|string|max:255',
+            'respected_person_mobile_number' => 'nullable|digits:10',
         ]);
 
         $name = trim($request->title . ' ' . $request->first_name . ' ' . ($request->middle_name ? $request->middle_name . ' ' : '') . $request->last_name);
@@ -463,14 +463,9 @@ class UserManagementController extends Controller
             'destination' => $request->destination,
             'latitude' => $request->latitude,
             'longitude' => $request->longitude,
+            'respected_person_name' => $request->respected_person_name,
+            'respected_person_mobile_number' => $request->respected_person_mobile_number,
         ];
-
-        if ($request->hasFile('caste_certificate')) {
-            if ($user->cast_certificate && \Storage::disk('public')->exists($user->cast_certificate)) {
-                \Storage::disk('public')->delete($user->cast_certificate);
-            }
-            $updateData['cast_certificate'] = $request->file('caste_certificate')->store('certificates', 'public');
-        }
         
         // Handle email verification status
         if ($request->has('email_verified')) {

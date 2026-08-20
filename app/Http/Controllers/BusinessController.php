@@ -422,6 +422,34 @@ class BusinessController extends Controller
     }
 
     /**
+     * Show a product detail page.
+     */
+    public function showProduct($id)
+    {
+        $item = Product::with(['business.category'])->findOrFail($id);
+
+        return view('business.catalog-detail', [
+            'item' => $item,
+            'itemType' => 'Product',
+            'icon' => 'fa-box',
+        ]);
+    }
+
+    /**
+     * Show a service detail page.
+     */
+    public function showService($id)
+    {
+        $item = Service::with(['business.category'])->findOrFail($id);
+
+        return view('business.catalog-detail', [
+            'item' => $item,
+            'itemType' => 'Service',
+            'icon' => 'fa-server',
+        ]);
+    }
+
+    /**
      * Store Business Review (One review per user per business)
      */
     public function storeReview(Request $request)

@@ -733,13 +733,26 @@
                         </div>
                     </div>
 
+                    <h5 class="fw-bold text-primary mb-4 border-bottom pb-2 mt-3">Respected Person Details <span class="text-muted small fw-normal">(Optional)</span></h5>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-4">
+                            <label class="form-label">Respected Person Name</label>
+                            <input type="text" name="respected_person_name" value="{{ old('respected_person_name', $user->respected_person_name) }}" class="form-control" placeholder="Enter respected person's name">
+                        </div>
+                        <div class="col-md-6 mb-4">
+                            <label class="form-label">Respected Person Mobile Number</label>
+                            <input type="tel" name="respected_person_mobile_number" value="{{ old('respected_person_mobile_number', $user->respected_person_mobile_number) }}" class="form-control" inputmode="numeric" pattern="[0-9]{10}" maxlength="10" placeholder="10-digit mobile number">
+                        </div>
+                    </div>
+
                     <h5 class="fw-bold text-primary mb-4 border-bottom pb-2 mt-3">Employment Details</h5>
                     
                     <div class="row">
                         <div class="col-md-4 mb-4">
-                            <label class="form-label">Occupation</label>
+                            <label class="form-label">Occupation <span class="text-muted small">(Optional)</span></label>
                             <select name="occupation" class="form-select @error('occupation') is-invalid @enderror">
-                                <option value="" disabled {{ old('occupation', $user->occupation) ? '' : 'selected' }}>Select Occupation</option>
+                                <option value="" {{ old('occupation', $user->occupation) ? '' : 'selected' }}>Select Occupation</option>
                                 <option value="Service" {{ old('occupation', $user->occupation) == 'Service' ? 'selected' : '' }}>Service</option>
                                 <option value="Business" {{ old('occupation', $user->occupation) == 'Business' ? 'selected' : '' }}>Business</option>
                                 <option value="Student" {{ old('occupation', $user->occupation) == 'Student' ? 'selected' : '' }}>Student</option>

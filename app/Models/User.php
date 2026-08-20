@@ -31,6 +31,8 @@ class User extends Authenticatable
         'admin_notes',
         'age',
         'cast_certificate',
+        'respected_person_name',
+        'respected_person_mobile_number',
         'occupation',
         'company_name',
         'dept_name',
@@ -62,6 +64,7 @@ class User extends Authenticatable
     protected $hidden = [
         'password',
         'remember_token',
+        'cast_certificate',
     ];
 
     /**

@@ -532,6 +532,34 @@
         });
     </script>
     
+    <!-- Shared matrimony photo preview -->
+    <div class="modal fade" id="matrimonyPhotoPreviewModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-xl">
+            <div class="modal-content bg-transparent border-0 shadow-none">
+                <div class="modal-body position-relative p-2 text-center">
+                    <button type="button" class="btn-close btn-close-white position-absolute top-0 end-0 m-3 p-2 bg-dark rounded-circle" data-bs-dismiss="modal" aria-label="Close" style="z-index:2;"></button>
+                    <img id="matrimonyPhotoPreviewImage" src="" alt="Matrimony profile photo" class="img-fluid rounded-4 shadow-lg" style="max-height:88vh; object-fit:contain; background:#fff;">
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            document.addEventListener('click', function (event) {
+                const photo = event.target.closest('img');
+                if (!photo || !photo.src.includes('/storage/matrimony/photos/')) return;
+
+                event.preventDefault();
+                document.getElementById('matrimonyPhotoPreviewImage').src = photo.src;
+                bootstrap.Modal.getOrCreateInstance(document.getElementById('matrimonyPhotoPreviewModal')).show();
+            });
+
+            document.querySelectorAll('img[src*="/storage/matrimony/photos/"]').forEach(function (photo) {
+                photo.style.cursor = 'zoom-in';
+                photo.title = photo.title || 'Click to enlarge';
+            });
+        });
+    </script>
     @stack('scripts')
 </body>
 </html>

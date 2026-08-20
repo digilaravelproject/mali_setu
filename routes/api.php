@@ -65,10 +65,12 @@ Route::prefix('banner')->group(function () {
 // Public business routes (for browsing)
 Route::prefix('business')->group(function () {
     Route::get('/', [BusinessController::class, 'index']);
-    Route::get('/{id}', [BusinessController::class, 'show']);
     Route::get('/category/{id}', [BusinessController::class, 'showOnCategory']);
+    Route::get('/products/{id}', [BusinessController::class, 'getProductById']);
+    Route::get('/services/{id}', [BusinessController::class, 'getServiceById']);
     Route::get('/{id}/products', [BusinessController::class, 'getProducts']);
     Route::get('/{id}/services', [BusinessController::class, 'getServices']);
+    Route::get('/{id}', [BusinessController::class, 'show']);
 });
 
 // Public matrimony routes (for browsing)

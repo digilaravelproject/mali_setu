@@ -30,7 +30,8 @@ class AuthController extends Controller
                 'email'            => 'required|string|email|max:255|unique:users',
                 'age'              => 'nullable|integer|min:18|max:100', // optional, must be 18-100 if provided
                 'phone'            => 'required|string|max:15|unique:users',
-                'cast_certificate' => 'nullable|string',
+                'respected_person_name' => 'nullable|string|max:255',
+                'respected_person_mobile_number' => 'nullable|digits:10',
                 'occupation'       => 'nullable|string|max:255',
                 'company_name'     => 'nullable|string|max:255',
                 'dept_name'        => 'nullable|string|max:255',
@@ -61,40 +62,6 @@ class AuthController extends Controller
                     'message' => $validator->errors(),
                     'errors' => $validator->errors()
                 ], 422);
-            }
-
-            $cast_certificate = '';
-
-            if ($request->cast_certificate) {
-                $data = $request->cast_certificate;
-                
-                $extension = 'pdf'; // default fallback
-                if (str_contains($data, 'data:') && str_contains($data, ';base64,')) {
-                    [$meta, $encoded] = explode(';base64,', $data);
-                    $mime = str_replace('data:', '', $meta);
-                    $extension = explode('/', $mime)[1] ?? 'pdf';
-                    // Clean up extension names
-                    if ($extension === 'jpeg') {
-                        $extension = 'jpg';
-                    }
-                }
-
-                // strip the "data:..." part
-                $data = preg_replace('#^data:.*?;base64,#', '', $data);
-                $fileData = base64_decode($data);
-
-                $fileName = uniqid() . '.' . $extension;
-
-                // Ensure the folder exists
-                if (!Storage::disk('public')->exists('certificates')) {
-                    Storage::disk('public')->makeDirectory('certificates');
-                }
-
-                // Save file in storage/app/public/certificates
-                $rev = Storage::disk('public')->put('certificates/' . $fileName, $fileData);
-
-                // Save path in DB
-                $cast_certificate = 'certificates/' . $fileName;
             }
 
             if ($request->filled('dob')) {
@@ -136,7 +103,8 @@ class AuthController extends Controller
                 'destination'            => $request->destination,
                 'latitude'               => $request->latitude,
                 'longitude'              => $request->longitude,
-                'cast_certificate'       => $cast_certificate,
+                'respected_person_name' => $request->respected_person_name,
+                'respected_person_mobile_number' => $request->respected_person_mobile_number,
                 'user_type'              => $request->user_type,
                 'caste_verification_status' => 'approved'
             ]);
@@ -323,7 +291,8 @@ class AuthController extends Controller
             'email'            => 'required|string|email|max:255|unique:users,email,' . $user->id,
             'age'              => 'nullable|integer|min:18|max:100',
             'phone'            => 'required|string|max:15|unique:users,phone,' . $user->id,
-            'cast_certificate' => 'nullable|string',
+            'respected_person_name' => 'nullable|string|max:255',
+            'respected_person_mobile_number' => 'nullable|digits:10',
             'occupation'       => 'nullable|string|max:255',
             'company_name'     => 'nullable|string|max:255',
             'dept_name'        => 'nullable|string|max:255',
@@ -374,7 +343,8 @@ class AuthController extends Controller
         }
 
         $data = $request->only([
-            'name', 'email', 'age', 'phone', 'cast_certificate', 'occupation',
+            'name', 'email', 'age', 'phone', 'respected_person_name',
+            'respected_person_mobile_number', 'occupation',
             'company_name', 'dept_name', 'dob', 'designation',
             'address', 'nearby_location', 'pincode', 'road_number',
             'state', 'country', 'city', 'sector', 'district', 'village', 'destination',

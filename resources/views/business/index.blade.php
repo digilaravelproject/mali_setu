@@ -355,7 +355,7 @@
                                                                 <div class="bg-light text-secondary rounded shadow-sm d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;"><i class="fa-solid fa-box"></i></div>
                                                             @endif
                                                         </td>
-                                                        <td><strong class="text-dark">{{ $prod->name }}</strong></td>
+                                                        <td><a href="{{ route('dashboard.business.products.show', $prod->id) }}" class="fw-bold text-dark text-decoration-none">{{ $prod->name }}</a></td>
                                                         <td><span class="text-primary fw-bold">₹{{ $prod->cost ?? '0.00' }}</span></td>
                                                         <td><span class="text-secondary small">{{ Str::limit($prod->description, 50) }}</span></td>
                                                         <td>
@@ -406,7 +406,7 @@
                                                                 <div class="bg-light text-secondary rounded shadow-sm d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;"><i class="fa-solid fa-server"></i></div>
                                                             @endif
                                                         </td>
-                                                        <td><strong class="text-dark">{{ $serv->name }}</strong></td>
+                                                        <td><a href="{{ route('dashboard.business.services.show', $serv->id) }}" class="fw-bold text-dark text-decoration-none">{{ $serv->name }}</a></td>
                                                         <td><span class="text-primary fw-bold">₹{{ $serv->cost ?? '0.00' }}</span></td>
                                                         <td><span class="text-secondary small">{{ Str::limit($serv->description, 50) }}</span></td>
                                                         <td>

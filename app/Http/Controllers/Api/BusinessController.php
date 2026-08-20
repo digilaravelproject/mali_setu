@@ -1119,6 +1119,36 @@ class BusinessController extends Controller
     }
 
     /**
+     * Get a single active product by ID.
+     */
+    public function getProductById($id)
+    {
+        if (!ctype_digit((string) $id)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid product ID',
+            ], 422);
+        }
+
+        $product = Product::with(['business.user', 'business.category'])
+            ->where('status', 'active')
+            ->find($id);
+
+        if (!$product) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Product not found',
+            ], 404);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Product fetched successfully',
+            'data' => ['product' => $product],
+        ]);
+    }
+
+    /**
      * Get business services
      */
     public function getServices($businessId)
@@ -1130,6 +1160,36 @@ class BusinessController extends Controller
         return response()->json([
             'success' => true,
             'data' => ['services' => $services]
+        ]);
+    }
+
+    /**
+     * Get a single active service by ID.
+     */
+    public function getServiceById($id)
+    {
+        if (!ctype_digit((string) $id)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid service ID',
+            ], 422);
+        }
+
+        $service = Service::with(['business.user', 'business.category'])
+            ->where('status', 'active')
+            ->find($id);
+
+        if (!$service) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Service not found',
+            ], 404);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Service fetched successfully',
+            'data' => ['service' => $service],
         ]);
     }
 

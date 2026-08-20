@@ -113,7 +113,7 @@
                             <div class="row g-3">
                                 @forelse($business->products as $p)
                                     <div class="col-md-6 col-12">
-                                        <div class="card h-100 border rounded-4 p-3 bg-light bg-opacity-50">
+                                        <a href="{{ route('dashboard.business.products.show', $p->id) }}" class="card h-100 border rounded-4 p-3 bg-light bg-opacity-50 text-decoration-none">
                                             <div class="d-flex gap-3 align-items-start">
                                                 @if($p->image_path)
                                                     <img src="{{ asset('storage/' . $p->image_path) }}" class="rounded shadow-sm border" style="width: 80px; height: 80px; object-fit: cover;">
@@ -126,7 +126,7 @@
                                                     <p class="text-secondary small mb-0" style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">{{ $p->description }}</p>
                                                 </div>
                                             </div>
-                                        </div>
+                                        </a>
                                     </div>
                                 @empty
                                     <div class="col-12 text-center py-4 bg-light rounded-3 border">
@@ -141,7 +141,7 @@
                             <div class="row g-3">
                                 @forelse($business->services as $s)
                                     <div class="col-md-6 col-12">
-                                        <div class="card h-100 border rounded-4 p-3 bg-light bg-opacity-50">
+                                        <a href="{{ route('dashboard.business.services.show', $s->id) }}" class="card h-100 border rounded-4 p-3 bg-light bg-opacity-50 text-decoration-none">
                                             <div class="d-flex gap-3 align-items-start">
                                                 @if($s->image_path)
                                                     <img src="{{ asset('storage/' . $s->image_path) }}" class="rounded shadow-sm border" style="width: 80px; height: 80px; object-fit: cover;">
@@ -154,7 +154,7 @@
                                                     <p class="text-secondary small mb-0" style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">{{ $s->description }}</p>
                                                 </div>
                                             </div>
-                                        </div>
+                                        </a>
                                     </div>
                                 @empty
                                     <div class="col-12 text-center py-4 bg-light rounded-3 border">

@@ -83,55 +83,23 @@
                             </div>
                         </div>
                         
-                        <!-- Caste Certificate Information -->
+                        <!-- Respected Person Information -->
                         <div class="col-md-6">
                             <div class="card">
                                 <div class="card-header">
-                                    <h5 class="card-title">Caste Certificate</h5>
+                                    <h5 class="card-title">Respected Person</h5>
                                 </div>
                                 <div class="card-body">
-                                    @if($user->casteCertificate)
-                                        <table class="table table-borderless">
-
-                                            <tr>
-                                                <td><strong>Uploaded:</strong></td>
-                                                <td>{{ $user->casteCertificate->created_at->format('M d, Y H:i') }}</td>
-                                            </tr>
-                                            @if($user->casteCertificate->verified_at)
-                                            <tr>
-                                                <td><strong>Verified At:</strong></td>
-                                                <td>{{ $user->casteCertificate->verified_at->format('M d, Y H:i') }}</td>
-                                            </tr>
-                                            @endif
-                                            @if($user->casteCertificate->admin_notes)
-                                            <tr>
-                                                <td><strong>Admin Notes:</strong></td>
-                                                <td>{{ $user->casteCertificate->admin_notes }}</td>
-                                            </tr>
-                                            @endif
-                                            <tr>
-                                                <td><strong>Certificate:</strong></td>
-                                                <td>
-                                                    <a href="{{ Storage::url($user->casteCertificate->file_path) }}" target="_blank" class="btn btn-sm btn-outline-primary">
-                                                        <i class="fas fa-download"></i> View Certificate
-                                                    </a>
-                                                </td>
-                                            </tr>
-                                        </table>
-                                        
-                                        @if($user->caste_verification_status == 'pending')
-                                        <div class="mt-3">
-                                            <button type="button" class="btn btn-success btn-sm" onclick="verifyCertificate({{ $user->id }})">
-                                                <i class="fas fa-check"></i> Approve
-                                            </button>
-                                            <button type="button" class="btn btn-danger btn-sm" onclick="rejectCertificate({{ $user->id }})">
-                                                <i class="fas fa-times"></i> Reject
-                                            </button>
-                                        </div>
-                                        @endif
-                                    @else
-                                        <p class="text-muted">No caste certificate uploaded</p>
-                                    @endif
+                                    <table class="table table-borderless">
+                                        <tr>
+                                            <td><strong>Name:</strong></td>
+                                            <td>{{ $user->respected_person_name ?? 'N/A' }}</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Mobile Number:</strong></td>
+                                            <td>{{ $user->respected_person_mobile_number ?? 'N/A' }}</td>
+                                        </tr>
+                                    </table>
                                 </div>
                             </div>
                         </div>

@@ -203,13 +203,16 @@ class DashboardController extends Controller
             'photo'            => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
             'latitude'         => 'nullable|numeric|between:-90,90',
             'longitude'        => 'nullable|numeric|between:-180,180',
+            'respected_person_name' => 'nullable|string|max:255',
+            'respected_person_mobile_number' => 'nullable|digits:10',
         ]);
 
         $data = $request->only([
             'name', 'email', 'phone', 'age', 'occupation', 'company_name',
             'dept_name', 'dob', 'designation', 'address', 'nearby_location',
             'pincode', 'road_number', 'state', 'country', 'city', 'sector', 'district',
-            'village', 'destination', 'latitude', 'longitude'
+            'village', 'destination', 'latitude', 'longitude',
+            'respected_person_name', 'respected_person_mobile_number'
         ]);
 
         if ($request->filled('name') && $request->name !== $user->name) {

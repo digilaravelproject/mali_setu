@@ -326,18 +326,27 @@
                     </div>
                 </div>
 
-                <!-- Section 2: Verification Details -->
+                <!-- Section 2: Respected Person Details -->
                 <div class="card border-0 rounded-4 shadow-sm mb-4" style="background: rgba(255, 255, 255, 0.5); backdrop-filter: blur(10px);">
                     <div class="card-body p-4">
-                        <h5 class="fw-bold mb-3 text-primary"><i class="fa-solid fa-file-shield me-2"></i> 2. Caste Verification</h5>
-                        <p class="small text-secondary mb-4">Please upload a valid Caste Certificate or other proof (Father's Caste Document) to verify community authenticity. Supported: JPG, JPEG, PNG, PDF (Max: 5MB).</p>
-                        
-                        <div class="mb-2">
-                            <label class="form-label small fw-bold text-secondary">Caste Certificate File</label>
-                            <input type="file" name="cast_certificate" class="form-control form-control-lg @error('cast_certificate') is-invalid @enderror" accept=".jpg,.jpeg,.png,.pdf">
-                            @error('cast_certificate')
+                        <h5 class="fw-bold mb-3 text-primary"><i class="fa-solid fa-user-check me-2"></i> 2. Respected Person Details</h5>
+                        <p class="small text-secondary mb-4">These reference details are optional.</p>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-2">
+                                <label class="form-label small fw-bold text-secondary">Respected Person Name</label>
+                                <input type="text" name="respected_person_name" value="{{ old('respected_person_name') }}" class="form-control form-control-lg @error('respected_person_name') is-invalid @enderror" placeholder="Enter respected person's name">
+                                @error('respected_person_name')
+                                    <div class="text-danger small mt-1">{{ $message }}</div>
+                                @enderror
+                            </div>
+                            <div class="col-md-6 mb-2">
+                                <label class="form-label small fw-bold text-secondary">Respected Person Mobile Number</label>
+                                <input type="tel" name="respected_person_mobile_number" value="{{ old('respected_person_mobile_number') }}" class="form-control form-control-lg @error('respected_person_mobile_number') is-invalid @enderror" inputmode="numeric" pattern="[0-9]{10}" maxlength="10" placeholder="10-digit mobile number">
+                                @error('respected_person_mobile_number')
                                 <div class="text-danger small mt-1">{{ $message }}</div>
-                            @enderror
+                                @enderror
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -456,9 +465,9 @@
                         <!-- Occupation & Company -->
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label class="form-label small fw-bold text-secondary">Occupation <span class="text-danger">*</span></label>
-                                <select name="occupation" class="form-select form-select-lg @error('occupation') is-invalid @enderror" required>
-                                    <option value="" disabled {{ old('occupation') ? '' : 'selected' }}>Select Occupation</option>
+                                <label class="form-label small fw-bold text-secondary">Occupation </label>
+                                <select name="occupation" class="form-select form-select-lg @error('occupation') is-invalid @enderror">
+                                    <option value="" {{ old('occupation') ? '' : 'selected' }}>Select Occupation</option>
                                     <option value="Service" {{ old('occupation') == 'Service' ? 'selected' : '' }}>Service</option>
                                     <option value="Business" {{ old('occupation') == 'Business' ? 'selected' : '' }}>Business</option>
                                     <option value="Student" {{ old('occupation') == 'Student' ? 'selected' : '' }}>Student</option>

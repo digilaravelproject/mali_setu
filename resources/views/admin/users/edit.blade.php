@@ -144,17 +144,15 @@
                                         </div>
                                         
                                         <div class="mb-3">
-                                            <label for="caste_certificate" class="form-label font-weight-bold small">Caste Certificate</label>
-                                            @if($user->cast_certificate)
-                                                <div class="mb-2">
-                                                    <a href="{{ asset('storage/' . $user->cast_certificate) }}" target="_blank" class="btn btn-outline-info btn-sm">
-                                                        <i class="fas fa-file-pdf me-1"></i> View Current Certificate
-                                                    </a>
-                                                </div>
-                                            @endif
-                                            <input type="file" class="form-control @error('caste_certificate') is-invalid @enderror" 
-                                                   id="caste_certificate" name="caste_certificate" accept=".pdf,image/*">
-                                            <small class="text-muted small">Upload PDF or image to replace current certificate (max 5MB)</small>
+                                            <label for="respected_person_name" class="form-label font-weight-bold small">Respected Person Name</label>
+                                            <input type="text" class="form-control @error('respected_person_name') is-invalid @enderror"
+                                                   id="respected_person_name" name="respected_person_name" value="{{ old('respected_person_name', $user->respected_person_name) }}" placeholder="Enter respected person's name">
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label for="respected_person_mobile_number" class="form-label font-weight-bold small">Respected Person Mobile Number</label>
+                                            <input type="tel" class="form-control @error('respected_person_mobile_number') is-invalid @enderror"
+                                                   id="respected_person_mobile_number" name="respected_person_mobile_number" value="{{ old('respected_person_mobile_number', $user->respected_person_mobile_number) }}" inputmode="numeric" pattern="[0-9]{10}" maxlength="10" placeholder="10-digit mobile number">
                                         </div>
                                         
                                         <div class="mb-3">
@@ -210,9 +208,9 @@
                                                 <input type="date" class="form-control" id="dob" name="dob" value="{{ old('dob', $user->dob ? \Carbon\Carbon::parse($user->dob)->format('Y-m-d') : '') }}">
                                             </div>
                                             <div class="col-md-3 mb-3">
-                                                <label for="occupation" class="form-label font-weight-bold small">Occupation</label>
+                                                <label for="occupation" class="form-label font-weight-bold small">Occupation <span class="text-muted fw-normal">(Optional)</span></label>
                                                 <select class="form-select @error('occupation') is-invalid @enderror" id="occupation" name="occupation">
-                                                    <option value="" disabled {{ old('occupation', $user->occupation) ? '' : 'selected' }}>Select Occupation</option>
+                                                    <option value="" {{ old('occupation', $user->occupation) ? '' : 'selected' }}>Select Occupation</option>
                                                     <option value="Service" {{ old('occupation', $user->occupation) == 'Service' ? 'selected' : '' }}>Service</option>
                                                     <option value="Business" {{ old('occupation', $user->occupation) == 'Business' ? 'selected' : '' }}>Business</option>
                                                     <option value="Student" {{ old('occupation', $user->occupation) == 'Student' ? 'selected' : '' }}>Student</option>

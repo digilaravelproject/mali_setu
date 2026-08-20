@@ -81,7 +81,8 @@ class WebAuthController extends Controller
             'email'            => 'required|string|email|max:255|unique:users,email',
             'phone'            => 'required|string|max:15|unique:users,phone',
             'dob'              => 'required|date',
-            'cast_certificate' => 'nullable|file|mimes:jpeg,png,jpg,pdf|max:5120',
+            'respected_person_name' => 'nullable|string|max:255',
+            'respected_person_mobile_number' => 'nullable|digits:10',
             'address'          => 'required|string|max:500',
             'pincode'          => 'required|digits:6',
             'state'            => 'required|string|max:100',
@@ -90,7 +91,7 @@ class WebAuthController extends Controller
             'taluka'           => 'nullable|string|max:100',
             'village'          => 'required|string|max:100',
             'user_type'        => 'required|in:general,business,matrimony,volunteer',
-            'occupation'       => 'required|string|max:255',
+            'occupation'       => 'nullable|string|max:255',
             'company_name'     => 'nullable|string|max:255',
             'dept_name'        => 'nullable|string|max:255',
             'designation'      => 'nullable|string|max:255',
@@ -105,18 +106,6 @@ class WebAuthController extends Controller
         }
 
         try {
-            // Handle caste certificate upload
-            $cast_certificate = '';
-            if ($request->hasFile('cast_certificate')) {
-                $file = $request->file('cast_certificate');
-                $fileName = uniqid() . '.' . $file->getClientOriginalExtension();
-                if (!Storage::disk('public')->exists('certificates')) {
-                    Storage::disk('public')->makeDirectory('certificates');
-                }
-                Storage::disk('public')->putFileAs('certificates', $file, $fileName);
-                $cast_certificate = 'certificates/' . $fileName;
-            }
-
             // Concatenate title, first, middle, last name into name
             $name = trim($request->title . ' ' . $request->first_name . ' ' . ($request->middle_name ? $request->middle_name . ' ' : '') . $request->last_name);
 
@@ -125,7 +114,8 @@ class WebAuthController extends Controller
                 'email'                  => $request->email,
                 'phone'                  => $request->phone,
                 'dob'                    => $request->dob,
-                'cast_certificate'       => $cast_certificate,
+                'respected_person_name' => $request->respected_person_name,
+                'respected_person_mobile_number' => $request->respected_person_mobile_number,
                 'address'                => $request->address,
                 'pincode'                => $request->pincode,
                 'state'                  => $request->state,

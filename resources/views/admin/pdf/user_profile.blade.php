@@ -165,6 +165,16 @@
     <div class="section-title">Personal & Professional Details</div>
     <table class="info-table">
         <tr>
+            <td class="label">Respected Person Name:</td>
+            <td class="value">{{ $user->respected_person_name ?? 'N/A' }}</td>
+        </tr>
+        <tr>
+            <td class="label">Respected Person Mobile:</td>
+            <td class="value">{{ $user->respected_person_mobile_number ?? 'N/A' }}</td>
+        </tr>
+    </table>
+    <table class="info-table">
+        <tr>
             <td class="label">Date of Birth:</td>
             <td class="value">{{ $user->dob ? \Carbon\Carbon::parse($user->dob)->format('M d, Y') : 'N/A' }}</td>
         </tr>
