@@ -742,7 +742,10 @@
                         </div>
                         <div class="col-md-6 mb-4">
                             <label class="form-label">Respected Person Mobile Number</label>
-                            <input type="tel" name="respected_person_mobile_number" value="{{ old('respected_person_mobile_number', $user->respected_person_mobile_number) }}" class="form-control" inputmode="numeric" pattern="[0-9]{10}" maxlength="10" placeholder="10-digit mobile number">
+                            <div class="input-group">
+                                <span class="input-group-text bg-light fw-bold text-secondary border-end-0">+91</span>
+                                <input type="tel" name="respected_person_mobile_number" value="{{ old('respected_person_mobile_number', $user->respected_person_mobile_number) }}" class="form-control border-start-0" inputmode="numeric" pattern="[0-9]{10}" maxlength="10" placeholder="10-digit mobile number">
+                            </div>
                         </div>
                     </div>
 

@@ -1582,9 +1582,13 @@
 <div class="modal fade" id="matrimonyPhotoPreviewModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-xl">
         <div class="modal-content bg-transparent border-0 shadow-none">
-            <div class="modal-body position-relative p-2 text-center">
-                <button type="button" class="btn-close btn-close-white position-absolute top-0 end-0 m-3 p-2 bg-dark rounded-circle" data-bs-dismiss="modal" aria-label="Close" style="z-index:2;"></button>
-                <img id="matrimonyPhotoPreviewImage" src="" alt="Matrimony profile photo" class="img-fluid rounded-4 shadow-lg" style="max-height:88vh; object-fit:contain; background:#fff;">
+            <div class="modal-body p-2 text-center">
+                <div class="position-relative d-inline-block">
+                    <img id="matrimonyPhotoPreviewImage" src="" alt="Matrimony profile photo" class="img-fluid rounded-4 shadow-lg" style="max-height:88vh; object-fit:contain; background:#fff;">
+                    <button type="button" class="position-absolute d-flex align-items-center justify-content-center border-0 rounded-circle bg-dark text-white shadow" data-bs-dismiss="modal" aria-label="Close image preview" title="Close" style="top:12px; right:12px; width:42px; height:42px; z-index:3; font-size:1.25rem;">
+                        <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+                    </button>
+                </div>
             </div>
         </div>
     </div>

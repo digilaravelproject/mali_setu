@@ -342,9 +342,12 @@
                             </div>
                             <div class="col-md-6 mb-2">
                                 <label class="form-label small fw-bold text-secondary">Respected Person Mobile Number</label>
-                                <input type="tel" name="respected_person_mobile_number" value="{{ old('respected_person_mobile_number') }}" class="form-control form-control-lg @error('respected_person_mobile_number') is-invalid @enderror" inputmode="numeric" pattern="[0-9]{10}" maxlength="10" placeholder="10-digit mobile number">
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light fw-bold text-secondary border-end-0 rounded-start-3" style="padding: 14px 20px;">+91</span>
+                                    <input type="tel" name="respected_person_mobile_number" value="{{ old('respected_person_mobile_number') }}" class="form-control form-control-lg border-start-0 rounded-end-3 @error('respected_person_mobile_number') is-invalid @enderror" inputmode="numeric" pattern="[0-9]{10}" maxlength="10" placeholder="10-digit mobile number">
+                                </div>
                                 @error('respected_person_mobile_number')
-                                <div class="text-danger small mt-1">{{ $message }}</div>
+                                    <div class="text-danger small mt-1">{{ $message }}</div>
                                 @enderror
                             </div>
                         </div>

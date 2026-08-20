@@ -136,8 +136,11 @@
 
                                         <div class="mb-3">
                                             <label for="respected_person_mobile_number" class="form-label font-weight-bold small">Respected Person Mobile Number</label>
-                                            <input type="tel" class="form-control @error('respected_person_mobile_number') is-invalid @enderror"
-                                                   id="respected_person_mobile_number" name="respected_person_mobile_number" value="{{ old('respected_person_mobile_number') }}" inputmode="numeric" pattern="[0-9]{10}" maxlength="10" placeholder="10-digit mobile number">
+                                            <div class="input-group">
+                                                <span class="input-group-text bg-light fw-bold text-secondary border-end-0">+91</span>
+                                                <input type="tel" class="form-control border-start-0 @error('respected_person_mobile_number') is-invalid @enderror"
+                                                       id="respected_person_mobile_number" name="respected_person_mobile_number" value="{{ old('respected_person_mobile_number') }}" inputmode="numeric" pattern="[0-9]{10}" maxlength="10" placeholder="10-digit mobile number">
+                                            </div>
                                         </div>
                                         
                                         <div class="mb-3">

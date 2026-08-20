@@ -1004,7 +1004,7 @@
                         $shareUrl = $blog->public_url . '?v=' . $blog->updated_at->timestamp;
                     @endphp
                     <a href="https://api.whatsapp.com/send?text={{ urlencode($blog->title . ' - ' . $shareUrl) }}" target="_blank" rel="noopener" class="btn btn-light rounded-circle shadow-sm d-inline-flex align-items-center justify-content-center" style="width: 44px; height: 44px; color:#25D366;" title="Share on WhatsApp"><i class="fa-brands fa-whatsapp fa-lg"></i></a>
-                    <a href="https://twitter.com/intent/tweet?url={{ urlencode($shareUrl) }}&text={{ urlencode($blog->title) }}" target="_blank" rel="noopener" class="btn btn-light rounded-circle shadow-sm d-inline-flex align-items-center justify-content-center" style="width: 44px; height: 44px; color:#1DA1F2;" title="Share on X"><i class="fa-brands fa-x-twitter fa-lg"></i></a>
+                    <a href="https://twitter.com/intent/tweet?url={{ urlencode($shareUrl) }}&text={{ urlencode($blog->title) }}" target="_blank" rel="noopener" class="btn btn-light rounded-circle shadow-sm d-inline-flex align-items-center justify-content-center" style="width: 44px; height: 44px; color:#111;" title="Share on X"><span aria-hidden="true" style="font-size:1.15rem; font-weight:800; line-height:1;">𝕏</span><span class="visually-hidden">Share on X</span></a>
                 </div>
             </div>
 
