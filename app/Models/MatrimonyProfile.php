@@ -73,6 +73,16 @@ class MatrimonyProfile extends Model
     }
 
     /**
+     * Get matrimony profile transactions
+     */
+    public function matrimonyTransactions(): HasMany
+    {
+        return $this->hasMany(Transaction::class, 'user_id', 'user_id')
+            ->where('purpose', 'matrimony_profile')
+            ->latest();
+    }
+
+    /**
      * Scope a query to only include approved profiles.
      */
     public function scopeApproved($query)

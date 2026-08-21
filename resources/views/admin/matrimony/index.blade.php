@@ -109,6 +109,7 @@
                                     <th>Education</th>
                                     <th>Family Details</th>
                                     <th>Status</th>
+                                    <th>Payment</th>
                                     <th>Created</th>
                                     <th>Actions</th>
                                 </tr>
@@ -158,6 +159,22 @@
                                             <span class="badge bg-danger">Rejected</span>
                                         @endif
                                     </td>
+                                    <td>
+                                        @php
+                                            $latestTxn = $profile->matrimonyTransactions->first();
+                                        @endphp
+                                        @if($latestTxn)
+                                            @if($latestTxn->status == 'completed')
+                                                <span class="badge bg-success">Paid</span>
+                                            @elseif($latestTxn->status == 'pending')
+                                                <span class="badge bg-warning">Pending</span>
+                                            @else
+                                                <span class="badge bg-danger">{{ ucfirst($latestTxn->status) }}</span>
+                                            @endif
+                                        @else
+                                            <span class="badge bg-secondary">Unpaid</span>
+                                        @endif
+                                    </td>
                                     <td>{{ $profile->created_at->format('M d, Y') }}</td>
                                     <td>
                                         <div class="btn-group" role="group">
@@ -192,7 +209,7 @@
                                 </tr>
                                 @empty
                                 <tr>
-                                    <td colspan="9" class="text-center">No matrimony profiles found</td>
+                                    <td colspan="10" class="text-center">No matrimony profiles found</td>
                                 </tr>
                                 @endforelse
                             </tbody>

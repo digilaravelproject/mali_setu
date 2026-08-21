@@ -123,6 +123,7 @@
                                 <th>Location</th>
                                 <th>Education</th>
                                 <th>Family Details</th>
+                                <th>Payment</th>
                                 <th>Submitted</th>
                                 <th>Actions</th>
                             </tr>
@@ -174,6 +175,22 @@
                                         </div>
                                     @else
                                         N/A
+                                    @endif
+                                </td>
+                                <td>
+                                    @php
+                                        $latestTxn = $profile->matrimonyTransactions->first();
+                                    @endphp
+                                    @if($latestTxn)
+                                        @if($latestTxn->status == 'completed')
+                                            <span class="badge bg-success text-white">Paid (₹{{ number_format($latestTxn->amount, 2) }})</span>
+                                        @elseif($latestTxn->status == 'pending')
+                                            <span class="badge bg-warning text-dark">Pending (₹{{ number_format($latestTxn->amount, 2) }})</span>
+                                        @else
+                                            <span class="badge bg-danger text-white">{{ ucfirst($latestTxn->status) }} (₹{{ number_format($latestTxn->amount, 2) }})</span>
+                                        @endif
+                                    @else
+                                        <span class="badge bg-secondary text-white">Unpaid</span>
                                     @endif
                                 </td>
                                 <td>

@@ -243,6 +243,25 @@
                                         <div class="info-label-premium">Marital Status</div>
                                         <div class="info-value-premium">{{ ucwords(str_replace('_', ' ', $pd['marital_status'] ?? 'N/A')) }}</div>
                                     </div>
+                                    <div class="col-12 mt-2 pt-2 border-top border-light">
+                                        <div class="info-label-premium">Payment Status</div>
+                                        @php
+                                            $latestTxn = $profile->matrimonyTransactions->first();
+                                        @endphp
+                                        <div class="info-value-premium">
+                                            @if($latestTxn)
+                                                @if($latestTxn->status == 'completed')
+                                                    <span class="text-success"><i class="fas fa-check-circle me-1"></i>Paid (₹{{ number_format($latestTxn->amount, 2) }})</span>
+                                                @elseif($latestTxn->status == 'pending')
+                                                    <span class="text-warning"><i class="fas fa-clock me-1"></i>Pending (₹{{ number_format($latestTxn->amount, 2) }})</span>
+                                                @else
+                                                    <span class="text-danger"><i class="fas fa-times-circle me-1"></i>{{ ucfirst($latestTxn->status) }} (₹{{ number_format($latestTxn->amount, 2) }})</span>
+                                                @endif
+                                            @else
+                                                <span class="text-secondary"><i class="fas fa-minus-circle me-1"></i>Unpaid</span>
+                                            @endif
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>

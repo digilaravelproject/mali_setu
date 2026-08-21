@@ -16,7 +16,7 @@ class MatrimonyManagementController extends Controller
      */
     public function index(Request $request)
     {
-        $query = MatrimonyProfile::with(['user']);
+        $query = MatrimonyProfile::with(['user', 'matrimonyTransactions']);
         
         // Filter by approval status
         if ($request->has('approval_status') && $request->approval_status !== '') {
@@ -58,7 +58,7 @@ class MatrimonyManagementController extends Controller
      */
     public function moderation(Request $request)
     {
-        $query = MatrimonyProfile::with(['user']);
+        $query = MatrimonyProfile::with(['user', 'matrimonyTransactions']);
             
         // Search functionality
         if ($request->has('search') && $request->search !== '') {
@@ -445,7 +445,8 @@ class MatrimonyManagementController extends Controller
         $profile = MatrimonyProfile::with([
             'user',
             'sentConnectionRequests.receiver',
-            'receivedConnectionRequests.sender'
+            'receivedConnectionRequests.sender',
+            'matrimonyTransactions'
         ])->findOrFail($id);
         
         return view('admin.matrimony.show', compact('profile'));
