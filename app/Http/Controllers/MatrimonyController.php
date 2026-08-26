@@ -893,6 +893,10 @@ class MatrimonyController extends Controller
 
         $conversation->update(['last_message_at' => now()]);
 
+        // Send notification to the other user
+        $receiver = $conversation->getOtherUser($user->id);
+        app(\App\Services\NotificationService::class)->notifyNewMessage($conversation, $user, $receiver);
+
         return response()->json([
             'success' => true,
             'message' => $message->load('sender'),

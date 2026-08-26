@@ -1301,6 +1301,11 @@ class MatrimonyController extends Controller
         // Update conversation last message time
         $conversation->update(['last_message_at' => now()]);
 
+        // Send notification to the other user
+        $sender = $request->user();
+        $receiver = $conversation->getOtherUser($userId);
+        $this->notifications->notifyNewMessage($conversation, $sender, $receiver);
+
         return response()->json([
             'success' => true,
             'message' => 'Message sent successfully',
