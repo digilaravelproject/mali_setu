@@ -3,6 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" type="image/x-icon" href="{{ asset('landing_page_logo.jpeg') }}">
     <title>Sign In — Mali Setu</title>
     <meta name="description" content="Access your Mali Setu account. Connect, serve, and grow with your community.">
 

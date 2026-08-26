@@ -3,6 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" type="image/x-icon" href="{{ asset('landing_page_logo.jpeg') }}">
     <title>Create Account — Mali Setu</title>
     <meta name="description" content="Register an account on Mali Setu today. Expand your business, find matches, and serve the community.">
 

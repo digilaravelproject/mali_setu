@@ -3,6 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" type="image/x-icon" href="{{ asset('landing_page_logo.jpeg') }}">
     <title>{{ $blog->title }} — Mali Setu</title>
     <meta name="description" content="{{ \Illuminate\Support\Str::limit(trim(strip_tags($blog->description)), 160) }}">
     <link rel="canonical" href="{{ $blog->public_url }}">
