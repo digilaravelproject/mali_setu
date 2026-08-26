@@ -51,7 +51,7 @@ class AuthController extends Controller
                 'destination'      => 'nullable|string|max:255',
                 'latitude'         => 'nullable|numeric|between:-90,90',
                 'longitude'        => 'nullable|numeric|between:-180,180',
-                'password'         => 'required|string|min:8|confirmed',
+                'password'         => 'required|string|confirmed',
                 'user_type'        => 'required|in:general,business,matrimony,volunteer',
                 'term_condition'   => 'accepted', // must be checked (true/1)
             ]);

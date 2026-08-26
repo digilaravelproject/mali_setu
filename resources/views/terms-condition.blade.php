@@ -4,6 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{{ $page->page_name ?? 'Terms & Conditions — Mali Setu' }}</title>
+    <link rel="icon" type="image/x-icon" href="{{ asset('landing_page_logo.jpeg') }}">
     <meta name="description" content="Mali Setu community terms of service, membership rules, and community guidelines.">
 
     <!-- Bootstrap & Google Fonts -->

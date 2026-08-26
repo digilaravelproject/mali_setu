@@ -4,6 +4,8 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Mali Setu — Connect, Serve, Grow</title>
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="{{ asset('landing_page_logo.jpeg') }}">
     <meta name="description" content="Mali Setu - Business directory, matrimony services, volunteering, and community support.">
 
     <!-- Bootstrap & Google Fonts -->

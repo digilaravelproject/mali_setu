@@ -3,6 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" type="image/x-icon" href="{{ asset('landing_page_logo.jpeg') }}">
     <title>@yield('title', 'Dashboard — Mali Setu')</title>
     <meta name="description" content="@yield('meta_description', 'Manage your Mali Setu profile, settings, and community modules.')">
     @yield('meta')

@@ -4,6 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{{ $page->page_name ?? 'Contact Us — Mali Setu' }}</title>
+    <link rel="icon" type="image/x-icon" href="{{ asset('landing_page_logo.jpeg') }}">
     <meta name="description" content="Contact Mali Setu support for any community or account queries.">
 
     <!-- Bootstrap & Google Fonts -->

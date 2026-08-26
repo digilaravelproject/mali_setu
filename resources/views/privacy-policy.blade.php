@@ -4,6 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{{ $page->page_name ?? 'Privacy Policy — Mali Setu' }}</title>
+    <link rel="icon" type="image/x-icon" href="{{ asset('landing_page_logo.jpeg') }}">
     <meta name="description" content="Mali Setu community privacy policy parameters and user data controls.">
 
     <!-- Bootstrap & Google Fonts -->
