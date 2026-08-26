@@ -4,9 +4,12 @@ namespace Tests\Feature;
 
 use App\Models\Payment;
 use App\Models\Transaction;
+use App\Services\CCAvenue;
+use App\Services\CCAvenuePaymentReconciliationService;
 use App\Services\CCAvenuePaymentService;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Schema;
 use Tests\TestCase;
 
@@ -25,6 +28,8 @@ class CCAvenuePaymentServiceTest extends TestCase
         ]);
         DB::purge('payment_testing');
         DB::setDefaultConnection('payment_testing');
+        config()->set('services.ccavenue.api_access_code', 'test-api-access-code');
+        config()->set('services.ccavenue.api_working_key', 'test-api-working-key');
 
         Schema::create('transactions', function (Blueprint $table) {
             $table->id();
@@ -66,6 +71,14 @@ class CCAvenuePaymentServiceTest extends TestCase
             $table->unsignedBigInteger('user_id');
             $table->timestamp('profile_expires_at')->nullable();
             $table->string('approval_status')->nullable();
+            $table->timestamps();
+        });
+        Schema::create('matrimony_plans', function (Blueprint $table) {
+            $table->id();
+            $table->string('plan_name')->nullable();
+            $table->integer('duration_years');
+            $table->decimal('price', 10, 2);
+            $table->boolean('active')->default(true);
             $table->timestamps();
         });
     }
@@ -135,7 +148,210 @@ class CCAvenuePaymentServiceTest extends TestCase
         $this->assertSame(1, Payment::where('transaction_id', (string) $transaction->id)->count());
     }
 
-    private function transaction(string $orderId): Transaction
+    public function test_reconciliation_completes_shipped_order_using_plan_duration(): void
+    {
+        DB::table('matrimony_plans')->insert([
+            'id' => 11,
+            'plan_name' => 'Three years',
+            'duration_years' => 3,
+            'price' => 11,
+            'active' => true,
+        ]);
+        DB::table('matrimony_profiles')->insert([
+            'user_id' => 1,
+            'approval_status' => 'pending',
+        ]);
+
+        $transaction = $this->transaction('MAT-test-1003', ['plan_id' => 11]);
+        app(CCAvenuePaymentService::class)->createPendingPayment($transaction);
+
+        $gateway = \Mockery::mock(CCAvenue::class);
+        $gateway->shouldReceive('getOrderStatus')
+            ->once()
+            ->with('MAT-test-1003')
+            ->andReturn([
+                'order_status' => 'Shipped',
+                'reference_no' => '114762776059',
+                'order_amt' => '11.00',
+                'order_currncy' => 'INR',
+                'order_option_type' => 'Unified Payments - UPI',
+            ]);
+
+        $service = new CCAvenuePaymentReconciliationService(
+            $gateway,
+            app(CCAvenuePaymentService::class),
+        );
+        $stats = $service->reconcile();
+
+        $this->assertSame(1, $stats['checked']);
+        $this->assertSame(1, $stats['completed']);
+        $this->assertSame('completed', $transaction->fresh()->status);
+        $this->assertDatabaseHas('payments', [
+            'transaction_id' => (string) $transaction->id,
+            'payment_id' => '114762776059',
+            'status' => 'completed',
+        ]);
+
+        $profile = DB::table('matrimony_profiles')->where('user_id', 1)->first();
+        $this->assertSame('approved', $profile->approval_status);
+        $this->assertEqualsWithDelta(now()->addYears(3)->timestamp, strtotime($profile->profile_expires_at), 5);
+    }
+
+    public function test_reconciliation_leaves_awaited_order_pending(): void
+    {
+        $transaction = $this->transaction('MAT-test-1004');
+
+        $gateway = \Mockery::mock(CCAvenue::class);
+        $gateway->shouldReceive('getOrderStatus')->once()->andReturn([
+            'order_status' => 'Awaited',
+        ]);
+
+        $service = new CCAvenuePaymentReconciliationService(
+            $gateway,
+            app(CCAvenuePaymentService::class),
+        );
+        $stats = $service->reconcile();
+
+        $this->assertSame(1, $stats['unchanged']);
+        $this->assertSame('pending', $transaction->fresh()->status);
+    }
+
+    public function test_ccavenue_status_client_accepts_form_encoded_envelope(): void
+    {
+        config()->set('services.ccavenue.working_key', 'test-working-key');
+        config()->set('services.ccavenue.access_code', 'test-access-code');
+        config()->set('services.ccavenue.api_working_key', 'test-working-key');
+        config()->set('services.ccavenue.api_access_code', 'test-access-code');
+        config()->set('services.ccavenue.status_url', 'https://ccavenue.test/status');
+
+        $gatewayResponse = json_encode([
+            'order_status' => 'Shipped',
+            'reference_no' => '114762776059',
+            'order_amt' => '11.00',
+            'order_currncy' => 'INR',
+        ]);
+        $encryptedResponse = $this->encryptCCAvenueResponse($gatewayResponse, 'test-working-key');
+
+        Http::fake([
+            'https://ccavenue.test/status' => Http::response(
+                'status=0&enc_response='.$encryptedResponse,
+                200,
+                ['Content-Type' => 'text/plain'],
+            ),
+        ]);
+
+        $status = app(CCAvenue::class)->getOrderStatus('BIZ-test-1005');
+
+        $this->assertSame('Shipped', $status['order_status']);
+        $this->assertSame('114762776059', $status['reference_no']);
+        Http::assertSent(fn ($request) => $request['command'] === 'orderStatusTracker'
+            && $request['access_code'] === 'test-access-code'
+            && json_decode(
+                $this->decryptCCAvenueRequest($request['enc_request'], 'test-working-key'),
+                true,
+            ) === ['order_no' => 'BIZ-test-1005']);
+    }
+
+    public function test_ccavenue_status_client_reports_gateway_error_details(): void
+    {
+        config()->set('services.ccavenue.working_key', 'test-working-key');
+        config()->set('services.ccavenue.access_code', 'invalid-access-code');
+        config()->set('services.ccavenue.api_working_key', 'test-working-key');
+        config()->set('services.ccavenue.api_access_code', 'invalid-access-code');
+        config()->set('services.ccavenue.status_url', 'https://ccavenue.test/status');
+
+        Http::fake([
+            'https://ccavenue.test/status' => Http::response(
+                'status=1&enc_response=Access_code%3A+Invalid+Parameter&enc_error_code=51407',
+                200,
+                ['Content-Type' => 'text/plain'],
+            ),
+        ]);
+
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage(
+            'CCAvenue rejected the order-status request (code 51407): Access_code: Invalid Parameter'
+        );
+
+        app(CCAvenue::class)->getOrderStatus('BIZ-test-1006');
+    }
+
+    public function test_ccavenue_status_client_uses_separate_api_credentials(): void
+    {
+        config()->set('services.ccavenue.working_key', 'checkout-working-key');
+        config()->set('services.ccavenue.access_code', 'checkout-access-code');
+        config()->set('services.ccavenue.api_working_key', 'api-working-key');
+        config()->set('services.ccavenue.api_access_code', 'api-access-code');
+        config()->set('services.ccavenue.status_url', 'https://ccavenue.test/status');
+
+        $encryptedResponse = $this->encryptCCAvenueResponse(
+            json_encode(['order_status' => 'Shipped']),
+            'api-working-key',
+        );
+        Http::fake([
+            'https://ccavenue.test/status' => Http::response(
+                'status=0&enc_response='.$encryptedResponse,
+                200,
+            ),
+        ]);
+
+        app(CCAvenue::class)->getOrderStatus('BIZ-test-1007');
+
+        Http::assertSent(fn ($request) => $request['access_code'] === 'api-access-code'
+            && json_decode(
+                $this->decryptCCAvenueRequest($request['enc_request'], 'api-working-key'),
+                true,
+            ) === ['order_no' => 'BIZ-test-1007']);
+    }
+
+    public function test_reconciliation_stops_before_polling_without_status_api_credentials(): void
+    {
+        config()->set('services.ccavenue.api_access_code');
+        config()->set('services.ccavenue.api_working_key');
+        $gateway = \Mockery::mock(CCAvenue::class);
+        $gateway->shouldNotReceive('getOrderStatus');
+
+        $service = new CCAvenuePaymentReconciliationService(
+            $gateway,
+            app(CCAvenuePaymentService::class),
+        );
+        $stats = $service->reconcile();
+
+        $this->assertSame(0, $stats['checked']);
+        $this->assertSame(1, $stats['errors']);
+        $this->assertStringContainsString('CCAVENUE_API_ACCESS_CODE', $stats['last_error']);
+    }
+
+    private function encryptCCAvenueResponse(string $plainText, string $workingKey): string
+    {
+        $secretKey = hex2bin(md5($workingKey));
+        $initialVector = pack('C*', ...range(0, 15));
+        $encrypted = openssl_encrypt(
+            $plainText,
+            'AES-128-CBC',
+            $secretKey,
+            OPENSSL_RAW_DATA,
+            $initialVector,
+        );
+
+        return bin2hex($encrypted);
+    }
+
+    private function decryptCCAvenueRequest(string $encryptedText, string $workingKey): string
+    {
+        $secretKey = hex2bin(md5($workingKey));
+        $initialVector = pack('C*', ...range(0, 15));
+
+        return openssl_decrypt(
+            hex2bin($encryptedText),
+            'AES-128-CBC',
+            $secretKey,
+            OPENSSL_RAW_DATA,
+            $initialVector,
+        );
+    }
+
+    private function transaction(string $orderId, array $metadata = []): Transaction
     {
         return Transaction::create([
             'user_id' => 1,
@@ -145,7 +361,7 @@ class CCAvenuePaymentServiceTest extends TestCase
             'razorpay_order_id' => $orderId,
             'status' => 'pending',
             'subscription_period' => 12,
-            'metadata' => [],
+            'metadata' => $metadata,
         ]);
     }
 }

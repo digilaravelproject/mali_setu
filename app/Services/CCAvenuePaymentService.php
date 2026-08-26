@@ -3,7 +3,9 @@
 namespace App\Services;
 
 use App\Models\Business;
+use App\Models\BusinessPlan;
 use App\Models\Donation;
+use App\Models\MatrimonyPlan;
 use App\Models\MatrimonyProfile;
 use App\Models\Payment;
 use App\Models\Transaction;
@@ -195,7 +197,7 @@ class CCAvenuePaymentService
             $business = Business::where('user_id', $transaction->user_id)->latest()->first();
             $business?->update([
                 'subscription_status' => 'active',
-                'subscription_expires_at' => now()->addMonths($transaction->subscription_period ?? 1),
+                'subscription_expires_at' => now()->addMonths($this->subscriptionMonths($transaction)),
             ]);
 
             return;
@@ -204,7 +206,7 @@ class CCAvenuePaymentService
         if ($transaction->purpose === 'matrimony_profile') {
             $profile = MatrimonyProfile::where('user_id', $transaction->user_id)->first();
             $profile?->update([
-                'profile_expires_at' => now()->addMonths($transaction->subscription_period ?? 12),
+                'profile_expires_at' => now()->addMonths($this->subscriptionMonths($transaction)),
                 'approval_status' => 'approved',
             ]);
 
@@ -222,6 +224,24 @@ class CCAvenuePaymentService
                 $donation->cause?->updateRaisedAmount();
             }
         }
+    }
+
+    private function subscriptionMonths(Transaction $transaction): int
+    {
+        $planId = $transaction->metadata['plan_id'] ?? null;
+
+        if ($planId) {
+            $plan = $transaction->purpose === 'business_registration'
+                ? BusinessPlan::find($planId)
+                : MatrimonyPlan::find($planId);
+
+            if ($plan && (int) $plan->duration_years > 0) {
+                return (int) $plan->duration_years * 12;
+            }
+        }
+
+        return max(1, (int) ($transaction->subscription_period
+            ?? ($transaction->purpose === 'matrimony_profile' ? 12 : 1)));
     }
 
     private function failDonation(Transaction $transaction): void

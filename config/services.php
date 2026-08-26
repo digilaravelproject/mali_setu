@@ -38,7 +38,15 @@ return [
         'merchant_id' => env('CCAVENUE_MERCHANT_ID'),
         'working_key' => env('CCAVENUE_WORKING_KEY'),
         'access_code' => env('CCAVENUE_ACCESS_CODE'),
+        // CCAvenue Status API credentials are issued for a registered server IP
+        // and can differ from the hosted-checkout credentials above.
+        'api_working_key' => env('CCAVENUE_API_WORKING_KEY'),
+        'api_access_code' => env('CCAVENUE_API_ACCESS_CODE'),
         'sandbox'     => env('CCAVENUE_SANDBOX', true),
+        'status_url'  => env('CCAVENUE_STATUS_URL', 'https://api.ccavenue.com/apis/servlet/DoWebTrans'),
+        'status_timeout' => env('CCAVENUE_STATUS_TIMEOUT', 15),
+        'reconcile_lookback_days' => env('CCAVENUE_RECONCILE_LOOKBACK_DAYS', 7),
+        'reconcile_batch_size' => env('CCAVENUE_RECONCILE_BATCH_SIZE', 100),
     ],
 
     'slack' => [

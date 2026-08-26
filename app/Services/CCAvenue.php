@@ -2,11 +2,16 @@
 
 namespace App\Services;
 
+use Illuminate\Support\Facades\Http;
+use RuntimeException;
+
 class CCAvenue
 {
     private $merchantId;
     private $workingKey;
     private $accessCode;
+    private $apiWorkingKey;
+    private $apiAccessCode;
     private $sandbox;
 
     public function __construct()
@@ -14,6 +19,8 @@ class CCAvenue
         $this->merchantId = config('services.ccavenue.merchant_id');
         $this->workingKey = config('services.ccavenue.working_key');
         $this->accessCode = config('services.ccavenue.access_code');
+        $this->apiWorkingKey = config('services.ccavenue.api_working_key') ?: $this->workingKey;
+        $this->apiAccessCode = config('services.ccavenue.api_access_code') ?: $this->accessCode;
         $this->sandbox = config('services.ccavenue.sandbox', true);
     }
 
@@ -35,6 +42,67 @@ class CCAvenue
     public function getAccessCode()
     {
         return $this->accessCode;
+    }
+
+    /**
+     * Fetch the authoritative status for an order from CCAvenue.
+     *
+     * @return array<string, mixed>
+     */
+    public function getOrderStatus(string $orderId): array
+    {
+        $requestPayload = json_encode(
+            ['order_no' => $orderId],
+            JSON_THROW_ON_ERROR
+        );
+        $encryptedRequest = $this->encryptAes($requestPayload, $this->apiWorkingKey);
+
+        $response = Http::asForm()
+            ->acceptJson()
+            ->timeout((int) config('services.ccavenue.status_timeout', 15))
+            ->post(config('services.ccavenue.status_url'), [
+                'request_type' => 'JSON',
+                'access_code' => $this->apiAccessCode,
+                'command' => 'orderStatusTracker',
+                'response_type' => 'JSON',
+                'version' => '1.1',
+                'enc_request' => $encryptedRequest,
+            ]);
+
+        $response->throw();
+        $envelope = $response->json();
+
+        // CCAvenue commonly returns the outer API envelope as
+        // status=0&enc_response=... even when response_type is JSON. The
+        // decrypted enc_response itself is JSON.
+        if (! is_array($envelope)) {
+            $envelope = [];
+            parse_str(trim($response->body()), $envelope);
+        }
+
+        if (! is_array($envelope) || (string) ($envelope['status'] ?? '') !== '0') {
+            $errorCode = trim((string) ($envelope['enc_error_code'] ?? $envelope['error_code'] ?? ''));
+            $errorMessage = trim((string) ($envelope['enc_response'] ?? ''));
+            throw new RuntimeException(
+                'CCAvenue rejected the order-status request'
+                .($errorCode !== '' ? " (code {$errorCode})" : '')
+                .($errorMessage !== '' ? ": {$errorMessage}" : '.')
+            );
+        }
+
+        $encryptedResponse = $envelope['enc_response'] ?? null;
+        if (! is_string($encryptedResponse) || $encryptedResponse === '') {
+            throw new RuntimeException('CCAvenue returned an empty order-status response.');
+        }
+
+        $decrypted = $this->decryptAes($encryptedResponse, $this->apiWorkingKey);
+        $status = json_decode($decrypted, true);
+
+        if (! is_array($status)) {
+            throw new RuntimeException('CCAvenue returned an invalid order-status response.');
+        }
+
+        return $status;
     }
 
     /**

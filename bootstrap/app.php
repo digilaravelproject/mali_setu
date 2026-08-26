@@ -15,6 +15,9 @@ return Application::configure(basePath: dirname(__DIR__))
         $schedule->command('subscriptions:send-reminders')->daily();
         $schedule->command('payment:backfill-audit-rows')->everyFiveMinutes();
         $schedule->command('payment:pending-reminders')->everyMinute();
+        $schedule->command('payment:reconcile-ccavenue')
+            ->everyThirtySeconds()
+            ->withoutOverlapping(1);
     })
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->alias([
