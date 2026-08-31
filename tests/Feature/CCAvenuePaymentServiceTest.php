@@ -193,7 +193,7 @@ class CCAvenuePaymentServiceTest extends TestCase
         ]);
 
         $profile = DB::table('matrimony_profiles')->where('user_id', 1)->first();
-        $this->assertSame('approved', $profile->approval_status);
+        $this->assertSame('pending', $profile->approval_status);
         $this->assertEqualsWithDelta(now()->addYears(3)->timestamp, strtotime($profile->profile_expires_at), 5);
     }
 

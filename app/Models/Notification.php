@@ -51,6 +51,8 @@ class Notification extends Model
     const TYPE_BUSINESS_REJECTED = 'business_rejected';
     const TYPE_MATRIMONY_APPROVED = 'matrimony_approved';
     const TYPE_MATRIMONY_REJECTED = 'matrimony_rejected';
+    const TYPE_MATRIMONY_PENDING = 'matrimony_pending';
+    const TYPE_MATRIMONY_PROFILE_CREATED = 'matrimony_profile_created';
     const TYPE_CONNECTION_REQUEST = 'connection_request';
     const TYPE_CONNECTION_ACCEPTED = 'connection_accepted';
     const TYPE_CONNECTION_REJECTED = 'connection_rejected';
@@ -214,6 +216,8 @@ class Notification extends Model
             self::TYPE_BUSINESS_REJECTED => 'briefcase',
             self::TYPE_MATRIMONY_APPROVED => 'heart',
             self::TYPE_MATRIMONY_REJECTED => 'heart',
+            self::TYPE_MATRIMONY_PENDING => 'heart',
+            self::TYPE_MATRIMONY_PROFILE_CREATED => 'heart',
             self::TYPE_CONNECTION_REQUEST => 'user-plus',
             self::TYPE_CONNECTION_ACCEPTED => 'user-check',
             self::TYPE_CONNECTION_REJECTED => 'user-x',

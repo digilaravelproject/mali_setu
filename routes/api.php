@@ -75,7 +75,7 @@ Route::prefix('business')->group(function () {
 
 // Public matrimony routes (for browsing)
 Route::prefix('matrimony')->group(function () {
-    Route::get('/search', [MatrimonyController::class, 'searchProfiles']);
+    Route::middleware('auth:sanctum')->get('/search', [MatrimonyController::class, 'searchProfiles']);
     // Route::get('/profile/{id}', [MatrimonyController::class, 'showProfile']);
     Route::middleware('auth:sanctum')->get(
         '/profile/{id}',

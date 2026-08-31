@@ -13,6 +13,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
+use App\Services\MatrimonyProfileSearchService;
 
 class SearchController extends Controller
 {
@@ -281,6 +282,12 @@ class SearchController extends Controller
         $query->where('user_id', '!=', $authUserId);
 
         $query->where('approval_status', 'approved');
+
+        app(MatrimonyProfileSearchService::class)->applyDefaultOppositeGender(
+            $query,
+            $request,
+            $request->user()
+        );
 
         $results = $query->latest()->paginate($request->size ?? 20);
 

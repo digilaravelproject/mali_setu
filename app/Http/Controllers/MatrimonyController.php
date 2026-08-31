@@ -14,6 +14,8 @@ use App\Models\Payment;
 use App\Models\Transaction;
 use App\Services\CCAvenue;
 use App\Services\CCAvenuePaymentService;
+use App\Services\MatrimonyProfileSearchService;
+use App\Services\NotificationService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -272,6 +274,8 @@ class MatrimonyController extends Controller
             'longitude' => $request->longitude,
         ]);
 
+        app(NotificationService::class)->notifyMatrimonyProfileCreated($profile);
+
         return redirect()->route('matrimony.subscription')
             ->with('success', 'Matrimony profile created! Please select a subscription plan or skip to proceed.');
     }
@@ -528,6 +532,8 @@ class MatrimonyController extends Controller
             ->where('user_id', '!=', $user->id)
             ->with('user');
 
+        app(MatrimonyProfileSearchService::class)->applyDefaultOppositeGender($query, $request, $user);
+
         // 1. Basic Details
         if ($request->filled('gender')) {
             $query->where(function ($q) use ($request) {
@@ -696,6 +702,12 @@ class MatrimonyController extends Controller
     {
         $user = Auth::user();
         $profile = MatrimonyProfile::with('user')->findOrFail($id);
+
+        if ($profile->user_id !== $user->id
+            && $user->user_type !== 'admin'
+            && $profile->approval_status !== 'approved') {
+            abort(404);
+        }
 
         // Block viewing other users' profiles if not subscribed (except for admins or viewing own profile)
         if ($profile->user_id !== $user->id) {

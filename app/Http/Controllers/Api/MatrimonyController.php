@@ -11,6 +11,7 @@ use App\Models\Notification;
 use App\Models\Cast;
 use App\Models\SubCast;
 use App\Services\NotificationService;
+use App\Services\MatrimonyProfileSearchService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Storage;
@@ -154,18 +155,7 @@ class MatrimonyController extends Controller
 
         \App\Jobs\SendPaymentPendingEmail::dispatch('matrimony', $profile->id)->delay(now()->addMinutes(11));
 
-        // Email: matrimony profile created
-        $this->notifications->createNotification(
-            $user->id,
-            Notification::TYPE_MATRIMONY_APPROVED,
-            'Matrimony profile created',
-            'Your matrimony profile has been created and is pending admin approval.',
-            ['profile_id' => $profile->id],
-            '/matrimony/profile',
-            Notification::PRIORITY_MEDIUM,
-            $profile,
-            ['in_app', 'email']
-        );
+        $this->notifications->notifyMatrimonyProfileCreated($profile);
 
         return response()->json([
             'success' => true,
@@ -430,6 +420,15 @@ class MatrimonyController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'No matrimony profile found'
+            ], 404);
+        }
+
+        if ($profile->user_id !== $request->user()->id
+            && $request->user()->user_type !== 'admin'
+            && $profile->approval_status !== 'approved') {
+            return response()->json([
+                'success' => false,
+                'message' => 'No matrimony profile found',
             ], 404);
         }
 
@@ -736,6 +735,12 @@ class MatrimonyController extends Controller
 
         $query->where('approval_status', 'approved');
 
+        app(MatrimonyProfileSearchService::class)->applyDefaultOppositeGender(
+            $query,
+            $request,
+            $request->user()
+        );
+
         $results = $query->latest()->paginate($request->size ?? 20);
 
         return response()->json(['success' => true, 'data' => $results]);
@@ -747,10 +752,15 @@ class MatrimonyController extends Controller
     public function showProfile_old(Request $request, $id)
     {
         $profile = MatrimonyProfile::with('user')
-            // ->where('approval_status', 'approved')
             ->findOrFail($id);
             
         $authUserId = $request->user()->id;
+
+        if ($profile->user_id !== $authUserId
+            && $request->user()->user_type !== 'admin'
+            && $profile->approval_status !== 'approved') {
+            abort(404);
+        }
         
         if(!empty($profile)){
             
@@ -786,10 +796,15 @@ class MatrimonyController extends Controller
     public function showProfile(Request $request, $id)
     {
         $profile = MatrimonyProfile::with('user')
-            // ->where('approval_status', 'approved')
             ->findOrFail($id);
     
         $authUserId = $request->user()->id;
+
+        if ($profile->user_id !== $authUserId
+            && $request->user()->user_type !== 'admin'
+            && $profile->approval_status !== 'approved') {
+            abort(404);
+        }
     
         if (!empty($profile)) {
     
@@ -841,11 +856,16 @@ class MatrimonyController extends Controller
         //     ->findOrFail($id);
 
         $profile = MatrimonyProfile::with('user')
-            // ->where('approval_status', 'approved')
             ->where('user_id', $id)
         ->firstOrFail();
     
         $authUserId = $request->user()->id;
+
+        if ($profile->user_id !== $authUserId
+            && $request->user()->user_type !== 'admin'
+            && $profile->approval_status !== 'approved') {
+            abort(404);
+        }
     
         if (!empty($profile)) {
     

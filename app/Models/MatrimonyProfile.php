@@ -31,6 +31,10 @@ class MatrimonyProfile extends Model
         'partner_preferences',
         'privacy_settings',
         'approval_status',
+        'approved_at',
+        'approved_by',
+        'rejection_reason',
+        'status',
         'profile_expires_at',
     ];
 
@@ -46,6 +50,7 @@ class MatrimonyProfile extends Model
         'partner_preferences' => 'array',
         'privacy_settings' => 'array',
         'profile_expires_at' => 'datetime',
+        'approved_at' => 'datetime',
     ];
 
     /**

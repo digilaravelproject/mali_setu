@@ -270,7 +270,6 @@ class CCAvenueController extends Controller
                     if ($profile) {
                         $profile->update([
                             'profile_expires_at' => now()->addMonths($transaction->subscription_period ?? 12),
-                            'approval_status' => 'approved',
                         ]);
                     }
 
