@@ -11,6 +11,8 @@ use App\Models\Service;
 use App\Models\Transaction;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\ValidationException;
 
 class BusinessManagementController extends Controller
 {
@@ -384,6 +386,9 @@ class BusinessManagementController extends Controller
 
         if ($request->hasFile('photo')) {
             $validated['photo'] = $request->file('photo')->store('business/photos', 'public');
+            if (! $validated['photo']) {
+                throw ValidationException::withMessages(['photo' => 'The business photo could not be saved. Please try again.']);
+            }
         }
 
         $validated['subscription_status'] = 'trial';
@@ -455,15 +460,22 @@ class BusinessManagementController extends Controller
             'subscription_expires_at' => 'nullable|date',
         ]);
 
+        $oldPhoto = $business->photo;
+        unset($validated['photo']);
+
         if ($request->hasFile('photo')) {
-            // Delete old photo if it exists
-            if ($business->photo && Storage::disk('public')->exists($business->photo)) {
-                Storage::disk('public')->delete($business->photo);
-            }
             $validated['photo'] = $request->file('photo')->store('business/photos', 'public');
+            if (! $validated['photo']) {
+                throw ValidationException::withMessages(['photo' => 'The business photo could not be saved. Please try again.']);
+            }
         }
 
         $business->update($validated);
+
+        // Keep the previous photo until the replacement has been stored and saved.
+        if (isset($validated['photo']) && $oldPhoto && $oldPhoto !== $validated['photo']) {
+            Storage::disk('public')->delete($oldPhoto);
+        }
 
         return redirect()->route('admin.businesses.show', $business->id)
             ->with('success', 'Business updated successfully.');

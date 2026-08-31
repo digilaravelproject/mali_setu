@@ -613,35 +613,10 @@ class AdminDashboardController extends Controller
 
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('admin.pdf.report_template', compact('title', 'headers', 'rows', 'summary'));
         
-        // Save PDF to a temporary file
-        $tempPdfPath = tempnam(sys_get_temp_dir(), 'pdf_report');
-        file_put_contents($tempPdfPath, $pdf->output());
+        // Protect the PDF itself, without depending on ZipArchive or temporary archives.
+        $pdf->setEncryption(date('dmY'));
 
-        // Create password-protected ZIP archive
-        $password = date('dmY');
-        $tempZipPath = tempnam(sys_get_temp_dir(), 'zip_report');
-        $zip = new \ZipArchive();
-        if ($zip->open($tempZipPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) === TRUE) {
-            $zip->setPassword($password);
-            
-            // PDF file name inside the zip
-            $pdfFileName = strtolower(str_replace(' ', '_', $originalTitle)) . '_' . date('Ymd') . '.pdf';
-            
-            $zip->addFile($tempPdfPath, $pdfFileName);
-            if (defined('ZipArchive::EM_AES_256')) {
-                $zip->setEncryptionName($pdfFileName, \ZipArchive::EM_AES_256);
-            } else {
-                $zip->setEncryptionName($pdfFileName, \ZipArchive::EM_TRAD_PKWARE);
-            }
-            $zip->close();
-        }
-        
-        // Delete temporary PDF file
-        @unlink($tempPdfPath);
-
-        return response()->download($tempZipPath, strtolower(str_replace(' ', '_', $originalTitle)) . '_' . date('Ymd') . '.zip', [
-            'Content-Type' => 'application/zip',
-        ])->deleteFileAfterSend(true);
+        return $pdf->download(strtolower(str_replace(' ', '_', $originalTitle)) . '_' . date('Ymd') . '.pdf');
     }
 
     /**
@@ -786,7 +761,7 @@ class AdminDashboardController extends Controller
                     'email' => $user->email,
                     'phone' => $user->phone ?? 'N/A',
                     'status' => $statusBadge,
-                    'joined' => $user->created_at->format('Y-m-d')
+                    'joined' => $user->created_at?->format('Y-m-d') ?? 'N/A'
                 ];
             }
             $summary = [
@@ -799,7 +774,7 @@ class AdminDashboardController extends Controller
             $title = "Business Directory Report";
             $headers = ['ID', 'Business Name', 'Owner', 'Category', 'Verification', 'Subscription', 'Start Date', 'End Date'];
             
-            $query = Business::with('user');
+            $query = Business::with(['user', 'category']);
             $totalCount = Business::query();
             $approvedCount = Business::where('verification_status', 'approved');
             $pendingCount = Business::where('verification_status', 'pending');
@@ -870,7 +845,7 @@ class AdminDashboardController extends Controller
                     'gender' => ucfirst($p->gender ?? 'N/A'),
                     'caste' => $personal['caste'] ?? 'N/A',
                     'status' => ucfirst($p->approval_status),
-                    'registered' => $p->created_at->format('Y-m-d'),
+                    'registered' => $p->created_at?->format('Y-m-d') ?? 'N/A',
                     'start_date' => $p->created_at ? $p->created_at->format('Y-m-d') : 'N/A',
                     'end_date' => $p->profile_expires_at ? $p->profile_expires_at->format('Y-m-d') : 'N/A'
                 ];
@@ -913,7 +888,7 @@ class AdminDashboardController extends Controller
                     'amount' => 'INR ' . number_format($pay->amount, 2),
                     'purpose' => $pay->purpose ?? 'General',
                     'status' => ucfirst($pay->status),
-                    'date' => $pay->created_at->format('Y-m-d'),
+                    'date' => $pay->created_at?->format('Y-m-d') ?? 'N/A',
                     'start_date' => $pay->subscription_start_date ? \Carbon\Carbon::parse($pay->subscription_start_date)->format('Y-m-d') : 'N/A',
                     'end_date' => $pay->subscription_end_date ? \Carbon\Carbon::parse($pay->subscription_end_date)->format('Y-m-d') : 'N/A'
                 ];
