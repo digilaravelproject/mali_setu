@@ -58,7 +58,7 @@ Route::prefix('auth')->group(function () {
 
 // Volunteer Routes
 Route::prefix('banner')->group(function () {
-    Route::get('/', [HomepageHeroController::class, 'index']);   // list (paginated)
+    Route::get('/', [HomepageHeroController::class, 'index']);   // list
     Route::get('/{hero}', [HomepageHeroController::class, 'show']); // single
 });
 
