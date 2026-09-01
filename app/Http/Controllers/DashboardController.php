@@ -70,7 +70,7 @@ class DashboardController extends Controller
         // $banners = \App\Models\HomepageHero::all();
         $banners = \App\Models\HomepageHero::whereNotNull('web_image_path')
             ->where('web_image_path', '!=', '')
-            ->select('id', 'title', 'url', 'web_image_path', 'created_at', 'updated_at')
+            ->select('id', 'title', 'url', 'image_path', 'web_image_path', 'created_at', 'updated_at')
             ->get();
         $featuredBusinesses = \App\Models\Business::where('verification_status', 'approved')
             ->with(['category', 'products', 'services'])

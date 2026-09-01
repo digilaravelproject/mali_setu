@@ -289,7 +289,14 @@ class SearchController extends Controller
             $request->user()
         );
 
-        $results = $query->latest()->paginate($request->size ?? 20);
+        // The mobile client currently consumes the complete result set. Keep the
+        // paginator response shape and explicit page-size support, but do not
+        // silently truncate an unpaginated request to the first 20 profiles.
+        $perPage = $request->filled('size')
+            ? max(1, (int) $request->input('size'))
+            : max(1, (clone $query)->count());
+
+        $results = $query->latest()->paginate($perPage);
 
         $filtered = $results->getCollection()->filter(function ($usr) use ($authUserId) {
         

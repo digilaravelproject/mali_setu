@@ -47,6 +47,19 @@ class MatrimonyProfileRulesTest extends TestCase
             $table->timestamp('profile_expires_at')->nullable();
             $table->timestamps();
         });
+        Schema::create('connection_requests', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('sender_id');
+            $table->unsignedBigInteger('receiver_id');
+            $table->string('status')->default('pending');
+            $table->timestamps();
+        });
+        Schema::create('chat_conversations', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('user1_id');
+            $table->unsignedBigInteger('user2_id');
+            $table->timestamps();
+        });
         Schema::create('notifications', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('user_id');
@@ -125,6 +138,36 @@ class MatrimonyProfileRulesTest extends TestCase
         );
 
         $this->assertSame([2, 3, 4], $query->orderBy('id')->pluck('id')->all());
+    }
+
+    public function test_api_matrimony_search_returns_all_matches_when_size_is_not_supplied(): void
+    {
+        foreach (range(5, 29) as $id) {
+            DB::table('users')->insert([
+                'id' => $id,
+                'name' => "Female {$id}",
+                'email' => "user{$id}@example.test",
+                'user_type' => 'matrimony',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+            DB::table('matrimony_profiles')->insert([
+                'id' => $id,
+                'user_id' => $id,
+                'personal_details' => json_encode(['name' => "Female {$id}", 'gender' => 'female']),
+                'approval_status' => 'approved',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+
+        $response = $this->actingAs(User::findOrFail(1), 'sanctum')
+            ->postJson('/api/search/matrimony', []);
+
+        $response->assertOk()
+            ->assertJsonPath('data.total', 27)
+            ->assertJsonPath('data.per_page', 27)
+            ->assertJsonCount(27, 'data.data');
     }
 
     public function test_new_profile_notifies_creator_and_all_existing_matrimony_users(): void
