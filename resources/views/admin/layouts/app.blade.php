@@ -401,6 +401,13 @@
             </div>
             
             <div class="nav-item">
+                <a href="{{ route('admin.app-versions.index') }}" class="nav-link {{ request()->routeIs('admin.app-versions.*') ? 'active' : '' }}">
+                    <i class="fas fa-mobile-screen-button"></i>
+                    App Version
+                </a>
+            </div>
+
+            <div class="nav-item">
                 <a href="{{ route('admin.settings') }}" class="nav-link {{ request()->routeIs('admin.settings') ? 'active' : '' }}">
                     <i class="fas fa-cog"></i>
                     Settings

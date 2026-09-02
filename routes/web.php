@@ -17,6 +17,8 @@ use App\Http\Controllers\Admin\BlogCategoryManagementController;
 use App\Http\Controllers\Admin\BlogCommentManagementController;
 use App\Http\Controllers\Admin\EducationManagementController;
 use App\Http\Controllers\Admin\PlanManagementController;
+use App\Http\Controllers\Admin\AppVersionController;
+use App\Http\Controllers\AppUpdateController;
 use Illuminate\Support\Facades\Mail;
 
 Route::get('/test-mail', function () {
@@ -41,6 +43,9 @@ use App\Http\Controllers\VolunteerController;
 Route::get('/', function () {
     return view('landing_page');
 });
+
+// Public device-aware app store link.
+Route::get('/app_update', AppUpdateController::class)->name('app.update');
 
 // Route::get('/blog/{id}', [BlogManagementController::class, 'show'])
 //     ->name('blog.show');
@@ -427,6 +432,8 @@ Route::prefix('admin')->name('admin.')->group(function () {
          // Settings and Reports
          Route::get('settings', [AdminDashboardController::class, 'settings'])->name('settings');
          Route::post('settings', [AdminDashboardController::class, 'updateSettings'])->name('settings.update');
+         Route::get('app-versions', [AppVersionController::class, 'index'])->name('app-versions.index');
+         Route::put('app-versions/{appVersion}', [AppVersionController::class, 'update'])->name('app-versions.update');
          Route::get('reports', [AdminDashboardController::class, 'reports'])->name('reports');
          Route::get('reports/download/{type}', [AdminDashboardController::class, 'downloadReportPdf'])->name('reports.download');
          Route::get('reports/download-xls/{type}', [AdminDashboardController::class, 'downloadReportXls'])->name('reports.download.xls');
