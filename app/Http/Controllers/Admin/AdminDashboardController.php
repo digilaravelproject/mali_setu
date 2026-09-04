@@ -611,16 +611,22 @@ class AdminDashboardController extends Controller
             $title .= " (Up to " . date('Y-m-d', strtotime($endDate)) . ")";
         }
 
-        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('admin.pdf.report_template', compact('title', 'headers', 'rows', 'summary'));
-        
-        // Protect the PDF itself, without depending on ZipArchive or temporary archives.
-        $pdf->setEncryption(date('dmY'));
+        $rows = array_map(fn (array $row) => array_map(
+            fn ($value) => $this->formatReportValue($value),
+            $row
+        ), $rows);
+        $summary = array_map(fn ($value) => $this->formatReportValue($value), $summary);
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView(
+            'admin.pdf.report_template',
+            compact('title', 'headers', 'rows', 'summary')
+        )->setPaper('a4', count($headers) > 8 ? 'landscape' : 'portrait');
 
         return $pdf->download(strtolower(str_replace(' ', '_', $originalTitle)) . '_' . date('Ymd') . '.pdf');
     }
 
     /**
-     * Download list report as password protected XLS zip
+     * Download list report directly as an unprotected XLS file.
      */
     public function downloadReportXls(Request $request, $type)
     {
@@ -638,29 +644,38 @@ class AdminDashboardController extends Controller
             $title .= " (Up to " . date('Y-m-d', strtotime($endDate)) . ")";
         }
 
-        // Generate XLS using PhpSpreadsheet
         $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
         $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Report');
         
         // Title
         $sheet->setCellValue('A1', $title);
         $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(14);
         
         // Headers
-        $col = 'A';
-        foreach ($headers as $header) {
-            $sheet->setCellValue($col . '3', $header);
-            $sheet->getStyle($col . '3')->getFont()->setBold(true);
-            $col++;
+        foreach ($headers as $columnIndex => $header) {
+            $cell = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($columnIndex + 1) . '3';
+            $sheet->setCellValue($cell, $header);
+            $sheet->getStyle($cell)->getFont()->setBold(true);
         }
         
         // Rows
         $rowNum = 4;
         foreach ($rows as $row) {
-            $col = 'A';
-            foreach ($row as $val) {
-                $sheet->setCellValue($col . $rowNum, strip_tags($val));
-                $col++;
+            foreach (array_values($row) as $columnIndex => $value) {
+                $cell = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($columnIndex + 1) . $rowNum;
+                $value = $this->formatReportValue($value);
+
+                if (is_int($value) || is_float($value)) {
+                    $sheet->setCellValue($cell, $value);
+                } else {
+                    // Explicit text keeps phone numbers, pincodes and long IDs out of scientific notation.
+                    $sheet->setCellValueExplicit(
+                        $cell,
+                        strip_tags((string) $value),
+                        \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING
+                    );
+                }
             }
             $rowNum++;
         }
@@ -673,45 +688,35 @@ class AdminDashboardController extends Controller
         
         foreach ($summary as $key => $val) {
             $sheet->setCellValue('A' . $rowNum, $key);
-            $sheet->setCellValue('B' . $rowNum, strip_tags($val));
+            $sheet->setCellValue('B' . $rowNum, strip_tags((string) $this->formatReportValue($val)));
             $sheet->getStyle('A' . $rowNum)->getFont()->setBold(true);
             $rowNum++;
         }
 
-        // Set password for Excel sheet protection
-        $password = date('dmY');
-        $sheet->getProtection()->setPassword($password);
-        $sheet->getProtection()->setSheet(true);
+        $lastColumn = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex(max(count($headers), 2));
+        $sheet->freezePane('A4');
+        $sheet->setAutoFilter("A3:{$lastColumn}3");
+        $sheet->getStyle("A3:{$lastColumn}3")->getFill()
+            ->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)
+            ->getStartColor()->setARGB('FF0D6EFD');
+        $sheet->getStyle("A3:{$lastColumn}3")->getFont()->getColor()->setARGB('FFFFFFFF');
+        $sheet->getStyle("A3:{$lastColumn}{$rowNum}")->getAlignment()->setVertical('top')->setWrapText(true);
 
-        // Save to temporary XLS file
-        $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xls($spreadsheet);
-        $tempXlsPath = tempnam(sys_get_temp_dir(), 'xls_report');
-        $writer->save($tempXlsPath);
-
-        // Create password-protected ZIP archive
-        $tempZipPath = tempnam(sys_get_temp_dir(), 'zip_report');
-        $zip = new \ZipArchive();
-        if ($zip->open($tempZipPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) === TRUE) {
-            $zip->setPassword($password);
-            
-            // XLS file name in the zip
-            $xlsFileName = strtolower(str_replace(' ', '_', $originalTitle)) . '_' . date('Ymd') . '.xls';
-            
-            $zip->addFile($tempXlsPath, $xlsFileName);
-            if (defined('ZipArchive::EM_AES_256')) {
-                $zip->setEncryptionName($xlsFileName, \ZipArchive::EM_AES_256);
-            } else {
-                $zip->setEncryptionName($xlsFileName, \ZipArchive::EM_TRAD_PKWARE);
-            }
-            $zip->close();
+        foreach (range(1, max(count($headers), 2)) as $columnIndex) {
+            $column = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($columnIndex);
+            $sheet->getColumnDimension($column)->setAutoSize(true);
         }
-        
-        // Delete temporary XLS file
-        @unlink($tempXlsPath);
 
-        return response()->download($tempZipPath, strtolower(str_replace(' ', '_', $originalTitle)) . '_' . date('Ymd') . '.zip', [
-            'Content-Type' => 'application/zip',
-        ])->deleteFileAfterSend(true);
+        $fileName = strtolower(str_replace(' ', '_', $originalTitle)) . '_' . date('Ymd') . '.xls';
+
+        return response()->streamDownload(function () use ($spreadsheet) {
+            $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xls($spreadsheet);
+            $writer->save('php://output');
+            $spreadsheet->disconnectWorksheets();
+        }, $fileName, [
+            'Content-Type' => 'application/vnd.ms-excel',
+            'Cache-Control' => 'max-age=0, no-cache, no-store, must-revalidate',
+        ]);
     }
 
     /**
@@ -726,13 +731,22 @@ class AdminDashboardController extends Controller
 
         if ($type === 'users') {
             $title = "Users Registration Report";
-            $headers = ['ID', 'Name', 'Email', 'Phone', 'Status', 'Joined'];
+            $headers = [
+                'ID', 'Name', 'Email', 'Phone', 'Age', 'Date of Birth', 'Occupation',
+                'Company', 'Department', 'Designation', 'User Type', 'Account Status',
+                'Caste Verification', 'Respected Person', 'Respected Person Phone',
+                'Referral Code', 'Address', 'Nearby Location', 'Road Number', 'Sector',
+                'Village', 'City', 'District', 'State', 'Country', 'Pincode', 'Latitude',
+                'Longitude', 'Email Verified At', 'Blog Access', 'Admin Notes', 'Joined',
+                'Last Updated',
+            ];
             
             $query = User::query();
             $totalCount = User::query();
             $activeCount = User::where('status', 'active');
             $inactiveCount = User::where('status', 'inactive');
             $suspendedCount = User::where('status', 'suspended');
+            $bannedCount = User::where('status', 'banned');
             
             if ($startDate) {
                 $query->whereDate('created_at', '>=', $startDate);
@@ -740,6 +754,7 @@ class AdminDashboardController extends Controller
                 $activeCount->whereDate('created_at', '>=', $startDate);
                 $inactiveCount->whereDate('created_at', '>=', $startDate);
                 $suspendedCount->whereDate('created_at', '>=', $startDate);
+                $bannedCount->whereDate('created_at', '>=', $startDate);
             }
             if ($endDate) {
                 $query->whereDate('created_at', '<=', $endDate);
@@ -747,21 +762,45 @@ class AdminDashboardController extends Controller
                 $activeCount->whereDate('created_at', '<=', $endDate);
                 $inactiveCount->whereDate('created_at', '<=', $endDate);
                 $suspendedCount->whereDate('created_at', '<=', $endDate);
+                $bannedCount->whereDate('created_at', '<=', $endDate);
             }
 
             $users = $query->latest()->get();
             foreach ($users as $user) {
-                $statusBadge = $user->status === 'active' 
-                    ? '<span style="color: green; font-weight: bold;">Active</span>' 
-                    : ($user->status === 'inactive' ? '<span style="color: gray;">Inactive</span>' : '<span style="color: red;">Suspended</span>');
-                
                 $rows[] = [
                     'id' => $user->id,
                     'name' => $user->name,
                     'email' => $user->email,
-                    'phone' => $user->phone ?? 'N/A',
-                    'status' => $statusBadge,
-                    'joined' => $user->created_at?->format('Y-m-d') ?? 'N/A'
+                    'phone' => $user->phone,
+                    'age' => $user->age,
+                    'dob' => $user->dob,
+                    'occupation' => $user->occupation,
+                    'company' => $user->company_name,
+                    'department' => $user->dept_name,
+                    'designation' => $user->designation,
+                    'user_type' => ucfirst((string) $user->user_type),
+                    'status' => ucfirst((string) $user->status),
+                    'caste_verification' => ucfirst((string) $user->caste_verification_status),
+                    'respected_person' => $user->respected_person_name,
+                    'respected_person_phone' => $user->respected_person_mobile_number,
+                    'referral_code' => $user->reffral_code,
+                    'address' => $user->address,
+                    'nearby_location' => $user->nearby_location,
+                    'road_number' => $user->road_number,
+                    'sector' => $user->sector,
+                    'village' => $user->village,
+                    'city' => $user->city,
+                    'district' => $user->district,
+                    'state' => $user->state,
+                    'country' => $user->country,
+                    'pincode' => $user->pincode,
+                    'latitude' => $user->latitude,
+                    'longitude' => $user->longitude,
+                    'email_verified_at' => $user->email_verified_at,
+                    'blog_access' => $user->blog_access,
+                    'admin_notes' => $user->admin_notes,
+                    'joined' => $user->created_at,
+                    'updated' => $user->updated_at,
                 ];
             }
             $summary = [
@@ -769,10 +808,19 @@ class AdminDashboardController extends Controller
                 'Active Users' => $activeCount->count(),
                 'Inactive Users' => $inactiveCount->count(),
                 'Suspended Users' => $suspendedCount->count(),
+                'Banned Users' => $bannedCount->count(),
             ];
         } elseif ($type === 'businesses') {
             $title = "Business Directory Report";
-            $headers = ['ID', 'Business Name', 'Owner', 'Category', 'Verification', 'Subscription', 'Start Date', 'End Date'];
+            $headers = [
+                'ID', 'Business Name', 'Business Type', 'Owner ID', 'Owner Name', 'Owner Email',
+                'Owner Phone', 'Category', 'Description', 'Contact Phone', 'Contact Email',
+                'Website', 'Address', 'Village', 'Taluka', 'City', 'District', 'State',
+                'Country', 'Pincode', 'Latitude', 'Longitude', 'Opening Time', 'Closing Time',
+                'Verification', 'Verified At', 'Verified By', 'Rejection Reason', 'Account Status',
+                'Subscription', 'Subscription Expires', 'Job Posting Limit', 'Photos', 'Created',
+                'Last Updated',
+            ];
             
             $query = Business::with(['user', 'category']);
             $totalCount = Business::query();
@@ -800,12 +848,39 @@ class AdminDashboardController extends Controller
                 $rows[] = [
                     'id' => $b->id,
                     'name' => $b->business_name,
-                    'owner' => $b->user?->name ?? 'N/A',
-                    'category' => $b->category?->name ?? 'N/A',
-                    'verification' => ucfirst($b->verification_status),
-                    'subscription' => ucfirst($b->subscription_status),
-                    'start_date' => $b->created_at ? $b->created_at->format('Y-m-d') : 'N/A',
-                    'end_date' => $b->subscription_expires_at ? $b->subscription_expires_at->format('Y-m-d') : 'N/A'
+                    'type' => $b->business_type,
+                    'owner_id' => $b->user_id,
+                    'owner' => $b->user?->name,
+                    'owner_email' => $b->user?->email,
+                    'owner_phone' => $b->user?->phone,
+                    'category' => $b->category?->name,
+                    'description' => $b->description,
+                    'contact_phone' => $b->contact_phone,
+                    'contact_email' => $b->contact_email,
+                    'website' => $b->website,
+                    'address' => $b->address,
+                    'village' => $b->village,
+                    'taluka' => $b->taluka,
+                    'city' => $b->city,
+                    'district' => $b->district,
+                    'state' => $b->state,
+                    'country' => $b->country,
+                    'pincode' => $b->pincode,
+                    'latitude' => $b->latitude,
+                    'longitude' => $b->longitude,
+                    'opening_time' => $b->opening_time,
+                    'closing_time' => $b->closing_time,
+                    'verification' => ucfirst((string) $b->verification_status),
+                    'verified_at' => $b->verified_at,
+                    'verified_by' => $b->verified_by,
+                    'rejection_reason' => $b->rejection_reason,
+                    'status' => ucfirst((string) $b->status),
+                    'subscription' => ucfirst((string) $b->subscription_status),
+                    'subscription_expires' => $b->subscription_expires_at,
+                    'job_posting_limit' => $b->job_posting_limit,
+                    'photos' => $b->photo,
+                    'created' => $b->created_at,
+                    'updated' => $b->updated_at,
                 ];
             }
             $summary = [
@@ -816,7 +891,14 @@ class AdminDashboardController extends Controller
             ];
         } elseif ($type === 'matrimony') {
             $title = "Matrimonial Profiles Report";
-            $headers = ['ID', 'Profile Name', 'Gender', 'Caste', 'Status', 'Registered', 'Start Date', 'End Date'];
+            $headers = [
+                'ID', 'User ID', 'Profile Name', 'Email', 'Phone', 'Gender', 'Date of Birth',
+                'Time of Birth', 'Age', 'Height', 'Weight', 'Complexion', 'Physical Status',
+                'Personal Details', 'Family Details', 'Education Details', 'Professional Details',
+                'Lifestyle Details', 'Location Details', 'Religious Details', 'Partner Preferences',
+                'Privacy Settings', 'Approval Status', 'Approved At', 'Approved By',
+                'Rejection Reason', 'Account Status', 'Profile Expires', 'Registered', 'Last Updated',
+            ];
             
             $query = MatrimonyProfile::with('user');
             $totalCount = MatrimonyProfile::query();
@@ -838,16 +920,37 @@ class AdminDashboardController extends Controller
 
             $profiles = $query->latest()->get();
             foreach ($profiles as $p) {
-                $personal = $p->personal_details ?? [];
                 $rows[] = [
                     'id' => $p->id,
-                    'name' => $p->user?->name ?? 'N/A',
-                    'gender' => ucfirst($p->gender ?? 'N/A'),
-                    'caste' => $personal['caste'] ?? 'N/A',
-                    'status' => ucfirst($p->approval_status),
-                    'registered' => $p->created_at?->format('Y-m-d') ?? 'N/A',
-                    'start_date' => $p->created_at ? $p->created_at->format('Y-m-d') : 'N/A',
-                    'end_date' => $p->profile_expires_at ? $p->profile_expires_at->format('Y-m-d') : 'N/A'
+                    'user_id' => $p->user_id,
+                    'name' => $p->user?->name,
+                    'email' => $p->user?->email,
+                    'phone' => $p->user?->phone,
+                    'gender' => ucfirst((string) $p->gender),
+                    'date_of_birth' => $p->date_of_birth,
+                    'time_of_birth' => $p->time_of_birth,
+                    'age' => $p->age,
+                    'height' => $p->height,
+                    'weight' => $p->weight,
+                    'complexion' => $p->complexion,
+                    'physical_status' => $p->physical_status,
+                    'personal_details' => $p->personal_details,
+                    'family_details' => $p->family_details,
+                    'education_details' => $p->education_details,
+                    'professional_details' => $p->professional_details,
+                    'lifestyle_details' => $p->lifestyle_details,
+                    'location_details' => $p->location_details,
+                    'religious_details' => $p->religious_details,
+                    'partner_preferences' => $p->partner_preferences,
+                    'privacy_settings' => $p->privacy_settings,
+                    'approval_status' => ucfirst((string) $p->approval_status),
+                    'approved_at' => $p->approved_at,
+                    'approved_by' => $p->approved_by,
+                    'rejection_reason' => $p->rejection_reason,
+                    'status' => ucfirst((string) $p->status),
+                    'profile_expires' => $p->profile_expires_at,
+                    'registered' => $p->created_at,
+                    'updated' => $p->updated_at,
                 ];
             }
             $summary = [
@@ -857,7 +960,13 @@ class AdminDashboardController extends Controller
             ];
         } elseif ($type === 'payments') {
             $title = "Payments & Revenue Report";
-            $headers = ['Transaction ID', 'User', 'Amount', 'Purpose', 'Status', 'Date', 'Start Date', 'End Date'];
+            $headers = [
+                'ID', 'Payment ID', 'Order ID', 'Transaction ID', 'User ID', 'User Name',
+                'User Email', 'User Phone', 'Payment Type', 'Amount', 'Currency', 'Status',
+                'Payment Method', 'Description', 'Paid At', 'Refund Amount', 'Refunded At',
+                'Refund Reason', 'Receipt Number', 'Metadata', 'Subscription Start',
+                'Subscription End', 'Created', 'Last Updated',
+            ];
             
             $query = \App\Models\Payment::with(['user.business', 'user.matrimonyProfile']);
             $totalCount = \App\Models\Payment::query();
@@ -883,14 +992,30 @@ class AdminDashboardController extends Controller
             $payments = $query->latest()->get();
             foreach ($payments as $pay) {
                 $rows[] = [
-                    'id' => $pay->transaction_id ?? 'N/A',
+                    'id' => $pay->id,
+                    'payment_id' => $pay->payment_id,
+                    'order_id' => $pay->order_id,
+                    'transaction_id' => $pay->transaction_id,
+                    'user_id' => $pay->user_id,
                     'user' => $pay->user?->name ?? 'Deleted User',
-                    'amount' => 'INR ' . number_format($pay->amount, 2),
-                    'purpose' => $pay->purpose ?? 'General',
-                    'status' => ucfirst($pay->status),
-                    'date' => $pay->created_at?->format('Y-m-d') ?? 'N/A',
-                    'start_date' => $pay->subscription_start_date ? \Carbon\Carbon::parse($pay->subscription_start_date)->format('Y-m-d') : 'N/A',
-                    'end_date' => $pay->subscription_end_date ? \Carbon\Carbon::parse($pay->subscription_end_date)->format('Y-m-d') : 'N/A'
+                    'email' => $pay->user?->email,
+                    'phone' => $pay->user?->phone,
+                    'payment_type' => $pay->payment_type,
+                    'amount' => (float) $pay->amount,
+                    'currency' => $pay->currency,
+                    'status' => ucfirst((string) $pay->status),
+                    'payment_method' => $pay->payment_method,
+                    'description' => $pay->description,
+                    'paid_at' => $pay->paid_at,
+                    'refund_amount' => $pay->refund_amount === null ? null : (float) $pay->refund_amount,
+                    'refunded_at' => $pay->refunded_at,
+                    'refund_reason' => $pay->refund_reason,
+                    'receipt_number' => $pay->receipt_number,
+                    'metadata' => $pay->metadata,
+                    'subscription_start' => $pay->subscription_start_date,
+                    'subscription_end' => $pay->subscription_end_date,
+                    'created' => $pay->created_at,
+                    'updated' => $pay->updated_at,
                 ];
             }
             $summary = [
@@ -902,5 +1027,34 @@ class AdminDashboardController extends Controller
         }
 
         return [$title, $headers, $rows, $summary];
+    }
+
+    /**
+     * Convert report values to readable scalar content without exposing credentials.
+     */
+    private function formatReportValue($value): string|int|float
+    {
+        if ($value instanceof \DateTimeInterface) {
+            return $value->format('Y-m-d H:i:s');
+        }
+
+        if (is_bool($value)) {
+            return $value ? 'Yes' : 'No';
+        }
+
+        if (is_array($value)) {
+            $flattened = [];
+            array_walk_recursive($value, function ($item, $key) use (&$flattened) {
+                $flattened[] = ucwords(str_replace('_', ' ', (string) $key)) . ': ' . $this->formatReportValue($item);
+            });
+
+            return $flattened ? implode('; ', $flattened) : 'N/A';
+        }
+
+        if ($value === null || $value === '') {
+            return 'N/A';
+        }
+
+        return is_int($value) || is_float($value) ? $value : (string) $value;
     }
 }

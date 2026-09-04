@@ -80,6 +80,38 @@
         .report-table tr:nth-child(even) {
             background-color: #f8f9fa;
         }
+        .record-block {
+            margin: 0 0 10px;
+            page-break-inside: avoid;
+        }
+        .record-heading {
+            background-color: #0d6efd;
+            color: #fff;
+            font-size: 10px;
+            font-weight: bold;
+            padding: 4px 6px;
+        }
+        .detail-table {
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: fixed;
+            font-size: 8px;
+        }
+        .detail-table td {
+            border: 1px solid #dee2e6;
+            padding: 3px 4px;
+            vertical-align: top;
+            overflow-wrap: anywhere;
+        }
+        .detail-table td.label {
+            width: 11%;
+            background-color: #f1f3f5;
+            font-weight: bold;
+            color: #444;
+        }
+        .detail-table td.value {
+            width: 22%;
+        }
         .text-right {
             text-align: right;
         }
@@ -147,6 +179,7 @@
     </div>
     @endif
 
+    @if(count($headers) <= 10)
     <table class="report-table">
         <thead>
             <tr>
@@ -163,7 +196,7 @@
                     <tr>
                         @foreach($row as $cellKey => $cellValue)
                             <td class="{{ str_contains(strtolower($cellKey), 'amount') || str_contains(strtolower($cellKey), 'fee') || str_contains(strtolower($cellKey), 'revenue') ? 'text-right' : '' }}">
-                                {!! $cellValue !!}
+                                {{ $cellValue }}
                             </td>
                         @endforeach
                     </tr>
@@ -177,6 +210,36 @@
             @endif
         </tbody>
     </table>
+    @else
+        @forelse($rows as $row)
+            @php
+                $detailPairs = [];
+                foreach (array_values($row) as $index => $cellValue) {
+                    if ($cellValue !== 'N/A' && $cellValue !== '') {
+                        $detailPairs[] = [$headers[$index] ?? ('Field ' . ($index + 1)), $cellValue];
+                    }
+                }
+            @endphp
+            <div class="record-block">
+                <div class="record-heading">Record {{ $loop->iteration }}</div>
+                <table class="detail-table">
+                    @foreach(array_chunk($detailPairs, 3) as $pairGroup)
+                        <tr>
+                            @foreach($pairGroup as [$label, $value])
+                                <td class="label">{{ $label }}</td>
+                                <td class="value">{{ $value }}</td>
+                            @endforeach
+                            @for($i = count($pairGroup); $i < 3; $i++)
+                                <td class="label"></td><td class="value"></td>
+                            @endfor
+                        </tr>
+                    @endforeach
+                </table>
+            </div>
+        @empty
+            <div style="text-align: center; padding: 15px;">No records found for this report period.</div>
+        @endforelse
+    @endif
 
     <div class="footer">
         Generated automatically by Mali Setu Admin System on {{ date('Y-m-d H:i:s') }}

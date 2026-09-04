@@ -178,7 +178,59 @@ class AdminBusinessAndReportTest extends TestCase
         $response->assertOk()->assertHeader('Content-Type', 'application/pdf');
         $this->assertStringContainsString('attachment;', $response->headers->get('Content-Disposition'));
         $this->assertStringStartsWith('%PDF-', $response->getContent());
-        $this->assertStringContainsString('/Encrypt', $response->getContent());
+        $this->assertStringNotContainsString('/Encrypt', $response->getContent());
+    }
+
+    public static function xlsReportTypes(): array
+    {
+        return [
+            ['users', 'Admin Notes'],
+            ['businesses', 'Contact Email'],
+            ['matrimony', 'Partner Preferences'],
+            ['payments', 'Payment Method'],
+        ];
+    }
+
+    #[DataProvider('xlsReportTypes')]
+    public function test_reports_download_as_direct_unprotected_xls_with_complete_headers(string $type, string $expectedHeader): void
+    {
+        DB::table('users')->insert([
+            'id' => 2,
+            'name' => 'Legacy User',
+            'email' => 'legacy@example.test',
+            'phone' => '919876543210',
+            'created_at' => '2026-09-04 10:00:00',
+        ]);
+        DB::table('businesses')->insert($this->businessData());
+        DB::table('matrimony_profiles')->insert(['user_id' => 2]);
+        DB::table('payments')->insert(['user_id' => 2, 'amount' => 10]);
+
+        $response = $this->get(route('admin.reports.download.xls', $type));
+        $response->assertOk()->assertHeader('Content-Type', 'application/vnd.ms-excel');
+        $disposition = $response->headers->get('Content-Disposition');
+        $this->assertStringContainsString('.xls', $disposition);
+        $this->assertStringNotContainsString('.zip', $disposition);
+
+        $content = $response->streamedContent();
+        $this->assertStringStartsWith("\xD0\xCF\x11\xE0", $content);
+
+        $path = tempnam(sys_get_temp_dir(), 'report_test_');
+        file_put_contents($path, $content);
+        try {
+            $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load($path);
+            $sheet = $spreadsheet->getActiveSheet();
+            $headers = $sheet->rangeToArray('A3:' . $sheet->getHighestColumn() . '3')[0];
+
+            $this->assertContains($expectedHeader, $headers);
+            $this->assertNotTrue($sheet->getProtection()->getSheet());
+            if ($type === 'users') {
+                $this->assertSame('919876543210', $sheet->getCell('D4')->getValue());
+            }
+
+            $spreadsheet->disconnectWorksheets();
+        } finally {
+            @unlink($path);
+        }
     }
 
     #[DataProvider('reportTypes')]

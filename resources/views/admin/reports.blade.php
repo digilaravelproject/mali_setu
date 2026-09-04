@@ -1,7 +1,7 @@
 @extends('admin.layouts.app')
 
 @section('title', 'Reports')
-@section('page-title', 'PDF Reports')
+@section('page-title', 'Reports')
 
 @section('content')
 <div class="row mb-4">
@@ -9,8 +9,8 @@
         <div class="card shadow-sm border-0">
             <div class="card-body bg-light p-4 rounded">
                 <h4 class="text-primary fw-bold mb-2">System Reports Dashboard</h4>
-                <p class="text-muted mb-0">Generate and download comprehensive PDF reports of the platform's key operational modules.</p>
-                <p class="text-muted small mt-2 mb-0">PDF reports download directly as password-protected PDF files. The password is the download date in DDMMYYYY format (for example, {{ date('dmY') }} today).</p>
+                <p class="text-muted mb-0">Generate and download complete PDF or Excel reports for the platform's key operational modules.</p>
+                <p class="text-muted small mt-2 mb-0">PDF and XLS reports download directly. Excel files are not zipped and do not require a password.</p>
             </div>
         </div>
     </div>
