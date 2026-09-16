@@ -7,6 +7,7 @@ use App\Models\User;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -53,6 +54,8 @@ class AdminBusinessAndReportTest extends TestCase
                 $table->string($column);
             }
             $table->string('photo')->nullable();
+            $table->decimal('latitude', 10, 8)->nullable();
+            $table->decimal('longitude', 11, 8)->nullable();
             $table->string('subscription_status')->default('trial');
             $table->timestamp('subscription_expires_at')->nullable();
             $table->timestamps();
@@ -105,6 +108,47 @@ class AdminBusinessAndReportTest extends TestCase
         $business = Business::firstOrFail();
         $response->assertRedirect(route('admin.businesses.show', $business));
         Storage::disk('public')->assertExists($business->photo);
+    }
+
+    public function test_admin_can_resolve_a_pincode_to_coordinates(): void
+    {
+        Http::fake([
+            'nominatim.openstreetmap.org/*' => Http::response([
+                ['lat' => '18.5204303', 'lon' => '73.8567437'],
+            ]),
+        ]);
+
+        $this->getJson(route('admin.businesses.geocode-pincode', ['pincode' => '411001']))
+            ->assertOk()
+            ->assertJson([
+                'latitude' => 18.5204303,
+                'longitude' => 73.8567437,
+            ]);
+    }
+
+    public function test_business_coordinates_are_saved_from_hidden_fields(): void
+    {
+        $response = $this->post(route('admin.businesses.store'), [
+            ...$this->businessData(),
+            'latitude' => '18.52043030',
+            'longitude' => '73.85674370',
+        ]);
+
+        $response->assertSessionHasNoErrors();
+        $business = Business::firstOrFail();
+        $this->assertEqualsWithDelta(18.52043030, (float) $business->latitude, 0.00000001);
+        $this->assertEqualsWithDelta(73.85674370, (float) $business->longitude, 0.00000001);
+
+        $updateResponse = $this->put(route('admin.businesses.update', $business), [
+            ...$this->businessData(),
+            'latitude' => '19.07609000',
+            'longitude' => '72.87742600',
+        ]);
+
+        $updateResponse->assertSessionHasNoErrors();
+        $business->refresh();
+        $this->assertEqualsWithDelta(19.07609000, (float) $business->latitude, 0.00000001);
+        $this->assertEqualsWithDelta(72.87742600, (float) $business->longitude, 0.00000001);
     }
 
     public function test_business_photo_can_be_replaced(): void

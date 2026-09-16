@@ -11,6 +11,7 @@ use App\Models\Service;
 use App\Models\Transaction;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 
@@ -350,6 +351,57 @@ class BusinessManagementController extends Controller
         $businessTypes = array_values(array_unique(array_merge($baseTypes, $existingTypes)));
 
         return view('admin.businesses.create', compact('users', 'categories', 'businessTypes'));
+    }
+
+    /**
+     * Resolve an Indian pincode to coordinates for the admin business form.
+     */
+    public function geocodePincode(Request $request)
+    {
+        $validated = $request->validate([
+            'pincode' => ['required', 'digits:6'],
+        ]);
+
+        try {
+            $response = Http::acceptJson()
+                ->withUserAgent(config('app.name', 'Mali Setu') . '/1.0')
+                ->timeout(10)
+                ->get('https://nominatim.openstreetmap.org/search', [
+                    'postalcode' => $validated['pincode'],
+                    'countrycodes' => 'in',
+                    'format' => 'jsonv2',
+                    'limit' => 1,
+                ]);
+
+            if ($response->failed() || empty($response->json())) {
+                return response()->json([
+                    'message' => 'Coordinates were not found for this pincode.',
+                ], 404);
+            }
+
+            $result = $response->json()[0];
+            $latitude = filter_var($result['lat'] ?? null, FILTER_VALIDATE_FLOAT);
+            $longitude = filter_var($result['lon'] ?? null, FILTER_VALIDATE_FLOAT);
+
+            if ($latitude === false || $longitude === false
+                || $latitude < -90 || $latitude > 90
+                || $longitude < -180 || $longitude > 180) {
+                return response()->json([
+                    'message' => 'The geocoding service returned invalid coordinates.',
+                ], 502);
+            }
+
+            return response()->json([
+                'latitude' => $latitude,
+                'longitude' => $longitude,
+            ]);
+        } catch (\Throwable $exception) {
+            report($exception);
+
+            return response()->json([
+                'message' => 'The coordinate lookup service is temporarily unavailable.',
+            ], 503);
+        }
     }
 
     /**

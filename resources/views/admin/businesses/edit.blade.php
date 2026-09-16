@@ -108,6 +108,7 @@
                                         <i class="fa-solid fa-location-crosshairs text-primary"></i>
                                     </button>
                                 </div>
+                                <small id="pincode_location_status" class="form-text" aria-live="polite"></small>
                             </div>
                             <div class="col-md-3 mb-3">
                                 <label for="village" class="form-label font-weight-bold small">Village</label>
@@ -197,9 +198,70 @@
 </div>
 @endsection
 
-@section('scripts')
+@push('scripts')
 <script>
     document.addEventListener('DOMContentLoaded', function() {
+        const pincodeInput = document.getElementById('pincode');
+        const latitudeInput = document.getElementById('latitude');
+        const longitudeInput = document.getElementById('longitude');
+        const pincodeStatus = document.getElementById('pincode_location_status');
+        let pincodeLookupTimer;
+        let pincodeLookupController;
+
+        function lookupPincodeCoordinates() {
+            const pincode = pincodeInput.value.trim();
+
+            clearTimeout(pincodeLookupTimer);
+            if (pincodeLookupController) {
+                pincodeLookupController.abort();
+            }
+
+            if (!/^\d{6}$/.test(pincode)) {
+                latitudeInput.value = '';
+                longitudeInput.value = '';
+                pincodeStatus.textContent = pincode ? 'Enter a valid 6-digit pincode.' : '';
+                pincodeStatus.className = 'form-text text-muted';
+                return;
+            }
+
+            pincodeLookupTimer = setTimeout(function() {
+                pincodeLookupController = new AbortController();
+                pincodeStatus.textContent = 'Finding coordinates...';
+                pincodeStatus.className = 'form-text text-muted';
+
+                fetch(`{{ route('admin.businesses.geocode-pincode') }}?pincode=${encodeURIComponent(pincode)}`, {
+                    headers: { 'Accept': 'application/json' },
+                    signal: pincodeLookupController.signal
+                })
+                .then(async response => {
+                    const data = await response.json();
+                    if (!response.ok) {
+                        throw new Error(data.message || 'Coordinates could not be found.');
+                    }
+                    return data;
+                })
+                .then(data => {
+                    if (pincodeInput.value.trim() !== pincode) return;
+                    latitudeInput.value = data.latitude;
+                    longitudeInput.value = data.longitude;
+                    pincodeStatus.textContent = 'Coordinates found.';
+                    pincodeStatus.className = 'form-text text-success';
+                })
+                .catch(error => {
+                    if (error.name === 'AbortError') return;
+                    latitudeInput.value = '';
+                    longitudeInput.value = '';
+                    pincodeStatus.textContent = error.message;
+                    pincodeStatus.className = 'form-text text-danger';
+                });
+            }, 500);
+        }
+
+        pincodeInput.addEventListener('input', lookupPincodeCoordinates);
+        if (/^\d{6}$/.test(pincodeInput.value.trim()) && !latitudeInput.value && !longitudeInput.value) {
+            lookupPincodeCoordinates();
+        }
+
         const getGpsBtn = document.getElementById('get_gps_location_btn');
         if (getGpsBtn) {
             getGpsBtn.addEventListener('click', function() {
@@ -277,4 +339,4 @@
         }
     });
 </script>
-@endsection
+@endpush

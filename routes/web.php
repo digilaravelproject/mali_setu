@@ -251,6 +251,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::get('/pending', [BusinessManagementController::class, 'pending'])->name('pending');
             Route::get('/verification', [BusinessManagementController::class, 'verification'])->name('verification');
             Route::get('/create', [BusinessManagementController::class, 'create'])->name('create');
+            Route::get('/geocode-pincode', [BusinessManagementController::class, 'geocodePincode'])->name('geocode-pincode');
             Route::post('/', [BusinessManagementController::class, 'store'])->name('store');
             Route::post('/{id}/approve', [BusinessManagementController::class, 'approve'])->name('approve');
             Route::post('/{id}/reject', [BusinessManagementController::class, 'reject'])->name('reject');
