@@ -45,17 +45,29 @@ class MatrimonyProfileSearchService
     ];
 
     /**
-     * Default an unfiltered search to the current matrimony user's opposite gender.
+     * Default a matrimony search to the current user's opposite gender
+     * unless an explicit gender filter is provided.
      */
     public function applyDefaultOppositeGender(Builder $query, Request $request, ?User $user): void
     {
-        if (! $user || $this->hasSelectedFilter($request)) {
+        if (! $user || $this->hasSelectedGenderFilter($request)) {
             return;
         }
 
         $user->loadMissing('matrimonyProfile');
-        $gender = strtolower((string) data_get($user->matrimonyProfile?->personal_details, 'gender'));
-        $oppositeGender = match ($gender) {
+
+        $gender = null;
+        if ($user->matrimonyProfile) {
+            $gender = data_get($user->matrimonyProfile->personal_details, 'gender')
+                ?? $user->matrimonyProfile->gender
+                ?? null;
+        }
+        if (! $gender && isset($user->gender)) {
+            $gender = $user->gender;
+        }
+
+        $genderStr = strtolower(trim((string) $gender));
+        $oppositeGender = match ($genderStr) {
             'male' => 'female',
             'female' => 'male',
             default => null,
@@ -65,11 +77,29 @@ class MatrimonyProfileSearchService
             return;
         }
 
-        $query->whereIn('personal_details->gender', [
-            $oppositeGender,
-            ucfirst($oppositeGender),
-            strtoupper($oppositeGender),
-        ]);
+        $query->where(function (Builder $q) use ($oppositeGender) {
+            $q->whereIn('personal_details->gender', [
+                $oppositeGender,
+                ucfirst($oppositeGender),
+                strtoupper($oppositeGender),
+            ]);
+
+            $driver = $q->getConnection()->getDriverName();
+            if (in_array($driver, ['mysql', 'mariadb'], true)) {
+                $q->orWhereRaw('LOWER(JSON_UNQUOTE(JSON_EXTRACT(personal_details, "$.gender"))) = ?', [$oppositeGender]);
+            }
+        });
+    }
+
+    public function hasSelectedGenderFilter(Request $request): bool
+    {
+        if ($request->filled('gender')) {
+            $value = strtolower(trim((string) $request->input('gender')));
+
+            return ! in_array($value, ['', 'any', 'all', "doesn't matter", 'doesnt matter'], true);
+        }
+
+        return false;
     }
 
     public function hasSelectedFilter(Request $request): bool

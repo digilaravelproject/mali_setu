@@ -127,11 +127,15 @@ class SearchController extends Controller
         */
 
         if ($request->filled('name')) {
-
-            $query->whereRaw(
-                "LOWER(JSON_UNQUOTE(JSON_EXTRACT(personal_details, '$.name'))) LIKE ?",
-                ['%' . strtolower(trim($request->name)) . '%']
-            );
+            $query->where(function ($q) use ($request) {
+                $q->where('personal_details->name', 'like', '%' . $request->name . '%');
+                if (in_array($q->getConnection()->getDriverName(), ['mysql', 'mariadb'], true)) {
+                    $q->orWhereRaw(
+                        "LOWER(JSON_UNQUOTE(JSON_EXTRACT(personal_details, '$.name'))) LIKE ?",
+                        ['%' . strtolower(trim($request->name)) . '%']
+                    );
+                }
+            });
         }
         
         //Basic Details
@@ -192,24 +196,15 @@ class SearchController extends Controller
         //Location Details
 
         if ($request->filled('state')) {
-            $query->whereRaw(
-                "LOWER(JSON_UNQUOTE(JSON_EXTRACT(location_details, '$.state'))) = ?",
-                [strtolower($request->state)]
-            );
+            $query->where('location_details->state', 'like', $request->state);
         }
 
         if ($request->filled('country')) {
-            $query->whereRaw(
-                "LOWER(JSON_UNQUOTE(JSON_EXTRACT(location_details, '$.country'))) = ?",
-                [strtolower($request->country)]
-            );
+            $query->where('location_details->country', 'like', $request->country);
         }
 
         if ($request->filled('city')) {
-            $query->whereRaw(
-                "LOWER(JSON_UNQUOTE(JSON_EXTRACT(location_details, '$.city'))) = ?",
-                [strtolower($request->city)]
-            );
+            $query->where('location_details->city', 'like', $request->city);
         }
 
         if ($request->filled('citizenship')) {
@@ -267,8 +262,10 @@ class SearchController extends Controller
 
         if ($request->filled('gender') && $request->gender !== 'Any') {
             $query->where(function($q) use ($request) {
-                $q->where('personal_details->gender', 'like', $request->gender)
-                  ->orWhereRaw('LOWER(JSON_UNQUOTE(JSON_EXTRACT(personal_details, "$.gender"))) = ?', [strtolower($request->gender)]);
+                $q->where('personal_details->gender', 'like', $request->gender);
+                if (in_array($q->getConnection()->getDriverName(), ['mysql', 'mariadb'], true)) {
+                    $q->orWhereRaw('LOWER(JSON_UNQUOTE(JSON_EXTRACT(personal_details, "$.gender"))) = ?', [strtolower($request->gender)]);
+                }
             });
         }
 

@@ -106,12 +106,14 @@ class MatrimonyProfileRulesTest extends TestCase
         }
     }
 
-    public function test_unfiltered_search_defaults_to_opposite_gender(): void
+    public function test_search_defaults_to_opposite_gender_even_with_other_filters(): void
     {
+        // User 1 is Male. Searching with created_at / age_min should only return Females (Users 2 and 3).
         $request = Request::create('/api/search/matrimony', 'POST', [
             'marital_status' => 'Any',
             'physical_status' => "Doesn't Matter",
-            'created_at' => 'all',
+            'created_at' => 'one_week',
+            'age_min' => 21,
         ]);
         $query = MatrimonyProfile::query()
             ->where('approval_status', 'approved')
@@ -126,9 +128,28 @@ class MatrimonyProfileRulesTest extends TestCase
         $this->assertSame([2, 3], $query->orderBy('id')->pluck('id')->all());
     }
 
-    public function test_explicit_filter_does_not_add_default_gender(): void
+    public function test_female_user_search_defaults_to_male_profiles(): void
     {
-        $request = Request::create('/api/search/matrimony', 'POST', ['age_min' => 21]);
+        // User 2 is Female. Searching without explicit gender filter should return Males (User 1 and User 4).
+        $request = Request::create('/api/search/matrimony', 'POST', [
+            'created_at' => 'one_week',
+        ]);
+        $query = MatrimonyProfile::query()
+            ->where('approval_status', 'approved')
+            ->where('user_id', '!=', 2);
+
+        app(MatrimonyProfileSearchService::class)->applyDefaultOppositeGender(
+            $query,
+            $request,
+            User::findOrFail(2)
+        );
+
+        $this->assertSame([1, 4], $query->orderBy('id')->pluck('id')->all());
+    }
+
+    public function test_explicit_gender_filter_overrides_default_opposite_gender(): void
+    {
+        $request = Request::create('/api/search/matrimony', 'POST', ['gender' => 'male']);
         $query = MatrimonyProfile::query()->where('user_id', '!=', 1);
 
         app(MatrimonyProfileSearchService::class)->applyDefaultOppositeGender(
@@ -137,6 +158,7 @@ class MatrimonyProfileRulesTest extends TestCase
             User::findOrFail(1)
         );
 
+        // When gender=male is passed, applyDefaultOppositeGender does not filter out males.
         $this->assertSame([2, 3, 4], $query->orderBy('id')->pluck('id')->all());
     }
 
@@ -162,7 +184,7 @@ class MatrimonyProfileRulesTest extends TestCase
         }
 
         $response = $this->actingAs(User::findOrFail(1), 'sanctum')
-            ->postJson('/api/search/matrimony', []);
+            ->postJson('/api/search/matrimony', ['created_at' => 'one_week']);
 
         $response->assertOk()
             ->assertJsonPath('data.total', 27)
