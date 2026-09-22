@@ -542,6 +542,12 @@ class AdminDashboardController extends Controller
         $thisMonth = Carbon::now()->startOfMonth();
         
         return [
+            'total_users' => User::count(),
+            'total_businesses' => Business::count(),
+            'total_matrimony_profiles' => MatrimonyProfile::count(),
+            'new_users_today' => User::whereDate('created_at', $today)->count(),
+            'new_businesses_today' => Business::whereDate('created_at', $today)->count(),
+            'new_matrimony_today' => MatrimonyProfile::whereDate('created_at', $today)->count(),
             'users' => [
                 'total' => User::count(),
                 'verified' => User::where('caste_verification_status', 'approved')->count(),

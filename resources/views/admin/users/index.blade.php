@@ -48,7 +48,7 @@
                             <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
                                 Total Users
                             </div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $stats['total_users'] ?? 0 }}</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $stats['total_users'] ?? $stats['total'] ?? 0 }}</div>
                         </div>
                         <div class="col-auto">
                             <i class="fas fa-users fa-2x text-gray-300"></i>
@@ -66,7 +66,7 @@
                             <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
                                 Verified Users
                             </div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $stats['verified_users'] ?? 0 }}</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $stats['verified_users'] ?? $stats['verified'] ?? 0 }}</div>
                         </div>
                         <div class="col-auto">
                             <i class="fas fa-user-check fa-2x text-gray-300"></i>
@@ -84,7 +84,7 @@
                             <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
                                 Pending Verification
                             </div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $stats['pending_verification'] ?? 0 }}</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $stats['pending_verification'] ?? $stats['pending'] ?? 0 }}</div>
                         </div>
                         <div class="col-auto">
                             <i class="fas fa-clock fa-2x text-gray-300"></i>

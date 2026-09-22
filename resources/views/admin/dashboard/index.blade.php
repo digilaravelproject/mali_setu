@@ -73,7 +73,8 @@
                             </div>
                             <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $stats['matrimony']['total'] }}</div>
                             <div class="text-xs text-muted mt-1">
-                                <span class="text-success">{{ $stats['matrimony']['connections'] }}</span> connections made
+                                <span class="text-success">{{ $stats['matrimony']['approved'] }}</span> approved,
+                                <span class="text-warning">{{ $stats['matrimony']['pending'] }}</span> pending
                             </div>
                         </div>
                         <div class="col-auto">

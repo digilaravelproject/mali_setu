@@ -45,7 +45,7 @@ Route::get('/', function () {
 });
 
 // Public device-aware app store link.
-Route::get('/app_update', AppUpdateController::class)->name('app.update');
+Route::get('/app', AppUpdateController::class)->name('app.update');
 
 // Route::get('/blog/{id}', [BlogManagementController::class, 'show'])
 //     ->name('blog.show');

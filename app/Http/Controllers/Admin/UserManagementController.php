@@ -52,6 +52,10 @@ class UserManagementController extends Controller
             'verified' => User::where('caste_verification_status', 'approved')->count(),
             'pending' => User::where('caste_verification_status', 'pending')->count(),
             'rejected' => User::where('caste_verification_status', 'rejected')->count(),
+            'total_users' => User::count(),
+            'verified_users' => User::where('caste_verification_status', 'approved')->count(),
+            'pending_verification' => User::where('caste_verification_status', 'pending')->count(),
+            'active_today' => User::whereDate('created_at', today())->orWhereDate('updated_at', today())->count(),
             'by_type' => User::selectRaw('user_type, COUNT(*) as count')
                 ->groupBy('user_type')
                 ->pluck('count', 'user_type')

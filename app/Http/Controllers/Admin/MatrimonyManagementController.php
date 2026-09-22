@@ -46,6 +46,7 @@ class MatrimonyManagementController extends Controller
             'approved' => MatrimonyProfile::where('approval_status', 'approved')->count(),
             'pending' => MatrimonyProfile::where('approval_status', 'pending')->count(),
             'rejected' => MatrimonyProfile::where('approval_status', 'rejected')->count(),
+            'connections' => ConnectionRequest::where('status', 'accepted')->count(),
             'active_connections' => ConnectionRequest::where('status', 'accepted')->count(),
             'total_connections' => ConnectionRequest::count()
         ];
