@@ -187,6 +187,16 @@
                                 <i class="fas fa-times"></i> Reject Profile
                             </button>
                         @endif
+                        
+                        <!-- Delete Profile Form -->
+                        <form method="POST" action="{{ route('admin.matrimony.destroy', $profile->id) }}" class="d-inline m-0">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="btn btn-outline-danger btn-action-premium d-flex align-items-center gap-2" 
+                                    onclick="return confirm('Are you sure you want to delete this matrimony profile? All profile and associated payment data will be permanently deleted.');">
+                                <i class="fas fa-trash"></i> Delete Profile
+                            </button>
+                        </form>
                     </div>
                 </div>
 

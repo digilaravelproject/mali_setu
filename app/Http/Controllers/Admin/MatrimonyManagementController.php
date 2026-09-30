@@ -7,6 +7,9 @@ use App\Models\MatrimonyProfile;
 use App\Models\ConnectionRequest;
 use App\Models\ChatConversation;
 use App\Models\User;
+use App\Models\Payment;
+use App\Models\Transaction;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Http\Request;
 
 class MatrimonyManagementController extends Controller
@@ -521,13 +524,60 @@ class MatrimonyManagementController extends Controller
     }
     
     /**
-     * Delete profile
+     * Delete profile and all associated payment and transaction data
      */
     public function destroy($id)
     {
         $profile = MatrimonyProfile::findOrFail($id);
+        $userId = $profile->user_id;
+
+        // Delete associated matrimony transactions
+        $matrimonyTransactions = Transaction::where('user_id', $userId)
+            ->where('purpose', 'matrimony_profile')
+            ->get();
+
+        $transactionIds = $matrimonyTransactions->pluck('id')->toArray();
+        $razorpayOrderIds = $matrimonyTransactions->pluck('razorpay_order_id')->filter()->toArray();
+        $razorpayPaymentIds = $matrimonyTransactions->pluck('razorpay_payment_id')->filter()->toArray();
+
+        // Delete payment records corresponding to matrimony_subscription or matching transaction/order/payment IDs
+        Payment::where('user_id', $userId)
+            ->where(function ($query) use ($transactionIds, $razorpayOrderIds, $razorpayPaymentIds) {
+                $query->where('payment_type', 'matrimony_subscription');
+                if (!empty($transactionIds)) {
+                    $query->orWhereIn('transaction_id', $transactionIds);
+                }
+                if (!empty($razorpayOrderIds)) {
+                    $query->orWhereIn('order_id', $razorpayOrderIds);
+                }
+                if (!empty($razorpayPaymentIds)) {
+                    $query->orWhereIn('payment_id', $razorpayPaymentIds);
+                }
+            })
+            ->delete();
+
+        // Delete the transactions themselves
+        Transaction::where('user_id', $userId)
+            ->where('purpose', 'matrimony_profile')
+            ->delete();
+
+        // Clean up profile photos from storage if available
+        if ($profile->personal_details && is_array($profile->personal_details) && !empty($profile->personal_details['photos'])) {
+            foreach ($profile->personal_details['photos'] as $photo) {
+                if ($photo && Storage::disk('public')->exists($photo)) {
+                    Storage::disk('public')->delete($photo);
+                }
+            }
+        }
+
+        // Clean up connection requests involving this matrimony profile user
+        ConnectionRequest::where('sender_id', $userId)
+            ->orWhere('receiver_id', $userId)
+            ->delete();
+
+        // Delete profile
         $profile->delete();
-        
-        return redirect()->back()->with('success', 'Profile deleted successfully!');
+
+        return redirect()->back()->with('success', 'Matrimony profile and all associated payment data deleted successfully!');
     }
 }

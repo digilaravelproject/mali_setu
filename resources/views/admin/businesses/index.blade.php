@@ -190,6 +190,16 @@
                                                     <i class="fas fa-times"></i>
                                                 </button>
                                             @endif
+                                            
+                                            <!-- Delete Business Form -->
+                                            <form action="{{ route('admin.businesses.destroy', $business->id) }}" method="POST" class="d-inline">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="btn btn-sm btn-danger" title="Delete business"
+                                                        onclick="return confirm('Are you sure you want to delete this business? All business listings and associated payment data will be permanently deleted.');">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </form>
                                         </div>
                                     </td>
                                 </tr>

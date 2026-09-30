@@ -9,6 +9,7 @@ use App\Models\JobPosting;
 use App\Models\Product;
 use App\Models\Service;
 use App\Models\Transaction;
+use App\Models\Payment;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
@@ -642,22 +643,55 @@ class BusinessManagementController extends Controller
     }
     
     /**
-     * Delete business
+     * Delete business and all associated payment and transaction data
      */
     public function destroy(Request $request, $id)
     {
         try {
             $business = Business::findOrFail($id);
+            $userId = $business->user_id;
+
+            // Delete associated business transactions
+            $businessTransactions = Transaction::where('user_id', $userId)
+                ->where('purpose', 'business_registration')
+                ->get();
+
+            $transactionIds = $businessTransactions->pluck('id')->toArray();
+            $razorpayOrderIds = $businessTransactions->pluck('razorpay_order_id')->filter()->toArray();
+            $razorpayPaymentIds = $businessTransactions->pluck('razorpay_payment_id')->filter()->toArray();
+
+            // Delete payment records corresponding to business_registration or matching transaction/order/payment IDs
+            Payment::where('user_id', $userId)
+                ->where(function ($query) use ($transactionIds, $razorpayOrderIds, $razorpayPaymentIds) {
+                    $query->where('payment_type', 'business_registration');
+                    if (!empty($transactionIds)) {
+                        $query->orWhereIn('transaction_id', $transactionIds);
+                    }
+                    if (!empty($razorpayOrderIds)) {
+                        $query->orWhereIn('order_id', $razorpayOrderIds);
+                    }
+                    if (!empty($razorpayPaymentIds)) {
+                        $query->orWhereIn('payment_id', $razorpayPaymentIds);
+                    }
+                })
+                ->delete();
+
+            // Delete the transactions themselves
+            Transaction::where('user_id', $userId)
+                ->where('purpose', 'business_registration')
+                ->delete();
+
+            // Delete the business instance (products, services, job postings, locations, reviews cascade via foreign key onDelete)
             $business->delete();
             
             if ($request->ajax()) {
                 return response()->json([
                     'success' => true,
-                    'message' => 'Business deleted successfully!'
+                    'message' => 'Business and associated payment data deleted successfully!'
                 ]);
             }
             
-            return redirect()->back()->with('success', 'Business deleted successfully!');
+            return redirect()->back()->with('success', 'Business and associated payment data deleted successfully!');
         } catch (\Exception $e) {
             if ($request->ajax()) {
                 return response()->json([
@@ -666,7 +700,7 @@ class BusinessManagementController extends Controller
                 ], 500);
             }
             
-            return redirect()->back()->with('error', 'Failed to delete business.');
+            return redirect()->back()->with('error', 'Failed to delete business: ' . $e->getMessage());
         }
     }
     

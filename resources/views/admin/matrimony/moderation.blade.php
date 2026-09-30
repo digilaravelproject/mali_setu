@@ -226,6 +226,17 @@
                                            data-toggle="tooltip" title="View Profile Details">
                                             <i class="fas fa-info-circle"></i>
                                         </a>
+                                        
+                                        <!-- Delete Form -->
+                                        <form method="POST" action="{{ route('admin.matrimony.destroy', $profile->id) }}" style="display: inline;">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="btn btn-danger btn-sm" 
+                                                    onclick="return confirm('Are you sure you want to delete this matrimony profile? All profile and associated payment data will be permanently deleted.');" 
+                                                    data-toggle="tooltip" title="Delete Profile">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </form>
                                     </div>
                                 </td>
                             </tr>

@@ -144,7 +144,7 @@
                                                 <strong>Father:</strong> {{ $profile->family_details['father_name'] ?? 'N/A' }}<br>
                                                 <strong>Mother:</strong> {{ $profile->family_details['mother_name'] ?? 'N/A' }}<br>
                                                 <strong>Siblings:</strong> {{ $profile->family_details['siblings'] ?? 'N/A' }}<br>
-                                                <strong>Type:</strong> {{ $profile->family_details['family_type'] ?? 'N/A' }}
+                                                 <strong>Type:</strong> {{ $profile->family_details['family_type'] ?? 'N/A' }}
                                             </div>
                                         @else
                                             N/A
@@ -204,6 +204,15 @@
                                                     </button>
                                                 </form>
                                             @endif
+                                            <!-- Delete Form -->
+                                            <form method="POST" action="{{ route('admin.matrimony.destroy', $profile->id) }}" style="display: inline;">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="btn btn-sm btn-danger" title="Delete Profile"
+                                                        onclick="return confirm('Are you sure you want to delete this matrimony profile? All profile and associated payment data will be permanently deleted.');">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </form>
                                         </div>
                                     </td>
                                 </tr>
