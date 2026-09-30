@@ -820,15 +820,32 @@ class AdminDashboardController extends Controller
             $title = "Business Directory Report";
             $headers = [
                 'ID', 'Business Name', 'Business Type', 'Owner ID', 'Owner Name', 'Owner Email',
-                'Owner Phone', 'Category', 'Description', 'Contact Phone', 'Contact Email',
+                'Owner Phone', 'Category ID', 'Category', 'Description', 'Contact Phone', 'Contact Email',
                 'Website', 'Address', 'Village', 'Taluka', 'City', 'District', 'State',
                 'Country', 'Pincode', 'Latitude', 'Longitude', 'Opening Time', 'Closing Time',
                 'Verification', 'Verified At', 'Verified By', 'Rejection Reason', 'Account Status',
-                'Subscription', 'Subscription Expires', 'Job Posting Limit', 'Photos', 'Created',
-                'Last Updated',
+                'Subscription', 'Subscription Expires', 'Job Posting Limit', 'Photos',
+                'Products', 'Services', 'Business Locations', 'Reviews', 'Job Postings',
+                'Business Registration Payments', 'Created', 'Last Updated',
             ];
             
-            $query = Business::with(['user', 'category']);
+            $businessRelations = ['user', 'category'];
+            $optionalRelations = [
+                'products' => 'products',
+                'services' => 'services',
+                'business_locations' => 'locations',
+                'business_reviews' => 'reviews.user',
+                'job_postings' => 'jobPostings',
+                'transactions' => 'businessRegistrationTransactions',
+            ];
+
+            foreach ($optionalRelations as $table => $relation) {
+                if (\Illuminate\Support\Facades\Schema::hasTable($table)) {
+                    $businessRelations[] = $relation;
+                }
+            }
+
+            $query = Business::with($businessRelations);
             $totalCount = Business::query();
             $approvedCount = Business::where('verification_status', 'approved');
             $pendingCount = Business::where('verification_status', 'pending');
@@ -859,6 +876,7 @@ class AdminDashboardController extends Controller
                     'owner' => $b->user?->name,
                     'owner_email' => $b->user?->email,
                     'owner_phone' => $b->user?->phone,
+                    'category_id' => $b->category_id,
                     'category' => $b->category?->name,
                     'description' => $b->description,
                     'contact_phone' => $b->contact_phone,
@@ -885,6 +903,46 @@ class AdminDashboardController extends Controller
                     'subscription_expires' => $b->subscription_expires_at,
                     'job_posting_limit' => $b->job_posting_limit,
                     'photos' => $b->photo,
+                    'products' => $this->formatBusinessRelationDetails($this->loadedBusinessRelation($b, 'products'), [
+                        'ID' => 'id', 'Name' => 'name', 'Description' => 'description',
+                        'Cost' => 'cost', 'Image' => 'image_path', 'Status' => 'status',
+                    ]),
+                    'services' => $this->formatBusinessRelationDetails($this->loadedBusinessRelation($b, 'services'), [
+                        'ID' => 'id', 'Name' => 'name', 'Description' => 'description',
+                        'Cost' => 'cost', 'Image' => 'image_path', 'Status' => 'status',
+                    ]),
+                    'locations' => $this->formatBusinessRelationDetails($this->loadedBusinessRelation($b, 'locations'), [
+                        'ID' => 'id', 'Type' => 'location_type', 'Address Line 1' => 'address_line_1',
+                        'Address Line 2' => 'address_line_2', 'City' => 'city', 'State' => 'state',
+                        'Postal Code' => 'postal_code', 'Country' => 'country', 'Latitude' => 'latitude',
+                        'Longitude' => 'longitude', 'Primary' => 'is_primary', 'Active' => 'is_active',
+                        'Phone' => 'contact_phone', 'Email' => 'contact_email',
+                        'Operating Hours' => 'operating_hours', 'Instructions' => 'special_instructions',
+                    ]),
+                    'reviews' => $this->formatBusinessRelationDetails($this->loadedBusinessRelation($b, 'reviews'), [
+                        'ID' => 'id', 'Reviewer' => fn ($review) => $review->user?->name,
+                        'Rating' => 'rating', 'Review' => 'review_text', 'Status' => 'status',
+                        'Admin Notes' => 'admin_notes', 'Moderated By' => 'moderated_by',
+                        'Moderated At' => 'moderated_at',
+                    ]),
+                    'job_postings' => $this->formatBusinessRelationDetails($this->loadedBusinessRelation($b, 'jobPostings'), [
+                        'ID' => 'id', 'Title' => 'title', 'Description' => 'description',
+                        'Requirements' => 'requirements', 'Salary' => 'salary_range',
+                        'Job Type' => 'job_type', 'Location' => 'location',
+                        'Experience' => 'experience_level', 'Employment Type' => 'employment_type',
+                        'Category' => 'category', 'Skills' => 'skills_required', 'Benefits' => 'benefits',
+                        'Application Deadline' => 'application_deadline', 'Active' => 'is_active',
+                        'Expires At' => 'expires_at', 'Status' => 'status',
+                    ]),
+                    'business_registration_payments' => $this->formatBusinessRelationDetails(
+                        $this->loadedBusinessRelation($b, 'businessRegistrationTransactions'),
+                        [
+                            'ID' => 'id', 'Amount' => 'amount', 'Currency' => 'currency',
+                            'Payment ID' => 'razorpay_payment_id', 'Order ID' => 'razorpay_order_id',
+                            'Status' => 'status', 'Subscription Period' => 'subscription_period',
+                            'Receipt' => 'receipt_url', 'Created' => 'created_at',
+                        ]
+                    ),
                     'created' => $b->created_at,
                     'updated' => $b->updated_at,
                 ];
@@ -1033,6 +1091,35 @@ class AdminDashboardController extends Controller
         }
 
         return [$title, $headers, $rows, $summary];
+    }
+
+    /**
+     * Flatten a business relation into one readable report cell while retaining every record.
+     */
+    private function formatBusinessRelationDetails($records, array $fields): string
+    {
+        if ($records->isEmpty()) {
+            return 'None';
+        }
+
+        return $records->values()->map(function ($record, $index) use ($fields) {
+            $details = [];
+
+            foreach ($fields as $label => $field) {
+                $value = is_callable($field) ? $field($record) : data_get($record, $field);
+                $details[] = $label . ': ' . $this->formatReportValue($value);
+            }
+
+            return '#' . ($index + 1) . ' [' . implode('; ', $details) . ']';
+        })->implode("\n");
+    }
+
+    /**
+     * Return an eager-loaded relation without triggering queries against legacy databases.
+     */
+    private function loadedBusinessRelation(Business $business, string $relation)
+    {
+        return $business->relationLoaded($relation) ? $business->getRelation($relation) : collect();
     }
 
     /**
