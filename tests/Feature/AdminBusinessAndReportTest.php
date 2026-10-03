@@ -228,15 +228,20 @@ class AdminBusinessAndReportTest extends TestCase
     public static function xlsReportTypes(): array
     {
         return [
-            ['users', 'Admin Notes'],
-            ['businesses', 'Contact Email'],
-            ['matrimony', 'Partner Preferences'],
-            ['payments', 'Payment Method'],
+            ['users', 'Admin Notes', 'B4', 'Legacy User'],
+            ['businesses', 'Contact Email', 'B4', 'Photo Test Business'],
+            ['matrimony', 'Partner Preferences', 'C4', 'Legacy User'],
+            ['payments', 'Payment Method', 'F4', 'Legacy User'],
         ];
     }
 
     #[DataProvider('xlsReportTypes')]
-    public function test_reports_download_as_direct_unprotected_xls_with_complete_headers(string $type, string $expectedHeader): void
+    public function test_reports_download_as_valid_unprotected_xlsx_with_complete_headers(
+        string $type,
+        string $expectedHeader,
+        string $textCell,
+        string $expectedText
+    ): void
     {
         DB::table('users')->insert([
             'id' => 2,
@@ -250,13 +255,16 @@ class AdminBusinessAndReportTest extends TestCase
         DB::table('payments')->insert(['user_id' => 2, 'amount' => 10]);
 
         $response = $this->get(route('admin.reports.download.xls', $type));
-        $response->assertOk()->assertHeader('Content-Type', 'application/vnd.ms-excel');
+        $response->assertOk()->assertHeader(
+            'Content-Type',
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        );
         $disposition = $response->headers->get('Content-Disposition');
-        $this->assertStringContainsString('.xls', $disposition);
+        $this->assertStringContainsString('.xlsx', $disposition);
         $this->assertStringNotContainsString('.zip', $disposition);
 
         $content = $response->streamedContent();
-        $this->assertStringStartsWith("\xD0\xCF\x11\xE0", $content);
+        $this->assertStringStartsWith("PK", $content);
 
         $path = tempnam(sys_get_temp_dir(), 'report_test_');
         file_put_contents($path, $content);
@@ -265,9 +273,12 @@ class AdminBusinessAndReportTest extends TestCase
             $sheet = $spreadsheet->getActiveSheet();
             $headers = $sheet->rangeToArray('A3:' . $sheet->getHighestColumn() . '3')[0];
 
+            $this->assertNotSame('', $sheet->getCell('A1')->getValue());
             $this->assertContains($expectedHeader, $headers);
+            $this->assertSame($expectedText, $sheet->getCell($textCell)->getValue());
             $this->assertNotTrue($sheet->getProtection()->getSheet());
             if ($type === 'users') {
+                $this->assertSame('legacy@example.test', $sheet->getCell('C4')->getValue());
                 $this->assertSame('919876543210', $sheet->getCell('D4')->getValue());
             }
 
@@ -275,6 +286,16 @@ class AdminBusinessAndReportTest extends TestCase
         } finally {
             @unlink($path);
         }
+    }
+
+    public function test_reports_page_exposes_mobile_friendly_direct_download_controls(): void
+    {
+        $this->get(route('admin.reports'))
+            ->assertOk()
+            ->assertSee('report-actions', false)
+            ->assertSee('Download Excel Report')
+            ->assertSee('@media (max-width: 575.98px)', false)
+            ->assertSee('download', false);
     }
 
     #[DataProvider('reportTypes')]

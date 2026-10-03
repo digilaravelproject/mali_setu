@@ -632,7 +632,12 @@ class AdminDashboardController extends Controller
     }
 
     /**
-     * Download list report directly as an unprotected XLS file.
+     * Download the report as a standards-compliant, unprotected Excel workbook.
+     *
+     * The old BIFF .xls writer could produce workbooks which desktop Excel tried
+     * to repair, dropping shared string cells while leaving numeric cells intact.
+     * XLSX avoids that legacy writer path and is supported by desktop and mobile
+     * spreadsheet applications.
      */
     public function downloadReportXls(Request $request, $type)
     {
@@ -651,11 +656,18 @@ class AdminDashboardController extends Controller
         }
 
         $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+        $spreadsheet->getProperties()
+            ->setCreator(config('app.name'))
+            ->setTitle($title)
+            ->setSubject('Administrative report export');
         $sheet = $spreadsheet->getActiveSheet();
         $sheet->setTitle('Report');
+
+        $lastColumn = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex(max(count($headers), 2));
         
         // Title
         $sheet->setCellValue('A1', $title);
+        $sheet->mergeCells("A1:{$lastColumn}1");
         $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(14);
         
         // Headers
@@ -699,7 +711,6 @@ class AdminDashboardController extends Controller
             $rowNum++;
         }
 
-        $lastColumn = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex(max(count($headers), 2));
         $sheet->freezePane('A4');
         $sheet->setAutoFilter("A3:{$lastColumn}3");
         $sheet->getStyle("A3:{$lastColumn}3")->getFill()
@@ -713,15 +724,17 @@ class AdminDashboardController extends Controller
             $sheet->getColumnDimension($column)->setAutoSize(true);
         }
 
-        $fileName = strtolower(str_replace(' ', '_', $originalTitle)) . '_' . date('Ymd') . '.xls';
+        $fileName = strtolower(str_replace(' ', '_', $originalTitle)) . '_' . date('Ymd') . '.xlsx';
 
         return response()->streamDownload(function () use ($spreadsheet) {
-            $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xls($spreadsheet);
+            $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
+            $writer->setPreCalculateFormulas(false);
             $writer->save('php://output');
             $spreadsheet->disconnectWorksheets();
         }, $fileName, [
-            'Content-Type' => 'application/vnd.ms-excel',
-            'Cache-Control' => 'max-age=0, no-cache, no-store, must-revalidate',
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'Cache-Control' => 'private, max-age=0, no-cache, no-store, must-revalidate',
+            'X-Content-Type-Options' => 'nosniff',
         ]);
     }
 
