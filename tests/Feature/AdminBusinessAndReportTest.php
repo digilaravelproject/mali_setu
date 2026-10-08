@@ -75,6 +75,7 @@ class AdminBusinessAndReportTest extends TestCase
             $table->string('transaction_id')->nullable();
             $table->decimal('amount', 10, 2);
             $table->string('status')->default('pending');
+            $table->json('metadata')->nullable();
             $table->timestamps();
         });
 
@@ -296,6 +297,74 @@ class AdminBusinessAndReportTest extends TestCase
             ->assertSee('Download Excel Report')
             ->assertSee('@media (max-width: 575.98px)', false)
             ->assertSee('download', false);
+    }
+
+    public function test_structured_report_data_is_exported_as_separate_table_columns(): void
+    {
+        DB::table('users')->insert([
+            'id' => 2, 'name' => 'Structured User', 'email' => 'structured@example.test',
+        ]);
+        DB::table('matrimony_profiles')->insert([
+            'user_id' => 2,
+            'personal_details' => json_encode([
+                'first_name' => 'Asha',
+                'occupation' => 'Engineer',
+                'languages' => ['Marathi', 'Hindi'],
+            ]),
+        ]);
+
+        $response = $this->get(route('admin.reports.download.xls', 'matrimony'));
+        $response->assertOk();
+
+        $path = tempnam(sys_get_temp_dir(), 'report_columns_');
+        file_put_contents($path, $response->streamedContent());
+        try {
+            $sheet = \PhpOffice\PhpSpreadsheet\IOFactory::load($path)->getActiveSheet();
+            $headers = $sheet->rangeToArray('A3:' . $sheet->getHighestColumn() . '3')[0];
+            $row = $sheet->rangeToArray('A4:' . $sheet->getHighestColumn() . '4')[0];
+
+            $this->assertContains('Personal Details - First Name', $headers);
+            $this->assertContains('Personal Details - Occupation', $headers);
+            $this->assertContains('Personal Details - Languages - 1', $headers);
+            $this->assertContains('Personal Details - Languages - 2', $headers);
+            $this->assertSame('Asha', $row[array_search('Personal Details - First Name', $headers, true)]);
+            $this->assertSame('Marathi', $row[array_search('Personal Details - Languages - 1', $headers, true)]);
+            $this->assertNotContains(json_encode([
+                'first_name' => 'Asha',
+                'occupation' => 'Engineer',
+                'languages' => ['Marathi', 'Hindi'],
+            ]), $row);
+        } finally {
+            @unlink($path);
+        }
+    }
+
+    public function test_payment_metadata_is_exported_as_separate_table_columns(): void
+    {
+        DB::table('payments')->insert([
+            'user_id' => 1,
+            'transaction_id' => 'txn-structured',
+            'amount' => 125,
+            'metadata' => json_encode(['plan_name' => 'Gold', 'duration_months' => 12]),
+        ]);
+
+        $response = $this->get(route('admin.reports.download.xls', 'payments'));
+        $response->assertOk();
+
+        $path = tempnam(sys_get_temp_dir(), 'report_metadata_');
+        file_put_contents($path, $response->streamedContent());
+        try {
+            $sheet = \PhpOffice\PhpSpreadsheet\IOFactory::load($path)->getActiveSheet();
+            $headers = $sheet->rangeToArray('A3:' . $sheet->getHighestColumn() . '3')[0];
+            $row = $sheet->rangeToArray('A4:' . $sheet->getHighestColumn() . '4')[0];
+
+            $this->assertContains('Metadata - Plan Name', $headers);
+            $this->assertContains('Metadata - Duration Months', $headers);
+            $this->assertSame('Gold', $row[array_search('Metadata - Plan Name', $headers, true)]);
+            $this->assertSame('12', (string) $row[array_search('Metadata - Duration Months', $headers, true)]);
+        } finally {
+            @unlink($path);
+        }
     }
 
     #[DataProvider('reportTypes')]

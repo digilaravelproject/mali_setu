@@ -915,16 +915,16 @@ class AdminDashboardController extends Controller
                     'subscription' => ucfirst((string) $b->subscription_status),
                     'subscription_expires' => $b->subscription_expires_at,
                     'job_posting_limit' => $b->job_posting_limit,
-                    'photos' => $b->photo,
-                    'products' => $this->formatBusinessRelationDetails($this->loadedBusinessRelation($b, 'products'), [
+                    'photos' => $b->getRawOriginal('photo'),
+                    'products' => $this->businessRelationDetails($this->loadedBusinessRelation($b, 'products'), [
                         'ID' => 'id', 'Name' => 'name', 'Description' => 'description',
                         'Cost' => 'cost', 'Image' => 'image_path', 'Status' => 'status',
                     ]),
-                    'services' => $this->formatBusinessRelationDetails($this->loadedBusinessRelation($b, 'services'), [
+                    'services' => $this->businessRelationDetails($this->loadedBusinessRelation($b, 'services'), [
                         'ID' => 'id', 'Name' => 'name', 'Description' => 'description',
                         'Cost' => 'cost', 'Image' => 'image_path', 'Status' => 'status',
                     ]),
-                    'locations' => $this->formatBusinessRelationDetails($this->loadedBusinessRelation($b, 'locations'), [
+                    'locations' => $this->businessRelationDetails($this->loadedBusinessRelation($b, 'locations'), [
                         'ID' => 'id', 'Type' => 'location_type', 'Address Line 1' => 'address_line_1',
                         'Address Line 2' => 'address_line_2', 'City' => 'city', 'State' => 'state',
                         'Postal Code' => 'postal_code', 'Country' => 'country', 'Latitude' => 'latitude',
@@ -932,13 +932,13 @@ class AdminDashboardController extends Controller
                         'Phone' => 'contact_phone', 'Email' => 'contact_email',
                         'Operating Hours' => 'operating_hours', 'Instructions' => 'special_instructions',
                     ]),
-                    'reviews' => $this->formatBusinessRelationDetails($this->loadedBusinessRelation($b, 'reviews'), [
+                    'reviews' => $this->businessRelationDetails($this->loadedBusinessRelation($b, 'reviews'), [
                         'ID' => 'id', 'Reviewer' => fn ($review) => $review->user?->name,
                         'Rating' => 'rating', 'Review' => 'review_text', 'Status' => 'status',
                         'Admin Notes' => 'admin_notes', 'Moderated By' => 'moderated_by',
                         'Moderated At' => 'moderated_at',
                     ]),
-                    'job_postings' => $this->formatBusinessRelationDetails($this->loadedBusinessRelation($b, 'jobPostings'), [
+                    'job_postings' => $this->businessRelationDetails($this->loadedBusinessRelation($b, 'jobPostings'), [
                         'ID' => 'id', 'Title' => 'title', 'Description' => 'description',
                         'Requirements' => 'requirements', 'Salary' => 'salary_range',
                         'Job Type' => 'job_type', 'Location' => 'location',
@@ -947,7 +947,7 @@ class AdminDashboardController extends Controller
                         'Application Deadline' => 'application_deadline', 'Active' => 'is_active',
                         'Expires At' => 'expires_at', 'Status' => 'status',
                     ]),
-                    'business_registration_payments' => $this->formatBusinessRelationDetails(
+                    'business_registration_payments' => $this->businessRelationDetails(
                         $this->loadedBusinessRelation($b, 'businessRegistrationTransactions'),
                         [
                             'ID' => 'id', 'Amount' => 'amount', 'Currency' => 'currency',
@@ -1103,28 +1103,149 @@ class AdminDashboardController extends Controller
             ];
         }
 
+        [$headers, $rows] = $this->expandStructuredReportColumns($headers, $rows);
+
         return [$title, $headers, $rows, $summary];
     }
 
     /**
-     * Flatten a business relation into one readable report cell while retaining every record.
+     * Prepare a business relation for expansion into ordinary report columns.
      */
-    private function formatBusinessRelationDetails($records, array $fields): string
+    private function businessRelationDetails($records, array $fields): array
     {
-        if ($records->isEmpty()) {
-            return 'None';
-        }
-
-        return $records->values()->map(function ($record, $index) use ($fields) {
+        return $records->values()->map(function ($record) use ($fields) {
             $details = [];
 
             foreach ($fields as $label => $field) {
                 $value = is_callable($field) ? $field($record) : data_get($record, $field);
-                $details[] = $label . ': ' . $this->formatReportValue($value);
+                $details[$label] = $value;
             }
 
-            return '#' . ($index + 1) . ' [' . implode('; ', $details) . ']';
-        })->implode("\n");
+            return $details;
+        })->all();
+    }
+
+    /**
+     * Expand JSON, arrays, and repeating child records into separate table columns.
+     *
+     * A report cell must always contain one scalar value. For example,
+     * `personal_details.first_name` becomes "Personal Details - First Name" and
+     * the second product name becomes "Products 2 - Name".
+     */
+    private function expandStructuredReportColumns(array $headers, array $rows): array
+    {
+        if ($rows === []) {
+            return [$headers, $rows];
+        }
+
+        $rowKeys = array_keys($rows[0]);
+        $expandedHeaders = [];
+        $columnDefinitions = [];
+
+        foreach ($rowKeys as $columnIndex => $rowKey) {
+            $baseHeader = $headers[$columnIndex] ?? ucwords(str_replace('_', ' ', (string) $rowKey));
+            $paths = [];
+
+            foreach ($rows as $row) {
+                $value = $this->decodeStructuredReportValue($row[$rowKey] ?? null);
+                if (!is_array($value) || $value === []) {
+                    continue;
+                }
+
+                foreach ($this->reportLeafPaths($value) as $path) {
+                    $pathKey = json_encode($path);
+                    $paths[$pathKey] = $path;
+                }
+            }
+
+            if ($paths === []) {
+                $expandedHeaders[] = $baseHeader;
+                $columnDefinitions[] = [$rowKey, []];
+                continue;
+            }
+
+            foreach ($paths as $path) {
+                $expandedHeaders[] = $this->expandedReportHeader($baseHeader, $path);
+                $columnDefinitions[] = [$rowKey, $path];
+            }
+        }
+
+        $expandedRows = array_map(function (array $row) use ($columnDefinitions) {
+            $expandedRow = [];
+
+            foreach ($columnDefinitions as [$rowKey, $path]) {
+                $value = $this->decodeStructuredReportValue($row[$rowKey] ?? null);
+                $expandedRow[] = $path === [] ? $value : $this->reportValueAtPath($value, $path);
+            }
+
+            return $expandedRow;
+        }, $rows);
+
+        return [$expandedHeaders, $expandedRows];
+    }
+
+    private function reportValueAtPath($value, array $path)
+    {
+        foreach ($path as $part) {
+            $value = $this->decodeStructuredReportValue($value);
+
+            if (!is_array($value) || !array_key_exists($part, $value)) {
+                return null;
+            }
+
+            $value = $value[$part];
+        }
+
+        return $this->decodeStructuredReportValue($value);
+    }
+
+    private function decodeStructuredReportValue($value)
+    {
+        if ($value instanceof \Illuminate\Support\Collection) {
+            return $value->all();
+        }
+
+        if (!is_string($value)) {
+            return $value;
+        }
+
+        $decoded = json_decode($value, true);
+
+        return json_last_error() === JSON_ERROR_NONE && is_array($decoded) ? $decoded : $value;
+    }
+
+    private function reportLeafPaths(array $value, array $prefix = []): array
+    {
+        $paths = [];
+
+        foreach ($value as $key => $item) {
+            $path = [...$prefix, (string) $key];
+            $item = $this->decodeStructuredReportValue($item);
+
+            if (is_array($item) && $item !== []) {
+                $paths = [...$paths, ...$this->reportLeafPaths($item, $path)];
+            } else {
+                $paths[] = $path;
+            }
+        }
+
+        return $paths;
+    }
+
+    private function expandedReportHeader(string $baseHeader, array $path): string
+    {
+        $parts = array_map(
+            fn ($part) => ctype_digit((string) $part)
+                ? (string) ((int) $part + 1)
+                : ucwords(str_replace(['_', '-'], ' ', (string) $part)),
+            $path
+        );
+
+        if (isset($parts[0]) && ctype_digit($parts[0])) {
+            $baseHeader .= ' ' . array_shift($parts);
+        }
+
+        return $parts === [] ? $baseHeader : $baseHeader . ' - ' . implode(' - ', $parts);
     }
 
     /**
@@ -1150,11 +1271,11 @@ class AdminDashboardController extends Controller
 
         if (is_array($value)) {
             $flattened = [];
-            array_walk_recursive($value, function ($item, $key) use (&$flattened) {
-                $flattened[] = ucwords(str_replace('_', ' ', (string) $key)) . ': ' . $this->formatReportValue($item);
+            array_walk_recursive($value, function ($item) use (&$flattened) {
+                $flattened[] = $this->formatReportValue($item);
             });
 
-            return $flattened ? implode('; ', $flattened) : 'N/A';
+            return $flattened ? implode(', ', $flattened) : 'N/A';
         }
 
         if ($value === null || $value === '') {

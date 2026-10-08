@@ -65,9 +65,9 @@
                     <p class="card-text text-muted">Generate a full audit report of registered platform users, including email addresses, phone numbers, caste verification status, and registration timelines.</p>
                 </div>
                 <div class="report-actions mt-4 d-flex gap-2">
-                    <a href="{{ route('admin.reports.download', 'users') }}" class="btn btn-primary d-inline-flex align-items-center justify-content-center" download>
+                    <?php /*<a href="{{ route('admin.reports.download', 'users') }}" class="btn btn-primary d-inline-flex align-items-center justify-content-center" download>
                         <i class="fas fa-file-pdf me-2" style="margin-right: 8px;"></i> Download PDF Report
-                    </a>
+                    </a> */?>
                     <a href="{{ route('admin.reports.download.xls', 'users') }}" class="btn btn-outline-primary d-inline-flex align-items-center justify-content-center" download>
                         <i class="fas fa-file-excel me-2" style="margin-right: 8px;"></i> Download Excel Report
                     </a>
@@ -90,9 +90,9 @@
                     <p class="card-text text-muted">Generate a detailed summary of all registered businesses, active promotions, business categories, verification status, and owner information.</p>
                 </div>
                 <div class="report-actions mt-4 d-flex gap-2">
-                    <a href="{{ route('admin.reports.download', 'businesses') }}" class="btn btn-success d-inline-flex align-items-center justify-content-center text-white" download>
+                    <?php /*<a href="{{ route('admin.reports.download', 'businesses') }}" class="btn btn-success d-inline-flex align-items-center justify-content-center text-white" download>
                         <i class="fas fa-file-pdf me-2" style="margin-right: 8px;"></i> Download PDF Report
-                    </a>
+                    </a>*/?>
                     <a href="{{ route('admin.reports.download.xls', 'businesses') }}" class="btn btn-outline-success d-inline-flex align-items-center justify-content-center" download>
                         <i class="fas fa-file-excel me-2" style="margin-right: 8px;"></i> Download Excel Report
                     </a>
@@ -115,9 +115,9 @@
                     <p class="card-text text-muted">Generate a compilation of matrimonial profiles, showing age distribution, sub-caste divisions, approval status, and matchmaking participation metrics.</p>
                 </div>
                 <div class="report-actions mt-4 d-flex gap-2">
-                    <a href="{{ route('admin.reports.download', 'matrimony') }}" class="btn btn-info d-inline-flex align-items-center justify-content-center text-white" download>
+                    <?php /*<a href="{{ route('admin.reports.download', 'matrimony') }}" class="btn btn-info d-inline-flex align-items-center justify-content-center text-white" download>
                         <i class="fas fa-file-pdf me-2" style="margin-right: 8px;"></i> Download PDF Report
-                    </a>
+                    </a>*/?>
                     <a href="{{ route('admin.reports.download.xls', 'matrimony') }}" class="btn btn-outline-info d-inline-flex align-items-center justify-content-center text-info" download>
                         <i class="fas fa-file-excel me-2" style="margin-right: 8px;"></i> Download Excel Report
                     </a>
@@ -140,9 +140,9 @@
                     <p class="card-text text-muted">Generate a financial statement showing platform revenue trends, listing business subscription fees, matchmaking premium payments, and transaction histories.</p>
                 </div>
                 <div class="report-actions mt-4 d-flex gap-2">
-                    <a href="{{ route('admin.reports.download', 'payments') }}" class="btn btn-warning d-inline-flex align-items-center justify-content-center text-dark fw-bold" download>
+                    <?php /*<a href="{{ route('admin.reports.download', 'payments') }}" class="btn btn-warning d-inline-flex align-items-center justify-content-center text-dark fw-bold" download>
                         <i class="fas fa-file-pdf me-2" style="margin-right: 8px;"></i> Download PDF Report
-                    </a>
+                    </a>*/?>
                     <a href="{{ route('admin.reports.download.xls', 'payments') }}" class="btn btn-outline-warning d-inline-flex align-items-center justify-content-center text-dark fw-bold" download>
                         <i class="fas fa-file-excel me-2" style="margin-right: 8px;"></i> Download Excel Report
                     </a>
