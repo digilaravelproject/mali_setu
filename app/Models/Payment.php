@@ -61,6 +61,32 @@ class Payment extends Model
     {
         return $this->belongsTo(MatrimonyProfile::class);
     }
+
+    /**
+     * Limit the query to payments initiated through CCAvenue.
+     */
+    public function scopeCCAvenue($query)
+    {
+        return $query->where(function ($ccavenueQuery) {
+            $ccavenueQuery->whereNotNull('metadata->ccavenue_order_id')
+                // Older callbacks stored an already-encoded JSON string.
+                ->orWhere('metadata', 'like', '%"ccavenue_order_id"%');
+        });
+    }
+
+    /**
+     * Determine whether this payment was handled by CCAvenue.
+     */
+    public function getIsCCAvenueAttribute(): bool
+    {
+        $metadata = $this->metadata;
+
+        if (is_string($metadata)) {
+            $metadata = json_decode($metadata, true) ?: [];
+        }
+
+        return is_array($metadata) && filled($metadata['ccavenue_order_id'] ?? null);
+    }
     
     /**
      * Check if payment is completed

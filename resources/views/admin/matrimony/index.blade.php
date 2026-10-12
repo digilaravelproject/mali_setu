@@ -104,6 +104,7 @@
                                 <tr>
                                     <th>ID</th>
                                     <th>User</th>
+                                    <th>Candidate Name</th>
                                     <th>Age</th>
                                     <th>Location</th>
                                     <th>Education</th>
@@ -122,6 +123,9 @@
                                         <strong>{{ $profile->user->name }}</strong>
                                         <br>
                                         <small class="text-muted">{{ $profile->user->email }}</small>
+                                    </td>
+                                    <td>
+                                        <strong>{{ $profile->candidate_name ?: 'N/A' }}</strong>
                                     </td>
                                     <td>{{ $profile->age ?? 'N/A' }}</td>
                                     <td>
@@ -218,7 +222,7 @@
                                 </tr>
                                 @empty
                                 <tr>
-                                    <td colspan="10" class="text-center">No matrimony profiles found</td>
+                                    <td colspan="11" class="text-center">No matrimony profiles found</td>
                                 </tr>
                                 @endforelse
                             </tbody>

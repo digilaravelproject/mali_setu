@@ -192,6 +192,37 @@ class MatrimonyProfileRulesTest extends TestCase
             ->assertJsonCount(27, 'data.data');
     }
 
+    public function test_candidate_name_combines_personal_detail_name_fields(): void
+    {
+        $profile = MatrimonyProfile::findOrFail(1);
+        $profile->personal_details = [
+            'first_name' => 'Laxmi',
+            'middle_name' => 'Jaikumar',
+            'last_name' => 'Charjan',
+        ];
+
+        $this->assertSame('Laxmi Jaikumar Charjan', $profile->candidate_name);
+    }
+
+    public function test_admin_search_finds_a_profile_by_full_candidate_name(): void
+    {
+        MatrimonyProfile::findOrFail(2)->update([
+            'personal_details' => [
+                'first_name' => 'Laxmi',
+                'middle_name' => 'Jaikumar',
+                'last_name' => 'Charjan',
+                'gender' => 'female',
+            ],
+        ]);
+
+        $matches = MatrimonyProfile::query()
+            ->adminSearch('Laxmi Jaikumar Charjan')
+            ->pluck('id')
+            ->all();
+
+        $this->assertSame([2], $matches);
+    }
+
     public function test_new_profile_notifies_creator_and_all_existing_matrimony_users(): void
     {
         Mail::fake();

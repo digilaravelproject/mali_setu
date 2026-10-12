@@ -215,8 +215,9 @@
                                     @endif
                                 </div>
                                 
-                                <h4 class="fw-bold text-dark mb-1">{{ $profile->user->name ?? 'N/A' }}</h4>
-                                <p class="text-muted small mb-3">ID: #{{ $profile->id }} • Seeker Account</p>
+                                <h4 class="fw-bold text-dark mb-1">{{ $profile->candidate_name ?: 'N/A' }}</h4>
+                                <p class="text-muted small mb-1">Candidate Name</p>
+                                <p class="text-muted small mb-3">ID: #{{ $profile->id }} • Account: {{ $profile->user->name ?? 'N/A' }}</p>
                                 
                                 <div class="mb-4">
                                     @if($profile->approval_status === 'approved')

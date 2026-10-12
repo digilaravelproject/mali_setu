@@ -34,12 +34,9 @@ class MatrimonyManagementController extends Controller
             $query->where('age', '<=', $request->age_max);
         }
         
-        // Search by user name
-        if ($request->has('search') && $request->search !== '') {
-            $query->whereHas('user', function($userQuery) use ($request) {
-                $userQuery->where('name', 'like', '%' . $request->search . '%')
-                         ->orWhere('email', 'like', '%' . $request->search . '%');
-            });
+        // Search by candidate name or the owning user account.
+        if ($request->filled('search')) {
+            $query->adminSearch($request->string('search')->toString());
         }
         
         $profiles = $query->latest()->paginate(20);
@@ -65,11 +62,8 @@ class MatrimonyManagementController extends Controller
         $query = MatrimonyProfile::with(['user', 'matrimonyTransactions']);
             
         // Search functionality
-        if ($request->has('search') && $request->search !== '') {
-            $query->whereHas('user', function($userQuery) use ($request) {
-                $userQuery->where('name', 'like', '%' . $request->search . '%')
-                         ->orWhere('email', 'like', '%' . $request->search . '%');
-            });
+        if ($request->filled('search')) {
+            $query->adminSearch($request->string('search')->toString());
         }
         
         $pendingProfiles = $query->orderByRaw("FIELD(approval_status, 'pending', 'approved', 'rejected')")

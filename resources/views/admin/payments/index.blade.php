@@ -105,11 +105,7 @@
                             </div>
                             <div class="col-md-3">
                                 <select name="payment_method" class="form-select">
-                                    <option value="">All Methods</option>
-                                    <option value="razorpay" {{ request('payment_method') == 'razorpay' ? 'selected' : '' }}>Razorpay</option>
-                                    <option value="paytm" {{ request('payment_method') == 'paytm' ? 'selected' : '' }}>Paytm</option>
-                                    <option value="upi" {{ request('payment_method') == 'upi' ? 'selected' : '' }}>UPI</option>
-                                    <option value="card" {{ request('payment_method') == 'card' ? 'selected' : '' }}>Card</option>
+                                    <option value="ccavenue" selected>CCAvenue</option>
                                 </select>
                             </div>
                             <div class="col-md-4">
@@ -168,7 +164,12 @@
                                             <small class="text-muted">{{ $payment->currency }}</small>
                                         </td>
                                         <td>
-                                            @if($payment->payment_method)
+                                            @if($payment->is_ccavenue)
+                                                <span class="badge badge-info text-muted">CCAvenue</span>
+                                                @if($payment->payment_method && $payment->payment_method !== 'other')
+                                                    <br><small class="text-muted">{{ ucfirst($payment->payment_method) }}</small>
+                                                @endif
+                                            @elseif($payment->payment_method)
                                                 <span class="badge badge-info text-muted">{{ ucfirst($payment->payment_method) }}</span>
                                             @else
                                                 <span class="text-muted text-muted">N/A</span>

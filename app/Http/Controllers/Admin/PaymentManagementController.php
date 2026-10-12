@@ -28,9 +28,9 @@ class PaymentManagementController extends Controller
             $query->where('status', $request->status);
         }
         
-        // Filter by payment method
-        if ($request->filled('payment_method')) {
-            $query->where('payment_method', $request->payment_method);
+        // CCAvenue is the only supported gateway in the admin payment listing.
+        if ($request->input('payment_method', 'ccavenue') === 'ccavenue') {
+            $query->ccavenue();
         }
         
         // Filter by date range

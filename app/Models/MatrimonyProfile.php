@@ -88,6 +88,48 @@ class MatrimonyProfile extends Model
     }
 
     /**
+     * Get the candidate's name stored in the matrimony profile.
+     */
+    public function getCandidateNameAttribute(): string
+    {
+        $personalDetails = $this->personal_details ?? [];
+        $nameParts = array_filter([
+            $personalDetails['first_name'] ?? null,
+            $personalDetails['middle_name'] ?? null,
+            $personalDetails['last_name'] ?? null,
+        ], fn ($part) => filled($part));
+
+        return trim(implode(' ', $nameParts))
+            ?: trim((string) ($personalDetails['full_name'] ?? $personalDetails['name'] ?? ''));
+    }
+
+    /**
+     * Search admin listings by candidate details or the owning user account.
+     */
+    public function scopeAdminSearch($query, string $search)
+    {
+        $terms = preg_split('/\s+/', trim($search), -1, PREG_SPLIT_NO_EMPTY) ?: [];
+
+        foreach ($terms as $term) {
+            $query->where(function ($termQuery) use ($term) {
+                $like = '%'.$term.'%';
+
+                $termQuery->where('personal_details->first_name', 'like', $like)
+                    ->orWhere('personal_details->middle_name', 'like', $like)
+                    ->orWhere('personal_details->last_name', 'like', $like)
+                    ->orWhere('personal_details->full_name', 'like', $like)
+                    ->orWhere('personal_details->name', 'like', $like)
+                    ->orWhereHas('user', function ($userQuery) use ($like) {
+                        $userQuery->where('name', 'like', $like)
+                            ->orWhere('email', 'like', $like);
+                    });
+            });
+        }
+
+        return $query;
+    }
+
+    /**
      * Scope a query to only include approved profiles.
      */
     public function scopeApproved($query)
