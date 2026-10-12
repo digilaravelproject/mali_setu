@@ -25,6 +25,11 @@ class MatrimonyManagementController extends Controller
         if ($request->has('approval_status') && $request->approval_status !== '') {
             $query->where('approval_status', $request->approval_status);
         }
+
+        // Filter by the gender saved inside personal_details.
+        if ($request->filled('gender')) {
+            $query->adminGender($request->string('gender')->toString());
+        }
         
         // Filter by age range
         if ($request->has('age_min') && $request->age_min !== '') {
@@ -39,7 +44,7 @@ class MatrimonyManagementController extends Controller
             $query->adminSearch($request->string('search')->toString());
         }
         
-        $profiles = $query->latest()->paginate(20);
+        $profiles = $query->latest()->paginate(20)->withQueryString();
         
         $stats = [
             'total' => MatrimonyProfile::count(),

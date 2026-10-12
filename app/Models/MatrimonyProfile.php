@@ -93,6 +93,11 @@ class MatrimonyProfile extends Model
     public function getCandidateNameAttribute(): string
     {
         $personalDetails = $this->personal_details ?? [];
+
+        if (is_string($personalDetails)) {
+            $personalDetails = json_decode($personalDetails, true) ?: [];
+        }
+
         $nameParts = array_filter([
             $personalDetails['first_name'] ?? null,
             $personalDetails['middle_name'] ?? null,
@@ -113,6 +118,7 @@ class MatrimonyProfile extends Model
         foreach ($terms as $term) {
             $query->where(function ($termQuery) use ($term) {
                 $like = '%'.$term.'%';
+                $lowerLike = '%'.strtolower($term).'%';
 
                 $termQuery->where('personal_details->first_name', 'like', $like)
                     ->orWhere('personal_details->middle_name', 'like', $like)
@@ -123,10 +129,44 @@ class MatrimonyProfile extends Model
                         $userQuery->where('name', 'like', $like)
                             ->orWhere('email', 'like', $like);
                     });
+
+                // Fallback for MariaDB/MySQL rows whose JSON path comparison is
+                // affected by collation or legacy JSON encoding.
+                $castType = in_array($termQuery->getConnection()->getDriverName(), ['mysql', 'mariadb'], true)
+                    ? 'CHAR'
+                    : 'TEXT';
+                $termQuery->orWhereRaw(
+                    "LOWER(CAST(personal_details AS {$castType})) LIKE ?",
+                    [$lowerLike]
+                );
             });
         }
 
         return $query;
+    }
+
+    /**
+     * Filter the admin listing by the gender stored in personal details.
+     */
+    public function scopeAdminGender($query, string $gender)
+    {
+        $gender = strtolower(trim($gender));
+
+        return $query->where(function ($genderQuery) use ($gender) {
+            $genderQuery->whereIn('personal_details->gender', [
+                $gender,
+                ucfirst($gender),
+                strtoupper($gender),
+            ]);
+
+            $castType = in_array($genderQuery->getConnection()->getDriverName(), ['mysql', 'mariadb'], true)
+                ? 'CHAR'
+                : 'TEXT';
+            $genderQuery->orWhereRaw(
+                "LOWER(CAST(personal_details AS {$castType})) LIKE ?",
+                ['%gender%'.$gender.'%']
+            );
+        });
     }
 
     /**

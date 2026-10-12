@@ -204,23 +204,34 @@ class MatrimonyProfileRulesTest extends TestCase
         $this->assertSame('Laxmi Jaikumar Charjan', $profile->candidate_name);
     }
 
-    public function test_admin_search_finds_a_profile_by_full_candidate_name(): void
+    public function test_admin_search_finds_a_profile_by_partial_candidate_name(): void
     {
         MatrimonyProfile::findOrFail(2)->update([
             'personal_details' => [
                 'first_name' => 'Laxmi',
                 'middle_name' => 'Jaikumar',
-                'last_name' => 'Charjan',
+                'last_name' => 'Charjan2',
                 'gender' => 'female',
             ],
         ]);
 
         $matches = MatrimonyProfile::query()
-            ->adminSearch('Laxmi Jaikumar Charjan')
+            ->adminSearch('charjan2')
             ->pluck('id')
             ->all();
 
         $this->assertSame([2], $matches);
+    }
+
+    public function test_admin_gender_filter_is_case_insensitive(): void
+    {
+        $matches = MatrimonyProfile::query()
+            ->adminGender('female')
+            ->orderBy('id')
+            ->pluck('id')
+            ->all();
+
+        $this->assertSame([2, 3], $matches);
     }
 
     public function test_new_profile_notifies_creator_and_all_existing_matrimony_users(): void
