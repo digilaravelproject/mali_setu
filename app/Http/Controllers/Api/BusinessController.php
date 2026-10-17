@@ -58,23 +58,13 @@ class BusinessController extends Controller
 
             'website' => 'nullable|url',
             'photos' => 'nullable|array',
-            'photos.*' => 'string',
+            'photos.*' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:5120',
             'opening_time' => 'nullable|date_format:H:i',
             'closing_time' => 'nullable|date_format:H:i',
             'latitude' => 'nullable|numeric|between:-90,90',
             'longitude' => 'nullable|numeric|between:-180,180',
         ]);
         
-        if ($validator->fails()) {
-            $errors = $validator->errors();
-        
-            return response()->json([
-                'success' => false,
-                'message' => $errors->first(), // 👈 get first error message
-                'errors' => $errors
-            ], 422);
-        }
-
         if ($validator->fails()) {
             $errors = $validator->errors();
         
@@ -95,20 +85,9 @@ class BusinessController extends Controller
         
         $photoPaths = [];
 
-        if ($request->photos) {
-            foreach ($request->photos as $base64Image) {
-        
-                if (str_contains($base64Image, 'base64,')) {
-                    $base64Image = explode('base64,', $base64Image)[1];
-                }
-        
-                $imageData = base64_decode($base64Image);
-        
-                $fileName = 'business/photos/' . uniqid() . '.jpg';
-        
-                Storage::disk('public')->put($fileName, $imageData);
-        
-                $photoPaths[] = $fileName;
+        if ($request->hasFile('photos')) {
+            foreach ($request->file('photos') as $photo) {
+                $photoPaths[] = $photo->store('business/photos', 'public');
             }
         }
 
@@ -872,7 +851,7 @@ class BusinessController extends Controller
             'website' => 'nullable|url',
 
             'photos' => 'nullable|array',
-            'photos.*' => 'string',
+            'photos.*' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:5120',
 
             'opening_time' => 'sometimes|date_format:H:i',
             'closing_time' => 'sometimes|date_format:H:i',
@@ -897,24 +876,13 @@ class BusinessController extends Controller
             ? explode(',', $business->photo)
             : [];
 
-        if ($request->photos) {
+        if ($request->hasFile('photos')) {
 
-            foreach ($request->photos as $base64Image) {
-
-                if (str_contains($base64Image, 'base64,')) {
-                    $base64Image = explode('base64,', $base64Image)[1];
-                }
-
-                $imageData = base64_decode($base64Image);
-
-                $fileName = 'business/photos/' . uniqid() . '.jpg';
-
-                Storage::disk('public')->put($fileName, $imageData);
-
-                $photoPaths[] = $fileName;
+            foreach ($request->file('photos') as $photo) {
+                $photoPaths[] = $photo->store('business/photos', 'public');
             }
 
-            // Delete old photos (optional)
+            // Delete old photos
             foreach ($existingPhotos as $oldPhoto) {
                 if (Storage::disk('public')->exists(trim($oldPhoto))) {
                     Storage::disk('public')->delete(trim($oldPhoto));

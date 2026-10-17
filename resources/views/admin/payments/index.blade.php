@@ -256,7 +256,7 @@
                         
                         <!-- Pagination -->
                         <div class="d-flex justify-content-center">
-                            {{ $payments->links() }}
+                            {{ $payments->appends(request()->query())->links() }}
                         </div>
                     @else
                         <div class="text-center py-5">

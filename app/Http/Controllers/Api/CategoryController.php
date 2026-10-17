@@ -19,6 +19,11 @@ class CategoryController extends Controller
             ->orderBy('sort_order', 'asc')
             ->orderBy('id', 'asc');
 
+        // Search by category name
+        if ($request->filled('q')) {
+            $query->where('name', 'like', '%' . $request->q . '%');
+        }
+
         $businessesCat = $query->paginate(10);
 
         return response()->json([

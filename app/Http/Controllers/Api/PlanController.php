@@ -15,8 +15,8 @@ class PlanController extends Controller
     public function businessPlans(Request $request)
     {
         $plans = BusinessPlan::where('active', true)
-            ->orderBy('company_type')
-            ->orderBy('duration_years')
+            // ->orderByRaw("FIELD(company_type, 'Proprietary(Owner)/Partnership - LLP', 'Private Ltd') DESC")
+            ->orderBy('id', 'asc')
             ->get();
 
         return response()->json([
