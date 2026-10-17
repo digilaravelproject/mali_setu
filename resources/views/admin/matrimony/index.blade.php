@@ -232,7 +232,7 @@
                     <!-- Pagination -->
                     @if(isset($profiles))
                     <div class="d-flex justify-content-center">
-                        {{ $profiles->links() }}
+                        {{ $profiles->appends(request()->query())->links() }}
                     </div>
                     @endif
                 </div>

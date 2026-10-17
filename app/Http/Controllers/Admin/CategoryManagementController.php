@@ -13,9 +13,17 @@ class CategoryManagementController extends Controller
      */
     public function index(Request $request)
     {
-        $categories = BusinessCategory::orderBy('sort_order', 'asc')->orderBy('id', 'asc')->paginate(20);
-        
-        return view('admin.category.index', compact('categories'));
+        $search = $request->input('search');
+
+        $query = BusinessCategory::orderBy('sort_order', 'asc')->orderBy('id', 'asc');
+
+        if ($search) {
+            $query->where('name', 'like', '%' . $search . '%');
+        }
+
+        $categories = $query->paginate(20)->withQueryString();
+
+        return view('admin.category.index', compact('categories', 'search'));
     }
 
     /**

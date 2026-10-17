@@ -22,12 +22,39 @@
 <div class="container-fluid">
     <div class="row">
         <div class="col-12">
-            <!-- Add Category Button -->
+            <!-- Header + Add Category Button -->
             <div class="d-flex justify-content-between align-items-center mb-3">
                 <h4 class="mb-0">Categories</h4>
                 <a href="{{ route('admin.category.addcategory') }}" class="btn btn-success">
                     <i class="fas fa-plus"></i> Add Category
                 </a>
+            </div>
+
+            <!-- Search Bar -->
+            <div class="card mb-3">
+                <div class="card-body py-2">
+                    <form method="GET" action="{{ route('admin.category.index') }}" class="row g-2 align-items-center">
+                        <div class="col-md-6">
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-search"></i></span>
+                                <input type="text" name="search" class="form-control" placeholder="Search categories by name..." value="{{ $search ?? '' }}" id="categorySearchInput" autocomplete="off">
+                                @if(!empty($search))
+                                    <a href="{{ route('admin.category.index') }}" class="btn btn-outline-secondary" title="Clear search">
+                                        <i class="fas fa-times"></i>
+                                    </a>
+                                @endif
+                            </div>
+                        </div>
+                        <div class="col-md-auto">
+                            <button type="submit" class="btn btn-primary"><i class="fas fa-search me-1"></i>Search</button>
+                        </div>
+                        @if(!empty($search))
+                            <div class="col-md-auto">
+                                <span class="badge bg-info text-white fs-6">Showing results for: "{{ $search }}"</span>
+                            </div>
+                        @endif
+                    </form>
+                </div>
             </div>
             <div class="card">
                 <div class="card-body">
@@ -118,7 +145,7 @@
                     
                     <!-- Pagination -->
                     <div class="d-flex justify-content-center mt-3">
-                        {{ $categories->links() }}
+                        {{ $categories->appends(request()->query())->links() }}
                     </div>
                 </div>
             </div>

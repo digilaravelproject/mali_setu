@@ -248,7 +248,7 @@
                 <!-- Pagination -->
                 @if(method_exists($pendingProfiles, 'links'))
                     <div class="d-flex justify-content-center">
-                        {{ $pendingProfiles->links() }}
+                        {{ $pendingProfiles->appends(request()->query())->links() }}
                     </div>
                 @endif
             @else

@@ -115,7 +115,7 @@
                 </div>
 
                 <div class="mt-4">
-                    {{ $bloggers->links() }}
+                    {{ $bloggers->appends(request()->query())->links() }}
                 </div>
             @else
                 <div class="alert alert-info border-0 rounded-4 p-4 text-center">

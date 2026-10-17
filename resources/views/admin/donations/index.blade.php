@@ -187,7 +187,7 @@
                     
                     <!-- Pagination -->
                     <div class="d-flex justify-content-center">
-                        {{ $donations->links() }}
+                        {{ $donations->appends(request()->query())->links() }}
                     </div>
                 </div>
             </div>

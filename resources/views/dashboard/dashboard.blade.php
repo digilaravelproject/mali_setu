@@ -967,8 +967,24 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body text-center">
-                <p class="text-secondary small mb-4 text-start">Click any sector below to filter directory listings immediately.</p>
-                <div class="row row-cols-3 row-cols-sm-4 row-cols-md-6 row-cols-lg-8 g-4 pt-2 justify-content-center">
+                <p class="text-secondary small mb-2 text-start">Click any sector below to filter directory listings immediately.</p>
+
+                <!-- Live Search Input -->
+                <div class="mb-3 text-start">
+                    <div class="input-group">
+                        <span class="input-group-text bg-white border-end-0" style="border-radius: 12px 0 0 12px;">
+                            <i class="fa-solid fa-magnifying-glass text-secondary"></i>
+                        </span>
+                        <input type="text"
+                               id="categoryModalSearch"
+                               class="form-control border-start-0 ps-0"
+                               placeholder="Search categories..."
+                               autocomplete="off"
+                               style="border-radius: 0 12px 12px 0; outline: none; box-shadow: none;">
+                    </div>
+                </div>
+
+                <div id="categoryModalGrid" class="row row-cols-3 row-cols-sm-4 row-cols-md-6 row-cols-lg-8 g-4 pt-2 justify-content-center">
                     @foreach($categories as $index => $cat)
                         @php
                             $matchedIcon = 'fa-tags';
@@ -997,7 +1013,7 @@
                             ];
                             $matchedBg = $bgMap[$matchedColor] ?? 'rgba(255, 71, 87, 0.06)';
                         @endphp
-                        <div class="col">
+                        <div class="col category-modal-item" data-cat-name="{{ strtolower($cat->name) }}">
                             <div onclick="selectCategoryOnDashboard({{ $cat->id }}); bootstrap.Modal.getInstance(document.getElementById('allCategoriesModal')).hide();" class="justdial-cat-item">
                                 <div class="justdial-cat-circle" style="--cat-bg: {{ $matchedBg }};">
                                     @if(!empty($cat->photo) && file_exists(public_path('storage/' . $cat->photo)))
@@ -1011,10 +1027,67 @@
                         </div>
                     @endforeach
                 </div>
+
+                <!-- No Results Message -->
+                <div id="categoryModalNoResults" class="py-4 text-center d-none">
+                    <i class="fa-solid fa-circle-xmark fa-2x text-secondary mb-2"></i>
+                    <p class="text-secondary mb-0">No categories found matching your search.</p>
+                </div>
             </div>
         </div>
     </div>
 </div>
+
+<script>
+(function () {
+    var searchInput = document.getElementById('categoryModalSearch');
+    var modal = document.getElementById('allCategoriesModal');
+
+    if (!searchInput || !modal) return;
+
+    // Clear search when modal opens
+    modal.addEventListener('show.bs.modal', function () {
+        searchInput.value = '';
+        filterCategoryModal('');
+    });
+
+    // Focus input after modal is fully shown
+    modal.addEventListener('shown.bs.modal', function () {
+        searchInput.focus();
+    });
+
+    searchInput.addEventListener('input', function () {
+        filterCategoryModal(this.value.trim().toLowerCase());
+    });
+
+    function filterCategoryModal(query) {
+        var items = document.querySelectorAll('#categoryModalGrid .category-modal-item');
+        var visibleCount = 0;
+
+        items.forEach(function (item) {
+            var name = item.getAttribute('data-cat-name') || '';
+            if (!query || name.indexOf(query) !== -1) {
+                item.style.display = '';
+                visibleCount++;
+            } else {
+                item.style.display = 'none';
+            }
+        });
+
+        var noResults = document.getElementById('categoryModalNoResults');
+        var grid = document.getElementById('categoryModalGrid');
+        if (noResults && grid) {
+            if (visibleCount === 0 && query !== '') {
+                noResults.classList.remove('d-none');
+                grid.classList.add('d-none');
+            } else {
+                noResults.classList.add('d-none');
+                grid.classList.remove('d-none');
+            }
+        }
+    }
+})();
+</script>
 
 <!-- Modal for displaying business phone number -->
 <div class="modal fade" id="callBusinessModal" tabindex="-1" aria-labelledby="callBusinessModalLabel" aria-hidden="true">

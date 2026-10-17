@@ -221,7 +221,7 @@
                     
                     <!-- Pagination -->
                     <div class="d-flex justify-content-center">
-                        {{ $causes->links() }}
+                        {{ $causes->appends(request()->query())->links() }}
                     </div>
                 </div>
             </div>

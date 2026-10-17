@@ -193,7 +193,7 @@
                         
                         <!-- Pagination -->
                         <div class="d-flex justify-content-center">
-                            {{ $pendingBusinesses->links() }}
+                            {{ $pendingBusinesses->appends(request()->query())->links() }}
                         </div>
                     @else
                         <div class="text-center py-5">

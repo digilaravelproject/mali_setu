@@ -54,7 +54,7 @@
                         </tbody>
                     </table>
                 </div>
-                <div class="d-flex justify-content-center">{{ $transactions->links() }}</div>
+                <div class="d-flex justify-content-center">{{ $transactions->appends(request()->query())->links() }}</div>
             @else
                 <p class="text-center">No business subscription transactions found.</p>
             @endif

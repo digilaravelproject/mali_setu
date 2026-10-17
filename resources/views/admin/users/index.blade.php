@@ -301,7 +301,7 @@
                 <!-- Pagination -->
                 @if(method_exists($users, 'links'))
                     <div class="d-flex justify-content-center">
-                        {{ $users->links() }}
+                        {{ $users->appends(request()->query())->links() }}
                     </div>
                 @endif
             @else

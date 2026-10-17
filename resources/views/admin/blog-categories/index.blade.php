@@ -121,7 +121,7 @@
             @if($categories->hasPages())
                 <div class="card-footer bg-white border-0 py-3">
                     <div class="d-flex justify-content-center">
-                        {{ $categories->links() }}
+                        {{ $categories->appends(request()->query())->links() }}
                     </div>
                 </div>
             @endif
