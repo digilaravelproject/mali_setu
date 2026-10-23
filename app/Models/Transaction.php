@@ -127,4 +127,33 @@ class Transaction extends Model
             'cause_title' => $this->metadata['cause_title'] ?? null,
         ];
     }
+
+    /**
+     * Get the subscription start date
+     */
+    public function getSubscriptionStartDateAttribute()
+    {
+        return $this->created_at;
+    }
+
+    /**
+     * Get the subscription end date
+     */
+    public function getSubscriptionEndDateAttribute()
+    {
+        $user = $this->user;
+        if (!$user) {
+            return null;
+        }
+
+        if ($this->purpose === 'business_registration') {
+            return $user->business?->subscription_expires_at;
+        }
+
+        if ($this->purpose === 'matrimony_profile') {
+            return $user->matrimonyProfile?->profile_expires_at;
+        }
+
+        return null;
+    }
 }

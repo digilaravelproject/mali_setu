@@ -57,7 +57,7 @@
         </div>
     </div>
     
-    <div class="col-xl-3 col-md-6 mb-4">
+    <?php /*<div class="col-xl-3 col-md-6 mb-4">
         <div class="stats-card">
             <div class="d-flex align-items-center">
                 <div class="stats-icon payments">
@@ -72,7 +72,7 @@
                 </div>
             </div>
         </div>
-    </div>
+    </div> */?>
 </div>
 
 <div class="row">

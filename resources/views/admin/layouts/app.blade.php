@@ -4,25 +4,29 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    <link rel="icon" type="image/x-icon" href="{{ asset('landing_page_logo.jpeg') }}">
     <title>@yield('title', 'Admin Dashboard') - Mali Setu</title>
+    
     
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
     <style>
         :root {
-            --primary-color: #b61315;
-            --secondary-color: #F59E0B;
+            --primary-color: #84144f;
+            --secondary-color: #aa1262;
             --sidebar-width: 280px;
             --header-height: 70px;
         }
         
         body {
-            font-family: 'Inter', sans-serif;
+            font-family: 'Nunito', sans-serif;
             background-color: #f8fafc;
         }
         
@@ -32,7 +36,7 @@
             left: 0;
             height: 100vh;
             width: var(--sidebar-width);
-            background: linear-gradient(135deg, var(--primary-color) 0%, #8b0000 100%);
+            background: linear-gradient(135deg, var(--primary-color) 0%, #630837 100%);
             color: white;
             z-index: 1000;
             transition: all 0.3s ease;
@@ -93,7 +97,7 @@
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
             display: flex;
             align-items: center;
-            justify-content: between;
+            justify-content: space-between;
             padding: 0 2rem;
         }
         
@@ -170,8 +174,8 @@
         }
         
         .btn-primary:hover {
-            background-color: #8b0000;
-            border-color: #8b0000;
+            background-color: #630837;
+            border-color: #630837;
         }
         
         .table {
@@ -238,6 +242,14 @@
                     Analytics
                 </a>
             </div>
+
+            <div class="nav-item">
+                <a href="{{ route('heroes.index') }}" 
+                class="nav-link {{ request()->routeIs('heroes.*') ? 'active' : '' }}">
+                    <i class="fas fa-image"></i>
+                    <span>Homepage Heroes</span>
+                </a>
+            </div>
             
             <div class="nav-item">
                 <a href="{{ route('admin.users.index') }}" class="nav-link {{ request()->routeIs('admin.users.*') ? 'active' : '' }}">
@@ -245,12 +257,60 @@
                     User Management
                 </a>
             </div>
+
+            <div class="nav-item">
+                <a class="nav-link d-flex justify-content-between align-items-center {{ request()->routeIs('admin.bloggers.*') || request()->routeIs('admin.blogs.access') ? 'active' : '' }}"
+                   data-bs-toggle="collapse" href="#bloggersMenu" role="button" aria-expanded="{{ request()->routeIs('admin.bloggers.*') || request()->routeIs('admin.blogs.access') ? 'true' : 'false' }}" aria-controls="bloggersMenu">
+                    <span><i class="fas fa-users-cog"></i> Manage Blogger</span>
+                    <i class="fas fa-chevron-down"></i>
+                </a>
+
+                <div class="collapse {{ request()->routeIs('admin.bloggers.*') || request()->routeIs('admin.blogs.access') ? 'show' : '' }}" id="bloggersMenu">
+                    <div class="nav-item" style="margin-left: .6rem;">
+                        <a href="{{ route('admin.bloggers.index') }}" class="nav-link {{ request()->routeIs('admin.bloggers.index') || request()->routeIs('admin.bloggers.create') || request()->routeIs('admin.bloggers.edit') ? 'active' : '' }}">
+                            <i class="fas fa-user-plus"></i>
+                            Add Blogger
+                        </a>
+                    </div>
+
+                    <div class="nav-item" style="margin-left: .6rem;">
+                        <a href="{{ route('admin.blogs.access') }}" class="nav-link {{ request()->routeIs('admin.blogs.access') ? 'active' : '' }}">
+                            <i class="fas fa-user-lock"></i>
+                            Blog Access
+                        </a>
+                    </div>
+                </div>
+            </div>
             
             <div class="nav-item">
                 <a href="{{ route('admin.users.verification.pending') }}" class="nav-link {{ request()->routeIs('admin.users.verification.*') ? 'active' : '' }}">
                     <i class="fas fa-certificate"></i>
                     Verifications
                 </a>
+            </div>
+
+            <div class="nav-item">
+                <a class="nav-link d-flex justify-content-between align-items-center {{ request()->routeIs('admin.plans.*') ? 'active' : '' }}"
+                   data-bs-toggle="collapse" href="#plansMenu" role="button" aria-expanded="{{ request()->routeIs('admin.plans.*') ? 'true' : 'false' }}" aria-controls="plansMenu">
+                    <span><i class="fas fa-list-alt"></i> Manage Plans</span>
+                    <i class="fas fa-chevron-down"></i>
+                </a>
+
+                <div class="collapse {{ request()->routeIs('admin.plans.*') ? 'show' : '' }}" id="plansMenu">
+                    <div class="nav-item" style="margin-left: .6rem;">
+                        <a href="{{ route('admin.plans.business.index') }}" class="nav-link {{ request()->routeIs('admin.plans.business.*') ? 'active' : '' }}">
+                            <i class="fas fa-briefcase"></i>
+                            Business Plans
+                        </a>
+                    </div>
+
+                    <div class="nav-item" style="margin-left: .6rem;">
+                        <a href="{{ route('admin.plans.matrimony.index') }}" class="nav-link {{ request()->routeIs('admin.plans.matrimony.*') ? 'active' : '' }}">
+                            <i class="fas fa-user-friends"></i>
+                            Matrimony Plans
+                        </a>
+                    </div>
+                </div>
             </div>
 
             <div class="nav-item">
@@ -267,10 +327,62 @@
                 </a>
             </div>
             
+            <?php /*<div class="nav-item">
+                <a href="{{ route('admin.volunteers.index') }}" class="nav-link {{ request()->routeIs('admin.volunteers.*') ? 'active' : '' }}">
+                    <i class="fas fa-hands-helping"></i>
+                    Volunteers
+                </a>
+            </div> */?>
+            
+            <div class="nav-item">
+                <a href="{{ route('admin.donations.index') }}" class="nav-link {{ request()->routeIs('admin.donations.*') ? 'active' : '' }}">
+                    <i class="fas fa-heart"></i>
+                    Contribution
+                </a>
+            </div>
+            
             <div class="nav-item">
                 <a href="{{ route('admin.matrimony.index') }}" class="nav-link {{ request()->routeIs('admin.matrimony.*') ? 'active' : '' }}">
                     <i class="fas fa-heart"></i>
                     Matrimony
+                </a>
+            </div>
+
+            <div class="nav-item">
+                <a href="{{ route('admin.casts.index') }}" class="nav-link {{ request()->routeIs('admin.casts.*') ? 'active' : '' }}">
+                    <i class="fas fa-sitemap"></i>
+                    Manage Casts
+                </a>
+            </div>
+
+            <div class="nav-item">
+                <a class="nav-link d-flex justify-content-between align-items-center {{ request()->routeIs('admin.blogs.*') || request()->routeIs('admin.blog-categories.*') ? 'active' : '' }}"
+                   data-bs-toggle="collapse" href="#blogsMenu" role="button" aria-expanded="{{ request()->routeIs('admin.blogs.*') || request()->routeIs('admin.blog-categories.*') ? 'true' : 'false' }}" aria-controls="blogsMenu">
+                    <span><i class="fas fa-newspaper"></i> Manage Blogs</span>
+                    <i class="fas fa-chevron-down"></i>
+                </a>
+
+                <div class="collapse {{ request()->routeIs('admin.blogs.*') || request()->routeIs('admin.blog-categories.*') ? 'show' : '' }}" id="blogsMenu">
+                    <div class="nav-item" style="margin-left: .6rem;">
+                        <a href="{{ route('admin.blogs.index') }}" class="nav-link {{ request()->routeIs('admin.blogs.index') || request()->routeIs('admin.blogs.create') || request()->routeIs('admin.blogs.edit') ? 'active' : '' }}">
+                            <i class="fas fa-file-alt"></i>
+                            Blogs
+                        </a>
+                    </div>
+
+                    <div class="nav-item" style="margin-left: .6rem;">
+                        <a href="{{ route('admin.blog-categories.index') }}" class="nav-link {{ request()->routeIs('admin.blog-categories.*') ? 'active' : '' }}">
+                            <i class="fas fa-tags"></i>
+                            Category
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="nav-item">
+                <a href="{{ route('admin.educations.index') }}" class="nav-link {{ request()->routeIs('admin.educations.*') ? 'active' : '' }}">
+                    <i class="fas fa-graduation-cap"></i>
+                    Manage Education
                 </a>
             </div>
             
@@ -281,6 +393,20 @@
                 </a>
             </div>
             
+            <div class="nav-item">
+                <a href="{{ route('admin.reports') }}" class="nav-link {{ request()->routeIs('admin.reports') ? 'active' : '' }}">
+                    <i class="fas fa-file-pdf"></i>
+                    Reports
+                </a>
+            </div>
+            
+            <div class="nav-item">
+                <a href="{{ route('admin.app-versions.index') }}" class="nav-link {{ request()->routeIs('admin.app-versions.*') ? 'active' : '' }}">
+                    <i class="fas fa-mobile-screen-button"></i>
+                    App Version
+                </a>
+            </div>
+
             <div class="nav-item">
                 <a href="{{ route('admin.settings') }}" class="nav-link {{ request()->routeIs('admin.settings') ? 'active' : '' }}">
                     <i class="fas fa-cog"></i>
@@ -302,18 +428,28 @@
             </div>
             
             <div class="dropdown">
-                <button class="btn btn-link dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                    <i class="fas fa-user-circle fa-lg"></i>
-                    <span class="ms-2">{{ auth()->user()->name }}</span>
+                <button class="btn btn-light dropdown-toggle d-flex align-items-center px-3 py-2 border rounded-pill shadow-sm" type="button" data-bs-toggle="dropdown" aria-expanded="false" style="text-decoration: none; color: #374151; font-weight: 500; transition: all 0.2s;">
+                    @if(auth()->user()->photo)
+                        <img src="{{ asset('storage/' . auth()->user()->photo) }}" alt="Avatar" class="rounded-circle me-2" style="width: 32px; height: 32px; object-fit: cover;">
+                    @else
+                        <div class="avatar-circle d-flex align-items-center justify-content-center bg-danger text-white rounded-circle me-2" style="width: 32px; height: 32px; font-weight: 600; font-size: 0.875rem;">
+                            {{ strtoupper(substr(auth()->user()->name, 0, 2)) }}
+                        </div>
+                    @endif
+                    <span class="me-1">{{ auth()->user()->name }}</span>
                 </button>
-                <ul class="dropdown-menu dropdown-menu-end">
-                    <li><a class="dropdown-item" href="#"><i class="fas fa-user me-2"></i>Profile</a></li>
-                    <li><hr class="dropdown-divider"></li>
+                <ul class="dropdown-menu dropdown-menu-end p-2 border-0 shadow-lg" style="border-radius: 12px; min-width: 200px;">
+                    <li class="px-3 py-2 border-bottom mb-2">
+                        <div class="fw-bold text-dark">{{ auth()->user()->name }}</div>
+                        <div class="text-muted small" style="font-size: 0.75rem;">{{ auth()->user()->email }}</div>
+                    </li>
+                    <li><a class="dropdown-item rounded-2 py-2 px-3 d-flex align-items-center" href="{{ route('admin.profile') }}"><i class="fas fa-user text-muted me-2" style="width: 20px;"></i>Profile</a></li>
+                    <li><hr class="dropdown-divider my-2"></li>
                     <li>
                         <form action="{{ route('admin.logout') }}" method="POST" class="d-inline">
                             @csrf
-                            <button type="submit" class="dropdown-item">
-                                <i class="fas fa-sign-out-alt me-2"></i>Logout
+                            <button type="submit" class="dropdown-item rounded-2 py-2 px-3 d-flex align-items-center text-danger">
+                                <i class="fas fa-sign-out-alt me-2" style="width: 20px;"></i>Logout
                             </button>
                         </form>
                     </li>
@@ -327,6 +463,14 @@
                 <div class="alert alert-success alert-dismissible fade show" role="alert">
                     <i class="fas fa-check-circle me-2"></i>
                     {{ session('success') }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            @endif
+            
+            @if(session('warning'))
+                <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    {{ session('warning') }}
                     <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                 </div>
             @endif
@@ -362,8 +506,73 @@
                 bsAlert.close();
             });
         }, 5000);
+
+        $(document).ready(function() {
+            // Character & input length constraints
+            $(document).on('input', 'input[name="first_name"], input[name="middle_name"], input[name="last_name"], input[name="name"]', function() {
+                let id = $(this).attr('id') || '';
+                let placeholder = $(this).attr('placeholder') || '';
+                if (id.includes('product') || id.includes('service') || id.includes('category') || id.includes('cast') || id.includes('blog') || id.includes('cause') || id.includes('plan')) {
+                    return;
+                }
+                if (placeholder.toLowerCase().includes('product') || placeholder.toLowerCase().includes('service') || placeholder.toLowerCase().includes('category') || placeholder.toLowerCase().includes('cast') || placeholder.toLowerCase().includes('blog') || placeholder.toLowerCase().includes('cause') || placeholder.toLowerCase().includes('plan')) {
+                    return;
+                }
+                let form = $(this).closest('form');
+                if (form.length) {
+                    let action = form.attr('action') || '';
+                    if (action.includes('product') || action.includes('service') || action.includes('category') || action.includes('blog') || action.includes('cause') || action.includes('plan')) {
+                        return;
+                    }
+                }
+                this.value = this.value.replace(/[0-9]/g, '');
+            });
+
+            $(document).on('input', 'input[name="phone"], input[name="mobile"], input[name="contact_phone"], input[type="tel"]', function() {
+                this.value = this.value.replace(/[^0-9]/g, '');
+                if (this.value.length > 10) {
+                    this.value = this.value.slice(0, 10);
+                }
+            });
+
+            $(document).on('input', 'input[name="country"], input[name="state"], input[name="city"], input[name="taluka"], input[name="village"]', function() {
+                this.value = this.value.replace(/[0-9]/g, '');
+            });
+        });
     </script>
     
+    <!-- Shared matrimony photo preview -->
+    <div class="modal fade" id="matrimonyPhotoPreviewModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-xl">
+            <div class="modal-content bg-transparent border-0 shadow-none">
+                <div class="modal-body p-2 text-center">
+                    <div class="position-relative d-inline-block">
+                        <img id="matrimonyPhotoPreviewImage" src="" alt="Matrimony profile photo" class="img-fluid rounded-4 shadow-lg" style="max-height:88vh; object-fit:contain; background:#fff;">
+                        <button type="button" class="position-absolute d-flex align-items-center justify-content-center border-0 rounded-circle bg-dark text-white shadow" data-bs-dismiss="modal" aria-label="Close image preview" title="Close" style="top:12px; right:12px; width:42px; height:42px; z-index:3; font-size:1.25rem;">
+                            <i class="fas fa-times" aria-hidden="true"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            document.addEventListener('click', function (event) {
+                const photo = event.target.closest('img');
+                if (!photo || !photo.src.includes('/storage/matrimony/photos/')) return;
+
+                event.preventDefault();
+                document.getElementById('matrimonyPhotoPreviewImage').src = photo.src;
+                bootstrap.Modal.getOrCreateInstance(document.getElementById('matrimonyPhotoPreviewModal')).show();
+            });
+
+            document.querySelectorAll('img[src*="/storage/matrimony/photos/"]').forEach(function (photo) {
+                photo.style.cursor = 'zoom-in';
+                photo.title = photo.title || 'Click to enlarge';
+            });
+        });
+    </script>
     @stack('scripts')
 </body>
 </html>

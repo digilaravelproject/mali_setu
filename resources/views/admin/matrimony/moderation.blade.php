@@ -123,6 +123,7 @@
                                 <th>Location</th>
                                 <th>Education</th>
                                 <th>Family Details</th>
+                                <th>Payment</th>
                                 <th>Submitted</th>
                                 <th>Actions</th>
                             </tr>
@@ -135,15 +136,17 @@
                                 </td>
                                 <td>
                                     <div class="d-flex align-items-center">
-                                        <div class="mr-3">
-                                            <div class="icon-circle bg-primary">
-                                                <i class="fas fa-heart text-white"></i>
-                                            </div>
-                                        </div>
                                         <div>
                                             <div class="font-weight-bold">{{ $profile->user->name ?? 'N/A' }}</div>
                                             <div class="text-xs text-gray-500">{{ $profile->user->email ?? 'N/A' }}</div>
                                             <div class="text-xs text-gray-500">ID: {{ $profile->id }}</div>
+                                            @if($profile->approval_status === 'approved')
+                                                <span class="badge bg-success text-white mt-1" style="font-size: 0.65rem;">Approved</span>
+                                            @elseif($profile->approval_status === 'rejected')
+                                                <span class="badge bg-danger text-white mt-1" style="font-size: 0.65rem;">Rejected</span>
+                                            @else
+                                                <span class="badge bg-warning text-dark mt-1" style="font-size: 0.65rem;">Pending</span>
+                                            @endif
                                         </div>
                                     </div>
                                 </td>
@@ -175,6 +178,22 @@
                                     @endif
                                 </td>
                                 <td>
+                                    @php
+                                        $latestTxn = $profile->matrimonyTransactions->first();
+                                    @endphp
+                                    @if($latestTxn)
+                                        @if($latestTxn->status == 'completed')
+                                            <span class="badge bg-success text-white">Paid (₹{{ number_format($latestTxn->amount, 2) }})</span>
+                                        @elseif($latestTxn->status == 'pending')
+                                            <span class="badge bg-warning text-dark">Pending (₹{{ number_format($latestTxn->amount, 2) }})</span>
+                                        @else
+                                            <span class="badge bg-danger text-white">{{ ucfirst($latestTxn->status) }} (₹{{ number_format($latestTxn->amount, 2) }})</span>
+                                        @endif
+                                    @else
+                                        <span class="badge bg-secondary text-white">Unpaid</span>
+                                    @endif
+                                </td>
+                                <td>
                                     <div class="text-xs text-gray-500">{{ $profile->created_at->format('M d, Y') }}</div>
                                     <div class="text-xs text-gray-500">{{ $profile->created_at->diffForHumans() }}</div>
                                 </td>
@@ -185,7 +204,8 @@
                                             @csrf
                                             <button type="submit" class="btn btn-success btn-sm" 
                                                     onclick="return confirm('Are you sure you want to approve this matrimony profile?')" 
-                                                    data-toggle="tooltip" title="Approve">
+                                                    data-toggle="tooltip" title="Approve"
+                                                    {{ $profile->approval_status === 'approved' ? 'disabled' : '' }}>
                                                 <i class="fas fa-check"></i>
                                             </button>
                                         </form>
@@ -196,7 +216,8 @@
                                             <input type="hidden" name="rejection_reason" id="rejection_reason_{{ $profile->id }}">
                                             <button type="submit" class="btn btn-danger btn-sm" 
                                                     onclick="var reason = prompt('Please provide a reason for rejection:'); if (reason && reason.trim() !== '') { document.getElementById('rejection_reason_{{ $profile->id }}').value = reason.trim(); return true; } else { return false; }" 
-                                                    data-toggle="tooltip" title="Reject">
+                                                    data-toggle="tooltip" title="Reject"
+                                                    {{ $profile->approval_status === 'rejected' ? 'disabled' : '' }}>
                                                 <i class="fas fa-times"></i>
                                             </button>
                                         </form>
@@ -205,6 +226,17 @@
                                            data-toggle="tooltip" title="View Profile Details">
                                             <i class="fas fa-info-circle"></i>
                                         </a>
+                                        
+                                        <!-- Delete Form -->
+                                        <form method="POST" action="{{ route('admin.matrimony.destroy', $profile->id) }}" style="display: inline;">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="btn btn-danger btn-sm" 
+                                                    onclick="return confirm('Are you sure you want to delete this matrimony profile? All profile and associated payment data will be permanently deleted.');" 
+                                                    data-toggle="tooltip" title="Delete Profile">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </form>
                                     </div>
                                 </td>
                             </tr>
@@ -216,7 +248,7 @@
                 <!-- Pagination -->
                 @if(method_exists($pendingProfiles, 'links'))
                     <div class="d-flex justify-content-center">
-                        {{ $pendingProfiles->links() }}
+                        {{ $pendingProfiles->appends(request()->query())->links() }}
                     </div>
                 @endif
             @else

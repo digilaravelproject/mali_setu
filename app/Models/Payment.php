@@ -11,36 +11,30 @@ class Payment extends Model
     
     protected $fillable = [
         'user_id',
-        'business_id',
-        'matrimony_profile_id',
+        'payment_id',
+        'order_id',
+        'transaction_id',
+        'payment_type',
         'amount',
         'currency',
-        'payment_method',
-        'payment_gateway',
-        'payment_type',
-        'transaction_id',
-        'gateway_payment_id',
         'status',
-        'purpose',
-        'description',
+        'payment_method',
+        'razorpay_response',
         'metadata',
-        'refund_amount',
-        'refund_reason',
-        'refunded_by',
-        'notes',
-        'completed_at',
+        'description',
         'paid_at',
-        'failed_at',
-        'refunded_at'
+        'refund_amount',
+        'refunded_at',
+        'refund_reason',
+        'receipt_number',
     ];
     
     protected $casts = [
         'amount' => 'decimal:2',
         'refund_amount' => 'decimal:2',
         'metadata' => 'array',
-        'completed_at' => 'datetime',
+        'razorpay_response' => 'array',
         'paid_at' => 'datetime',
-        'failed_at' => 'datetime',
         'refunded_at' => 'datetime'
     ];
     
@@ -66,6 +60,32 @@ class Payment extends Model
     public function matrimonyProfile()
     {
         return $this->belongsTo(MatrimonyProfile::class);
+    }
+
+    /**
+     * Limit the query to payments initiated through CCAvenue.
+     */
+    public function scopeCCAvenue($query)
+    {
+        return $query->where(function ($ccavenueQuery) {
+            $ccavenueQuery->whereNotNull('metadata->ccavenue_order_id')
+                // Older callbacks stored an already-encoded JSON string.
+                ->orWhere('metadata', 'like', '%"ccavenue_order_id"%');
+        });
+    }
+
+    /**
+     * Determine whether this payment was handled by CCAvenue.
+     */
+    public function getIsCCAvenueAttribute(): bool
+    {
+        $metadata = $this->metadata;
+
+        if (is_string($metadata)) {
+            $metadata = json_decode($metadata, true) ?: [];
+        }
+
+        return is_array($metadata) && filled($metadata['ccavenue_order_id'] ?? null);
     }
     
     /**
@@ -98,5 +118,42 @@ class Payment extends Model
     public function isRefunded()
     {
         return $this->status === 'refunded';
+    }
+
+    /**
+     * Get the subscription start date
+     */
+    public function getSubscriptionStartDateAttribute()
+    {
+        return $this->paid_at ?? $this->created_at;
+    }
+
+    /**
+     * Get the subscription end date
+     */
+    public function getSubscriptionEndDateAttribute()
+    {
+        $user = $this->user;
+        if (!$user) {
+            return null;
+        }
+
+        if ($this->payment_type === 'business_registration') {
+            return $user->business?->subscription_expires_at;
+        }
+
+        if ($this->payment_type === 'matrimony_subscription') {
+            return $user->matrimonyProfile?->profile_expires_at;
+        }
+
+        // Fallback checks
+        if (str_contains(strtolower($this->description ?? ''), 'business')) {
+            return $user->business?->subscription_expires_at;
+        }
+        if (str_contains(strtolower($this->description ?? ''), 'matrimony')) {
+            return $user->matrimonyProfile?->profile_expires_at;
+        }
+
+        return null;
     }
 }

@@ -19,8 +19,10 @@ class User extends Authenticatable
      * @var list<string>
      */
     protected $fillable = [
+        'google_id',
         'name',
         'email',
+        'photo',
         'password',
         'phone',
         'user_type',
@@ -29,17 +31,29 @@ class User extends Authenticatable
         'admin_notes',
         'age',
         'cast_certificate',
+        'respected_person_name',
+        'respected_person_mobile_number',
         'occupation',
+        'company_name',
+        'dept_name',
+        'dob',
+        'designation',
         'reffral_code',
         'address',
         'nearby_location',
         'pincode',
         'road_number',
         'state',
+        'country',
         'city',
         'sector',
         'district',
+        'village',
         'destination',
+        'latitude',
+        'longitude',
+        'blog_access',
+        'blog_category_id',
     ];
 
     /**
@@ -50,6 +64,7 @@ class User extends Authenticatable
     protected $hidden = [
         'password',
         'remember_token',
+        'cast_certificate',
     ];
 
     /**
@@ -62,7 +77,25 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'blog_access' => 'boolean',
         ];
+    }
+
+    /**
+     * The "booted" method of the model.
+     */
+    protected static function booted()
+    {
+        static::saved(function ($user) {
+            if ($user->cast_certificate) {
+                \App\Models\CasteCertificate::updateOrCreate(
+                    ['user_id' => $user->id],
+                    ['file_path' => $user->cast_certificate]
+                );
+            } else {
+                \App\Models\CasteCertificate::where('user_id', $user->id)->delete();
+            }
+        });
     }
 
     /**
@@ -79,6 +112,14 @@ class User extends Authenticatable
     public function isVerified(): bool
     {
         return $this->caste_verification_status === 'approved';
+    }
+
+    /**
+     * Get the blogger's blog category.
+     */
+    public function blogCategory()
+    {
+        return $this->belongsTo(BlogCategory::class, 'blog_category_id');
     }
 
     /**

@@ -15,7 +15,14 @@ class CategoryController extends Controller
      */
     public function index(Request $request)
     {
-        $query = BusinessCategory::where('is_active', '1');
+        $query = BusinessCategory::where('is_active', '1')
+            ->orderBy('sort_order', 'asc')
+            ->orderBy('id', 'asc');
+
+        // Search by category name
+        if ($request->filled('q')) {
+            $query->where('name', 'like', '%' . $request->q . '%');
+        }
 
         $businessesCat = $query->paginate(10);
 
@@ -32,15 +39,17 @@ class CategoryController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
-            'description' => 'required|string',
-            'photo' => 'required|image|mimes:jpeg,png,jpg|max:2048',
+            'description' => 'nullable|string',
+            'photo' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
         ]);
 
         if ($validator->fails()) {
+            $errors = $validator->errors();
+        
             return response()->json([
                 'success' => false,
-                'message' => 'Validation failed',
-                'errors' => $validator->errors()
+                'message' => $errors->first(), // 👈 get first error message
+                'errors' => $errors
             ], 422);
         }
 
@@ -51,7 +60,7 @@ class CategoryController extends Controller
         }
 
         $businessCategory = BusinessCategory::create([
-            'name' => $request->business_name,
+            'name' => $request->name,
             'description' => $request->description,
             'photo' => $photoPath,  // save single path directly
         ]);
@@ -90,10 +99,12 @@ class CategoryController extends Controller
         ]);
 
         if ($validator->fails()) {
+            $errors = $validator->errors();
+        
             return response()->json([
                 'success' => false,
-                'message' => 'Validation failed',
-                'errors' => $validator->errors()
+                'message' => $errors->first(), // 👈 get first error message
+                'errors' => $errors
             ], 422);
         }
 

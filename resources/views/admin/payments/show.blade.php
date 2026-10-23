@@ -52,34 +52,42 @@
                                         <tr>
                                             <td><strong>Payment Method:</strong></td>
                                             <td>
-                                                <span class="badge badge-info">{{ ucfirst($payment->payment_method ?? 'N/A') }}</span>
+                                                <span class="badge badge-info text-black">{{ ucfirst($payment->payment_method ?? 'N/A') }}</span>
                                             </td>
                                         </tr>
                                         <tr>
                                             <td><strong>Payment Type:</strong></td>
                                             <td>
-                                                <span class="badge badge-secondary">{{ ucfirst($payment->payment_type ?? 'N/A') }}</span>
+                                                <span class="badge badge-secondary text-black">{{ ucfirst($payment->payment_type ?? 'N/A') }}</span>
                                             </td>
                                         </tr>
                                         <tr>
                                             <td><strong>Status:</strong></td>
                                             <td>
                                                 @if($payment->status === 'completed')
-                                                    <span class="badge badge-success">Completed</span>
+                                                    <span class="badge badge-success text-black">Completed</span>
                                                 @elseif($payment->status === 'pending')
-                                                    <span class="badge badge-warning">Pending</span>
+                                                    <span class="badge badge-warning text-black">Pending</span>
                                                 @elseif($payment->status === 'failed')
-                                                    <span class="badge badge-danger">Failed</span>
+                                                    <span class="badge badge-danger" style="color: red !important;">Failed</span>
                                                 @elseif($payment->status === 'refunded')
-                                                    <span class="badge badge-info">Refunded</span>
+                                                    <span class="badge badge-info text-black">Refunded</span>
                                                 @else
-                                                    <span class="badge badge-secondary">{{ ucfirst($payment->status) }}</span>
+                                                    <span class="badge badge-secondary text-black">{{ ucfirst($payment->status) }}</span>
                                                 @endif
                                             </td>
                                         </tr>
                                         <tr>
                                             <td><strong>Created:</strong></td>
                                             <td>{{ $payment->created_at->format('M d, Y H:i:s') }}</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Start Date:</strong></td>
+                                            <td>{{ $payment->subscription_start_date ? \Carbon\Carbon::parse($payment->subscription_start_date)->format('M d, Y') : 'N/A' }}</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>End Date:</strong></td>
+                                            <td>{{ $payment->subscription_end_date ? \Carbon\Carbon::parse($payment->subscription_end_date)->format('M d, Y') : 'N/A' }}</td>
                                         </tr>
                                         @if($payment->completed_at)
                                         <tr>
@@ -99,6 +107,7 @@
                                     <h5 class="mb-0">User Information</h5>
                                 </div>
                                 <div class="card-body">
+                                    @if($payment->user)
                                     <table class="table table-borderless">
                                         <tr>
                                             <td><strong>Name:</strong></td>
@@ -131,6 +140,11 @@
                                             </td>
                                         </tr>
                                     </table>
+                                    @else
+                                    <div class="text-center py-4">
+                                        <p class="text-danger mb-0 font-weight-bold">User has been deleted / not found</p>
+                                    </div>
+                                    @endif
                                 </div>
                             </div>
                         </div>
@@ -168,11 +182,11 @@
                                                     <td><strong>Verification Status:</strong></td>
                                                     <td>
                                                         @if($payment->business->verification_status === 'approved')
-                                                            <span class="badge badge-success">Approved</span>
+                                                            <span class="badge badge-success text-black">Approved</span>
                                                         @elseif($payment->business->verification_status === 'pending')
-                                                            <span class="badge badge-warning">Pending</span>
+                                                            <span class="badge badge-warning text-black">Pending</span>
                                                         @else
-                                                            <span class="badge badge-danger">Rejected</span>
+                                                            <span class="badge badge-danger" style="color: red !important;">Rejected</span>
                                                         @endif
                                                     </td>
                                                 </tr>

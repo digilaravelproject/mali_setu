@@ -6,6 +6,11 @@ use App\Http\Controllers\Controller;
 use App\Models\Payment;
 use App\Models\User;
 use App\Models\Business;
+use App\Models\Transaction;
+use App\Exports\BusinessTransactionsExport;
+use App\Exports\MatrimonyTransactionsExport;
+use App\Exports\PaymentsExport;
+use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 
@@ -16,23 +21,23 @@ class PaymentManagementController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Payment::with(['user', 'business']);
+        $query = Payment::with(['user.business', 'user.matrimonyProfile']);
         
         // Filter by payment status
-        if ($request->has('status') && $request->status !== '') {
+        if ($request->filled('status')) {
             $query->where('status', $request->status);
         }
         
-        // Filter by payment method
-        if ($request->has('payment_method') && $request->payment_method !== '') {
-            $query->where('payment_method', $request->payment_method);
+        // CCAvenue is the only supported gateway in the admin payment listing.
+        if ($request->input('payment_method', 'ccavenue') === 'ccavenue') {
+            $query->ccavenue();
         }
         
         // Filter by date range
-        if ($request->has('date_from') && $request->date_from !== '') {
+        if ($request->filled('date_from')) {
             $query->whereDate('created_at', '>=', $request->date_from);
         }
-        if ($request->has('date_to') && $request->date_to !== '') {
+        if ($request->filled('date_to')) {
             $query->whereDate('created_at', '<=', $request->date_to);
         }
         
@@ -133,7 +138,7 @@ class PaymentManagementController extends Controller
      */
     public function show($id)
     {
-        $payment = Payment::with(['user', 'business'])->findOrFail($id);
+        $payment = Payment::with(['user.business', 'user.matrimonyProfile'])->findOrFail($id);
         
         return view('admin.payments.show', compact('payment'));
     }
@@ -178,7 +183,7 @@ class PaymentManagementController extends Controller
      */
     public function export(Request $request)
     {
-        $query = Payment::with(['user', 'business']);
+        $query = Payment::with(['user.business', 'user.matrimonyProfile']);
         
         // Apply same filters as index
         if ($request->has('status') && $request->status !== '') {
@@ -189,11 +194,11 @@ class PaymentManagementController extends Controller
             $query->where('payment_type', $request->payment_type);
         }
         
-        if ($request->has('date_from') && $request->date_from !== '') {
+        if ($request->filled('date_from')) {
             $query->whereDate('created_at', '>=', $request->date_from);
         }
         
-        if ($request->has('date_to') && $request->date_to !== '') {
+        if ($request->filled('date_to')) {
             $query->whereDate('created_at', '<=', $request->date_to);
         }
         
@@ -201,20 +206,16 @@ class PaymentManagementController extends Controller
         
         $filename = 'payments_export_' . date('Y-m-d_H-i-s') . '.csv';
         
-        $headers = [
-            'Content-Type' => 'text/csv',
-            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
-        ];
-        
+        $filename = $filename;
         $callback = function() use ($payments) {
             $file = fopen('php://output', 'w');
-            
+
             // CSV headers
             fputcsv($file, [
                 'Payment ID', 'User Name', 'User Email', 'Amount', 'Payment Type',
                 'Status', 'Razorpay Payment ID', 'Razorpay Order ID', 'Created At'
             ]);
-            
+
             // CSV data
             foreach ($payments as $payment) {
                 fputcsv($file, [
@@ -229,11 +230,174 @@ class PaymentManagementController extends Controller
                     $payment->created_at->format('Y-m-d H:i:s')
                 ]);
             }
-            
+
             fclose($file);
         };
-        
-        return response()->stream($callback, 200, $headers);
+
+        return response()->streamDownload($callback, $filename, [
+            'Content-Type' => 'text/csv',
+        ]);
+    }
+
+    /**
+     * List business subscription transactions
+     */
+    public function businessTransactions(Request $request)
+    {
+        $query = Transaction::with(['user.business', 'user.matrimonyProfile'])->where('purpose', 'business_registration');
+
+        if ($request->has('status') && $request->status !== '') {
+            $query->where('status', $request->status);
+        }
+
+        if ($request->filled('date_from')) {
+            $query->whereDate('created_at', '>=', $request->date_from);
+        }
+        if ($request->filled('date_to')) {
+            $query->whereDate('created_at', '<=', $request->date_to);
+        }
+
+        if ($request->has('search') && $request->search !== '') {
+            $query->where(function($q) use ($request) {
+                $q->where('razorpay_order_id', 'like', '%' . $request->search . '%')
+                  ->orWhere('razorpay_payment_id', 'like', '%' . $request->search . '%')
+                  ->orWhereHas('user', function($userQuery) use ($request) {
+                      $userQuery->where('name', 'like', '%' . $request->search . '%')
+                               ->orWhere('email', 'like', '%' . $request->search . '%');
+                  });
+            });
+        }
+
+        $transactions = $query->latest()->paginate(20);
+
+        return view('admin.payments.business_transactions', compact('transactions'));
+    }
+
+    /**
+     * Export business subscription transactions CSV
+     */
+    public function exportBusiness(Request $request)
+    {
+        $query = Transaction::with(['user.business', 'user.matrimonyProfile'])->where('purpose', 'business_registration');
+
+        if ($request->filled('date_from')) {
+            $query->whereDate('created_at', '>=', $request->date_from);
+        }
+        if ($request->filled('date_to')) {
+            $query->whereDate('created_at', '<=', $request->date_to);
+        }
+
+        $transactions = $query->get();
+
+        $filename = 'business_transactions_' . date('Y-m-d_H-i-s') . '.csv';
+
+        $callback = function() use ($transactions) {
+            $file = fopen('php://output', 'w');
+            fputcsv($file, ['Transaction ID','User Name','User Email','Amount','Purpose','Status','Razorpay Payment ID','Razorpay Order ID','Created At']);
+            foreach ($transactions as $t) {
+                fputcsv($file, [
+                    $t->id,
+                    $t->user->name ?? 'N/A',
+                    $t->user->email ?? 'N/A',
+                    $t->amount,
+                    $t->purpose,
+                    $t->status,
+                    $t->razorpay_payment_id ?? '',
+                    $t->razorpay_order_id ?? '',
+                    $t->created_at->format('Y-m-d H:i:s')
+                ]);
+            }
+            fclose($file);
+        };
+
+        return response()->streamDownload($callback, $filename, [
+            'Content-Type' => 'text/csv',
+        ]);
+    }
+
+    /**
+     * List matrimony subscription transactions
+     */
+    public function matrimonyTransactions(Request $request)
+    {
+        $query = Transaction::with(['user.business', 'user.matrimonyProfile'])->where('purpose', 'matrimony_profile');
+
+        if ($request->has('status') && $request->status !== '') {
+            $query->where('status', $request->status);
+        }
+
+        if ($request->filled('date_from')) {
+            $query->whereDate('created_at', '>=', $request->date_from);
+        }
+        if ($request->filled('date_to')) {
+            $query->whereDate('created_at', '<=', $request->date_to);
+        }
+
+        if ($request->has('search') && $request->search !== '') {
+            $query->where(function($q) use ($request) {
+                $q->where('razorpay_order_id', 'like', '%' . $request->search . '%')
+                  ->orWhere('razorpay_payment_id', 'like', '%' . $request->search . '%')
+                  ->orWhereHas('user', function($userQuery) use ($request) {
+                      $userQuery->where('name', 'like', '%' . $request->search . '%')
+                               ->orWhere('email', 'like', '%' . $request->search . '%');
+                  });
+            });
+        }
+
+        $transactions = $query->latest()->paginate(20);
+
+        return view('admin.payments.matrimony_transactions', compact('transactions'));
+    }
+
+    /**
+     * Export matrimony subscription transactions CSV
+     */
+    public function exportMatrimony(Request $request)
+    {
+        $query = Transaction::with(['user.business', 'user.matrimonyProfile'])->where('purpose', 'matrimony_profile');
+
+        if ($request->filled('date_from')) {
+            $query->whereDate('created_at', '>=', $request->date_from);
+        }
+        if ($request->filled('date_to')) {
+            $query->whereDate('created_at', '<=', $request->date_to);
+        }
+
+        $transactions = $query->get();
+
+        $filename = 'matrimony_transactions_' . date('Y-m-d_H-i-s') . '.csv';
+
+        $callback = function() use ($transactions) {
+            $file = fopen('php://output', 'w');
+            fputcsv($file, ['Transaction ID','User Name','User Email','Amount','Purpose','Status','Razorpay Payment ID','Razorpay Order ID','Created At']);
+            foreach ($transactions as $t) {
+                fputcsv($file, [
+                    $t->id,
+                    $t->user->name ?? 'N/A',
+                    $t->user->email ?? 'N/A',
+                    $t->amount,
+                    $t->purpose,
+                    $t->status,
+                    $t->razorpay_payment_id ?? '',
+                    $t->razorpay_order_id ?? '',
+                    $t->created_at->format('Y-m-d H:i:s')
+                ]);
+            }
+            fclose($file);
+        };
+
+        return response()->streamDownload($callback, $filename, [
+            'Content-Type' => 'text/csv',
+        ]);
+    }
+
+    /**
+     * View transaction detail
+     */
+    public function showTransaction($id)
+    {
+        $transaction = Transaction::with(['user.business', 'user.matrimonyProfile'])->findOrFail($id);
+        return view('admin.payments.transaction_show', compact('transaction'));
     }
     
     /**
@@ -255,5 +419,197 @@ class PaymentManagementController extends Controller
         ]);
         
         return redirect()->back()->with('success', 'Payment status updated successfully!');
+    }
+
+    /**
+     * Export business transactions to Excel
+     */
+    public function exportBusinessXlsx(Request $request)
+    {
+        $query = Transaction::with(['user.business', 'user.matrimonyProfile'])->where('purpose', 'business_registration');
+
+        if ($request->filled('date_from')) {
+            $query->whereDate('created_at', '>=', $request->date_from);
+        }
+        if ($request->filled('date_to')) {
+            $query->whereDate('created_at', '<=', $request->date_to);
+        }
+
+        $transactions = $query->get();
+        $filename = 'business_transactions_' . date('Y-m-d_H-i-s') . '.xlsx';
+
+        return Excel::download(new BusinessTransactionsExport($transactions), $filename);
+    }
+
+    /**
+     * Export matrimony transactions to Excel
+     */
+    public function exportMatrimonyXlsx(Request $request)
+    {
+        $query = Transaction::with(['user.business', 'user.matrimonyProfile'])->where('purpose', 'matrimony_profile');
+
+        if ($request->filled('date_from')) {
+            $query->whereDate('created_at', '>=', $request->date_from);
+        }
+        if ($request->filled('date_to')) {
+            $query->whereDate('created_at', '<=', $request->date_to);
+        }
+
+        $transactions = $query->get();
+        $filename = 'matrimony_transactions_' . date('Y-m-d_H-i-s') . '.xlsx';
+
+        return Excel::download(new MatrimonyTransactionsExport($transactions), $filename);
+    }
+
+    /**
+     * Export all payments to Excel
+     */
+    public function exportXlsx(Request $request)
+    {
+        $query = Payment::with(['user.business', 'user.matrimonyProfile']);
+        
+        if ($request->has('status') && $request->status !== '') {
+            $query->where('status', $request->status);
+        }
+
+        if ($request->filled('date_from')) {
+            $query->whereDate('created_at', '>=', $request->date_from);
+        }
+        if ($request->filled('date_to')) {
+            $query->whereDate('created_at', '<=', $request->date_to);
+        }
+
+        $payments = $query->get();
+        $filename = 'payments_export_' . date('Y-m-d_H-i-s') . '.xlsx';
+
+        return Excel::download(new PaymentsExport($payments), $filename);
+    }
+
+    /**
+     * Export all payments to PDF
+     */
+    public function exportPdf(Request $request)
+    {
+        $query = Payment::with(['user.business', 'user.matrimonyProfile']);
+        
+        if ($request->has('status') && $request->status !== '') {
+            $query->where('status', $request->status);
+        }
+
+        if ($request->filled('date_from')) {
+            $query->whereDate('created_at', '>=', $request->date_from);
+        }
+        if ($request->filled('date_to')) {
+            $query->whereDate('created_at', '<=', $request->date_to);
+        }
+
+        $payments = $query->latest()->get();
+
+        $title = "Payments Export Report";
+        $headers = ['Transaction ID', 'User', 'Amount', 'Method', 'Purpose', 'Status', 'Date', 'Start Date', 'End Date'];
+        $rows = [];
+        foreach ($payments as $pay) {
+            $rows[] = [
+                'id' => $pay->transaction_id ?? 'N/A',
+                'user' => $pay->user?->name ?? 'Deleted User',
+                'amount' => 'INR ' . number_format($pay->amount, 2),
+                'method' => ucfirst($pay->payment_method ?? 'N/A'),
+                'purpose' => $pay->purpose ?? 'General',
+                'status' => ucfirst($pay->status),
+                'date' => $pay->created_at->format('Y-m-d'),
+                'start_date' => $pay->subscription_start_date ? Carbon::parse($pay->subscription_start_date)->format('Y-m-d') : 'N/A',
+                'end_date' => $pay->subscription_end_date ? Carbon::parse($pay->subscription_end_date)->format('Y-m-d') : 'N/A'
+            ];
+        }
+        $summary = [
+            'Total Transactions' => $payments->count(),
+            'Total Amount' => 'INR ' . number_format($payments->where('status', 'completed')->sum('amount'), 2),
+            'Successful' => $payments->where('status', 'completed')->count(),
+            'Pending' => $payments->where('status', 'pending')->count(),
+            'Failed' => $payments->where('status', 'failed')->count()
+        ];
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('admin.pdf.report_template', compact('title', 'headers', 'rows', 'summary'));
+        return $pdf->download('payments_export_' . date('Y-m-d_H-i-s') . '.pdf');
+    }
+
+    /**
+     * Export business transactions to PDF
+     */
+    public function exportBusinessPdf(Request $request)
+    {
+        $query = Transaction::with(['user.business', 'user.matrimonyProfile'])->where('purpose', 'business_registration');
+
+        if ($request->filled('date_from')) {
+            $query->whereDate('created_at', '>=', $request->date_from);
+        }
+        if ($request->filled('date_to')) {
+            $query->whereDate('created_at', '<=', $request->date_to);
+        }
+
+        $transactions = $query->latest()->get();
+        $title = "Business Registration Transactions";
+        $headers = ['Transaction ID', 'User', 'Amount', 'Status', 'Date', 'Start Date', 'End Date'];
+        $rows = [];
+        foreach ($transactions as $t) {
+            $rows[] = [
+                'id' => $t->transaction_id ?? 'N/A',
+                'user' => $t->user?->name ?? 'Deleted User',
+                'amount' => 'INR ' . number_format($t->amount, 2),
+                'status' => ucfirst($t->status),
+                'date' => $t->created_at->format('Y-m-d'),
+                'start_date' => $t->subscription_start_date ? Carbon::parse($t->subscription_start_date)->format('Y-m-d') : 'N/A',
+                'end_date' => $t->subscription_end_date ? Carbon::parse($t->subscription_end_date)->format('Y-m-d') : 'N/A'
+            ];
+        }
+        $summary = [
+            'Total Transactions' => $transactions->count(),
+            'Completed Revenue' => 'INR ' . number_format($transactions->where('status', 'completed')->sum('amount'), 2),
+            'Successful' => $transactions->where('status', 'completed')->count(),
+            'Pending' => $transactions->where('status', 'pending')->count()
+        ];
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('admin.pdf.report_template', compact('title', 'headers', 'rows', 'summary'));
+        return $pdf->download('business_transactions_' . date('Y-m-d_H-i-s') . '.pdf');
+    }
+
+    /**
+     * Export matrimony transactions to PDF
+     */
+    public function exportMatrimonyPdf(Request $request)
+    {
+        $query = Transaction::with(['user.business', 'user.matrimonyProfile'])->where('purpose', 'matrimony_profile');
+
+        if ($request->filled('date_from')) {
+            $query->whereDate('created_at', '>=', $request->date_from);
+        }
+        if ($request->filled('date_to')) {
+            $query->whereDate('created_at', '<=', $request->date_to);
+        }
+
+        $transactions = $query->latest()->get();
+        $title = "Matrimony Profile Transactions";
+        $headers = ['Transaction ID', 'User', 'Amount', 'Status', 'Date', 'Start Date', 'End Date'];
+        $rows = [];
+        foreach ($transactions as $t) {
+            $rows[] = [
+                'id' => $t->transaction_id ?? 'N/A',
+                'user' => $t->user?->name ?? 'Deleted User',
+                'amount' => 'INR ' . number_format($t->amount, 2),
+                'status' => ucfirst($t->status),
+                'date' => $t->created_at->format('Y-m-d'),
+                'start_date' => $t->subscription_start_date ? Carbon::parse($t->subscription_start_date)->format('Y-m-d') : 'N/A',
+                'end_date' => $t->subscription_end_date ? Carbon::parse($t->subscription_end_date)->format('Y-m-d') : 'N/A'
+            ];
+        }
+        $summary = [
+            'Total Transactions' => $transactions->count(),
+            'Completed Revenue' => 'INR ' . number_format($transactions->where('status', 'completed')->sum('amount'), 2),
+            'Successful' => $transactions->where('status', 'completed')->count(),
+            'Pending' => $transactions->where('status', 'pending')->count()
+        ];
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('admin.pdf.report_template', compact('title', 'headers', 'rows', 'summary'));
+        return $pdf->download('matrimony_transactions_' . date('Y-m-d_H-i-s') . '.pdf');
     }
 }

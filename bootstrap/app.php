@@ -11,9 +11,22 @@ return Application::configure(basePath: dirname(__DIR__))
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
     )
+    ->withSchedule(function (\Illuminate\Console\Scheduling\Schedule $schedule) {
+        $schedule->command('subscriptions:send-reminders')->daily();
+        $schedule->command('payment:backfill-audit-rows')->everyFiveMinutes();
+        $schedule->command('payment:pending-reminders')->everyMinute();
+        $schedule->command('payment:reconcile-ccavenue')
+            ->everyThirtySeconds()
+            ->withoutOverlapping(1);
+    })
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->alias([
             'role' => \App\Http\Middleware\RoleMiddleware::class,
+            'redirect.admin' => \App\Http\Middleware\RedirectAdmin::class,
+        ]);
+        $middleware->validateCsrfTokens(except: [
+            '/ccavenue/callback',
+            'ccavenue/callback',
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

@@ -10,6 +10,9 @@
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h3 class="card-title">Business Management</h3>
                     <div class="card-tools">
+                        <a href="{{ route('admin.businesses.create') }}" class="btn btn-primary btn-sm me-2">
+                            <i class="fas fa-plus"></i> Add Business
+                        </a>
                         <a href="{{ route('admin.businesses.verification') }}" class="btn btn-warning btn-sm">
                             <i class="fas fa-clock"></i> Pending Verification ({{ $stats['pending'] }})
                         </a>
@@ -80,9 +83,9 @@
                                 <div class="col-md-3">
                                     <select name="business_type" class="form-select">
                                         <option value="">All Types</option>
-                                        <option value="retail" {{ request('business_type') == 'retail' ? 'selected' : '' }}>Retail</option>
-                                        <option value="service" {{ request('business_type') == 'service' ? 'selected' : '' }}>Service</option>
-                                        <option value="manufacturing" {{ request('business_type') == 'manufacturing' ? 'selected' : '' }}>Manufacturing</option>
+                                        @foreach($businessTypes as $type)
+                                            <option value="{{ $type }}" {{ request('business_type') == $type ? 'selected' : '' }}>{{ ucfirst($type) }}</option>
+                                        @endforeach
                                     </select>
                                 </div>
                                 <div class="col-md-4">
@@ -106,6 +109,7 @@
                                     <th>Type</th>
                                     <th>Category</th>
                                     <th>Status</th>
+                                    <th>Payment</th>
                                     <th>Created</th>
                                     <th>Actions</th>
                                 </tr>
@@ -137,36 +141,71 @@
                                             <span class="badge bg-danger">Rejected</span>
                                         @endif
                                     </td>
+                                    <td>
+                                        @if($business->completed_business_registrations_count > 0)
+                                            <span class="badge bg-success">Paid</span>
+                                        @elseif($business->pending_business_registrations_count > 0)
+                                            <span class="badge bg-warning">Payment Pending</span>
+                                        @else
+                                            <span class="badge bg-secondary">Not Paid</span>
+                                        @endif
+                                    </td>
                                     <td>{{ $business->created_at->format('M d, Y') }}</td>
                                     <td>
                                         <div class="btn-group" role="group">
-                                            <a href="{{ route('admin.businesses.show', $business->id) }}" class="btn btn-sm btn-info">
+                                            <a href="{{ route('admin.businesses.show', $business->id) }}" class="btn btn-sm btn-info" title="View business">
                                                 <i class="fas fa-eye"></i>
                                             </a>
+                                            <a href="{{ route('admin.businesses.edit', $business->id) }}" class="btn btn-sm btn-warning text-white" title="Edit business">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            @if($business->verification_status === 'approved')
+                                                <a href="{{ route('admin.businesses.jobs', $business->id) }}" class="btn btn-sm btn-primary" title="View jobs for this business">
+                                                    <i class="fas fa-briefcase"></i>
+                                                    <?php /*@if($business->job_postings_count > 0)
+                                                        <span class="badge bg-light text-dark ms-1">{{ $business->job_postings_count }}</span>
+                                                    @endif*/ ?>
+                                                </a>
+                                            @endif
                                             @if($business->verification_status == 'pending')
-                                                <!-- Approve Business Form -->
-                                                <form action="{{ route('admin.businesses.approve', $business->id) }}" method="POST" class="d-inline">
-                                                    @csrf
-                                                    <button type="submit" class="btn btn-sm btn-success" onclick="return confirm('Are you sure you want to approve this business?')">
+                                                @if($business->completed_business_registrations_count > 0)
+                                                    <!-- Approve Business Form -->
+                                                    <form action="{{ route('admin.businesses.approve', $business->id) }}" method="POST" class="d-inline">
+                                                        @csrf
+                                                        <button type="submit" class="btn btn-sm btn-success" onclick="return confirm('Are you sure you want to approve this business?')">
+                                                            <i class="fas fa-check"></i>
+                                                        </button>
+                                                    </form>
+                                                @else
+                                                    <button type="button" class="btn btn-sm btn-secondary" disabled title="Cannot approve until payment is complete">
                                                         <i class="fas fa-check"></i>
                                                     </button>
-                                                </form>
+                                                @endif
                                                 
-                                                <!-- Reject Business Form -->
-                                                <form action="{{ route('admin.businesses.reject', $business->id) }}" method="POST" class="d-inline">
-                                                    @csrf
-                                                    <input type="hidden" name="rejection_reason" id="rejection_reason_{{ $business->id }}">
-                                                    <button type="submit" class="btn btn-sm btn-danger" onclick="return handleRejectClick(this, {{ $business->id }})">
-                                                        <i class="fas fa-times"></i>
-                                                    </button>
-                                                </form>
+                                                <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#rejectModal"
+                                                    data-action="{{ route('admin.businesses.reject', $business->id) }}"
+                                                    data-business-name="{{ $business->business_name }}"
+                                                    title="Reject business"
+                                                    onclick="setRejectForm(this)">
+                                                    <i class="fas fa-times"></i>
+                                                </button>
                                             @endif
+                                            
+                                            <!-- Delete Business Form -->
+                                            <form action="{{ route('admin.businesses.destroy', $business->id) }}" method="POST" class="d-inline">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="btn btn-sm btn-danger" title="Delete business"
+                                                        onclick="return confirm('Are you sure you want to delete this business? All business listings and associated payment data will be permanently deleted.');">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </form>
                                         </div>
                                     </td>
                                 </tr>
                                 @empty
                                 <tr>
-                                    <td colspan="8" class="text-center">No businesses found</td>
+                                    <td colspan="9" class="text-center">No businesses found</td>
                                 </tr>
                                 @endforelse
                             </tbody>
@@ -175,7 +214,7 @@
                     
                     <!-- Pagination -->
                     <div class="d-flex justify-content-center">
-                        {{ $businesses->links() }}
+                        {{ $businesses->appends(request()->query())->links('pagination::bootstrap-5') }}
                     </div>
                 </div>
             </div>
@@ -213,9 +252,10 @@
                 <h5 class="modal-title">Reject Business</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <form id="rejectForm" method="POST">
+            <form id="rejectForm" method="POST" action="">
                 @csrf
                 <div class="modal-body">
+                    <p id="rejectModalMessage">Are you sure you want to reject this business? This action will set the business status to Rejected.</p>
                     <div class="mb-3">
                         <label for="rejection_reason" class="form-label">Rejection Reason</label>
                         <textarea class="form-control" id="rejection_reason" name="rejection_reason" rows="3" required></textarea>
@@ -233,22 +273,22 @@
 
 @section('scripts')
 <script>
-function handleRejectClick(button, businessId) {
-    const reason = prompt('Please provide a reason for rejection:');
-    if (reason && reason.trim() !== '') {
-        // Set the rejection reason in the hidden input
-        const reasonInput = document.getElementById('rejection_reason_' + businessId);
-        if (reasonInput) {
-            reasonInput.value = reason.trim();
-            return confirm('Are you sure you want to reject this business?');
-        } else {
-            alert('Error: Could not find rejection reason input field');
-            return false;
+    function setRejectForm(button) {
+        var action = button.dataset.action;
+        var businessName = button.dataset.businessName;
+        var form = document.getElementById('rejectForm');
+        var message = document.getElementById('rejectModalMessage');
+        var reasonField = document.getElementById('rejection_reason');
+
+        if (form) {
+            form.action = action || form.action;
         }
-    } else {
-        alert('Rejection reason is required');
-        return false;
+        if (message) {
+            message.textContent = 'Are you sure you want to reject "' + businessName + '"? This will set the business status to Rejected.';
+        }
+        if (reasonField) {
+            reasonField.value = '';
+        }
     }
-}
 </script>
 @endsection

@@ -31,6 +31,10 @@ class MatrimonyProfile extends Model
         'partner_preferences',
         'privacy_settings',
         'approval_status',
+        'approved_at',
+        'approved_by',
+        'rejection_reason',
+        'status',
         'profile_expires_at',
     ];
 
@@ -46,6 +50,7 @@ class MatrimonyProfile extends Model
         'partner_preferences' => 'array',
         'privacy_settings' => 'array',
         'profile_expires_at' => 'datetime',
+        'approved_at' => 'datetime',
     ];
 
     /**
@@ -70,6 +75,98 @@ class MatrimonyProfile extends Model
     public function sentConnectionRequests(): HasMany
     {
         return $this->hasMany(ConnectionRequest::class, 'sender_id', 'user_id');
+    }
+
+    /**
+     * Get matrimony profile transactions
+     */
+    public function matrimonyTransactions(): HasMany
+    {
+        return $this->hasMany(Transaction::class, 'user_id', 'user_id')
+            ->where('purpose', 'matrimony_profile')
+            ->latest();
+    }
+
+    /**
+     * Get the candidate's name stored in the matrimony profile.
+     */
+    public function getCandidateNameAttribute(): string
+    {
+        $personalDetails = $this->personal_details ?? [];
+
+        if (is_string($personalDetails)) {
+            $personalDetails = json_decode($personalDetails, true) ?: [];
+        }
+
+        $nameParts = array_filter([
+            $personalDetails['first_name'] ?? null,
+            $personalDetails['middle_name'] ?? null,
+            $personalDetails['last_name'] ?? null,
+        ], fn ($part) => filled($part));
+
+        return trim(implode(' ', $nameParts))
+            ?: trim((string) ($personalDetails['full_name'] ?? $personalDetails['name'] ?? ''));
+    }
+
+    /**
+     * Search admin listings by candidate details or the owning user account.
+     */
+    public function scopeAdminSearch($query, string $search)
+    {
+        $terms = preg_split('/\s+/', trim($search), -1, PREG_SPLIT_NO_EMPTY) ?: [];
+
+        foreach ($terms as $term) {
+            $query->where(function ($termQuery) use ($term) {
+                $like = '%'.$term.'%';
+                $lowerLike = '%'.strtolower($term).'%';
+
+                $termQuery->where('personal_details->first_name', 'like', $like)
+                    ->orWhere('personal_details->middle_name', 'like', $like)
+                    ->orWhere('personal_details->last_name', 'like', $like)
+                    ->orWhere('personal_details->full_name', 'like', $like)
+                    ->orWhere('personal_details->name', 'like', $like)
+                    ->orWhereHas('user', function ($userQuery) use ($like) {
+                        $userQuery->where('name', 'like', $like)
+                            ->orWhere('email', 'like', $like);
+                    });
+
+                // Fallback for MariaDB/MySQL rows whose JSON path comparison is
+                // affected by collation or legacy JSON encoding.
+                $castType = in_array($termQuery->getConnection()->getDriverName(), ['mysql', 'mariadb'], true)
+                    ? 'CHAR'
+                    : 'TEXT';
+                $termQuery->orWhereRaw(
+                    "LOWER(CAST(personal_details AS {$castType})) LIKE ?",
+                    [$lowerLike]
+                );
+            });
+        }
+
+        return $query;
+    }
+
+    /**
+     * Filter the admin listing by the gender stored in personal details.
+     */
+    public function scopeAdminGender($query, string $gender)
+    {
+        $gender = strtolower(trim($gender));
+
+        return $query->where(function ($genderQuery) use ($gender) {
+            $genderQuery->whereIn('personal_details->gender', [
+                $gender,
+                ucfirst($gender),
+                strtoupper($gender),
+            ]);
+
+            $castType = in_array($genderQuery->getConnection()->getDriverName(), ['mysql', 'mariadb'], true)
+                ? 'CHAR'
+                : 'TEXT';
+            $genderQuery->orWhereRaw(
+                "LOWER(CAST(personal_details AS {$castType})) LIKE ?",
+                ['%gender%'.$gender.'%']
+            );
+        });
     }
 
     /**

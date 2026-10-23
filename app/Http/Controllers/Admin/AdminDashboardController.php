@@ -11,6 +11,11 @@ use App\Models\ConnectionRequest;
 use App\Models\ChatMessage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\PasswordChangedMail;
 use Carbon\Carbon;
 
 class AdminDashboardController extends Controller
@@ -34,13 +39,165 @@ class AdminDashboardController extends Controller
             'businesses' => Business::where('verification_status', 'pending')->count(),
             'matrimony_profiles' => MatrimonyProfile::where('approval_status', 'pending')->count(),
         ];
+
+        // Fetch subscription expiry reminders (logic from SubscriptionReminderService)
+        $today = Carbon::now()->startOfDay();
+        $reminderStages = [
+            'before_3_months' => -3,
+            'before_2_months' => -2,
+            'before_1_month'  => -1,
+            'on_date'         => 0,
+            'after_1_month'   => 1,
+            'after_2_months'  => 2,
+            'after_3_months'  => 3,
+            'after_4_months'  => 4,
+            'after_5_months'  => 5,
+            'after_6_months'  => 6,
+        ];
+        
+        $earliest = $today->copy()->subMonthsNoOverflow(6)->startOfDay();
+        $latest = $today->copy()->addMonthsNoOverflow(3)->endOfDay();
+        
+        $expiryReminders = [];
+
+        // 1. Process Business Expiries
+        $businesses = Business::with('user')
+            ->whereNotNull('subscription_expires_at')
+            ->whereBetween('subscription_expires_at', [$earliest, $latest])
+            ->get();
+            
+        foreach ($businesses as $business) {
+            if (!$business->user) {
+                continue;
+            }
+            
+            $expiry = Carbon::parse($business->subscription_expires_at)->startOfDay();
+            
+            foreach ($reminderStages as $stageKey => $monthDelta) {
+                $sendAt = $expiry->copy()->addMonthsNoOverflow($monthDelta);
+                
+                if ($sendAt->isSameDay($today)) {
+                    $stageLabels = [
+                        'before_3_months' => '3 months before expiry',
+                        'before_2_months' => '2 months before expiry',
+                        'before_1_month'  => '1 month before expiry',
+                        'on_date'         => 'on expiry date',
+                        'after_1_month'   => '1 month after expiry',
+                        'after_2_months'  => '2 months after expiry',
+                        'after_3_months'  => '3 months after expiry',
+                        'after_4_months'  => '4 months after expiry',
+                        'after_5_months'  => '5 months after expiry',
+                        'after_6_months'  => '6 months after expiry',
+                    ];
+                    
+                    $user = $business->user;
+                    $phone = preg_replace('/[^0-9]/', '', $user->phone ?? '');
+                    if (strlen($phone) === 10) {
+                        $phone = '91' . $phone;
+                    }
+                    
+                    $expiryDateStr = $expiry->format('M d, Y');
+                    if (str_starts_with($stageKey, 'before_')) {
+                        $msg = "Hello {$user->name}, your subscription for \"{$business->business_name}\" will expire on {$expiryDateStr}. Please renew to avoid any interruption.";
+                    } elseif ($stageKey === 'on_date') {
+                        $msg = "Hello {$user->name}, your subscription for \"{$business->business_name}\" expires today ({$expiryDateStr}). Please renew to keep your listing active.";
+                    } else {
+                        $msg = "Hello {$user->name}, your subscription for \"{$business->business_name}\" expired on {$expiryDateStr}. Please renew to continue enjoying the service.";
+                    }
+                    
+                    $waLink = !empty($phone) ? "https://wa.me/{$phone}?text=" . urlencode($msg) : '#';
+                    
+                    $expiryReminders[] = [
+                        'type' => 'Business',
+                        'entity_id' => $business->id,
+                        'entity_name' => $business->business_name,
+                        'user_id' => $user->id,
+                        'user_name' => $user->name,
+                        'user_phone' => $user->phone ?? 'N/A',
+                        'expiry_date' => $expiry->format('Y-m-d'),
+                        'stage_label' => $stageLabels[$stageKey],
+                        'wa_link' => $waLink
+                    ];
+                    break;
+                }
+            }
+        }
+
+        // 2. Process Matrimony Profile Expiries
+        $matrimonyProfiles = MatrimonyProfile::with('user')
+            ->whereNotNull('profile_expires_at')
+            ->whereBetween('profile_expires_at', [$earliest, $latest])
+            ->get();
+
+        foreach ($matrimonyProfiles as $profile) {
+            if (!$profile->user) {
+                continue;
+            }
+            
+            $expiry = Carbon::parse($profile->profile_expires_at)->startOfDay();
+            
+            foreach ($reminderStages as $stageKey => $monthDelta) {
+                $sendAt = $expiry->copy()->addMonthsNoOverflow($monthDelta);
+                
+                if ($sendAt->isSameDay($today)) {
+                    $stageLabels = [
+                        'before_3_months' => '3 months before expiry',
+                        'before_2_months' => '2 months before expiry',
+                        'before_1_month'  => '1 month before expiry',
+                        'on_date'         => 'on expiry date',
+                        'after_1_month'   => '1 month after expiry',
+                        'after_2_months'  => '2 months after expiry',
+                        'after_3_months'  => '3 months after expiry',
+                        'after_4_months'  => '4 months after expiry',
+                        'after_5_months'  => '5 months after expiry',
+                        'after_6_months'  => '6 months after expiry',
+                    ];
+                    
+                    $user = $profile->user;
+                    $phone = preg_replace('/[^0-9]/', '', $user->phone ?? '');
+                    if (strlen($phone) === 10) {
+                        $phone = '91' . $phone;
+                    }
+                    
+                    $expiryDateStr = $expiry->format('M d, Y');
+                    if (str_starts_with($stageKey, 'before_')) {
+                        $msg = "Hello {$user->name}, your matrimony profile subscription will expire on {$expiryDateStr}. Please renew to avoid any interruption.";
+                    } elseif ($stageKey === 'on_date') {
+                        $msg = "Hello {$user->name}, your matrimony profile subscription expires today ({$expiryDateStr}). Please renew to keep your profile active.";
+                    } else {
+                        $msg = "Hello {$user->name}, your matrimony profile subscription expired on {$expiryDateStr}. Please renew to continue enjoying the service.";
+                    }
+                    
+                    $waLink = !empty($phone) ? "https://wa.me/{$phone}?text=" . urlencode($msg) : '#';
+                    
+                    $expiryReminders[] = [
+                        'type' => 'Matrimony',
+                        'entity_id' => $profile->id,
+                        'entity_name' => 'Matrimony Profile',
+                        'user_id' => $user->id,
+                        'user_name' => $user->name,
+                        'user_phone' => $user->phone ?? 'N/A',
+                        'expiry_date' => $expiry->format('Y-m-d'),
+                        'stage_label' => $stageLabels[$stageKey],
+                        'wa_link' => $waLink
+                    ];
+                    break;
+                }
+            }
+        }
+
+        // Sort by expiry date ascending
+        usort($expiryReminders, function($a, $b) {
+            return strcmp($a['expiry_date'], $b['expiry_date']);
+        });
         
         return view('admin.dashboard.index', compact(
             'stats', 
             'recentUsers', 
             'recentBusinesses', 
             'recentTransactions',
-            'pendingVerifications'
+            'pendingVerifications',
+            'expiryReminders'
         ));
     }
     
@@ -101,6 +258,78 @@ class AdminDashboardController extends Controller
             'paymentDistribution',
             'period'
         ));
+    }
+
+    /**
+     * Show admin profile settings page
+     */
+    public function profile()
+    {
+        $user = Auth::user();
+        return view('admin.dashboard.profile', compact('user'));
+    }
+
+    /**
+     * Update admin profile settings
+     */
+    public function updateProfile(Request $request)
+    {
+        $user = Auth::user();
+
+        $request->validate([
+            'name'             => 'required|string|max:255',
+            'email'            => 'required|string|email|max:255|unique:users,email,' . $user->id,
+            'phone'            => 'required|string|max:15|unique:users,phone,' . $user->id,
+            'photo'            => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
+            'current_password' => 'nullable|required_with:password|string',
+            'password'         => 'nullable|string|min:8|confirmed',
+        ]);
+
+        $data = $request->only(['name', 'email', 'phone']);
+
+        // Check if user is updating password
+        if ($request->filled('password')) {
+            if (!Hash::check($request->current_password, $user->password)) {
+                return back()->withErrors(['current_password' => 'Current password is incorrect.']);
+            }
+            $data['password'] = Hash::make($request->password);
+        }
+
+        // Handle profile photo upload
+        if ($request->hasFile('photo')) {
+            // Delete old photo if exists
+            if (!empty($user->photo)) {
+                if (Storage::disk('public')->exists($user->photo)) {
+                    Storage::disk('public')->delete($user->photo);
+                }
+            }
+
+            $file = $request->file('photo');
+            $fileName = 'profile/photos/' . uniqid() . '.' . $file->getClientOriginalExtension();
+            
+            if (!Storage::disk('public')->exists('profile/photos')) {
+                Storage::disk('public')->makeDirectory('profile/photos');
+            }
+
+            Storage::disk('public')->put($fileName, file_get_contents($file));
+            $data['photo'] = $fileName;
+        }
+
+        $user->update($data);
+
+        // Send email notification if password was changed
+        if ($request->filled('password')) {
+            try {
+                Mail::to($user->email)->send(new PasswordChangedMail($user, $request->password));
+            } catch (\Throwable $mailEx) {
+                \Log::warning('Admin password change email failed', [
+                    'user_id' => $user->id,
+                    'error'   => $mailEx->getMessage()
+                ]);
+            }
+        }
+
+        return redirect()->route('admin.profile')->with('success', 'Profile updated successfully!');
     }
     
     /**
@@ -313,6 +542,12 @@ class AdminDashboardController extends Controller
         $thisMonth = Carbon::now()->startOfMonth();
         
         return [
+            'total_users' => User::count(),
+            'total_businesses' => Business::count(),
+            'total_matrimony_profiles' => MatrimonyProfile::count(),
+            'new_users_today' => User::whereDate('created_at', $today)->count(),
+            'new_businesses_today' => Business::whereDate('created_at', $today)->count(),
+            'new_matrimony_today' => MatrimonyProfile::whereDate('created_at', $today)->count(),
             'users' => [
                 'total' => User::count(),
                 'verified' => User::where('caste_verification_status', 'approved')->count(),
@@ -353,5 +588,700 @@ class AdminDashboardController extends Controller
                     ->distinct('conversation_id')->count('conversation_id'),
             ]
         ];
+    }
+
+    /**
+     * Show reports list view
+     */
+    public function reports()
+    {
+        return view('admin.reports');
+    }
+
+    /**
+     * Download list report as PDF
+     */
+    public function downloadReportPdf(Request $request, $type)
+    {
+        $startDate = $request->input('start_date');
+        $endDate = $request->input('end_date');
+
+        list($title, $headers, $rows, $summary) = $this->getReportData($type, $startDate, $endDate);
+
+        $originalTitle = $title;
+        if ($startDate && $endDate) {
+            $title .= " (" . date('Y-m-d', strtotime($startDate)) . " to " . date('Y-m-d', strtotime($endDate)) . ")";
+        } elseif ($startDate) {
+            $title .= " (From " . date('Y-m-d', strtotime($startDate)) . ")";
+        } elseif ($endDate) {
+            $title .= " (Up to " . date('Y-m-d', strtotime($endDate)) . ")";
+        }
+
+        $rows = array_map(fn (array $row) => array_map(
+            fn ($value) => $this->formatReportValue($value),
+            $row
+        ), $rows);
+        $summary = array_map(fn ($value) => $this->formatReportValue($value), $summary);
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView(
+            'admin.pdf.report_template',
+            compact('title', 'headers', 'rows', 'summary')
+        )->setPaper('a4', count($headers) > 8 ? 'landscape' : 'portrait');
+
+        return $pdf->download(strtolower(str_replace(' ', '_', $originalTitle)) . '_' . date('Ymd') . '.pdf');
+    }
+
+    /**
+     * Download the report as a standards-compliant, unprotected Excel workbook.
+     *
+     * The old BIFF .xls writer could produce workbooks which desktop Excel tried
+     * to repair, dropping shared string cells while leaving numeric cells intact.
+     * XLSX avoids that legacy writer path and is supported by desktop and mobile
+     * spreadsheet applications.
+     */
+    public function downloadReportXls(Request $request, $type)
+    {
+        $startDate = $request->input('start_date');
+        $endDate = $request->input('end_date');
+
+        list($title, $headers, $rows, $summary) = $this->getReportData($type, $startDate, $endDate);
+
+        $originalTitle = $title;
+        if ($startDate && $endDate) {
+            $title .= " (" . date('Y-m-d', strtotime($startDate)) . " to " . date('Y-m-d', strtotime($endDate)) . ")";
+        } elseif ($startDate) {
+            $title .= " (From " . date('Y-m-d', strtotime($startDate)) . ")";
+        } elseif ($endDate) {
+            $title .= " (Up to " . date('Y-m-d', strtotime($endDate)) . ")";
+        }
+
+        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+        $spreadsheet->getProperties()
+            ->setCreator(config('app.name'))
+            ->setTitle($title)
+            ->setSubject('Administrative report export');
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Report');
+
+        $lastColumn = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex(max(count($headers), 2));
+        
+        // Title
+        $sheet->setCellValue('A1', $title);
+        $sheet->mergeCells("A1:{$lastColumn}1");
+        $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(14);
+        
+        // Headers
+        foreach ($headers as $columnIndex => $header) {
+            $cell = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($columnIndex + 1) . '3';
+            $sheet->setCellValue($cell, $header);
+            $sheet->getStyle($cell)->getFont()->setBold(true);
+        }
+        
+        // Rows
+        $rowNum = 4;
+        foreach ($rows as $row) {
+            foreach (array_values($row) as $columnIndex => $value) {
+                $cell = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($columnIndex + 1) . $rowNum;
+                $value = $this->formatReportValue($value);
+
+                if (is_int($value) || is_float($value)) {
+                    $sheet->setCellValue($cell, $value);
+                } else {
+                    // Explicit text keeps phone numbers, pincodes and long IDs out of scientific notation.
+                    $sheet->setCellValueExplicit(
+                        $cell,
+                        strip_tags((string) $value),
+                        \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING
+                    );
+                }
+            }
+            $rowNum++;
+        }
+        
+        // Summary section
+        $rowNum += 2;
+        $sheet->setCellValue('A' . $rowNum, 'SUMMARY');
+        $sheet->getStyle('A' . $rowNum)->getFont()->setBold(true);
+        $rowNum++;
+        
+        foreach ($summary as $key => $val) {
+            $sheet->setCellValue('A' . $rowNum, $key);
+            $sheet->setCellValue('B' . $rowNum, strip_tags((string) $this->formatReportValue($val)));
+            $sheet->getStyle('A' . $rowNum)->getFont()->setBold(true);
+            $rowNum++;
+        }
+
+        $sheet->freezePane('A4');
+        $sheet->setAutoFilter("A3:{$lastColumn}3");
+        $sheet->getStyle("A3:{$lastColumn}3")->getFill()
+            ->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)
+            ->getStartColor()->setARGB('FF0D6EFD');
+        $sheet->getStyle("A3:{$lastColumn}3")->getFont()->getColor()->setARGB('FFFFFFFF');
+        $sheet->getStyle("A3:{$lastColumn}{$rowNum}")->getAlignment()->setVertical('top')->setWrapText(true);
+
+        foreach (range(1, max(count($headers), 2)) as $columnIndex) {
+            $column = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($columnIndex);
+            $sheet->getColumnDimension($column)->setAutoSize(true);
+        }
+
+        $fileName = strtolower(str_replace(' ', '_', $originalTitle)) . '_' . date('Ymd') . '.xlsx';
+
+        return response()->streamDownload(function () use ($spreadsheet) {
+            $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
+            $writer->setPreCalculateFormulas(false);
+            $writer->save('php://output');
+            $spreadsheet->disconnectWorksheets();
+        }, $fileName, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'Cache-Control' => 'private, max-age=0, no-cache, no-store, must-revalidate',
+            'X-Content-Type-Options' => 'nosniff',
+        ]);
+    }
+
+    /**
+     * Shared helper to retrieve report dataset
+     */
+    private function getReportData($type, $startDate, $endDate)
+    {
+        $title = "";
+        $headers = [];
+        $rows = [];
+        $summary = [];
+
+        if ($type === 'users') {
+            $title = "Users Registration Report";
+            $headers = [
+                'ID', 'Name', 'Email', 'Phone', 'Age', 'Date of Birth', 'Occupation',
+                'Company', 'Department', 'Designation', 'User Type', 'Account Status',
+                'Caste Verification', 'Respected Person', 'Respected Person Phone',
+                'Referral Code', 'Address', 'Nearby Location', 'Road Number', 'Sector',
+                'Village', 'City', 'District', 'State', 'Country', 'Pincode', 'Latitude',
+                'Longitude', 'Email Verified At', 'Blog Access', 'Admin Notes', 'Joined',
+                'Last Updated',
+            ];
+            
+            $query = User::query();
+            $totalCount = User::query();
+            $activeCount = User::where('status', 'active');
+            $inactiveCount = User::where('status', 'inactive');
+            $suspendedCount = User::where('status', 'suspended');
+            $bannedCount = User::where('status', 'banned');
+            
+            if ($startDate) {
+                $query->whereDate('created_at', '>=', $startDate);
+                $totalCount->whereDate('created_at', '>=', $startDate);
+                $activeCount->whereDate('created_at', '>=', $startDate);
+                $inactiveCount->whereDate('created_at', '>=', $startDate);
+                $suspendedCount->whereDate('created_at', '>=', $startDate);
+                $bannedCount->whereDate('created_at', '>=', $startDate);
+            }
+            if ($endDate) {
+                $query->whereDate('created_at', '<=', $endDate);
+                $totalCount->whereDate('created_at', '<=', $endDate);
+                $activeCount->whereDate('created_at', '<=', $endDate);
+                $inactiveCount->whereDate('created_at', '<=', $endDate);
+                $suspendedCount->whereDate('created_at', '<=', $endDate);
+                $bannedCount->whereDate('created_at', '<=', $endDate);
+            }
+
+            $users = $query->latest()->get();
+            foreach ($users as $user) {
+                $rows[] = [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'phone' => $user->phone,
+                    'age' => $user->age,
+                    'dob' => $user->dob,
+                    'occupation' => $user->occupation,
+                    'company' => $user->company_name,
+                    'department' => $user->dept_name,
+                    'designation' => $user->designation,
+                    'user_type' => ucfirst((string) $user->user_type),
+                    'status' => ucfirst((string) $user->status),
+                    'caste_verification' => ucfirst((string) $user->caste_verification_status),
+                    'respected_person' => $user->respected_person_name,
+                    'respected_person_phone' => $user->respected_person_mobile_number,
+                    'referral_code' => $user->reffral_code,
+                    'address' => $user->address,
+                    'nearby_location' => $user->nearby_location,
+                    'road_number' => $user->road_number,
+                    'sector' => $user->sector,
+                    'village' => $user->village,
+                    'city' => $user->city,
+                    'district' => $user->district,
+                    'state' => $user->state,
+                    'country' => $user->country,
+                    'pincode' => $user->pincode,
+                    'latitude' => $user->latitude,
+                    'longitude' => $user->longitude,
+                    'email_verified_at' => $user->email_verified_at,
+                    'blog_access' => $user->blog_access,
+                    'admin_notes' => $user->admin_notes,
+                    'joined' => $user->created_at,
+                    'updated' => $user->updated_at,
+                ];
+            }
+            $summary = [
+                'Total Users' => $totalCount->count(),
+                'Active Users' => $activeCount->count(),
+                'Inactive Users' => $inactiveCount->count(),
+                'Suspended Users' => $suspendedCount->count(),
+                'Banned Users' => $bannedCount->count(),
+            ];
+        } elseif ($type === 'businesses') {
+            $title = "Business Directory Report";
+            $headers = [
+                'ID', 'Business Name', 'Business Type', 'Owner ID', 'Owner Name', 'Owner Email',
+                'Owner Phone', 'Category ID', 'Category', 'Description', 'Contact Phone', 'Contact Email',
+                'Website', 'Address', 'Village', 'Taluka', 'City', 'District', 'State',
+                'Country', 'Pincode', 'Latitude', 'Longitude', 'Opening Time', 'Closing Time',
+                'Verification', 'Verified At', 'Verified By', 'Rejection Reason', 'Account Status',
+                'Subscription', 'Subscription Expires', 'Job Posting Limit', 'Photos',
+                'Products', 'Services', 'Business Locations', 'Reviews', 'Job Postings',
+                'Business Registration Payments', 'Created', 'Last Updated',
+            ];
+            
+            $businessRelations = ['user', 'category'];
+            $optionalRelations = [
+                'products' => 'products',
+                'services' => 'services',
+                'business_locations' => 'locations',
+                'business_reviews' => 'reviews.user',
+                'job_postings' => 'jobPostings',
+                'transactions' => 'businessRegistrationTransactions',
+            ];
+
+            foreach ($optionalRelations as $table => $relation) {
+                if (\Illuminate\Support\Facades\Schema::hasTable($table)) {
+                    $businessRelations[] = $relation;
+                }
+            }
+
+            $query = Business::with($businessRelations);
+            $totalCount = Business::query();
+            $approvedCount = Business::where('verification_status', 'approved');
+            $pendingCount = Business::where('verification_status', 'pending');
+            $activeSubCount = Business::where('subscription_status', 'active');
+            
+            if ($startDate) {
+                $query->whereDate('created_at', '>=', $startDate);
+                $totalCount->whereDate('created_at', '>=', $startDate);
+                $approvedCount->whereDate('created_at', '>=', $startDate);
+                $pendingCount->whereDate('created_at', '>=', $startDate);
+                $activeSubCount->whereDate('created_at', '>=', $startDate);
+            }
+            if ($endDate) {
+                $query->whereDate('created_at', '<=', $endDate);
+                $totalCount->whereDate('created_at', '<=', $endDate);
+                $approvedCount->whereDate('created_at', '<=', $endDate);
+                $pendingCount->whereDate('created_at', '<=', $endDate);
+                $activeSubCount->whereDate('created_at', '<=', $endDate);
+            }
+
+            $businesses = $query->latest()->get();
+            foreach ($businesses as $b) {
+                $rows[] = [
+                    'id' => $b->id,
+                    'name' => $b->business_name,
+                    'type' => $b->business_type,
+                    'owner_id' => $b->user_id,
+                    'owner' => $b->user?->name,
+                    'owner_email' => $b->user?->email,
+                    'owner_phone' => $b->user?->phone,
+                    'category_id' => $b->category_id,
+                    'category' => $b->category?->name,
+                    'description' => $b->description,
+                    'contact_phone' => $b->contact_phone,
+                    'contact_email' => $b->contact_email,
+                    'website' => $b->website,
+                    'address' => $b->address,
+                    'village' => $b->village,
+                    'taluka' => $b->taluka,
+                    'city' => $b->city,
+                    'district' => $b->district,
+                    'state' => $b->state,
+                    'country' => $b->country,
+                    'pincode' => $b->pincode,
+                    'latitude' => $b->latitude,
+                    'longitude' => $b->longitude,
+                    'opening_time' => $b->opening_time,
+                    'closing_time' => $b->closing_time,
+                    'verification' => ucfirst((string) $b->verification_status),
+                    'verified_at' => $b->verified_at,
+                    'verified_by' => $b->verified_by,
+                    'rejection_reason' => $b->rejection_reason,
+                    'status' => ucfirst((string) $b->status),
+                    'subscription' => ucfirst((string) $b->subscription_status),
+                    'subscription_expires' => $b->subscription_expires_at,
+                    'job_posting_limit' => $b->job_posting_limit,
+                    'photos' => $b->getRawOriginal('photo'),
+                    'products' => $this->businessRelationDetails($this->loadedBusinessRelation($b, 'products'), [
+                        'ID' => 'id', 'Name' => 'name', 'Description' => 'description',
+                        'Cost' => 'cost', 'Image' => 'image_path', 'Status' => 'status',
+                    ]),
+                    'services' => $this->businessRelationDetails($this->loadedBusinessRelation($b, 'services'), [
+                        'ID' => 'id', 'Name' => 'name', 'Description' => 'description',
+                        'Cost' => 'cost', 'Image' => 'image_path', 'Status' => 'status',
+                    ]),
+                    'locations' => $this->businessRelationDetails($this->loadedBusinessRelation($b, 'locations'), [
+                        'ID' => 'id', 'Type' => 'location_type', 'Address Line 1' => 'address_line_1',
+                        'Address Line 2' => 'address_line_2', 'City' => 'city', 'State' => 'state',
+                        'Postal Code' => 'postal_code', 'Country' => 'country', 'Latitude' => 'latitude',
+                        'Longitude' => 'longitude', 'Primary' => 'is_primary', 'Active' => 'is_active',
+                        'Phone' => 'contact_phone', 'Email' => 'contact_email',
+                        'Operating Hours' => 'operating_hours', 'Instructions' => 'special_instructions',
+                    ]),
+                    'reviews' => $this->businessRelationDetails($this->loadedBusinessRelation($b, 'reviews'), [
+                        'ID' => 'id', 'Reviewer' => fn ($review) => $review->user?->name,
+                        'Rating' => 'rating', 'Review' => 'review_text', 'Status' => 'status',
+                        'Admin Notes' => 'admin_notes', 'Moderated By' => 'moderated_by',
+                        'Moderated At' => 'moderated_at',
+                    ]),
+                    'job_postings' => $this->businessRelationDetails($this->loadedBusinessRelation($b, 'jobPostings'), [
+                        'ID' => 'id', 'Title' => 'title', 'Description' => 'description',
+                        'Requirements' => 'requirements', 'Salary' => 'salary_range',
+                        'Job Type' => 'job_type', 'Location' => 'location',
+                        'Experience' => 'experience_level', 'Employment Type' => 'employment_type',
+                        'Category' => 'category', 'Skills' => 'skills_required', 'Benefits' => 'benefits',
+                        'Application Deadline' => 'application_deadline', 'Active' => 'is_active',
+                        'Expires At' => 'expires_at', 'Status' => 'status',
+                    ]),
+                    'business_registration_payments' => $this->businessRelationDetails(
+                        $this->loadedBusinessRelation($b, 'businessRegistrationTransactions'),
+                        [
+                            'ID' => 'id', 'Amount' => 'amount', 'Currency' => 'currency',
+                            'Payment ID' => 'razorpay_payment_id', 'Order ID' => 'razorpay_order_id',
+                            'Status' => 'status', 'Subscription Period' => 'subscription_period',
+                            'Receipt' => 'receipt_url', 'Created' => 'created_at',
+                        ]
+                    ),
+                    'created' => $b->created_at,
+                    'updated' => $b->updated_at,
+                ];
+            }
+            $summary = [
+                'Total Businesses' => $totalCount->count(),
+                'Approved' => $approvedCount->count(),
+                'Pending' => $pendingCount->count(),
+                'Active Subscriptions' => $activeSubCount->count(),
+            ];
+        } elseif ($type === 'matrimony') {
+            $title = "Matrimonial Profiles Report";
+            $headers = [
+                'ID', 'User ID', 'Profile Name', 'Email', 'Phone', 'Gender', 'Date of Birth',
+                'Time of Birth', 'Age', 'Height', 'Weight', 'Complexion', 'Physical Status',
+                'Personal Details', 'Family Details', 'Education Details', 'Professional Details',
+                'Lifestyle Details', 'Location Details', 'Religious Details', 'Partner Preferences',
+                'Privacy Settings', 'Approval Status', 'Approved At', 'Approved By',
+                'Rejection Reason', 'Account Status', 'Profile Expires', 'Registered', 'Last Updated',
+            ];
+            
+            $query = MatrimonyProfile::with('user');
+            $totalCount = MatrimonyProfile::query();
+            $approvedCount = MatrimonyProfile::where('approval_status', 'approved');
+            $pendingCount = MatrimonyProfile::where('approval_status', 'pending');
+            
+            if ($startDate) {
+                $query->whereDate('created_at', '>=', $startDate);
+                $totalCount->whereDate('created_at', '>=', $startDate);
+                $approvedCount->whereDate('created_at', '>=', $startDate);
+                $pendingCount->whereDate('created_at', '>=', $startDate);
+            }
+            if ($endDate) {
+                $query->whereDate('created_at', '<=', $endDate);
+                $totalCount->whereDate('created_at', '<=', $endDate);
+                $approvedCount->whereDate('created_at', '<=', $endDate);
+                $pendingCount->whereDate('created_at', '<=', $endDate);
+            }
+
+            $profiles = $query->latest()->get();
+            foreach ($profiles as $p) {
+                $rows[] = [
+                    'id' => $p->id,
+                    'user_id' => $p->user_id,
+                    'name' => $p->user?->name,
+                    'email' => $p->user?->email,
+                    'phone' => $p->user?->phone,
+                    'gender' => ucfirst((string) $p->gender),
+                    'date_of_birth' => $p->date_of_birth,
+                    'time_of_birth' => $p->time_of_birth,
+                    'age' => $p->age,
+                    'height' => $p->height,
+                    'weight' => $p->weight,
+                    'complexion' => $p->complexion,
+                    'physical_status' => $p->physical_status,
+                    'personal_details' => $p->personal_details,
+                    'family_details' => $p->family_details,
+                    'education_details' => $p->education_details,
+                    'professional_details' => $p->professional_details,
+                    'lifestyle_details' => $p->lifestyle_details,
+                    'location_details' => $p->location_details,
+                    'religious_details' => $p->religious_details,
+                    'partner_preferences' => $p->partner_preferences,
+                    'privacy_settings' => $p->privacy_settings,
+                    'approval_status' => ucfirst((string) $p->approval_status),
+                    'approved_at' => $p->approved_at,
+                    'approved_by' => $p->approved_by,
+                    'rejection_reason' => $p->rejection_reason,
+                    'status' => ucfirst((string) $p->status),
+                    'profile_expires' => $p->profile_expires_at,
+                    'registered' => $p->created_at,
+                    'updated' => $p->updated_at,
+                ];
+            }
+            $summary = [
+                'Total Matrimony Profiles' => $totalCount->count(),
+                'Approved' => $approvedCount->count(),
+                'Pending' => $pendingCount->count(),
+            ];
+        } elseif ($type === 'payments') {
+            $title = "Payments & Revenue Report";
+            $headers = [
+                'ID', 'Payment ID', 'Order ID', 'Transaction ID', 'User ID', 'User Name',
+                'User Email', 'User Phone', 'Payment Type', 'Amount', 'Currency', 'Status',
+                'Payment Method', 'Description', 'Paid At', 'Refund Amount', 'Refunded At',
+                'Refund Reason', 'Receipt Number', 'Metadata', 'Subscription Start',
+                'Subscription End', 'Created', 'Last Updated',
+            ];
+            
+            $query = \App\Models\Payment::with(['user.business', 'user.matrimonyProfile']);
+            $totalCount = \App\Models\Payment::query();
+            $revenueSum = \App\Models\Payment::where('status', 'completed');
+            $successCount = \App\Models\Payment::where('status', 'completed');
+            $pendingCount = \App\Models\Payment::where('status', 'pending');
+            
+            if ($startDate) {
+                $query->whereDate('created_at', '>=', $startDate);
+                $totalCount->whereDate('created_at', '>=', $startDate);
+                $revenueSum->whereDate('created_at', '>=', $startDate);
+                $successCount->whereDate('created_at', '>=', $startDate);
+                $pendingCount->whereDate('created_at', '>=', $startDate);
+            }
+            if ($endDate) {
+                $query->whereDate('created_at', '<=', $endDate);
+                $totalCount->whereDate('created_at', '<=', $endDate);
+                $revenueSum->whereDate('created_at', '<=', $endDate);
+                $successCount->whereDate('created_at', '<=', $endDate);
+                $pendingCount->whereDate('created_at', '<=', $endDate);
+            }
+
+            $payments = $query->latest()->get();
+            foreach ($payments as $pay) {
+                $rows[] = [
+                    'id' => $pay->id,
+                    'payment_id' => $pay->payment_id,
+                    'order_id' => $pay->order_id,
+                    'transaction_id' => $pay->transaction_id,
+                    'user_id' => $pay->user_id,
+                    'user' => $pay->user?->name ?? 'Deleted User',
+                    'email' => $pay->user?->email,
+                    'phone' => $pay->user?->phone,
+                    'payment_type' => $pay->payment_type,
+                    'amount' => (float) $pay->amount,
+                    'currency' => $pay->currency,
+                    'status' => ucfirst((string) $pay->status),
+                    'payment_method' => $pay->payment_method,
+                    'description' => $pay->description,
+                    'paid_at' => $pay->paid_at,
+                    'refund_amount' => $pay->refund_amount === null ? null : (float) $pay->refund_amount,
+                    'refunded_at' => $pay->refunded_at,
+                    'refund_reason' => $pay->refund_reason,
+                    'receipt_number' => $pay->receipt_number,
+                    'metadata' => $pay->metadata,
+                    'subscription_start' => $pay->subscription_start_date,
+                    'subscription_end' => $pay->subscription_end_date,
+                    'created' => $pay->created_at,
+                    'updated' => $pay->updated_at,
+                ];
+            }
+            $summary = [
+                'Total Transactions' => $totalCount->count(),
+                'Completed Revenue' => 'INR ' . number_format($revenueSum->sum('amount'), 2),
+                'Successful Payments' => $successCount->count(),
+                'Pending Payments' => $pendingCount->count(),
+            ];
+        }
+
+        [$headers, $rows] = $this->expandStructuredReportColumns($headers, $rows);
+
+        return [$title, $headers, $rows, $summary];
+    }
+
+    /**
+     * Prepare a business relation for expansion into ordinary report columns.
+     */
+    private function businessRelationDetails($records, array $fields): array
+    {
+        return $records->values()->map(function ($record) use ($fields) {
+            $details = [];
+
+            foreach ($fields as $label => $field) {
+                $value = is_callable($field) ? $field($record) : data_get($record, $field);
+                $details[$label] = $value;
+            }
+
+            return $details;
+        })->all();
+    }
+
+    /**
+     * Expand JSON, arrays, and repeating child records into separate table columns.
+     *
+     * A report cell must always contain one scalar value. For example,
+     * `personal_details.first_name` becomes "Personal Details - First Name" and
+     * the second product name becomes "Products 2 - Name".
+     */
+    private function expandStructuredReportColumns(array $headers, array $rows): array
+    {
+        if ($rows === []) {
+            return [$headers, $rows];
+        }
+
+        $rowKeys = array_keys($rows[0]);
+        $expandedHeaders = [];
+        $columnDefinitions = [];
+
+        foreach ($rowKeys as $columnIndex => $rowKey) {
+            $baseHeader = $headers[$columnIndex] ?? ucwords(str_replace('_', ' ', (string) $rowKey));
+            $paths = [];
+
+            foreach ($rows as $row) {
+                $value = $this->decodeStructuredReportValue($row[$rowKey] ?? null);
+                if (!is_array($value) || $value === []) {
+                    continue;
+                }
+
+                foreach ($this->reportLeafPaths($value) as $path) {
+                    $pathKey = json_encode($path);
+                    $paths[$pathKey] = $path;
+                }
+            }
+
+            if ($paths === []) {
+                $expandedHeaders[] = $baseHeader;
+                $columnDefinitions[] = [$rowKey, []];
+                continue;
+            }
+
+            foreach ($paths as $path) {
+                $expandedHeaders[] = $this->expandedReportHeader($baseHeader, $path);
+                $columnDefinitions[] = [$rowKey, $path];
+            }
+        }
+
+        $expandedRows = array_map(function (array $row) use ($columnDefinitions) {
+            $expandedRow = [];
+
+            foreach ($columnDefinitions as [$rowKey, $path]) {
+                $value = $this->decodeStructuredReportValue($row[$rowKey] ?? null);
+                $expandedRow[] = $path === [] ? $value : $this->reportValueAtPath($value, $path);
+            }
+
+            return $expandedRow;
+        }, $rows);
+
+        return [$expandedHeaders, $expandedRows];
+    }
+
+    private function reportValueAtPath($value, array $path)
+    {
+        foreach ($path as $part) {
+            $value = $this->decodeStructuredReportValue($value);
+
+            if (!is_array($value) || !array_key_exists($part, $value)) {
+                return null;
+            }
+
+            $value = $value[$part];
+        }
+
+        return $this->decodeStructuredReportValue($value);
+    }
+
+    private function decodeStructuredReportValue($value)
+    {
+        if ($value instanceof \Illuminate\Support\Collection) {
+            return $value->all();
+        }
+
+        if (!is_string($value)) {
+            return $value;
+        }
+
+        $decoded = json_decode($value, true);
+
+        return json_last_error() === JSON_ERROR_NONE && is_array($decoded) ? $decoded : $value;
+    }
+
+    private function reportLeafPaths(array $value, array $prefix = []): array
+    {
+        $paths = [];
+
+        foreach ($value as $key => $item) {
+            $path = [...$prefix, (string) $key];
+            $item = $this->decodeStructuredReportValue($item);
+
+            if (is_array($item) && $item !== []) {
+                $paths = [...$paths, ...$this->reportLeafPaths($item, $path)];
+            } else {
+                $paths[] = $path;
+            }
+        }
+
+        return $paths;
+    }
+
+    private function expandedReportHeader(string $baseHeader, array $path): string
+    {
+        $parts = array_map(
+            fn ($part) => ctype_digit((string) $part)
+                ? (string) ((int) $part + 1)
+                : ucwords(str_replace(['_', '-'], ' ', (string) $part)),
+            $path
+        );
+
+        if (isset($parts[0]) && ctype_digit($parts[0])) {
+            $baseHeader .= ' ' . array_shift($parts);
+        }
+
+        return $parts === [] ? $baseHeader : $baseHeader . ' - ' . implode(' - ', $parts);
+    }
+
+    /**
+     * Return an eager-loaded relation without triggering queries against legacy databases.
+     */
+    private function loadedBusinessRelation(Business $business, string $relation)
+    {
+        return $business->relationLoaded($relation) ? $business->getRelation($relation) : collect();
+    }
+
+    /**
+     * Convert report values to readable scalar content without exposing credentials.
+     */
+    private function formatReportValue($value): string|int|float
+    {
+        if ($value instanceof \DateTimeInterface) {
+            return $value->format('Y-m-d H:i:s');
+        }
+
+        if (is_bool($value)) {
+            return $value ? 'Yes' : 'No';
+        }
+
+        if (is_array($value)) {
+            $flattened = [];
+            array_walk_recursive($value, function ($item) use (&$flattened) {
+                $flattened[] = $this->formatReportValue($item);
+            });
+
+            return $flattened ? implode(', ', $flattened) : 'N/A';
+        }
+
+        if ($value === null || $value === '') {
+            return 'N/A';
+        }
+
+        return is_int($value) || is_float($value) ? $value : (string) $value;
     }
 }

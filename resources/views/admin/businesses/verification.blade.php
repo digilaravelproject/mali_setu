@@ -98,6 +98,7 @@
                                         <th>Email</th>
                                         <th>Business Type</th>
                                         <th>Category</th>
+                                        <th>Payment</th>
                                         <th>Submitted</th>
                                         <th>Actions</th>
                                     </tr>
@@ -113,13 +114,30 @@
                                         <td>{{ $business->user->name }}</td>
                                         <td>{{ $business->user->email }}</td>
                                         <td>
-                                            <span class="badge badge-info">{{ ucfirst($business->business_type) }}</span>
+                                            <span class="badge badge-info text-black">{{ ucfirst($business->business_type) }}</span>
+                                            <br>
+                                            @if($business->verification_status === 'approved')
+                                                <span class="badge bg-success text-white mt-1">Approved</span>
+                                            @elseif($business->verification_status === 'rejected')
+                                                <span class="badge bg-danger text-white mt-1">Rejected</span>
+                                            @else
+                                                <span class="badge bg-warning text-dark mt-1">Pending</span>
+                                            @endif
                                         </td>
                                         <td>
                                             @if($business->category)
                                                 {{ $business->category->name }}
                                             @else
                                                 <span class="text-muted">No Category</span>
+                                            @endif
+                                        </td>
+                                        <td>
+                                            @if($business->completed_business_registrations_count > 0)
+                                                <span class="badge bg-success">Paid</span>
+                                            @elseif($business->pending_business_registrations_count > 0)
+                                                <span class="badge bg-warning">Payment Pending</span>
+                                            @else
+                                                <span class="badge bg-secondary">Not Paid</span>
                                             @endif
                                         </td>
                                         <td>
@@ -133,14 +151,38 @@
                                                    class="btn btn-sm btn-info" title="View Details">
                                                     <i class="fas fa-eye"></i>
                                                 </a>
-                                                <button type="button" class="btn btn-sm btn-success" 
-                                                        onclick="approveBusiness({{ $business->id }})" title="Approve">
-                                                    <i class="fas fa-check"></i>
-                                                </button>
+                                                <a href="{{ route('admin.businesses.edit', $business->id) }}" class="btn btn-sm btn-warning text-white" title="Edit business">
+                                                    <i class="fas fa-edit"></i>
+                                                </a>
+                                                @if($business->verification_status === 'approved')
+                                                    <button type="button" class="btn btn-sm btn-success" disabled title="Approved">
+                                                        <i class="fas fa-check"></i>
+                                                    </button>
+                                                @elseif($business->completed_business_registrations_count > 0)
+                                                    <button type="button" class="btn btn-sm btn-success" 
+                                                            onclick="approveBusiness({{ $business->id }})" title="Approve">
+                                                        <i class="fas fa-check"></i>
+                                                    </button>
+                                                @else
+                                                    <button type="button" class="btn btn-sm btn-secondary" title="Payment pending. Cannot approve." disabled>
+                                                        <i class="fas fa-check"></i>
+                                                    </button>
+                                                @endif
                                                 <button type="button" class="btn btn-sm btn-danger" 
-                                                        onclick="rejectBusiness({{ $business->id }})" title="Reject">
+                                                        onclick="rejectBusiness({{ $business->id }})" title="Reject"
+                                                        {{ $business->verification_status === 'rejected' ? 'disabled' : '' }}>
                                                     <i class="fas fa-times"></i>
                                                 </button>
+                                                
+                                                <!-- Delete Form -->
+                                                <form action="{{ route('admin.businesses.destroy', $business->id) }}" method="POST" class="d-inline">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete business"
+                                                            onclick="return confirm('Are you sure you want to delete this business? All business listings and associated payment data will be permanently deleted.');">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </form>
                                             </div>
                                         </td>
                                     </tr>
@@ -151,7 +193,7 @@
                         
                         <!-- Pagination -->
                         <div class="d-flex justify-content-center">
-                            {{ $pendingBusinesses->links() }}
+                            {{ $pendingBusinesses->appends(request()->query())->links() }}
                         </div>
                     @else
                         <div class="text-center py-5">

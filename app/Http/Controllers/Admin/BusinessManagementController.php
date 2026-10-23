@@ -5,9 +5,16 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Business;
 use App\Models\BusinessCategory;
+use App\Models\JobPosting;
 use App\Models\Product;
 use App\Models\Service;
+use App\Models\Transaction;
+use App\Models\Payment;
+use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\ValidationException;
 
 class BusinessManagementController extends Controller
 {
@@ -16,7 +23,16 @@ class BusinessManagementController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Business::with(['user', 'category', 'products', 'services']);
+        $query = Business::with(['user', 'category', 'products', 'services'])
+            ->withCount([
+                'businessRegistrationTransactions as completed_business_registrations_count' => function ($query) {
+                    $query->where('status', 'completed');
+                },
+                'businessRegistrationTransactions as pending_business_registrations_count' => function ($query) {
+                    $query->where('status', 'pending');
+                },
+                'jobPostings'
+            ]);
         
         // Filter by verification status
         if ($request->has('verification_status') && $request->verification_status !== '') {
@@ -45,7 +61,13 @@ class BusinessManagementController extends Controller
         
         $businesses = $query->latest()->paginate(20);
         
-        $categories = BusinessCategory::where('is_active', true)->get();
+        $categories = BusinessCategory::where('is_active', true)->orderBy('sort_order', 'asc')->orderBy('id', 'asc')->get();
+
+        $businessTypes = Business::select('business_type')
+            ->distinct()
+            ->orderBy('business_type')
+            ->pluck('business_type')
+            ->toArray();
         
         $stats = [
             'total' => Business::count(),
@@ -58,7 +80,7 @@ class BusinessManagementController extends Controller
                 ->toArray()
         ];
         
-        return view('admin.businesses.index', compact('businesses', 'categories', 'stats'));
+        return view('admin.businesses.index', compact('businesses', 'categories', 'stats', 'businessTypes'));
     }
     
     /**
@@ -67,7 +89,14 @@ class BusinessManagementController extends Controller
     public function verification(Request $request)
     {
         $query = Business::with(['user', 'category', 'products', 'services'])
-            ->where('verification_status', 'pending');
+            ->withCount([
+                'businessRegistrationTransactions as completed_business_registrations_count' => function ($query) {
+                    $query->where('status', 'completed');
+                },
+                'businessRegistrationTransactions as pending_business_registrations_count' => function ($query) {
+                    $query->where('status', 'pending');
+                },
+            ]);
             
         // Search functionality
         if ($request->has('search') && $request->search !== '') {
@@ -79,7 +108,9 @@ class BusinessManagementController extends Controller
             });
         }
         
-        $pendingBusinesses = $query->latest()->paginate(15);
+        $pendingBusinesses = $query->orderByRaw("FIELD(verification_status, 'pending', 'approved', 'rejected')")
+            ->latest()
+            ->paginate(15);
         
         $stats = [
             'pending_count' => Business::where('verification_status', 'pending')->count(),
@@ -107,20 +138,36 @@ class BusinessManagementController extends Controller
     {
         try {
             $business = Business::findOrFail($businessId);
-            
+
+            $paymentCompleted = Transaction::where('user_id', $business->user_id)
+                ->where('purpose', 'business_registration')
+                ->where('status', 'completed')
+                ->exists();
+
+            if (! $paymentCompleted) {
+                $message = 'Payment is pending for this business. Approval is not allowed until payment is complete.';
+                if ($request->ajax()) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => $message
+                    ], 422);
+                }
+                return redirect()->back()->with('error', $message);
+            }
+
             $business->update([
                 'verification_status' => 'approved',
                 'verified_at' => now(),
                 'verified_by' => auth()->id()
             ]);
-            
+
             if ($request->ajax()) {
                 return response()->json([
                     'success' => true,
                     'message' => 'Business approved successfully!'
                 ]);
             }
-            
+
             return redirect()->back()->with('success', 'Business approved successfully!');
         } catch (\Exception $e) {
             if ($request->ajax()) {
@@ -129,7 +176,7 @@ class BusinessManagementController extends Controller
                     'message' => 'Failed to approve business: ' . $e->getMessage()
                 ], 500);
             }
-            
+
             return redirect()->back()->with('error', 'Failed to approve business.');
         }
     }
@@ -213,6 +260,49 @@ class BusinessManagementController extends Controller
     }
     
     /**
+     * View business jobs
+     */
+    public function jobs($id)
+    {
+        $business = Business::with([
+            'user',
+            'category',
+            'jobPostings' => function ($query) {
+                $query->with(['applications.user'])->withCount('applications')->orderBy('created_at', 'desc');
+            }
+        ])->findOrFail($id);
+
+        if ($business->verification_status !== 'approved') {
+            return redirect()->route('admin.businesses.index')
+                ->with('error', 'Jobs can only be viewed for approved businesses.');
+        }
+
+        return view('admin.businesses.jobs', compact('business'));
+    }
+
+    /**
+     * Approve business job posting
+     */
+    public function approveJob(Request $request, $jobId)
+    {
+        $job = JobPosting::findOrFail($jobId);
+        $job->update(['status' => 'approved', 'is_active' => true]);
+
+        return redirect()->back()->with('success', 'Job posting approved successfully.');
+    }
+
+    /**
+     * Reject business job posting
+     */
+    public function rejectJob(Request $request, $jobId)
+    {
+        $job = JobPosting::findOrFail($jobId);
+        $job->update(['status' => 'rejected']);
+
+        return redirect()->back()->with('success', 'Job posting rejected successfully.');
+    }
+    
+    /**
      * View business details
      */
     public function show($id)
@@ -224,9 +314,224 @@ class BusinessManagementController extends Controller
             'services', 
             'locations',
             'reviews.user'
-        ])->findOrFail($id);
+        ])
+        ->withCount([
+            'businessRegistrationTransactions as completed_business_registrations_count' => function ($query) {
+                $query->where('status', 'completed');
+            },
+            'businessRegistrationTransactions as pending_business_registrations_count' => function ($query) {
+                $query->where('status', 'pending');
+            },
+        ])
+        ->findOrFail($id);
         
         return view('admin.businesses.show', compact('business'));
+    }
+
+    /**
+     * Show edit form for a business
+     */
+    public function create()
+    {
+        // Get all users to allow assigning ownership of the business
+        $users = User::orderBy('name')->get();
+        $categories = BusinessCategory::where('is_active', true)->orderBy('sort_order', 'asc')->orderBy('id', 'asc')->get();
+
+        $baseTypes = [
+            'Public Ltd',
+            'Private Ltd',
+            'Proprietary /Partnership - LLP'
+        ];
+
+        $existingTypes = Business::select('business_type')
+            ->distinct()
+            ->orderBy('business_type')
+            ->pluck('business_type')
+            ->toArray();
+
+        $businessTypes = array_values(array_unique(array_merge($baseTypes, $existingTypes)));
+
+        return view('admin.businesses.create', compact('users', 'categories', 'businessTypes'));
+    }
+
+    /**
+     * Resolve an Indian pincode to coordinates for the admin business form.
+     */
+    public function geocodePincode(Request $request)
+    {
+        $validated = $request->validate([
+            'pincode' => ['required', 'digits:6'],
+        ]);
+
+        try {
+            $response = Http::acceptJson()
+                ->withUserAgent(config('app.name', 'Mali Setu') . '/1.0')
+                ->timeout(10)
+                ->get('https://nominatim.openstreetmap.org/search', [
+                    'postalcode' => $validated['pincode'],
+                    'countrycodes' => 'in',
+                    'format' => 'jsonv2',
+                    'limit' => 1,
+                ]);
+
+            if ($response->failed() || empty($response->json())) {
+                return response()->json([
+                    'message' => 'Coordinates were not found for this pincode.',
+                ], 404);
+            }
+
+            $result = $response->json()[0];
+            $latitude = filter_var($result['lat'] ?? null, FILTER_VALIDATE_FLOAT);
+            $longitude = filter_var($result['lon'] ?? null, FILTER_VALIDATE_FLOAT);
+
+            if ($latitude === false || $longitude === false
+                || $latitude < -90 || $latitude > 90
+                || $longitude < -180 || $longitude > 180) {
+                return response()->json([
+                    'message' => 'The geocoding service returned invalid coordinates.',
+                ], 502);
+            }
+
+            return response()->json([
+                'latitude' => $latitude,
+                'longitude' => $longitude,
+            ]);
+        } catch (\Throwable $exception) {
+            report($exception);
+
+            return response()->json([
+                'message' => 'The coordinate lookup service is temporarily unavailable.',
+            ], 503);
+        }
+    }
+
+    /**
+     * Store a new business
+     */
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'user_id' => 'required|integer|exists:users,id',
+            'business_name' => 'required|string|max:255',
+            'business_type' => 'required|string|max:255',
+            'category_id' => 'required|integer|exists:business_categories,id',
+            'description' => 'required|string',
+            'contact_phone' => 'nullable|string|max:20',
+            'contact_email' => 'nullable|email',
+            'country' => 'required|string|max:100',
+            'state' => 'required|string|max:100',
+            'district' => 'nullable|string|max:100',
+            'city' => 'required|string|max:100',
+            'pincode' => 'required|digits:6',
+            'village' => 'nullable|string|max:100',
+            'taluka' => 'nullable|string|max:100',
+            'address' => 'nullable|string|max:500',
+            'website' => 'nullable|url',
+            'opening_time' => 'nullable|date_format:H:i',
+            'closing_time' => 'nullable|date_format:H:i',
+            'latitude' => 'nullable|numeric|between:-90,90',
+            'longitude' => 'nullable|numeric|between:-180,180',
+            'photo' => 'nullable|image|max:2048',
+            'verification_status' => 'required|in:pending,approved,rejected',
+            'status' => 'required|in:active,suspended,banned',
+            'subscription_expires_at' => 'nullable|date',
+        ]);
+
+        if ($request->hasFile('photo')) {
+            $validated['photo'] = $request->file('photo')->store('business/photos', 'public');
+            if (! $validated['photo']) {
+                throw ValidationException::withMessages(['photo' => 'The business photo could not be saved. Please try again.']);
+            }
+        }
+
+        $validated['subscription_status'] = 'trial';
+
+        $business = Business::create($validated);
+
+        // Update user type to business if needed
+        $user = User::find($request->user_id);
+        if ($user && (empty($user->user_type) || $user->user_type != 'business')) {
+            $user->update(['user_type' => 'business']);
+        }
+
+        return redirect()->route('admin.businesses.show', $business->id)
+            ->with('success', 'Business created successfully.');
+    }
+
+    public function edit($id)
+    {
+        $business = Business::findOrFail($id);
+        $categories = BusinessCategory::where('is_active', true)->orderBy('sort_order', 'asc')->orderBy('id', 'asc')->get();
+
+        $baseTypes = [
+            'Public Ltd',
+            'Private Ltd',
+            'Proprietary /Partnership - LLP'
+        ];
+
+        $existingTypes = Business::select('business_type')
+            ->distinct()
+            ->orderBy('business_type')
+            ->pluck('business_type')
+            ->toArray();
+
+        $businessTypes = array_values(array_unique(array_merge($baseTypes, $existingTypes)));
+
+        return view('admin.businesses.edit', compact('business', 'categories', 'businessTypes'));
+    }
+
+    /**
+     * Update business details
+     */
+    public function update(Request $request, $id)
+    {
+        $business = Business::findOrFail($id);
+
+        $validated = $request->validate([
+            'business_name' => 'required|string|max:255',
+            'business_type' => 'required|string|max:255',
+            'category_id' => 'required|integer|exists:business_categories,id',
+            'description' => 'required|string',
+            'contact_phone' => 'nullable|string|max:20',
+            'contact_email' => 'nullable|email',
+            'country' => 'required|string|max:100',
+            'state' => 'required|string|max:100',
+            'district' => 'nullable|string|max:100',
+            'city' => 'required|string|max:100',
+            'pincode' => 'required|digits:6',
+            'village' => 'nullable|string|max:100',
+            'taluka' => 'nullable|string|max:100',
+            'address' => 'nullable|string|max:500',
+            'website' => 'nullable|url',
+            'opening_time' => 'nullable|date_format:H:i',
+            'closing_time' => 'nullable|date_format:H:i',
+            'latitude' => 'nullable|numeric|between:-90,90',
+            'longitude' => 'nullable|numeric|between:-180,180',
+            'photo' => 'nullable|image|max:2048',
+            'verification_status' => 'required|in:pending,approved,rejected',
+            'status' => 'required|in:active,suspended,banned',
+            'subscription_expires_at' => 'nullable|date',
+        ]);
+
+        $oldPhoto = $business->photo;
+        unset($validated['photo']);
+
+        if ($request->hasFile('photo')) {
+            $validated['photo'] = $request->file('photo')->store('business/photos', 'public');
+            if (! $validated['photo']) {
+                throw ValidationException::withMessages(['photo' => 'The business photo could not be saved. Please try again.']);
+            }
+        }
+
+        $business->update($validated);
+
+        // Keep the previous photo until the replacement has been stored and saved.
+        if (isset($validated['photo']) && $oldPhoto && $oldPhoto !== $validated['photo']) {
+            Storage::disk('public')->delete($oldPhoto);
+        }
+
+        return redirect()->route('admin.businesses.show', $business->id)
+            ->with('success', 'Business updated successfully.');
     }
     
     /**
@@ -338,22 +643,55 @@ class BusinessManagementController extends Controller
     }
     
     /**
-     * Delete business
+     * Delete business and all associated payment and transaction data
      */
     public function destroy(Request $request, $id)
     {
         try {
             $business = Business::findOrFail($id);
+            $userId = $business->user_id;
+
+            // Delete associated business transactions
+            $businessTransactions = Transaction::where('user_id', $userId)
+                ->where('purpose', 'business_registration')
+                ->get();
+
+            $transactionIds = $businessTransactions->pluck('id')->toArray();
+            $razorpayOrderIds = $businessTransactions->pluck('razorpay_order_id')->filter()->toArray();
+            $razorpayPaymentIds = $businessTransactions->pluck('razorpay_payment_id')->filter()->toArray();
+
+            // Delete payment records corresponding to business_registration or matching transaction/order/payment IDs
+            Payment::where('user_id', $userId)
+                ->where(function ($query) use ($transactionIds, $razorpayOrderIds, $razorpayPaymentIds) {
+                    $query->where('payment_type', 'business_registration');
+                    if (!empty($transactionIds)) {
+                        $query->orWhereIn('transaction_id', $transactionIds);
+                    }
+                    if (!empty($razorpayOrderIds)) {
+                        $query->orWhereIn('order_id', $razorpayOrderIds);
+                    }
+                    if (!empty($razorpayPaymentIds)) {
+                        $query->orWhereIn('payment_id', $razorpayPaymentIds);
+                    }
+                })
+                ->delete();
+
+            // Delete the transactions themselves
+            Transaction::where('user_id', $userId)
+                ->where('purpose', 'business_registration')
+                ->delete();
+
+            // Delete the business instance (products, services, job postings, locations, reviews cascade via foreign key onDelete)
             $business->delete();
             
             if ($request->ajax()) {
                 return response()->json([
                     'success' => true,
-                    'message' => 'Business deleted successfully!'
+                    'message' => 'Business and associated payment data deleted successfully!'
                 ]);
             }
             
-            return redirect()->back()->with('success', 'Business deleted successfully!');
+            return redirect()->back()->with('success', 'Business and associated payment data deleted successfully!');
         } catch (\Exception $e) {
             if ($request->ajax()) {
                 return response()->json([
@@ -362,7 +700,7 @@ class BusinessManagementController extends Controller
                 ], 500);
             }
             
-            return redirect()->back()->with('error', 'Failed to delete business.');
+            return redirect()->back()->with('error', 'Failed to delete business: ' . $e->getMessage());
         }
     }
     
@@ -371,7 +709,7 @@ class BusinessManagementController extends Controller
      */
     public function categories()
     {
-        $categories = BusinessCategory::withCount('businesses')->paginate(20);
+        $categories = BusinessCategory::withCount('businesses')->orderBy('sort_order', 'asc')->orderBy('id', 'asc')->paginate(20);
         
         return view('admin.businesses.categories', compact('categories'));
     }

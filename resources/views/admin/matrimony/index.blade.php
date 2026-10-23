@@ -10,6 +10,9 @@
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h3 class="card-title">Matrimony Profile Management</h3>
                     <div class="card-tools">
+                        <a href="{{ route('admin.matrimony.create') }}" class="btn btn-primary btn-sm me-2">
+                            <i class="fas fa-plus"></i> Add Profile
+                        </a>
                         <a href="{{ route('admin.matrimony.moderation') }}" class="btn btn-warning btn-sm">
                             <i class="fas fa-eye"></i> Content Moderation
                         </a>
@@ -101,11 +104,13 @@
                                 <tr>
                                     <th>ID</th>
                                     <th>User</th>
+                                    <th>Candidate Name</th>
                                     <th>Age</th>
                                     <th>Location</th>
                                     <th>Education</th>
                                     <th>Family Details</th>
                                     <th>Status</th>
+                                    <th>Payment</th>
                                     <th>Created</th>
                                     <th>Actions</th>
                                 </tr>
@@ -118,6 +123,9 @@
                                         <strong>{{ $profile->user->name }}</strong>
                                         <br>
                                         <small class="text-muted">{{ $profile->user->email }}</small>
+                                    </td>
+                                    <td>
+                                        <strong>{{ $profile->candidate_name ?: 'N/A' }}</strong>
                                     </td>
                                     <td>{{ $profile->age ?? 'N/A' }}</td>
                                     <td>
@@ -140,7 +148,7 @@
                                                 <strong>Father:</strong> {{ $profile->family_details['father_name'] ?? 'N/A' }}<br>
                                                 <strong>Mother:</strong> {{ $profile->family_details['mother_name'] ?? 'N/A' }}<br>
                                                 <strong>Siblings:</strong> {{ $profile->family_details['siblings'] ?? 'N/A' }}<br>
-                                                <strong>Type:</strong> {{ $profile->family_details['family_type'] ?? 'N/A' }}
+                                                 <strong>Type:</strong> {{ $profile->family_details['family_type'] ?? 'N/A' }}
                                             </div>
                                         @else
                                             N/A
@@ -155,11 +163,30 @@
                                             <span class="badge bg-danger">Rejected</span>
                                         @endif
                                     </td>
+                                    <td>
+                                        @php
+                                            $latestTxn = $profile->matrimonyTransactions->first();
+                                        @endphp
+                                        @if($latestTxn)
+                                            @if($latestTxn->status == 'completed')
+                                                <span class="badge bg-success">Paid</span>
+                                            @elseif($latestTxn->status == 'pending')
+                                                <span class="badge bg-warning">Pending</span>
+                                            @else
+                                                <span class="badge bg-danger">{{ ucfirst($latestTxn->status) }}</span>
+                                            @endif
+                                        @else
+                                            <span class="badge bg-secondary">Unpaid</span>
+                                        @endif
+                                    </td>
                                     <td>{{ $profile->created_at->format('M d, Y') }}</td>
                                     <td>
                                         <div class="btn-group" role="group">
-                                            <a href="{{ route('admin.matrimony.show', $profile->id) }}" class="btn btn-sm btn-info">
+                                            <a href="{{ route('admin.matrimony.show', $profile->id) }}" class="btn btn-sm btn-info" title="View Details">
                                                 <i class="fas fa-eye"></i>
+                                            </a>
+                                            <a href="{{ route('admin.matrimony.edit', $profile->id) }}" class="btn btn-sm btn-warning text-white" title="Edit Profile">
+                                                <i class="fas fa-edit"></i>
                                             </a>
                                             @if($profile->approval_status == 'pending')
                                                 <!-- Approve Form -->
@@ -181,12 +208,21 @@
                                                     </button>
                                                 </form>
                                             @endif
+                                            <!-- Delete Form -->
+                                            <form method="POST" action="{{ route('admin.matrimony.destroy', $profile->id) }}" style="display: inline;">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="btn btn-sm btn-danger" title="Delete Profile"
+                                                        onclick="return confirm('Are you sure you want to delete this matrimony profile? All profile and associated payment data will be permanently deleted.');">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </form>
                                         </div>
                                     </td>
                                 </tr>
                                 @empty
                                 <tr>
-                                    <td colspan="9" class="text-center">No matrimony profiles found</td>
+                                    <td colspan="11" class="text-center">No matrimony profiles found</td>
                                 </tr>
                                 @endforelse
                             </tbody>
@@ -196,7 +232,7 @@
                     <!-- Pagination -->
                     @if(isset($profiles))
                     <div class="d-flex justify-content-center">
-                        {{ $profiles->links() }}
+                        {{ $profiles->appends(request()->query())->links() }}
                     </div>
                     @endif
                 </div>

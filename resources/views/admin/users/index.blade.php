@@ -8,6 +8,9 @@
     <div class="d-sm-flex align-items-center justify-content-between mb-4">
         <h1 class="h3 mb-0 text-gray-800">User Management</h1>
         <div class="d-sm-flex">
+            <a href="{{ route('admin.users.create') }}" class="btn btn-primary btn-sm shadow-sm mr-2">
+                <i class="fas fa-plus fa-sm text-white-50"></i> Add User
+            </a>
             <a href="{{ route('admin.users.verification.pending') }}" class="btn btn-warning btn-sm shadow-sm mr-2">
                 <i class="fas fa-clock fa-sm text-white-50"></i> Pending Verifications
             </a>
@@ -45,7 +48,7 @@
                             <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
                                 Total Users
                             </div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $stats['total_users'] ?? 0 }}</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $stats['total_users'] ?? $stats['total'] ?? 0 }}</div>
                         </div>
                         <div class="col-auto">
                             <i class="fas fa-users fa-2x text-gray-300"></i>
@@ -63,7 +66,7 @@
                             <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
                                 Verified Users
                             </div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $stats['verified_users'] ?? 0 }}</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $stats['verified_users'] ?? $stats['verified'] ?? 0 }}</div>
                         </div>
                         <div class="col-auto">
                             <i class="fas fa-user-check fa-2x text-gray-300"></i>
@@ -81,7 +84,7 @@
                             <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
                                 Pending Verification
                             </div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $stats['pending_verification'] ?? 0 }}</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $stats['pending_verification'] ?? $stats['pending'] ?? 0 }}</div>
                         </div>
                         <div class="col-auto">
                             <i class="fas fa-clock fa-2x text-gray-300"></i>
@@ -130,12 +133,9 @@
                             <label for="user_type">User Type</label>
                             <select class="form-control" id="user_type" name="user_type">
                                 <option value="">All Types</option>
-                                <option value="individual" {{ request('user_type') == 'individual' ? 'selected' : '' }}>Individual</option>
-                                <option value="business" {{ request('user_type') == 'business' ? 'selected' : '' }}>Business</option>
-                                <option value="volunteer" {{ request('user_type') == 'volunteer' ? 'selected' : '' }}>Volunteer</option>
-                                <option value="donor" {{ request('user_type') == 'donor' ? 'selected' : '' }}>Donor</option>
-                                <option value="matrimony" {{ request('user_type') == 'matrimony' ? 'selected' : '' }}>Matrimony</option>
-                                <option value="admin" {{ request('user_type') == 'admin' ? 'selected' : '' }}>Admin</option>
+                                @foreach($userTypes as $type)
+                                    <option value="{{ $type }}" {{ request('user_type') == $type ? 'selected' : '' }}>{{ ucfirst($type) }}</option>
+                                @endforeach
                             </select>
                         </div>
                     </div>
@@ -152,7 +152,7 @@
                     </div>
                     <div class="col-md-2">
                         <div class="form-group">
-                            <label for="status">Account Status</label>
+                            <label for="status">Status</label>
                             <select class="form-control" id="status" name="status">
                                 <option value="">All Status</option>
                                 <option value="active" {{ request('status') == 'active' ? 'selected' : '' }}>Active</option>
@@ -165,11 +165,11 @@
                         <div class="form-group">
                             <label>&nbsp;</label>
                             <div class="d-flex">
-                                <button type="submit" class="btn btn-primary mr-2">
-                                    <i class="fas fa-search"></i> Search
+                                <button type="submit" class="btn btn-primary mr-2" style="margin-right: 10px !important;">
+                                    <i class="fas fa-search"></i>
                                 </button>
                                 <a href="{{ route('admin.users.index') }}" class="btn btn-secondary">
-                                    <i class="fas fa-undo"></i> Reset
+                                    <i class="fas fa-undo"></i>
                                 </a>
                             </div>
                         </div>
@@ -222,11 +222,6 @@
                                 </td>
                                 <td>
                                     <div class="d-flex align-items-center">
-                                        <div class="mr-3">
-                                            <div class="icon-circle bg-primary">
-                                                <i class="fas fa-user text-white"></i>
-                                            </div>
-                                        </div>
                                         <div>
                                             <div class="font-weight-bold">{{ $user->name }}</div>
                                             <div class="text-xs text-gray-500">ID: {{ $user->id }}</div>
@@ -240,24 +235,26 @@
                                     </div>
                                 </td>
                                 <td>
-                                    <span class="badge badge-secondary">{{ ucfirst($user->user_type) }}</span>
+                                    <span class="badge badge-secondary text-black">{{ ucfirst($user->user_type) }}</span>
                                 </td>
                                 <td>
-                                    @if($user->caste_certificate_verified)
-                                        <span class="badge badge-success">Verified</span>
-                                    @elseif($user->caste_certificate_path)
-                                        <span class="badge badge-warning">Pending</span>
+                                    @if($user->caste_verification_status === 'approved')
+                                        <span class="badge badge-success text-black">Verified</span>
+                                    @elseif($user->caste_verification_status === 'rejected')
+                                        <span class="badge badge-danger" style="color: red !important;">Rejected</span>
+                                    @elseif($user->cast_certificate)
+                                        <span class="badge badge-warning text-black">Pending</span>
                                     @else
-                                        <span class="badge badge-secondary">Not Submitted</span>
+                                        <span class="badge badge-secondary text-black">Not Submitted</span>
                                     @endif
                                 </td>
                                 <td>
                                     @if($user->status == 'active')
-                                        <span class="badge badge-success">Active</span>
+                                        <span class="badge badge-success text-black">Active</span>
                                     @elseif($user->status == 'inactive')
-                                        <span class="badge badge-secondary">Inactive</span>
+                                        <span class="badge badge-secondary text-black">Inactive</span>
                                     @else
-                                        <span class="badge badge-danger">Suspended</span>
+                                        <span class="badge badge-danger" style="color: red !important;">Suspended</span>
                                     @endif
                                 </td>
                                 <td>
@@ -276,6 +273,10 @@
                                                 data-toggle="tooltip" title="Edit User">
                                             <i class="fas fa-edit"></i>
                                         </button>
+                                        <a href="{{ route('admin.users.pdf', $user->id) }}" class="btn btn-danger btn-sm" 
+                                           data-toggle="tooltip" title="Download PDF">
+                                            <i class="fas fa-file-pdf"></i>
+                                        </a>
                                         @if($user->status == 'active')
                                             <button type="button" class="btn btn-danger btn-sm" 
                                                     onclick="suspendUser({{ $user->id }})" 
@@ -300,7 +301,7 @@
                 <!-- Pagination -->
                 @if(method_exists($users, 'links'))
                     <div class="d-flex justify-content-center">
-                        {{ $users->links() }}
+                        {{ $users->appends(request()->query())->links() }}
                     </div>
                 @endif
             @else

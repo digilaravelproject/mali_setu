@@ -83,60 +83,123 @@
                             </div>
                         </div>
                         
-                        <!-- Caste Certificate Information -->
+                        <!-- Respected Person Information -->
                         <div class="col-md-6">
                             <div class="card">
                                 <div class="card-header">
-                                    <h5 class="card-title">Caste Certificate</h5>
+                                    <h5 class="card-title">Respected Person</h5>
                                 </div>
                                 <div class="card-body">
-                                    @if($user->casteCertificate)
-                                        <table class="table table-borderless">
-
-                                            <tr>
-                                                <td><strong>Uploaded:</strong></td>
-                                                <td>{{ $user->casteCertificate->created_at->format('M d, Y H:i') }}</td>
-                                            </tr>
-                                            @if($user->casteCertificate->verified_at)
-                                            <tr>
-                                                <td><strong>Verified At:</strong></td>
-                                                <td>{{ $user->casteCertificate->verified_at->format('M d, Y H:i') }}</td>
-                                            </tr>
-                                            @endif
-                                            @if($user->casteCertificate->admin_notes)
-                                            <tr>
-                                                <td><strong>Admin Notes:</strong></td>
-                                                <td>{{ $user->casteCertificate->admin_notes }}</td>
-                                            </tr>
-                                            @endif
-                                            <tr>
-                                                <td><strong>Certificate:</strong></td>
-                                                <td>
-                                                    <a href="{{ Storage::url($user->casteCertificate->file_path) }}" target="_blank" class="btn btn-sm btn-outline-primary">
-                                                        <i class="fas fa-download"></i> View Certificate
-                                                    </a>
-                                                </td>
-                                            </tr>
-                                        </table>
-                                        
-                                        @if($user->caste_verification_status == 'pending')
-                                        <div class="mt-3">
-                                            <button type="button" class="btn btn-success btn-sm" onclick="verifyCertificate({{ $user->id }})">
-                                                <i class="fas fa-check"></i> Approve
-                                            </button>
-                                            <button type="button" class="btn btn-danger btn-sm" onclick="rejectCertificate({{ $user->id }})">
-                                                <i class="fas fa-times"></i> Reject
-                                            </button>
-                                        </div>
-                                        @endif
-                                    @else
-                                        <p class="text-muted">No caste certificate uploaded</p>
-                                    @endif
+                                    <table class="table table-borderless">
+                                        <tr>
+                                            <td><strong>Name:</strong></td>
+                                            <td>{{ $user->respected_person_name ?? 'N/A' }}</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Mobile Number:</strong></td>
+                                            <td>{{ $user->respected_person_mobile_number ?? 'N/A' }}</td>
+                                        </tr>
+                                    </table>
                                 </div>
                             </div>
                         </div>
                     </div>
                     
+                    <!-- Profile & Location Details -->
+                    <div class="row mt-4">
+                        <div class="col-md-12">
+                            <div class="card shadow-sm">
+                                <div class="card-header bg-light">
+                                    <h5 class="card-title mb-0"><i class="fas fa-address-card text-primary me-2"></i>Profile & Location Details</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <h6 class="font-weight-bold border-bottom pb-2 mb-3 text-secondary">Personal & Professional Info</h6>
+                                            <table class="table table-borderless">
+                                                <tr>
+                                                    <td style="width: 35%;"><strong>Age:</strong></td>
+                                                    <td>{{ $user->age ?? 'N/A' }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><strong>Date of Birth:</strong></td>
+                                                    <td>{{ $user->dob ? \Carbon\Carbon::parse($user->dob)->format('M d, Y') : 'N/A' }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><strong>Occupation:</strong></td>
+                                                    <td>{{ $user->occupation ?? 'N/A' }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><strong>Designation:</strong></td>
+                                                    <td>{{ $user->designation ?? 'N/A' }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><strong>Company Name:</strong></td>
+                                                    <td>{{ $user->company_name ?? 'N/A' }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><strong>Department Name:</strong></td>
+                                                    <td>{{ $user->dept_name ?? 'N/A' }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><strong>Referral Code:</strong></td>
+                                                    <td>{{ $user->reffral_code ?? 'N/A' }}</td>
+                                                </tr>
+                                            </table>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <h6 class="font-weight-bold border-bottom pb-2 mb-3 text-secondary">Location & Address Info</h6>
+                                            <table class="table table-borderless">
+                                                <tr>
+                                                    <td style="width: 35%;"><strong>Road / Street:</strong></td>
+                                                    <td>{{ $user->road_number ?? 'N/A' }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><strong>Landmark:</strong></td>
+                                                    <td>{{ $user->nearby_location ?? 'N/A' }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><strong>Sector / Area:</strong></td>
+                                                    <td>{{ $user->sector ?? 'N/A' }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><strong>Village / City:</strong></td>
+                                                    <td>{{ $user->village ?? 'N/A' }}{{ $user->village && $user->city ? ', ' : '' }}{{ $user->city ?? 'N/A' }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><strong>District / State:</strong></td>
+                                                    <td>{{ $user->district ?? 'N/A' }}{{ $user->district && $user->state ? ', ' : '' }}{{ $user->state ?? 'N/A' }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><strong>Country:</strong></td>
+                                                    <td>{{ $user->country ?? 'N/A' }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><strong>Pincode:</strong></td>
+                                                    <td>{{ $user->pincode ?? 'N/A' }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><strong>Coordinates (Lat, Lng):</strong></td>
+                                                    <td>
+                                                        @if($user->latitude || $user->longitude)
+                                                            {{ $user->latitude ?? '0' }}, {{ $user->longitude ?? '0' }}
+                                                        @else
+                                                            N/A
+                                                        @endif
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td><strong>Address:</strong></td>
+                                                    <td>{{ $user->address ?? 'N/A' }}</td>
+                                                </tr>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Additional Information based on user type -->
                     <div class="row mt-4">
                         @if($user->business)

@@ -10,11 +10,17 @@
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h3 class="card-title">Payment Management</h3>
                     <div class="card-tools">
-                        <a href="{{ route('admin.payments.analytics') }}" class="btn btn-info btn-sm">
+                        <?php /*<a href="{{ route('admin.payments.analytics') }}" class="btn btn-info btn-sm">
                             <i class="fas fa-chart-bar"></i> Analytics
-                        </a>
+                        </a> */?>
                         <a href="{{ route('admin.payments.export') }}" class="btn btn-success btn-sm">
-                            <i class="fas fa-download"></i> Export
+                            <i class="fas fa-download"></i> Export CSV
+                        </a>
+                        <a href="{{ route('admin.payments.exportXlsx') }}" class="btn btn-info btn-sm">
+                            <i class="fas fa-file-excel"></i> Export Excel
+                        </a>
+                        <a href="{{ route('admin.payments.exportPdf', request()->all()) }}" class="btn btn-danger btn-sm">
+                            <i class="fas fa-file-pdf"></i> Export PDF
                         </a>
                     </div>
                 </div>
@@ -99,11 +105,7 @@
                             </div>
                             <div class="col-md-3">
                                 <select name="payment_method" class="form-select">
-                                    <option value="">All Methods</option>
-                                    <option value="razorpay" {{ request('payment_method') == 'razorpay' ? 'selected' : '' }}>Razorpay</option>
-                                    <option value="paytm" {{ request('payment_method') == 'paytm' ? 'selected' : '' }}>Paytm</option>
-                                    <option value="upi" {{ request('payment_method') == 'upi' ? 'selected' : '' }}>UPI</option>
-                                    <option value="card" {{ request('payment_method') == 'card' ? 'selected' : '' }}>Card</option>
+                                    <option value="ccavenue" selected>CCAvenue</option>
                                 </select>
                             </div>
                             <div class="col-md-4">
@@ -137,6 +139,8 @@
                                         <th>Purpose</th>
                                         <th>Status</th>
                                         <th>Date</th>
+                                        <th>Start Date</th>
+                                        <th>End Date</th>
                                         <th>Actions</th>
                                     </tr>
                                 </thead>
@@ -150,9 +154,9 @@
                                             @endif
                                         </td>
                                         <td>
-                                            {{ $payment->user->name }}
+                                            {{ $payment->user?->name ?? 'Deleted User' }}
                                             <br>
-                                            <small class="text-muted">{{ $payment->user->email }}</small>
+                                            <small class="text-muted">{{ $payment->user?->email ?? 'N/A' }}</small>
                                         </td>
                                         <td>
                                             <strong>₹{{ number_format($payment->amount, 2) }}</strong>
@@ -160,13 +164,18 @@
                                             <small class="text-muted">{{ $payment->currency }}</small>
                                         </td>
                                         <td>
-                                            @if($payment->payment_method)
-                                                <span class="badge badge-info">{{ ucfirst($payment->payment_method) }}</span>
+                                            @if($payment->is_ccavenue)
+                                                <span class="badge badge-info text-muted">CCAvenue</span>
+                                                @if($payment->payment_method && $payment->payment_method !== 'other')
+                                                    <br><small class="text-muted">{{ ucfirst($payment->payment_method) }}</small>
+                                                @endif
+                                            @elseif($payment->payment_method)
+                                                <span class="badge badge-info text-muted">{{ ucfirst($payment->payment_method) }}</span>
                                             @else
-                                                <span class="text-muted">N/A</span>
+                                                <span class="text-muted text-muted">N/A</span>
                                             @endif
                                             @if($payment->payment_gateway)
-                                                <br><small class="text-muted">{{ ucfirst($payment->payment_gateway) }}</small>
+                                                <br><small class="text-muted text-muted">{{ ucfirst($payment->payment_gateway) }}</small>
                                             @endif
                                         </td>
                                         <td>
@@ -177,21 +186,35 @@
                                         </td>
                                         <td>
                                             @if($payment->status === 'completed')
-                                                <span class="badge badge-success">Completed</span>
+                                                <span class="badge badge-success text-muted">Completed</span>
                                             @elseif($payment->status === 'pending')
-                                                <span class="badge badge-warning">Pending</span>
+                                                <span class="badge badge-warning text-muted">Pending</span>
                                             @elseif($payment->status === 'failed')
-                                                <span class="badge badge-danger">Failed</span>
+                                                <span class="badge badge-danger text-muted">Failed</span>
                                             @elseif($payment->status === 'refunded')
-                                                <span class="badge badge-info">Refunded</span>
+                                                <span class="badge badge-info text-muted">Refunded</span>
                                             @elseif($payment->status === 'cancelled')
-                                                <span class="badge badge-secondary">Cancelled</span>
+                                                <span class="badge badge-secondary text-black">Cancelled</span>
                                             @endif
                                         </td>
                                         <td>
                                             {{ $payment->created_at->format('M d, Y') }}
                                             <br>
                                             <small class="text-muted">{{ $payment->created_at->format('H:i') }}</small>
+                                        </td>
+                                        <td>
+                                            @if($payment->subscription_start_date)
+                                                {{ \Carbon\Carbon::parse($payment->subscription_start_date)->format('M d, Y') }}
+                                            @else
+                                                <span class="text-muted">N/A</span>
+                                            @endif
+                                        </td>
+                                        <td>
+                                            @if($payment->subscription_end_date)
+                                                {{ \Carbon\Carbon::parse($payment->subscription_end_date)->format('M d, Y') }}
+                                            @else
+                                                <span class="text-muted">N/A</span>
+                                            @endif
                                         </td>
                                         <td>
                                             <div class="btn-group" role="group">
@@ -215,6 +238,14 @@
                                                         <i class="fas fa-times"></i>
                                                     </button>
                                                 @endif
+                                                @if($payment->user && $payment->user->phone)
+                                                    <a href="https://wa.me/{{ preg_replace('/[^0-9]/', '', $payment->user->phone) }}" 
+                                                       class="btn btn-sm btn-success" 
+                                                       target="_blank" 
+                                                       title="WhatsApp">
+                                                        <i class="fab fa-whatsapp"></i>
+                                                    </a>
+                                                @endif
                                             </div>
                                         </td>
                                     </tr>
@@ -225,7 +256,7 @@
                         
                         <!-- Pagination -->
                         <div class="d-flex justify-content-center">
-                            {{ $payments->links() }}
+                            {{ $payments->appends(request()->query())->links() }}
                         </div>
                     @else
                         <div class="text-center py-5">

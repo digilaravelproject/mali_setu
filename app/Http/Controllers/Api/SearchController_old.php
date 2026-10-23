@@ -13,7 +13,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Log;
 
-class SearchController extends Controller
+class SearchController_old extends Controller
 {
     protected $elasticsearchService;
 
@@ -36,10 +36,12 @@ class SearchController extends Controller
         ]);
 
         if ($validator->fails()) {
+            $errors = $validator->errors();
+        
             return response()->json([
                 'success' => false,
-                'message' => 'Validation failed',
-                'errors' => $validator->errors()
+                'message' => $errors->first(), // 👈 get first error message
+                'errors' => $errors
             ], 422);
         }
 
@@ -98,10 +100,12 @@ class SearchController extends Controller
         ]);
 
         if ($validator->fails()) {
+            $errors = $validator->errors();
+        
             return response()->json([
                 'success' => false,
-                'message' => 'Validation failed',
-                'errors' => $validator->errors()
+                'message' => $errors->first(), // 👈 get first error message
+                'errors' => $errors
             ], 422);
         }
 
@@ -170,10 +174,12 @@ class SearchController extends Controller
         ]);
 
         if ($validator->fails()) {
+            $errors = $validator->errors();
+        
             return response()->json([
                 'success' => false,
-                'message' => 'Validation failed',
-                'errors' => $validator->errors()
+                'message' => $errors->first(), // 👈 get first error message
+                'errors' => $errors
             ], 422);
         }
 
@@ -237,10 +243,12 @@ class SearchController extends Controller
         ]);
 
         if ($validator->fails()) {
+            $errors = $validator->errors();
+        
             return response()->json([
                 'success' => false,
-                'message' => 'Validation failed',
-                'errors' => $validator->errors()
+                'message' => $errors->first(), // 👈 get first error message
+                'errors' => $errors
             ], 422);
         }
 
@@ -305,10 +313,12 @@ class SearchController extends Controller
         ]);
 
         if ($validator->fails()) {
+            $errors = $validator->errors();
+        
             return response()->json([
                 'success' => false,
-                'message' => 'Validation failed',
-                'errors' => $validator->errors()
+                'message' => $errors->first(), // 👈 get first error message
+                'errors' => $errors
             ], 422);
         }
 
@@ -373,10 +383,12 @@ class SearchController extends Controller
         ]);
 
         if ($validator->fails()) {
+            $errors = $validator->errors();
+        
             return response()->json([
                 'success' => false,
-                'message' => 'Validation failed',
-                'errors' => $validator->errors()
+                'message' => $errors->first(), // 👈 get first error message
+                'errors' => $errors
             ], 422);
         }
 
@@ -438,10 +450,12 @@ class SearchController extends Controller
         ]);
 
         if ($validator->fails()) {
+            $errors = $validator->errors();
+        
             return response()->json([
                 'success' => false,
-                'message' => 'Validation failed',
-                'errors' => $validator->errors()
+                'message' => $errors->first(), // 👈 get first error message
+                'errors' => $errors
             ], 422);
         }
 
@@ -492,10 +506,12 @@ class SearchController extends Controller
         ]);
 
         if ($validator->fails()) {
+            $errors = $validator->errors();
+        
             return response()->json([
                 'success' => false,
-                'message' => 'Validation failed',
-                'errors' => $validator->errors()
+                'message' => $errors->first(), // 👈 get first error message
+                'errors' => $errors
             ], 422);
         }
 

@@ -1,0 +1,11 @@
+{
+  "applinks": {
+    "apps": [],
+    "details": [
+      {
+        "appID": "978JF9JVW9.com.malisetu.app",
+        "paths": ["/blog/*"]
+      }
+    ]
+  }
+}

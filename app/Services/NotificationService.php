@@ -2,10 +2,12 @@
 
 namespace App\Services;
 
+use App\Mail\NotificationMail;
 use App\Models\Notification;
+use App\Models\MatrimonyProfile;
 use App\Models\User;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Queue;
 
 class NotificationService
@@ -98,12 +100,13 @@ class NotificationService
                 return;
             }
 
-            // For now, we'll just log the email sending
-            // In a real implementation, you would use Laravel's Mail facade
+            // Send using generic notification email template
+            Mail::to($user->email)->send(new NotificationMail($notification));
+
             Log::info('Email notification sent', [
                 'notification_id' => $notification->id,
                 'user_email' => $user->email,
-                'subject' => $notification->title
+                'subject' => $notification->title,
             ]);
 
             $notification->markEmailSent();
@@ -188,7 +191,8 @@ class NotificationService
         array $data = [],
         string $actionUrl = null,
         string $priority = Notification::PRIORITY_MEDIUM,
-        array $channels = ['in_app']
+        array $channels = ['in_app'],
+        $relatedModel = null
     ) {
         $notifications = [];
         
@@ -202,7 +206,7 @@ class NotificationService
                     $data,
                     $actionUrl,
                     $priority,
-                    null,
+                    $relatedModel,
                     $channels
                 );
                 $notifications[] = $notification;
@@ -274,20 +278,59 @@ class NotificationService
 
     public function notifyConnectionRequest($matrimonyProfile, $requesterProfile)
     {
+        $requesterName = optional($requesterProfile->user)->name ?? 'Someone';
         return $this->createNotification(
             $matrimonyProfile->user_id,
             Notification::TYPE_CONNECTION_REQUEST,
             'New Connection Request',
-            $requesterProfile->user->name . ' has sent you a connection request.',
+            $requesterName . ' has sent you a connection request.',
             [
                 'requester_id' => $requesterProfile->user_id,
-                'requester_name' => $requesterProfile->user->name
+                'requester_name' => $requesterName
             ],
             '/matrimony/requests',
             Notification::PRIORITY_MEDIUM,
             $requesterProfile,
-            ['in_app', 'push']
+            ['in_app', 'email']
         );
+    }
+
+    public function notifyMatrimonyProfileCreated(MatrimonyProfile $profile)
+    {
+        $creatorNotification = $this->createNotification(
+            $profile->user_id,
+            Notification::TYPE_MATRIMONY_PENDING,
+            'Matrimony profile pending approval',
+            'Your matrimony profile has been created and is pending admin approval.',
+            ['profile_id' => $profile->id],
+            '/dashboard/matrimony',
+            Notification::PRIORITY_MEDIUM,
+            $profile,
+            ['in_app', 'email']
+        );
+
+        $existingUserIds = User::whereKeyNot($profile->user_id)
+            ->whereHas('matrimonyProfile')
+            ->pluck('id')
+            ->all();
+
+        $profileName = data_get($profile->personal_details, 'name', 'A new member');
+        $existingUserNotifications = $this->sendBulkNotifications(
+            $existingUserIds,
+            Notification::TYPE_MATRIMONY_PROFILE_CREATED,
+            'New matrimony profile created',
+            $profileName.' has created a matrimony profile.',
+            ['profile_id' => $profile->id],
+            '/dashboard/matrimony/browse',
+            Notification::PRIORITY_MEDIUM,
+            ['in_app'],
+            $profile
+        );
+
+        return [
+            'creator' => $creatorNotification,
+            'existing_users' => $existingUserNotifications,
+        ];
     }
 
     public function notifyJobApplication($jobPosting, $applicant)

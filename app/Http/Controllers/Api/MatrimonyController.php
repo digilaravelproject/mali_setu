@@ -7,17 +7,37 @@ use App\Models\MatrimonyProfile;
 use App\Models\ConnectionRequest;
 use App\Models\ChatConversation;
 use App\Models\ChatMessage;
+use App\Models\Notification;
+use App\Models\Cast;
+use App\Models\SubCast;
+use App\Services\NotificationService;
+use App\Services\MatrimonyProfileSearchService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
+
+use Illuminate\Support\Str;
 
 class MatrimonyController extends Controller
 {
+    /**
+     * @var \App\Services\NotificationService
+     */
+    protected $notifications;
+
+    public function __construct(NotificationService $notifications)
+    {
+        $this->notifications = $notifications;
+    }
     /**
      * Create matrimony profile
      */
     public function createProfile(Request $request)
     {
+        $user = $request->user();
+        
         $validator = Validator::make($request->all(), [
             'age' => 'required|integer|min:18|max:100',
             'height' => 'nullable|string|max:10',
@@ -32,15 +52,18 @@ class MatrimonyController extends Controller
             'location_details' => 'required|array',
             'partner_preferences' => 'required|array',
             'privacy_settings' => 'nullable|array',
-            'photos' => 'nullable|array',
-            'photos.*' => 'image|mimes:jpeg,png,jpg|max:2048',
+            'photos' => 'required_without:personal_details.photos|array|min:2|max:5',
+            'photos.*' => 'image|mimes:jpeg,png,jpg|max:5120',
+            'personal_details.photos' => 'required_without:photos|array|min:2|max:5',
         ]);
 
         if ($validator->fails()) {
+            $errors = $validator->errors();
+        
             return response()->json([
                 'success' => false,
-                'message' => 'Validation failed',
-                'errors' => $validator->errors()
+                'message' => $errors->first(), // 👈 get first error message
+                'errors' => $errors
             ], 422);
         }
 
@@ -52,13 +75,51 @@ class MatrimonyController extends Controller
                 'message' => 'User already has a matrimony profile'
             ], 400);
         }
-
+    
         // Handle photo uploads
         $photoPaths = [];
-        if ($request->hasFile('photos')) {
-            foreach ($request->file('photos') as $photo) {
-                $photoPaths[] = $photo->store('matrimony/photos', 'public');
+        if (!empty($request->personal_details['photos'])) {
+            foreach ($request->personal_details['photos'] as $photo) {
+        
+                // Check if base64 image
+                if (preg_match('/^data:image\/(\w+);base64,/', $photo, $type)) {
+        
+                    $imageType = $type[1]; // jpg, png, jpeg, webp, etc
+                    $decodedPhoto = base64_decode(substr($photo, strpos($photo, ',') + 1));
+        
+                    if ($decodedPhoto === false) {
+                        continue;
+                    }
+
+                    if (strlen($decodedPhoto) > 5 * 1024 * 1024) {
+                        return response()->json([
+                            'success' => false,
+                            'message' => 'Each photo must not exceed 5MB.'
+                        ], 422);
+                    }
+        
+                    $fileName = 'matrimony/photos/' . Str::uuid() . '.' . $imageType;
+        
+                    Storage::disk('public')->put($fileName, $decodedPhoto);
+        
+                    $photoPaths[] = $fileName;
+                } else {
+                    $photoPaths[] = $photo;
+                }
             }
+        }
+
+        if ($request->hasFile('photos')) {
+            foreach ($request->file('photos') as $photoFile) {
+                $photoPaths[] = $photoFile->store('matrimony/photos', 'public');
+            }
+        }
+
+        if (count($photoPaths) < 2) {
+            return response()->json([
+                'success' => false,
+                'message' => 'At least 2 photos are required.'
+            ], 422);
         }
 
         $profile = MatrimonyProfile::create([
@@ -85,12 +146,121 @@ class MatrimonyController extends Controller
                 'personal_details' => array_merge($profile->personal_details, ['photos' => $photoPaths])
             ]);
         }
+        
+        if (empty($user->user_type) || $user->user_type != 'matrimony') {
+            $user->update([
+                'user_type' => 'matrimony'
+            ]);
+        }
+
+        \App\Jobs\SendPaymentPendingEmail::dispatch('matrimony', $profile->id)->delay(now()->addMinutes(11));
+
+        $this->notifications->notifyMatrimonyProfileCreated($profile);
 
         return response()->json([
             'success' => true,
             'message' => 'Matrimony profile created successfully',
             'data' => ['profile' => $profile]
         ], 201);
+    }
+
+    /**
+     * Get all casts
+     */
+    public function getCasts(Request $request)
+    {
+        try {
+            $casts = Cast::where('is_active', true)
+                // ->with('subCasts')
+                ->latest()
+                ->get();
+
+            if ($casts->isEmpty()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No casts found'
+                ], 404);
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Casts fetched successfully',
+                'data' => [
+                    'casts' => $casts,
+                    'count' => $casts->count()
+                ]
+            ], 200);
+
+        } catch (\Exception $e) {
+            \Log::error('Get casts API error', [
+                'error' => $e->getMessage()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Something went wrong. Please try again later.'
+            ], 500);
+        }
+    }
+
+    /**
+     * Get sub-casts by cast ID
+     */
+    public function getSubCasts(Request $request, $castId)
+    {
+        try {
+            // Validate cast ID
+            if (!is_numeric($castId)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid cast ID',
+                    'errors' => ['cast_id' => ['Cast ID must be numeric']]
+                ], 422);
+            }
+
+            // Check if cast exists and is active
+            $cast = Cast::find($castId);
+            if (!$cast || !$cast->is_active) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Cast not found or inactive'
+                ], 404);
+            }
+
+            // Fetch sub-casts for this cast
+            $subCasts = SubCast::where('cast_id', $castId)
+                ->where('is_active', true)
+                ->latest()
+                ->get();
+
+            if ($subCasts->isEmpty()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No sub-casts found for this cast'
+                ], 404);
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Sub-casts fetched successfully',
+                'data' => [
+                    'cast' => $cast,
+                    'sub_casts' => $subCasts,
+                    'count' => $subCasts->count()
+                ]
+            ], 200);
+
+        } catch (\Exception $e) {
+            \Log::error('Get sub-casts API error', [
+                'cast_id' => $castId,
+                'error' => $e->getMessage()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Something went wrong. Please try again later.'
+            ], 500);
+        }
     }
 
     /**
@@ -143,14 +313,66 @@ class MatrimonyController extends Controller
             'location_details' => 'sometimes|array',
             'partner_preferences' => 'sometimes|array',
             'privacy_settings' => 'nullable|array',
+            'photos' => 'nullable|array|max:5',
+            'photos.*' => 'image|mimes:jpeg,png,jpg|max:5120',
         ]);
 
         if ($validator->fails()) {
+            $errors = $validator->errors();
+        
             return response()->json([
                 'success' => false,
-                'message' => 'Validation failed',
-                'errors' => $validator->errors()
+                'message' => $errors->first(), // 👈 get first error message
+                'errors' => $errors
             ], 422);
+        }
+
+        // Handle photo uploads
+        $photoPaths = [];
+        if (!empty($request->personal_details['photos'])) {
+            foreach ($request->personal_details['photos'] as $photo) {
+        
+                // Check if base64 image
+                if (preg_match('/^data:image\/(\w+);base64,/', $photo, $type)) {
+        
+                    $imageType = $type[1]; // jpg, png, jpeg, webp, etc
+                    $decodedPhoto = base64_decode(substr($photo, strpos($photo, ',') + 1));
+        
+                    if ($decodedPhoto === false) {
+                        continue;
+                    }
+
+                    if (strlen($decodedPhoto) > 5 * 1024 * 1024) {
+                        return response()->json([
+                            'success' => false,
+                            'message' => 'Each photo must not exceed 5MB.'
+                        ], 422);
+                    }
+        
+                    $fileName = 'matrimony/photos/' . Str::uuid() . '.' . $imageType;
+        
+                    Storage::disk('public')->put($fileName, $decodedPhoto);
+        
+                    $photoPaths[] = $fileName;
+                } else {
+                    $photoPaths[] = $photo;
+                }
+            }
+        }
+
+        if ($request->hasFile('photos')) {
+            foreach ($request->file('photos') as $photoFile) {
+                $photoPaths[] = $photoFile->store('matrimony/photos', 'public');
+            }
+        }
+
+        if (isset($request->personal_details['photos']) || $request->hasFile('photos')) {
+            if (count($photoPaths) < 2) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'At least 2 photos are required.'
+                ], 422);
+            }
         }
 
         $profile->update($request->only([
@@ -159,6 +381,191 @@ class MatrimonyController extends Controller
             'professional_details', 'lifestyle_details', 'location_details',
             'partner_preferences', 'privacy_settings'
         ]));
+
+        // Store photo paths if any
+        if (!empty($photoPaths)) {
+            $profile->update([
+                'personal_details' => array_merge($profile->personal_details, ['photos' => $photoPaths])
+            ]);
+        }
+
+        // Email: matrimony profile updated
+        $this->notifications->createNotification(
+            $request->user()->id,
+            Notification::TYPE_PROFILE_UPDATE,
+            'Matrimony profile updated',
+            'Your matrimony profile details have been updated.',
+            ['profile_id' => $profile->id],
+            '/matrimony/profile',
+            Notification::PRIORITY_LOW,
+            $profile,
+            ['in_app', 'email']
+        );
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Profile updated successfully',
+            'data' => ['profile' => $profile]
+        ]);
+    }
+
+    /**
+     * Get matrimony profile by ID
+     */
+    public function getProfileById(Request $request, $id)
+    {
+        $profile = MatrimonyProfile::with('user')->find($id);
+
+        if (!$profile) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No matrimony profile found'
+            ], 404);
+        }
+
+        if ($profile->user_id !== $request->user()->id
+            && $request->user()->user_type !== 'admin'
+            && $profile->approval_status !== 'approved') {
+            return response()->json([
+                'success' => false,
+                'message' => 'No matrimony profile found',
+            ], 404);
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => ['profile' => $profile]
+        ]);
+    }
+
+    /**
+     * Update matrimony profile by ID
+     */
+    public function updateProfileById(Request $request, $id)
+    {
+        $user = $request->user();
+        $profile = MatrimonyProfile::find($id);
+        
+        if (!$profile) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No matrimony profile found'
+            ], 404);
+        }
+
+        // Check if user is the owner or an admin
+        if ($profile->user_id != $user->id && $user->user_type !== 'admin') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized to update this profile.'
+            ], 403);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'age' => 'required|integer|min:18|max:100',
+            'height' => 'nullable|string|max:10',
+            'weight' => 'nullable|string|max:10',
+            'complexion' => 'nullable|string|max:50',
+            'physical_status' => 'nullable|string|max:50',
+            'personal_details' => 'required|array',
+            'family_details' => 'required|array',
+            'education_details' => 'required|array',
+            'professional_details' => 'required|array',
+            'lifestyle_details' => 'nullable|array',
+            'location_details' => 'required|array',
+            'partner_preferences' => 'required|array',
+            'privacy_settings' => 'nullable|array',
+            'photos' => 'nullable|array|max:5',
+            'photos.*' => 'image|mimes:jpeg,png,jpg|max:5120',
+        ]);
+
+        if ($validator->fails()) {
+            $errors = $validator->errors();
+        
+            return response()->json([
+                'success' => false,
+                'message' => $errors->first(),
+                'errors' => $errors
+            ], 422);
+        }
+
+        // Handle photo uploads
+        $photoPaths = [];
+        if (!empty($request->personal_details['photos'])) {
+            foreach ($request->personal_details['photos'] as $photo) {
+                // Check if base64 image
+                if (preg_match('/^data:image\/(\w+);base64,/', $photo, $type)) {
+                    $imageType = $type[1];
+                    $decodedPhoto = base64_decode(substr($photo, strpos($photo, ',') + 1));
+                    if ($decodedPhoto === false) {
+                        continue;
+                    }
+                    if (strlen($decodedPhoto) > 5 * 1024 * 1024) {
+                        return response()->json([
+                            'success' => false,
+                            'message' => 'Each photo must not exceed 5MB.'
+                        ], 422);
+                    }
+                    $fileName = 'matrimony/photos/' . Str::uuid() . '.' . $imageType;
+                    Storage::disk('public')->put($fileName, $decodedPhoto);
+                    $photoPaths[] = $fileName;
+                } else {
+                    $photoPaths[] = $photo;
+                }
+            }
+        }
+
+        if ($request->hasFile('photos')) {
+            foreach ($request->file('photos') as $photoFile) {
+                $photoPaths[] = $photoFile->store('matrimony/photos', 'public');
+            }
+        }
+
+        // Keep old photos if none were updated
+        if (empty($photoPaths) && !empty($profile->personal_details['photos'])) {
+            $photoPaths = $profile->personal_details['photos'];
+        }
+
+        if (count($photoPaths) < 2) {
+            return response()->json([
+                'success' => false,
+                'message' => 'At least 2 photos are required.'
+            ], 422);
+        }
+
+        $profile->update([
+            'age' => $request->age,
+            'height' => $request->height,
+            'weight' => $request->weight,
+            'complexion' => $request->complexion,
+            'physical_status' => $request->physical_status,
+            'personal_details' => $request->personal_details,
+            'family_details' => $request->family_details,
+            'education_details' => $request->education_details,
+            'professional_details' => $request->professional_details,
+            'lifestyle_details' => $request->lifestyle_details ?? [],
+            'location_details' => $request->location_details,
+            'partner_preferences' => $request->partner_preferences,
+            'privacy_settings' => $request->privacy_settings ?? [],
+        ]);
+
+        // Store photo paths
+        $profile->update([
+            'personal_details' => array_merge($profile->personal_details, ['photos' => $photoPaths])
+        ]);
+
+        // Email: matrimony profile updated
+        $this->notifications->createNotification(
+            $profile->user_id,
+            Notification::TYPE_PROFILE_UPDATE,
+            'Matrimony profile updated',
+            'Your matrimony profile details have been updated.',
+            ['profile_id' => $profile->id],
+            '/matrimony/profile',
+            Notification::PRIORITY_LOW,
+            $profile,
+            ['in_app', 'email']
+        );
 
         return response()->json([
             'success' => true,
@@ -328,6 +735,12 @@ class MatrimonyController extends Controller
 
         $query->where('approval_status', 'approved');
 
+        app(MatrimonyProfileSearchService::class)->applyDefaultOppositeGender(
+            $query,
+            $request,
+            $request->user()
+        );
+
         $results = $query->latest()->paginate($request->size ?? 20);
 
         return response()->json(['success' => true, 'data' => $results]);
@@ -336,15 +749,161 @@ class MatrimonyController extends Controller
     /**
      * Get single profile details
      */
-    public function showProfile($id)
+    public function showProfile_old(Request $request, $id)
     {
         $profile = MatrimonyProfile::with('user')
-            // ->where('approval_status', 'approved')
             ->findOrFail($id);
+            
+        $authUserId = $request->user()->id;
+
+        if ($profile->user_id !== $authUserId
+            && $request->user()->user_type !== 'admin'
+            && $profile->approval_status !== 'approved') {
+            abort(404);
+        }
+        
+        if(!empty($profile)){
+            
+                $usr_id = $profile->id; // paginator items are objects, not arrays
+            
+                $connection = DB::table('connection_requests')
+                    ->where(function ($q) use ($authUserId, $usr_id) {
+                        $q->where('sender_id', $authUserId)
+                          ->where('receiver_id', $usr_id);
+                    })
+                    ->orWhere(function ($q) use ($authUserId, $usr_id) {
+                        $q->where('sender_id', $usr_id)
+                          ->where('receiver_id', $authUserId);
+                    })
+                    ->first();
+                    
+                if ($connection) {
+                    $profile->connection_status = $connection->status;
+                } else {
+                    $profile->connection_status = 'not_connected';
+                }
+        }
 
         return response()->json([
             'success' => true,
             'data' => ['profile' => $profile]
+        ]);
+    }
+
+    /**
+     * Get single profile details
+     */
+    public function showProfile(Request $request, $id)
+    {
+        $profile = MatrimonyProfile::with('user')
+            ->findOrFail($id);
+    
+        $authUserId = $request->user()->id;
+
+        if ($profile->user_id !== $authUserId
+            && $request->user()->user_type !== 'admin'
+            && $profile->approval_status !== 'approved') {
+            abort(404);
+        }
+    
+        if (!empty($profile)) {
+    
+            // ✅ FIX: use user_id instead of profile id
+            $usr_id = $profile->user_id;
+    
+            $connection = DB::table('connection_requests')
+                ->where(function ($q) use ($authUserId, $usr_id) {
+                    $q->where('sender_id', $authUserId)
+                      ->where('receiver_id', $usr_id);
+                })
+                ->orWhere(function ($q) use ($authUserId, $usr_id) {
+                    $q->where('sender_id', $usr_id)
+                      ->where('receiver_id', $authUserId);
+                })
+                ->orderBy('id', 'desc')
+                ->first();
+    
+            if ($connection) {
+    
+                // ❌ remove user if removed (same pattern as your search logic)
+                if ($connection->status === 'removed') {
+                    $profile->connection_status = 'not_connected';
+                } else {
+                    $profile->connection_status = $connection->status;
+                }
+    
+            } else {
+    
+                $profile->connection_status = 'not_connected';
+            }
+        }
+    
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'profile' => $profile
+            ]
+        ]);
+    }
+
+    /**
+     * Get single profile details
+     */
+    public function showProfileOnUserId(Request $request, $id)
+    {
+        // $profile = MatrimonyProfile::with('user')
+        //     // ->where('approval_status', 'approved')
+        //     ->findOrFail($id);
+
+        $profile = MatrimonyProfile::with('user')
+            ->where('user_id', $id)
+        ->firstOrFail();
+    
+        $authUserId = $request->user()->id;
+
+        if ($profile->user_id !== $authUserId
+            && $request->user()->user_type !== 'admin'
+            && $profile->approval_status !== 'approved') {
+            abort(404);
+        }
+    
+        if (!empty($profile)) {
+    
+            // ✅ FIX: use user_id instead of profile id
+            $usr_id = $profile->user_id;
+    
+            $connection = DB::table('connection_requests')
+                ->where(function ($q) use ($authUserId, $usr_id) {
+                    $q->where('sender_id', $authUserId)
+                      ->where('receiver_id', $usr_id);
+                })
+                ->orWhere(function ($q) use ($authUserId, $usr_id) {
+                    $q->where('sender_id', $usr_id)
+                      ->where('receiver_id', $authUserId);
+                })
+                ->orderBy('id', 'desc')
+                ->first();
+    
+            if ($connection) {
+    
+                // ❌ remove user if removed (same pattern as your search logic)
+                if ($connection->status === 'removed') {
+                    $profile->connection_status = 'not_connected';
+                } else {
+                    $profile->connection_status = $connection->status;
+                }
+    
+            } else {
+    
+                $profile->connection_status = 'not_connected';
+            }
+        }
+    
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'profile' => $profile
+            ]
         ]);
     }
 
@@ -359,10 +918,12 @@ class MatrimonyController extends Controller
         ]);
 
         if ($validator->fails()) {
+            $errors = $validator->errors();
+        
             return response()->json([
                 'success' => false,
-                'message' => 'Validation failed',
-                'errors' => $validator->errors()
+                'message' => $errors->first(), // 👈 get first error message
+                'errors' => $errors
             ], 422);
         }
 
@@ -385,9 +946,64 @@ class MatrimonyController extends Controller
             'status' => 'pending',
         ]);
 
+        // Email: new connection request (receiver)
+        $receiverProfile = MatrimonyProfile::with('user')->where('user_id', $request->receiver_id)->first();
+        $senderProfile = MatrimonyProfile::with('user')->where('user_id', $request->user()->id)->first();
+
+        if ($receiverProfile && $senderProfile) {
+            $this->notifications->notifyConnectionRequest($receiverProfile, $senderProfile);
+        }
+
         return response()->json([
             'success' => true,
             'message' => 'Connection request sent successfully',
+            'data' => ['request' => $connectionRequest]
+        ], 201);
+    }
+    
+    /**
+     * Send connection request
+     */
+    public function sendRemoveUser(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'receiver_id' => 'required|integer|exists:users,id',
+            'message' => 'nullable|string|max:500',
+        ]);
+
+        if ($validator->fails()) {
+            $errors = $validator->errors();
+        
+            return response()->json([
+                'success' => false,
+                'message' => $errors->first(), // 👈 get first error message
+                'errors' => $errors
+            ], 422);
+        }
+
+        // Check if request already exists
+        $existingRequest = ConnectionRequest::where('sender_id', $request->user()->id)
+            ->where('receiver_id', $request->receiver_id)
+            ->where('status', 'removed')
+            ->first();
+
+        if ($existingRequest) {
+            return response()->json([
+                'success' => false,
+                'message' => 'This user already removed from your end'
+            ], 400);
+        }
+
+        $connectionRequest = ConnectionRequest::create([
+            'sender_id' => $request->user()->id,
+            'receiver_id' => $request->receiver_id,
+            'message' => $request->message,
+            'status' => 'removed',
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'User removed successfully',
             'data' => ['request' => $connectionRequest]
         ], 201);
     }
@@ -403,17 +1019,27 @@ class MatrimonyController extends Controller
         ]);
 
         if ($validator->fails()) {
+            $errors = $validator->errors();
+        
             return response()->json([
                 'success' => false,
-                'message' => 'Validation failed',
-                'errors' => $validator->errors()
+                'message' => $errors->first(), // 👈 get first error message
+                'errors' => $errors
             ], 422);
         }
 
-        $connectionRequest = ConnectionRequest::where('id', $id)
-            ->where('receiver_id', $request->user()->id)
-            ->where('status', 'pending')
-            ->firstOrFail();
+        $connectionRequest = ConnectionRequest::where([
+            'id' => $id,
+            'receiver_id' => $request->user()->id,
+            'status' => 'pending'
+        ])->first();
+        
+        if (empty($connectionRequest)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No pending connection request found.'
+            ], 200);
+        }
 
         $connectionRequest->update([
             'status' => $request->status,
@@ -427,6 +1053,45 @@ class MatrimonyController extends Controller
                 'user1_id' => min($connectionRequest->sender_id, $connectionRequest->receiver_id),
                 'user2_id' => max($connectionRequest->sender_id, $connectionRequest->receiver_id),
             ]);
+
+            // Email: connection request accepted (sender)
+            $senderProfile = MatrimonyProfile::with('user')->where('user_id', $connectionRequest->sender_id)->first();
+            $receiverProfile = MatrimonyProfile::with('user')->where('user_id', $connectionRequest->receiver_id)->first();
+
+            if ($senderProfile && $receiverProfile) {
+                $this->notifications->createNotification(
+                    $connectionRequest->sender_id,
+                    Notification::TYPE_CONNECTION_ACCEPTED,
+                    'Connection request accepted',
+                    optional($receiverProfile->user)->name . ' has accepted your connection request.',
+                    [
+                        'receiver_id' => $connectionRequest->receiver_id,
+                        'request_id' => $connectionRequest->id,
+                    ],
+                    '/matrimony/requests',
+                    Notification::PRIORITY_MEDIUM,
+                    $connectionRequest,
+                    ['in_app', 'email']
+                );
+            }
+        } else {
+            // Email: connection request rejected (sender)
+            $receiverProfile = MatrimonyProfile::with('user')->where('user_id', $connectionRequest->receiver_id)->first();
+
+            $this->notifications->createNotification(
+                $connectionRequest->sender_id,
+                Notification::TYPE_CONNECTION_REJECTED,
+                'Connection request declined',
+                optional($receiverProfile->user)->name . ' has declined your connection request.',
+                [
+                    'receiver_id' => $connectionRequest->receiver_id,
+                    'request_id' => $connectionRequest->id,
+                ],
+                '/matrimony/requests',
+                Notification::PRIORITY_LOW,
+                $connectionRequest,
+                ['in_app', 'email']
+            );
         }
 
         return response()->json([
@@ -442,20 +1107,92 @@ class MatrimonyController extends Controller
     public function getConnectionRequests(Request $request)
     {
         $sentRequests = ConnectionRequest::where('sender_id', $request->user()->id)
-            ->with('receiver')
             ->orderBy('created_at', 'desc')
             ->get();
 
         $receivedRequests = ConnectionRequest::where('receiver_id', $request->user()->id)
-            ->with('sender')
             ->orderBy('created_at', 'desc')
             ->get();
+            
+        if(!empty($sentRequests)){
+            foreach ($sentRequests as $sentRequest) {
+                $sentRequest->receiver_profile = MatrimonyProfile::where(
+                    'user_id',
+                    $sentRequest->receiver_id
+                )->first();
+            }
+        }
+        
+        if(!empty($receivedRequests)){
+            foreach ($receivedRequests as $receivedRequest) {
+                $receivedRequest->sender_profile = MatrimonyProfile::where(
+                    'user_id',
+                    $receivedRequest->sender_id
+                )->first();
+            }
+        }
 
         return response()->json([
             'success' => true,
             'data' => [
                 'sent_requests' => $sentRequests,
                 'received_requests' => $receivedRequests
+            ]
+        ]);
+    }
+    
+    /**
+     * Get user's connection requests
+     */
+    public function getConnectedUsers(Request $request)
+    {
+        $userId = $request->user()->id;
+
+        /**
+         * Get accepted connections where user is sender OR receiver
+         */
+        $connections = ConnectionRequest::where('status', 'accepted')
+            ->where(function ($query) use ($userId) {
+                $query->where('sender_id', $userId)
+                      ->orWhere('receiver_id', $userId);
+            })
+            ->orderBy('created_at', 'desc')
+            ->get();
+        
+        if(count($connections) == 0){
+            return response()->json([
+                'success' => false,
+                'message' => 'Connected users not found'
+            ], 422);
+        }
+        
+        /**
+         * Attach connected user's matrimony profile
+         */
+        if(count($connections) > 0){
+            foreach ($connections as $connection) {
+                
+                
+            
+                // If logged-in user is sender → get receiver profile
+                if ($connection->sender_id == $userId) {
+                    $connection->connected_profile = MatrimonyProfile::where(
+                        'user_id',
+                        $connection->receiver_id
+                    )->first();
+                } else {
+                    $connection->connected_profile = MatrimonyProfile::where(
+                        'user_id',
+                        $connection->sender_id
+                    )->first();
+                }
+            }
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'connected_users' => $connections
             ]
         ]);
     }
@@ -469,11 +1206,31 @@ class MatrimonyController extends Controller
         
         $conversations = ChatConversation::where('user1_id', $userId)
             ->orWhere('user2_id', $userId)
-            ->with(['user1', 'user2', 'messages' => function($query) {
+            ->with(['messages' => function($query) {
                 $query->latest()->limit(1);
             }])
             ->orderBy('last_message_at', 'desc')
             ->get();
+            
+        /**
+         * Attach connected user's matrimony profile
+         */
+        if(count($conversations) > 0){
+            foreach ($conversations as $conversation) {
+            
+                // If logged-in user is sender → get receiver profile
+                if ($conversation->user1_id == $userId) {
+                    $u_id = $conversation->user2_id;
+                } else {
+                    $u_id = $conversation->user1_id;
+                }
+                
+                $conversation->user1 = MatrimonyProfile::where(
+                    'user_id',
+                    $u_id
+                )->first();
+            }
+        }
 
         return response()->json([
             'success' => true,
@@ -497,7 +1254,7 @@ class MatrimonyController extends Controller
 
         $messages = ChatMessage::where('conversation_id', $conversationId)
             ->with('sender')
-            ->orderBy('created_at', 'asc')
+            ->orderBy('id', 'desc')
             ->paginate(50);
 
         // Mark messages as read
@@ -528,10 +1285,12 @@ class MatrimonyController extends Controller
         ]);
 
         if ($validator->fails()) {
+            $errors = $validator->errors();
+        
             return response()->json([
                 'success' => false,
-                'message' => 'Validation failed',
-                'errors' => $validator->errors()
+                'message' => $errors->first(), // 👈 get first error message
+                'errors' => $errors
             ], 422);
         }
 
@@ -561,6 +1320,11 @@ class MatrimonyController extends Controller
 
         // Update conversation last message time
         $conversation->update(['last_message_at' => now()]);
+
+        // Send notification to the other user
+        $sender = $request->user();
+        $receiver = $conversation->getOtherUser($userId);
+        $this->notifications->notifyNewMessage($conversation, $sender, $receiver);
 
         return response()->json([
             'success' => true,
