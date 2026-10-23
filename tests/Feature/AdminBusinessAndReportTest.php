@@ -7,6 +7,7 @@ use App\Models\User;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -53,6 +54,8 @@ class AdminBusinessAndReportTest extends TestCase
                 $table->string($column);
             }
             $table->string('photo')->nullable();
+            $table->decimal('latitude', 10, 8)->nullable();
+            $table->decimal('longitude', 11, 8)->nullable();
             $table->string('subscription_status')->default('trial');
             $table->timestamp('subscription_expires_at')->nullable();
             $table->timestamps();
@@ -72,6 +75,7 @@ class AdminBusinessAndReportTest extends TestCase
             $table->string('transaction_id')->nullable();
             $table->decimal('amount', 10, 2);
             $table->string('status')->default('pending');
+            $table->json('metadata')->nullable();
             $table->timestamps();
         });
 
@@ -105,6 +109,47 @@ class AdminBusinessAndReportTest extends TestCase
         $business = Business::firstOrFail();
         $response->assertRedirect(route('admin.businesses.show', $business));
         Storage::disk('public')->assertExists($business->photo);
+    }
+
+    public function test_admin_can_resolve_a_pincode_to_coordinates(): void
+    {
+        Http::fake([
+            'nominatim.openstreetmap.org/*' => Http::response([
+                ['lat' => '18.5204303', 'lon' => '73.8567437'],
+            ]),
+        ]);
+
+        $this->getJson(route('admin.businesses.geocode-pincode', ['pincode' => '411001']))
+            ->assertOk()
+            ->assertJson([
+                'latitude' => 18.5204303,
+                'longitude' => 73.8567437,
+            ]);
+    }
+
+    public function test_business_coordinates_are_saved_from_hidden_fields(): void
+    {
+        $response = $this->post(route('admin.businesses.store'), [
+            ...$this->businessData(),
+            'latitude' => '18.52043030',
+            'longitude' => '73.85674370',
+        ]);
+
+        $response->assertSessionHasNoErrors();
+        $business = Business::firstOrFail();
+        $this->assertEqualsWithDelta(18.52043030, (float) $business->latitude, 0.00000001);
+        $this->assertEqualsWithDelta(73.85674370, (float) $business->longitude, 0.00000001);
+
+        $updateResponse = $this->put(route('admin.businesses.update', $business), [
+            ...$this->businessData(),
+            'latitude' => '19.07609000',
+            'longitude' => '72.87742600',
+        ]);
+
+        $updateResponse->assertSessionHasNoErrors();
+        $business->refresh();
+        $this->assertEqualsWithDelta(19.07609000, (float) $business->latitude, 0.00000001);
+        $this->assertEqualsWithDelta(72.87742600, (float) $business->longitude, 0.00000001);
     }
 
     public function test_business_photo_can_be_replaced(): void
@@ -178,7 +223,148 @@ class AdminBusinessAndReportTest extends TestCase
         $response->assertOk()->assertHeader('Content-Type', 'application/pdf');
         $this->assertStringContainsString('attachment;', $response->headers->get('Content-Disposition'));
         $this->assertStringStartsWith('%PDF-', $response->getContent());
-        $this->assertStringContainsString('/Encrypt', $response->getContent());
+        $this->assertStringNotContainsString('/Encrypt', $response->getContent());
+    }
+
+    public static function xlsReportTypes(): array
+    {
+        return [
+            ['users', 'Admin Notes', 'B4', 'Legacy User'],
+            ['businesses', 'Contact Email', 'B4', 'Photo Test Business'],
+            ['matrimony', 'Partner Preferences', 'C4', 'Legacy User'],
+            ['payments', 'Payment Method', 'F4', 'Legacy User'],
+        ];
+    }
+
+    #[DataProvider('xlsReportTypes')]
+    public function test_reports_download_as_valid_unprotected_xlsx_with_complete_headers(
+        string $type,
+        string $expectedHeader,
+        string $textCell,
+        string $expectedText
+    ): void
+    {
+        DB::table('users')->insert([
+            'id' => 2,
+            'name' => 'Legacy User',
+            'email' => 'legacy@example.test',
+            'phone' => '919876543210',
+            'created_at' => '2026-09-04 10:00:00',
+        ]);
+        DB::table('businesses')->insert($this->businessData());
+        DB::table('matrimony_profiles')->insert(['user_id' => 2]);
+        DB::table('payments')->insert(['user_id' => 2, 'amount' => 10]);
+
+        $response = $this->get(route('admin.reports.download.xls', $type));
+        $response->assertOk()->assertHeader(
+            'Content-Type',
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        );
+        $disposition = $response->headers->get('Content-Disposition');
+        $this->assertStringContainsString('.xlsx', $disposition);
+        $this->assertStringNotContainsString('.zip', $disposition);
+
+        $content = $response->streamedContent();
+        $this->assertStringStartsWith("PK", $content);
+
+        $path = tempnam(sys_get_temp_dir(), 'report_test_');
+        file_put_contents($path, $content);
+        try {
+            $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load($path);
+            $sheet = $spreadsheet->getActiveSheet();
+            $headers = $sheet->rangeToArray('A3:' . $sheet->getHighestColumn() . '3')[0];
+
+            $this->assertNotSame('', $sheet->getCell('A1')->getValue());
+            $this->assertContains($expectedHeader, $headers);
+            $this->assertSame($expectedText, $sheet->getCell($textCell)->getValue());
+            $this->assertNotTrue($sheet->getProtection()->getSheet());
+            if ($type === 'users') {
+                $this->assertSame('legacy@example.test', $sheet->getCell('C4')->getValue());
+                $this->assertSame('919876543210', $sheet->getCell('D4')->getValue());
+            }
+
+            $spreadsheet->disconnectWorksheets();
+        } finally {
+            @unlink($path);
+        }
+    }
+
+    public function test_reports_page_exposes_mobile_friendly_direct_download_controls(): void
+    {
+        $this->get(route('admin.reports'))
+            ->assertOk()
+            ->assertSee('report-actions', false)
+            ->assertSee('Download Excel Report')
+            ->assertSee('@media (max-width: 575.98px)', false)
+            ->assertSee('download', false);
+    }
+
+    public function test_structured_report_data_is_exported_as_separate_table_columns(): void
+    {
+        DB::table('users')->insert([
+            'id' => 2, 'name' => 'Structured User', 'email' => 'structured@example.test',
+        ]);
+        DB::table('matrimony_profiles')->insert([
+            'user_id' => 2,
+            'personal_details' => json_encode([
+                'first_name' => 'Asha',
+                'occupation' => 'Engineer',
+                'languages' => ['Marathi', 'Hindi'],
+            ]),
+        ]);
+
+        $response = $this->get(route('admin.reports.download.xls', 'matrimony'));
+        $response->assertOk();
+
+        $path = tempnam(sys_get_temp_dir(), 'report_columns_');
+        file_put_contents($path, $response->streamedContent());
+        try {
+            $sheet = \PhpOffice\PhpSpreadsheet\IOFactory::load($path)->getActiveSheet();
+            $headers = $sheet->rangeToArray('A3:' . $sheet->getHighestColumn() . '3')[0];
+            $row = $sheet->rangeToArray('A4:' . $sheet->getHighestColumn() . '4')[0];
+
+            $this->assertContains('Personal Details - First Name', $headers);
+            $this->assertContains('Personal Details - Occupation', $headers);
+            $this->assertContains('Personal Details - Languages - 1', $headers);
+            $this->assertContains('Personal Details - Languages - 2', $headers);
+            $this->assertSame('Asha', $row[array_search('Personal Details - First Name', $headers, true)]);
+            $this->assertSame('Marathi', $row[array_search('Personal Details - Languages - 1', $headers, true)]);
+            $this->assertNotContains(json_encode([
+                'first_name' => 'Asha',
+                'occupation' => 'Engineer',
+                'languages' => ['Marathi', 'Hindi'],
+            ]), $row);
+        } finally {
+            @unlink($path);
+        }
+    }
+
+    public function test_payment_metadata_is_exported_as_separate_table_columns(): void
+    {
+        DB::table('payments')->insert([
+            'user_id' => 1,
+            'transaction_id' => 'txn-structured',
+            'amount' => 125,
+            'metadata' => json_encode(['plan_name' => 'Gold', 'duration_months' => 12]),
+        ]);
+
+        $response = $this->get(route('admin.reports.download.xls', 'payments'));
+        $response->assertOk();
+
+        $path = tempnam(sys_get_temp_dir(), 'report_metadata_');
+        file_put_contents($path, $response->streamedContent());
+        try {
+            $sheet = \PhpOffice\PhpSpreadsheet\IOFactory::load($path)->getActiveSheet();
+            $headers = $sheet->rangeToArray('A3:' . $sheet->getHighestColumn() . '3')[0];
+            $row = $sheet->rangeToArray('A4:' . $sheet->getHighestColumn() . '4')[0];
+
+            $this->assertContains('Metadata - Plan Name', $headers);
+            $this->assertContains('Metadata - Duration Months', $headers);
+            $this->assertSame('Gold', $row[array_search('Metadata - Plan Name', $headers, true)]);
+            $this->assertSame('12', (string) $row[array_search('Metadata - Duration Months', $headers, true)]);
+        } finally {
+            @unlink($path);
+        }
     }
 
     #[DataProvider('reportTypes')]

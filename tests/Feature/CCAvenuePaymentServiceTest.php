@@ -91,6 +91,8 @@ class CCAvenuePaymentServiceTest extends TestCase
         $pendingPayment = $service->createPendingPayment($transaction);
         $this->assertSame('pending', $pendingPayment->status);
         $this->assertSame('pending:MAT-test-1001', $pendingPayment->payment_id);
+        $this->assertTrue($pendingPayment->is_ccavenue);
+        $this->assertSame([$pendingPayment->id], Payment::ccavenue()->pluck('id')->all());
 
         $pendingResult = $service->processCallback([
             'order_id' => 'MAT-test-1001',
