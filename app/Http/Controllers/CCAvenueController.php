@@ -324,6 +324,9 @@ class CCAvenueController extends Controller
         }
 
         if ($status === 'success') {
+            if ($orderId) {
+                return redirect()->route('payment.summary', ['order_id' => $orderId]);
+            }
             session()->flash('success', $message);
         } elseif ($status === 'pending') {
             session()->flash('warning', $message ?: 'Your payment is awaiting confirmation. Please do not pay again.');
