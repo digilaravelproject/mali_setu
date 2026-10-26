@@ -199,6 +199,47 @@ class CCAvenuePaymentServiceTest extends TestCase
         $this->assertEqualsWithDelta(now()->addYears(3)->timestamp, strtotime($profile->profile_expires_at), 5);
     }
 
+    public function test_direct_shipped_callback_is_completed(): void
+    {
+        $transaction = $this->transaction('MAT-test-shipped');
+
+        $result = app(CCAvenuePaymentService::class)->processCallback([
+            'order_id' => 'MAT-test-shipped',
+            'tracking_id' => 'tracking-shipped',
+            'order_status' => 'Shipped',
+            'amount' => '11.00',
+            'currency' => 'INR',
+        ]);
+
+        $this->assertSame('completed', $result['status']);
+        $this->assertSame('completed', $transaction->fresh()->status);
+        $this->assertSame('Shipped', $result['payment']->razorpay_response['order_status']);
+    }
+
+    public function test_reconciliation_marks_unsuccessful_order_failed(): void
+    {
+        $transaction = $this->transaction('MAT-test-unsuccessful');
+
+        $gateway = \Mockery::mock(CCAvenue::class);
+        $gateway->shouldReceive('getOrderStatus')->once()->andReturn([
+            'order_status' => 'Unsuccessful',
+            'reference_no' => 'failed-reference',
+        ]);
+
+        $service = new CCAvenuePaymentReconciliationService(
+            $gateway,
+            app(CCAvenuePaymentService::class),
+        );
+        $stats = $service->reconcile();
+
+        $this->assertSame(1, $stats['failed']);
+        $this->assertSame('failed', $transaction->fresh()->status);
+        $this->assertDatabaseHas('payments', [
+            'transaction_id' => (string) $transaction->id,
+            'status' => 'failed',
+        ]);
+    }
+
     public function test_reconciliation_leaves_awaited_order_pending(): void
     {
         $transaction = $this->transaction('MAT-test-1004');

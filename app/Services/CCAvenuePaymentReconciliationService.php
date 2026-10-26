@@ -14,11 +14,11 @@ class CCAvenuePaymentReconciliationService
     ) {}
 
     /**
-     * @return array{checked: int, completed: int, unchanged: int, errors: int, last_error: ?string}
+     * @return array{checked: int, completed: int, failed: int, unchanged: int, errors: int, last_error: ?string}
      */
     public function reconcile(): array
     {
-        $stats = ['checked' => 0, 'completed' => 0, 'unchanged' => 0, 'errors' => 0, 'last_error' => null];
+        $stats = ['checked' => 0, 'completed' => 0, 'failed' => 0, 'unchanged' => 0, 'errors' => 0, 'last_error' => null];
 
         if (blank(config('services.ccavenue.api_access_code'))
             || blank(config('services.ccavenue.api_working_key'))) {
@@ -34,7 +34,7 @@ class CCAvenuePaymentReconciliationService
 
         $transactions = Transaction::query()
             ->where('status', 'pending')
-            ->whereIn('purpose', ['business_registration', 'matrimony_profile'])
+            ->whereIn('purpose', ['business_registration', 'matrimony_profile', 'donation'])
             ->whereNotNull('razorpay_order_id')
             ->where('created_at', '>=', now()->subDays($lookbackDays))
             ->oldest('id')
@@ -47,14 +47,16 @@ class CCAvenuePaymentReconciliationService
             try {
                 $gatewayStatus = $this->ccavenue->getOrderStatus($transaction->razorpay_order_id);
 
-                if (! $this->isSuccessful($gatewayStatus['order_status'] ?? null)) {
+                $status = $this->payments->normalizeGatewayStatus($gatewayStatus['order_status'] ?? null);
+
+                if ($status === 'pending') {
                     $stats['unchanged']++;
 
                     continue;
                 }
 
                 $this->payments->processCallback($this->callbackParameters($transaction, $gatewayStatus));
-                $stats['completed']++;
+                $stats[$status]++;
             } catch (Throwable $exception) {
                 $stats['errors']++;
                 $stats['last_error'] = $exception->getMessage();
@@ -69,11 +71,6 @@ class CCAvenuePaymentReconciliationService
         return $stats;
     }
 
-    private function isSuccessful(mixed $status): bool
-    {
-        return in_array(strtolower(trim((string) $status)), ['success', 'successful', 'shipped'], true);
-    }
-
     /**
      * @param  array<string, mixed>  $status
      * @return array<string, mixed>
@@ -83,7 +80,9 @@ class CCAvenuePaymentReconciliationService
         return [
             'order_id' => $transaction->razorpay_order_id,
             'tracking_id' => $status['reference_no'] ?? $status['tracking_id'] ?? null,
-            'order_status' => 'Success',
+            // Preserve the authoritative gateway state. The payment service
+            // normalizes Shipped/Successful and Unsuccessful/Aborted safely.
+            'order_status' => $status['order_status'] ?? null,
             'amount' => $status['order_amt'] ?? $status['amount'] ?? null,
             'currency' => $status['order_currncy'] ?? $status['currency'] ?? null,
             'payment_mode' => $status['order_option_type'] ?? $status['order_card_name'] ?? '',
