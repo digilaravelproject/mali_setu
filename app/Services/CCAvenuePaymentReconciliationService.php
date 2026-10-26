@@ -20,11 +20,16 @@ class CCAvenuePaymentReconciliationService
     {
         $stats = ['checked' => 0, 'completed' => 0, 'failed' => 0, 'unchanged' => 0, 'errors' => 0, 'last_error' => null];
 
-        if (blank(config('services.ccavenue.api_access_code'))
-            || blank(config('services.ccavenue.api_working_key'))) {
+        $statusAccessCode = config('services.ccavenue.api_access_code')
+            ?: config('services.ccavenue.access_code');
+        $statusWorkingKey = config('services.ccavenue.api_working_key')
+            ?: config('services.ccavenue.working_key');
+
+        if (blank($statusAccessCode) || blank($statusWorkingKey)) {
             $stats['errors'] = 1;
-            $stats['last_error'] = 'Dedicated CCAvenue Status API credentials are not configured. '
-                .'Set CCAVENUE_API_ACCESS_CODE and CCAVENUE_API_WORKING_KEY from M.A.R.S. Settings -> API Keys.';
+            $stats['last_error'] = 'CCAvenue Status API credentials are not configured. '
+                .'Set CCAVENUE_ACCESS_CODE and CCAVENUE_WORKING_KEY, or the dedicated '
+                .'CCAVENUE_API_ACCESS_CODE and CCAVENUE_API_WORKING_KEY values.';
 
             return $stats;
         }

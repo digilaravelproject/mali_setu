@@ -24,3 +24,4 @@ yarn-error.log
 /laravel_docker_isolation_guide.md
 *.sql
 /info.php
+.agent
