@@ -154,13 +154,22 @@ class CCAvenuePaymentService
         }
     }
 
-    private function callbackStatus(?string $status): string
+    /**
+     * Convert both hosted-checkout callback states and order-status API states
+     * to the application's transaction states.
+     */
+    public function normalizeGatewayStatus(mixed $status): string
     {
         return match (strtolower(trim((string) $status))) {
-            'success' => 'completed',
-            'failure', 'failed', 'aborted', 'invalid', 'cancelled', 'canceled' => 'failed',
+            'success', 'successful', 'shipped' => 'completed',
+            'failure', 'failed', 'unsuccessful', 'aborted', 'invalid', 'cancelled', 'canceled' => 'failed',
             default => 'pending',
         };
+    }
+
+    private function callbackStatus(mixed $status): string
+    {
+        return $this->normalizeGatewayStatus($status);
     }
 
     private function paymentType(Transaction $transaction): string

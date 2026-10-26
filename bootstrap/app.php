@@ -20,6 +20,7 @@ return Application::configure(basePath: dirname(__DIR__))
             ->withoutOverlapping(1);
     })
     ->withMiddleware(function (Middleware $middleware) {
+        $middleware->trustProxies(at: '*');
         $middleware->alias([
             'role' => \App\Http\Middleware\RoleMiddleware::class,
             'redirect.admin' => \App\Http\Middleware\RedirectAdmin::class,
