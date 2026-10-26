@@ -59,7 +59,7 @@ Route::get('/payment/summary/{order_id}/back', [\App\Http\Controllers\CCAvenueCo
 
 
 // Public Blog Routes
-Route::get('/blog/{id}', [\App\Http\Controllers\BlogController::class, 'showPublic'])->name('blogs.public.show');
+Route::get('/blog/{id}', [\App\Http\Controllers\BlogController::class, 'showPublic'])->name('blog.public.show');
 Route::get('/blogs/{id}', [\App\Http\Controllers\BlogController::class, 'showPublic'])->name('blogs.public.show');
 Route::post('/blogs/{id}/like', [\App\Http\Controllers\BlogController::class, 'likePublic'])->name('blogs.public.like');
 
