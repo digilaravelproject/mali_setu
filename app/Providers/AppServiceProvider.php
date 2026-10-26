@@ -21,6 +21,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        if (config('app.env') === 'production' || str_starts_with(config('app.url'), 'https://')) {
+            \Illuminate\Support\Facades\URL::forceScheme('https');
+        }
+
         View::composer('*', function ($view) {
             if (!array_key_exists('user', $view->getData())) {
                 $view->with('user', auth()->user());
