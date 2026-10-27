@@ -6,18 +6,20 @@ use App\Http\Controllers\Controller;
 use App\Models\Business;
 use App\Models\BusinessCategory;
 use App\Models\JobPosting;
-use App\Models\Product;
-use App\Models\Service;
-use App\Models\Transaction;
 use App\Models\Payment;
+use App\Models\Transaction;
 use App\Models\User;
+use App\Services\NotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 
 class BusinessManagementController extends Controller
 {
+    public function __construct(private readonly NotificationService $notifications) {}
+
     /**
      * Display all businesses
      */
@@ -31,36 +33,36 @@ class BusinessManagementController extends Controller
                 'businessRegistrationTransactions as pending_business_registrations_count' => function ($query) {
                     $query->where('status', 'pending');
                 },
-                'jobPostings'
+                'jobPostings',
             ]);
-        
+
         // Filter by verification status
         if ($request->has('verification_status') && $request->verification_status !== '') {
             $query->where('verification_status', $request->verification_status);
         }
-        
+
         // Filter by business type
         if ($request->has('business_type') && $request->business_type !== '') {
             $query->where('business_type', $request->business_type);
         }
-        
+
         // Filter by category
         if ($request->has('category_id') && $request->category_id !== '') {
             $query->where('category_id', $request->category_id);
         }
-        
+
         // Search by business name or owner name
         if ($request->has('search') && $request->search !== '') {
-            $query->where(function($q) use ($request) {
-                $q->where('business_name', 'like', '%' . $request->search . '%')
-                  ->orWhereHas('user', function($userQuery) use ($request) {
-                      $userQuery->where('name', 'like', '%' . $request->search . '%');
-                  });
+            $query->where(function ($q) use ($request) {
+                $q->where('business_name', 'like', '%'.$request->search.'%')
+                    ->orWhereHas('user', function ($userQuery) use ($request) {
+                        $userQuery->where('name', 'like', '%'.$request->search.'%');
+                    });
             });
         }
-        
+
         $businesses = $query->latest()->paginate(20);
-        
+
         $categories = BusinessCategory::where('is_active', true)->orderBy('sort_order', 'asc')->orderBy('id', 'asc')->get();
 
         $businessTypes = Business::select('business_type')
@@ -68,7 +70,7 @@ class BusinessManagementController extends Controller
             ->orderBy('business_type')
             ->pluck('business_type')
             ->toArray();
-        
+
         $stats = [
             'total' => Business::count(),
             'approved' => Business::where('verification_status', 'approved')->count(),
@@ -77,12 +79,12 @@ class BusinessManagementController extends Controller
             'by_type' => Business::selectRaw('business_type, COUNT(*) as count')
                 ->groupBy('business_type')
                 ->pluck('count', 'business_type')
-                ->toArray()
+                ->toArray(),
         ];
-        
+
         return view('admin.businesses.index', compact('businesses', 'categories', 'stats', 'businessTypes'));
     }
-    
+
     /**
      * Display pending business verifications
      */
@@ -97,21 +99,21 @@ class BusinessManagementController extends Controller
                     $query->where('status', 'pending');
                 },
             ]);
-            
+
         // Search functionality
         if ($request->has('search') && $request->search !== '') {
-            $query->where(function($q) use ($request) {
-                $q->where('business_name', 'like', '%' . $request->search . '%')
-                  ->orWhereHas('user', function($userQuery) use ($request) {
-                      $userQuery->where('name', 'like', '%' . $request->search . '%');
-                  });
+            $query->where(function ($q) use ($request) {
+                $q->where('business_name', 'like', '%'.$request->search.'%')
+                    ->orWhereHas('user', function ($userQuery) use ($request) {
+                        $userQuery->where('name', 'like', '%'.$request->search.'%');
+                    });
             });
         }
-        
+
         $pendingBusinesses = $query->orderByRaw("FIELD(verification_status, 'pending', 'approved', 'rejected')")
             ->latest()
             ->paginate(15);
-        
+
         $stats = [
             'pending_count' => Business::where('verification_status', 'pending')->count(),
             'approved_today' => Business::where('verification_status', 'approved')
@@ -119,10 +121,10 @@ class BusinessManagementController extends Controller
             'rejected_today' => Business::where('verification_status', 'rejected')
                 ->whereDate('updated_at', today())->count(),
         ];
-        
+
         return view('admin.businesses.verification', compact('pendingBusinesses', 'stats'));
     }
-    
+
     /**
      * Display pending businesses (alias for verification)
      */
@@ -130,7 +132,7 @@ class BusinessManagementController extends Controller
     {
         return $this->verification($request);
     }
-    
+
     /**
      * Approve business
      */
@@ -149,22 +151,31 @@ class BusinessManagementController extends Controller
                 if ($request->ajax()) {
                     return response()->json([
                         'success' => false,
-                        'message' => $message
+                        'message' => $message,
                     ], 422);
                 }
+
                 return redirect()->back()->with('error', $message);
             }
 
             $business->update([
                 'verification_status' => 'approved',
                 'verified_at' => now(),
-                'verified_by' => auth()->id()
+                'verified_by' => auth()->id(),
+            ]);
+
+            $notification = $this->notifications->notifyBusinessVerified($business->fresh());
+            Log::info('Business approval notification processed', [
+                'business_id' => $business->id,
+                'user_id' => $business->user_id,
+                'notification_id' => $notification?->id,
+                'push_sent' => $notification?->push_sent ?? false,
             ]);
 
             if ($request->ajax()) {
                 return response()->json([
                     'success' => true,
-                    'message' => 'Business approved successfully!'
+                    'message' => 'Business approved successfully!',
                 ]);
             }
 
@@ -173,14 +184,14 @@ class BusinessManagementController extends Controller
             if ($request->ajax()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Failed to approve business: ' . $e->getMessage()
+                    'message' => 'Failed to approve business: '.$e->getMessage(),
                 ], 500);
             }
 
             return redirect()->back()->with('error', 'Failed to approve business.');
         }
     }
-    
+
     /**
      * Reject business
      */
@@ -191,74 +202,85 @@ class BusinessManagementController extends Controller
             \Log::info('Business rejection request', [
                 'business_id' => $businessId,
                 'request_data' => $request->all(),
-                'rejection_reason' => $request->rejection_reason
+                'rejection_reason' => $request->rejection_reason,
             ]);
-            
+
             $request->validate([
-                'rejection_reason' => 'required|string|max:500'
+                'rejection_reason' => 'required|string|max:500',
             ]);
-            
+
             $business = Business::findOrFail($businessId);
-            
+
             \Log::info('Business found for rejection', [
                 'business_id' => $businessId,
-                'current_status' => $business->verification_status
+                'current_status' => $business->verification_status,
             ]);
-            
+
             $business->update([
                 'verification_status' => 'rejected',
                 'rejection_reason' => $request->rejection_reason,
                 'verified_at' => now(),
-                'verified_by' => auth()->id()
+                'verified_by' => auth()->id(),
             ]);
-            
+
+            $notification = $this->notifications->notifyBusinessRejected(
+                $business->fresh(),
+                $request->rejection_reason,
+            );
+            Log::info('Business rejection notification processed', [
+                'business_id' => $business->id,
+                'user_id' => $business->user_id,
+                'notification_id' => $notification?->id,
+                'push_sent' => $notification?->push_sent ?? false,
+            ]);
+
             \Log::info('Business rejected successfully', [
                 'business_id' => $businessId,
-                'rejection_reason' => $request->rejection_reason
+                'rejection_reason' => $request->rejection_reason,
             ]);
-            
+
             if ($request->ajax()) {
                 return response()->json([
                     'success' => true,
-                    'message' => 'Business rejected successfully!'
+                    'message' => 'Business rejected successfully!',
                 ]);
             }
-            
+
             return redirect()->back()->with('success', 'Business rejected successfully!');
-        } catch (\Illuminate\Validation\ValidationException $e) {
+        } catch (ValidationException $e) {
             \Log::error('Business rejection validation failed', [
                 'business_id' => $businessId,
                 'validation_errors' => $e->errors(),
-                'request_data' => $request->all()
+                'request_data' => $request->all(),
             ]);
-            
+
             if ($request->ajax()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Validation failed: ' . implode(', ', $e->validator->errors()->all())
+                    'message' => 'Validation failed: '.implode(', ', $e->validator->errors()->all()),
                 ], 422);
             }
-            
+
             return redirect()->back()->withErrors($e->validator)->withInput();
         } catch (\Exception $e) {
             \Log::error('Failed to reject business', [
                 'business_id' => $businessId,
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
-                'request_data' => $request->all()
+                'request_data' => $request->all(),
             ]);
-            
+
             if ($request->ajax()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Failed to reject business: ' . $e->getMessage()
+                    'message' => 'Failed to reject business: '.$e->getMessage(),
                 ], 500);
             }
-            
-            return redirect()->back()->with('error', 'Failed to reject business: ' . $e->getMessage());
+
+            return redirect()->back()->with('error', 'Failed to reject business: '.$e->getMessage());
         }
     }
-    
+
     /**
      * View business jobs
      */
@@ -269,7 +291,7 @@ class BusinessManagementController extends Controller
             'category',
             'jobPostings' => function ($query) {
                 $query->with(['applications.user'])->withCount('applications')->orderBy('created_at', 'desc');
-            }
+            },
         ])->findOrFail($id);
 
         if ($business->verification_status !== 'approved') {
@@ -301,30 +323,30 @@ class BusinessManagementController extends Controller
 
         return redirect()->back()->with('success', 'Job posting rejected successfully.');
     }
-    
+
     /**
      * View business details
      */
     public function show($id)
     {
         $business = Business::with([
-            'user', 
-            'category', 
-            'products', 
-            'services', 
+            'user',
+            'category',
+            'products',
+            'services',
             'locations',
-            'reviews.user'
+            'reviews.user',
         ])
-        ->withCount([
-            'businessRegistrationTransactions as completed_business_registrations_count' => function ($query) {
-                $query->where('status', 'completed');
-            },
-            'businessRegistrationTransactions as pending_business_registrations_count' => function ($query) {
-                $query->where('status', 'pending');
-            },
-        ])
-        ->findOrFail($id);
-        
+            ->withCount([
+                'businessRegistrationTransactions as completed_business_registrations_count' => function ($query) {
+                    $query->where('status', 'completed');
+                },
+                'businessRegistrationTransactions as pending_business_registrations_count' => function ($query) {
+                    $query->where('status', 'pending');
+                },
+            ])
+            ->findOrFail($id);
+
         return view('admin.businesses.show', compact('business'));
     }
 
@@ -340,7 +362,7 @@ class BusinessManagementController extends Controller
         $baseTypes = [
             'Public Ltd',
             'Private Ltd',
-            'Proprietary /Partnership - LLP'
+            'Proprietary /Partnership - LLP',
         ];
 
         $existingTypes = Business::select('business_type')
@@ -365,7 +387,7 @@ class BusinessManagementController extends Controller
 
         try {
             $response = Http::acceptJson()
-                ->withUserAgent(config('app.name', 'Mali Setu') . '/1.0')
+                ->withUserAgent(config('app.name', 'Mali Setu').'/1.0')
                 ->timeout(10)
                 ->get('https://nominatim.openstreetmap.org/search', [
                     'postalcode' => $validated['pincode'],
@@ -466,7 +488,7 @@ class BusinessManagementController extends Controller
         $baseTypes = [
             'Public Ltd',
             'Private Ltd',
-            'Proprietary /Partnership - LLP'
+            'Proprietary /Partnership - LLP',
         ];
 
         $existingTypes = Business::select('business_type')
@@ -533,7 +555,7 @@ class BusinessManagementController extends Controller
         return redirect()->route('admin.businesses.show', $business->id)
             ->with('success', 'Business updated successfully.');
     }
-    
+
     /**
      * Suspend business
      */
@@ -541,53 +563,53 @@ class BusinessManagementController extends Controller
     {
         try {
             $business = Business::findOrFail($id);
-            
+
             // Log current status for debugging
             \Log::info('Suspending business', [
                 'business_id' => $id,
                 'current_status' => $business->status,
-                'verification_status' => $business->verification_status
+                'verification_status' => $business->verification_status,
             ]);
-            
+
             $updated = $business->update(['status' => 'suspended']);
-            
+
             // Refresh the model to get updated data
             $business->refresh();
-            
+
             // Log after update
             \Log::info('Business status after update', [
                 'business_id' => $id,
                 'new_status' => $business->status,
-                'update_result' => $updated
+                'update_result' => $updated,
             ]);
-            
+
             if ($request->ajax()) {
                 return response()->json([
                     'success' => true,
                     'message' => 'Business suspended successfully!',
-                    'new_status' => $business->status
+                    'new_status' => $business->status,
                 ]);
             }
-            
+
             return redirect()->back()->with('success', 'Business suspended successfully!');
         } catch (\Exception $e) {
             \Log::error('Failed to suspend business', [
                 'business_id' => $id,
                 'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
             ]);
-            
+
             if ($request->ajax()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Failed to suspend business: ' . $e->getMessage()
+                    'message' => 'Failed to suspend business: '.$e->getMessage(),
                 ], 500);
             }
-            
-            return redirect()->back()->with('error', 'Failed to suspend business: ' . $e->getMessage());
+
+            return redirect()->back()->with('error', 'Failed to suspend business: '.$e->getMessage());
         }
     }
-    
+
     /**
      * Activate business
      */
@@ -595,53 +617,53 @@ class BusinessManagementController extends Controller
     {
         try {
             $business = Business::findOrFail($id);
-            
+
             // Log current status for debugging
             \Log::info('Activating business', [
                 'business_id' => $id,
                 'current_status' => $business->status,
-                'verification_status' => $business->verification_status
+                'verification_status' => $business->verification_status,
             ]);
-            
+
             $updated = $business->update(['status' => 'active']);
-            
+
             // Refresh the model to get updated data
             $business->refresh();
-            
+
             // Log after update
             \Log::info('Business status after activation', [
                 'business_id' => $id,
                 'new_status' => $business->status,
-                'update_result' => $updated
+                'update_result' => $updated,
             ]);
-            
+
             if ($request->ajax()) {
                 return response()->json([
                     'success' => true,
                     'message' => 'Business activated successfully!',
-                    'new_status' => $business->status
+                    'new_status' => $business->status,
                 ]);
             }
-            
+
             return redirect()->back()->with('success', 'Business activated successfully!');
         } catch (\Exception $e) {
             \Log::error('Failed to activate business', [
                 'business_id' => $id,
                 'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
             ]);
-            
+
             if ($request->ajax()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Failed to activate business: ' . $e->getMessage()
+                    'message' => 'Failed to activate business: '.$e->getMessage(),
                 ], 500);
             }
-            
-            return redirect()->back()->with('error', 'Failed to activate business: ' . $e->getMessage());
+
+            return redirect()->back()->with('error', 'Failed to activate business: '.$e->getMessage());
         }
     }
-    
+
     /**
      * Delete business and all associated payment and transaction data
      */
@@ -664,13 +686,13 @@ class BusinessManagementController extends Controller
             Payment::where('user_id', $userId)
                 ->where(function ($query) use ($transactionIds, $razorpayOrderIds, $razorpayPaymentIds) {
                     $query->where('payment_type', 'business_registration');
-                    if (!empty($transactionIds)) {
+                    if (! empty($transactionIds)) {
                         $query->orWhereIn('transaction_id', $transactionIds);
                     }
-                    if (!empty($razorpayOrderIds)) {
+                    if (! empty($razorpayOrderIds)) {
                         $query->orWhereIn('order_id', $razorpayOrderIds);
                     }
-                    if (!empty($razorpayPaymentIds)) {
+                    if (! empty($razorpayPaymentIds)) {
                         $query->orWhereIn('payment_id', $razorpayPaymentIds);
                     }
                 })
@@ -683,37 +705,37 @@ class BusinessManagementController extends Controller
 
             // Delete the business instance (products, services, job postings, locations, reviews cascade via foreign key onDelete)
             $business->delete();
-            
+
             if ($request->ajax()) {
                 return response()->json([
                     'success' => true,
-                    'message' => 'Business and associated payment data deleted successfully!'
+                    'message' => 'Business and associated payment data deleted successfully!',
                 ]);
             }
-            
+
             return redirect()->back()->with('success', 'Business and associated payment data deleted successfully!');
         } catch (\Exception $e) {
             if ($request->ajax()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Failed to delete business: ' . $e->getMessage()
+                    'message' => 'Failed to delete business: '.$e->getMessage(),
                 ], 500);
             }
-            
-            return redirect()->back()->with('error', 'Failed to delete business: ' . $e->getMessage());
+
+            return redirect()->back()->with('error', 'Failed to delete business: '.$e->getMessage());
         }
     }
-    
+
     /**
      * Manage business categories
      */
     public function categories()
     {
         $categories = BusinessCategory::withCount('businesses')->orderBy('sort_order', 'asc')->orderBy('id', 'asc')->paginate(20);
-        
+
         return view('admin.businesses.categories', compact('categories'));
     }
-    
+
     /**
      * Create new category
      */
@@ -721,15 +743,15 @@ class BusinessManagementController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255|unique:business_categories',
-            'description' => 'nullable|string|max:500'
+            'description' => 'nullable|string|max:500',
         ]);
-        
+
         BusinessCategory::create([
             'name' => $request->name,
             'description' => $request->description,
-            'is_active' => true
+            'is_active' => true,
         ]);
-        
+
         return redirect()->back()->with('success', 'Category created successfully!');
     }
 }

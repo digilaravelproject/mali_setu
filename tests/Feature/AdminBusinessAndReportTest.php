@@ -4,12 +4,16 @@ namespace Tests\Feature;
 
 use App\Models\Business;
 use App\Models\User;
+use App\Services\NotificationService;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Filesystem\FilesystemAdapter;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
+use Mockery\MockInterface;
+use PhpOffice\PhpSpreadsheet\IOFactory;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
@@ -58,6 +62,16 @@ class AdminBusinessAndReportTest extends TestCase
             $table->decimal('longitude', 11, 8)->nullable();
             $table->string('subscription_status')->default('trial');
             $table->timestamp('subscription_expires_at')->nullable();
+            $table->timestamp('verified_at')->nullable();
+            $table->unsignedBigInteger('verified_by')->nullable();
+            $table->text('rejection_reason')->nullable();
+            $table->timestamps();
+        });
+        Schema::create('transactions', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('user_id');
+            $table->string('purpose');
+            $table->string('status');
             $table->timestamps();
         });
         Schema::create('matrimony_profiles', function (Blueprint $table) {
@@ -178,6 +192,49 @@ class AdminBusinessAndReportTest extends TestCase
         Storage::disk('public')->assertExists('business/photos/old.jpg');
     }
 
+    public function test_approving_a_business_triggers_the_verified_notification(): void
+    {
+        $business = Business::create($this->businessData());
+        DB::table('transactions')->insert([
+            'user_id' => $business->user_id,
+            'purpose' => 'business_registration',
+            'status' => 'completed',
+        ]);
+
+        $this->mock(NotificationService::class, function (MockInterface $mock) use ($business) {
+            $mock->shouldReceive('notifyBusinessVerified')
+                ->once()
+                ->withArgs(fn (Business $notifiedBusiness) => $notifiedBusiness->is($business))
+                ->andReturn(null);
+        });
+
+        $this->post(route('admin.businesses.approve', $business))
+            ->assertRedirect()
+            ->assertSessionHas('success');
+
+        $this->assertSame('approved', $business->fresh()->verification_status);
+    }
+
+    public function test_rejecting_a_business_triggers_the_rejected_notification_with_reason(): void
+    {
+        $business = Business::create($this->businessData());
+
+        $this->mock(NotificationService::class, function (MockInterface $mock) use ($business) {
+            $mock->shouldReceive('notifyBusinessRejected')
+                ->once()
+                ->withArgs(fn (Business $notifiedBusiness, string $reason) => $notifiedBusiness->is($business) && $reason === 'Duplicate listing')
+                ->andReturn(null);
+        });
+
+        $this->post(route('admin.businesses.reject', $business), [
+            'rejection_reason' => 'Duplicate listing',
+        ])->assertRedirect()->assertSessionHas('success');
+
+        $business->refresh();
+        $this->assertSame('rejected', $business->verification_status);
+        $this->assertSame('Duplicate listing', $business->rejection_reason);
+    }
+
     public function test_invalid_upload_keeps_the_existing_photo(): void
     {
         Storage::disk('public')->put('business/photos/old.jpg', 'old photo');
@@ -194,7 +251,7 @@ class AdminBusinessAndReportTest extends TestCase
         $disk = Storage::disk('public');
         $disk->put('business/photos/old.jpg', 'old photo');
         $business = Business::create([...$this->businessData(), 'photo' => 'business/photos/old.jpg']);
-        $failedDisk = \Mockery::mock(\Illuminate\Filesystem\FilesystemAdapter::class);
+        $failedDisk = \Mockery::mock(FilesystemAdapter::class);
         $failedDisk->shouldReceive('putFileAs')->once()->andReturn(false);
         Storage::shouldReceive('disk')->with('public')->andReturn($failedDisk);
 
@@ -242,8 +299,7 @@ class AdminBusinessAndReportTest extends TestCase
         string $expectedHeader,
         string $textCell,
         string $expectedText
-    ): void
-    {
+    ): void {
         DB::table('users')->insert([
             'id' => 2,
             'name' => 'Legacy User',
@@ -265,14 +321,14 @@ class AdminBusinessAndReportTest extends TestCase
         $this->assertStringNotContainsString('.zip', $disposition);
 
         $content = $response->streamedContent();
-        $this->assertStringStartsWith("PK", $content);
+        $this->assertStringStartsWith('PK', $content);
 
         $path = tempnam(sys_get_temp_dir(), 'report_test_');
         file_put_contents($path, $content);
         try {
-            $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load($path);
+            $spreadsheet = IOFactory::load($path);
             $sheet = $spreadsheet->getActiveSheet();
-            $headers = $sheet->rangeToArray('A3:' . $sheet->getHighestColumn() . '3')[0];
+            $headers = $sheet->rangeToArray('A3:'.$sheet->getHighestColumn().'3')[0];
 
             $this->assertNotSame('', $sheet->getCell('A1')->getValue());
             $this->assertContains($expectedHeader, $headers);
@@ -319,9 +375,9 @@ class AdminBusinessAndReportTest extends TestCase
         $path = tempnam(sys_get_temp_dir(), 'report_columns_');
         file_put_contents($path, $response->streamedContent());
         try {
-            $sheet = \PhpOffice\PhpSpreadsheet\IOFactory::load($path)->getActiveSheet();
-            $headers = $sheet->rangeToArray('A3:' . $sheet->getHighestColumn() . '3')[0];
-            $row = $sheet->rangeToArray('A4:' . $sheet->getHighestColumn() . '4')[0];
+            $sheet = IOFactory::load($path)->getActiveSheet();
+            $headers = $sheet->rangeToArray('A3:'.$sheet->getHighestColumn().'3')[0];
+            $row = $sheet->rangeToArray('A4:'.$sheet->getHighestColumn().'4')[0];
 
             $this->assertContains('Personal Details - First Name', $headers);
             $this->assertContains('Personal Details - Occupation', $headers);
@@ -354,9 +410,9 @@ class AdminBusinessAndReportTest extends TestCase
         $path = tempnam(sys_get_temp_dir(), 'report_metadata_');
         file_put_contents($path, $response->streamedContent());
         try {
-            $sheet = \PhpOffice\PhpSpreadsheet\IOFactory::load($path)->getActiveSheet();
-            $headers = $sheet->rangeToArray('A3:' . $sheet->getHighestColumn() . '3')[0];
-            $row = $sheet->rangeToArray('A4:' . $sheet->getHighestColumn() . '4')[0];
+            $sheet = IOFactory::load($path)->getActiveSheet();
+            $headers = $sheet->rangeToArray('A3:'.$sheet->getHighestColumn().'3')[0];
+            $row = $sheet->rangeToArray('A4:'.$sheet->getHighestColumn().'4')[0];
 
             $this->assertContains('Metadata - Plan Name', $headers);
             $this->assertContains('Metadata - Duration Months', $headers);

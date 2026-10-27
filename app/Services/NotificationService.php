@@ -307,7 +307,29 @@ class NotificationService
             Notification::TYPE_BUSINESS_VERIFIED,
             'Business Verified!',
             'Your business "'.$business->business_name.'" has been verified and is now live.',
-            ['business_id' => $business->id],
+            [
+                'business_id' => $business->id,
+                'business_name' => $business->business_name,
+            ],
+            '/business/manage',
+            Notification::PRIORITY_HIGH,
+            $business,
+            ['in_app', 'email']
+        );
+    }
+
+    public function notifyBusinessRejected($business, string $reason)
+    {
+        return $this->createNotification(
+            $business->user_id,
+            Notification::TYPE_BUSINESS_REJECTED,
+            'Business Rejected',
+            'Your business "'.$business->business_name.'" was rejected. Reason: '.$reason,
+            [
+                'business_id' => $business->id,
+                'business_name' => $business->business_name,
+                'reason' => $reason,
+            ],
             '/business/manage',
             Notification::PRIORITY_HIGH,
             $business,

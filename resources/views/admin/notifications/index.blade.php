@@ -98,7 +98,7 @@
                             </div>
                             <div class="message-box mb-3"><div class="message-title">{{ $action->title_template }}</div><div class="message-body">{{ $action->body_template }}</div></div>
                             @if($action->action_url)<div class="meta-row text-break mb-2"><i class="fas fa-link me-2 text-primary"></i>{{ $action->action_url }}</div>@endif
-                            @if(!empty($action->available_variables))<div class="meta-row mb-3"><i class="fas fa-code me-2 text-primary"></i>@foreach($action->available_variables as $variable)<code class="me-1">@{{ $variable }}</code>@endforeach</div>@endif
+                            @if(!empty($action->available_variables))<div class="meta-row mb-3"><i class="fas fa-code me-2 text-primary"></i>@foreach($action->available_variables as $variable)<code class="me-1">{{ '{{'.$variable.'}}' }}</code>@endforeach</div>@endif
                             <div class="d-flex flex-wrap gap-2 mt-auto pt-2 border-top">
                                 <a class="btn btn-sm btn-success px-3" href="{{ route('admin.notifications.send-form', $action) }}"><i class="fas fa-paper-plane me-1"></i>Send</a>
                                 <a class="btn btn-sm btn-outline-primary px-3" href="{{ route('admin.notifications.edit', $action) }}"><i class="fas fa-pen-to-square me-1"></i>Edit & preview</a>
