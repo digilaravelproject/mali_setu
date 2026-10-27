@@ -408,6 +408,13 @@
             </div>
 
             <div class="nav-item">
+                <a href="{{ route('admin.notifications.index') }}" class="nav-link {{ request()->routeIs('admin.notifications.*') ? 'active' : '' }}">
+                    <i class="fas fa-bell"></i>
+                    Push Notifications
+                </a>
+            </div>
+
+            <div class="nav-item">
                 <a href="{{ route('admin.settings') }}" class="nav-link {{ request()->routeIs('admin.settings') ? 'active' : '' }}">
                     <i class="fas fa-cog"></i>
                     Settings

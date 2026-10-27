@@ -3,15 +3,17 @@
 namespace App\Services;
 
 use App\Mail\NotificationMail;
-use App\Models\Notification;
 use App\Models\MatrimonyProfile;
+use App\Models\Notification;
+use App\Models\NotificationAction;
 use App\Models\User;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Facades\Queue;
 
 class NotificationService
 {
+    public function __construct(private readonly FirebaseMessagingService $firebase) {}
+
     /**
      * Create and send a notification
      */
@@ -21,12 +23,46 @@ class NotificationService
         string $title,
         string $message,
         array $data = [],
-        string $actionUrl = null,
+        ?string $actionUrl = null,
         string $priority = Notification::PRIORITY_MEDIUM,
         $relatedModel = null,
         array $channels = ['in_app']
     ) {
         try {
+            NotificationAction::ensureDefaults();
+            $action = NotificationAction::query()->firstOrCreate(
+                ['key' => $type],
+                [
+                    'name' => str($type)->replace('_', ' ')->title(),
+                    'title_template' => $title,
+                    'body_template' => $message,
+                    'action_url' => $actionUrl,
+                    'available_variables' => array_keys($data),
+                    'is_enabled' => true,
+                    'push_enabled' => false,
+                ]
+            );
+
+            if (! $action->is_enabled) {
+                Log::info('Notification skipped because its action is disabled', ['type' => $type, 'user_id' => $userId]);
+
+                return null;
+            }
+
+            $user = User::find($userId);
+            $templateData = array_merge($data, [
+                'user_name' => $user?->name ?? '',
+                'user_email' => $user?->email ?? '',
+            ]);
+            $title = $action->render($action->title_template, $templateData);
+            $message = $action->render($action->body_template, $templateData);
+            $actionUrl = $action->action_url ?? $actionUrl;
+
+            $channels = array_values(array_diff($channels, [Notification::CHANNEL_PUSH]));
+            if ($action->push_enabled) {
+                $channels[] = Notification::CHANNEL_PUSH;
+            }
+
             // Create the notification
             $notification = Notification::createNotification(
                 $userId,
@@ -49,7 +85,7 @@ class NotificationService
             Log::error('Failed to create notification', [
                 'error' => $e->getMessage(),
                 'user_id' => $userId,
-                'type' => $type
+                'type' => $type,
             ]);
             throw $e;
         }
@@ -80,7 +116,7 @@ class NotificationService
             Log::error('Failed to send notification', [
                 'error' => $e->getMessage(),
                 'notification_id' => $notification->id,
-                'channel' => $channel
+                'channel' => $channel,
             ]);
         }
     }
@@ -92,11 +128,12 @@ class NotificationService
     {
         try {
             $user = $notification->user;
-            
-            if (!$user || !$user->email) {
+
+            if (! $user || ! $user->email) {
                 Log::warning('Cannot send email notification - user or email not found', [
-                    'notification_id' => $notification->id
+                    'notification_id' => $notification->id,
                 ]);
+
                 return;
             }
 
@@ -113,7 +150,7 @@ class NotificationService
         } catch (\Exception $e) {
             Log::error('Failed to send email notification', [
                 'error' => $e->getMessage(),
-                'notification_id' => $notification->id
+                'notification_id' => $notification->id,
             ]);
         }
     }
@@ -123,31 +160,31 @@ class NotificationService
      */
     private function sendPushNotification(Notification $notification)
     {
-        try {
-            $user = $notification->user;
-            
-            if (!$user) {
-                Log::warning('Cannot send push notification - user not found', [
-                    'notification_id' => $notification->id
-                ]);
-                return;
-            }
+        $user = $notification->user;
 
-            // For now, we'll just log the push notification
-            // In a real implementation, you would integrate with Firebase FCM
-            Log::info('Push notification sent', [
+        if (! $user?->fcm_token) {
+            Log::info('Push notification skipped because the user has no FCM token', [
                 'notification_id' => $notification->id,
-                'user_id' => $user->id,
-                'title' => $notification->title
+                'user_id' => $notification->user_id,
             ]);
 
-            $notification->markPushSent();
-        } catch (\Exception $e) {
-            Log::error('Failed to send push notification', [
-                'error' => $e->getMessage(),
-                'notification_id' => $notification->id
-            ]);
+            return;
         }
+
+        $this->firebase->send($user->fcm_token, $notification->title, $notification->message, array_merge(
+            $notification->data ?? [],
+            [
+                'notification_id' => $notification->id,
+                'action_key' => $notification->type,
+                'action_url' => $notification->action_url ?? '',
+            ]
+        ));
+
+        $notification->markPushSent();
+        Log::info('Firebase push notification sent', [
+            'notification_id' => $notification->id,
+            'user_id' => $user->id,
+        ]);
     }
 
     /**
@@ -157,11 +194,12 @@ class NotificationService
     {
         try {
             $user = $notification->user;
-            
-            if (!$user || !$user->phone) {
+
+            if (! $user || ! $user->phone) {
                 Log::warning('Cannot send SMS notification - user or phone not found', [
-                    'notification_id' => $notification->id
+                    'notification_id' => $notification->id,
                 ]);
+
                 return;
             }
 
@@ -170,12 +208,12 @@ class NotificationService
             Log::info('SMS notification sent', [
                 'notification_id' => $notification->id,
                 'user_phone' => $user->phone,
-                'message' => $notification->message
+                'message' => $notification->message,
             ]);
         } catch (\Exception $e) {
             Log::error('Failed to send SMS notification', [
                 'error' => $e->getMessage(),
-                'notification_id' => $notification->id
+                'notification_id' => $notification->id,
             ]);
         }
     }
@@ -189,13 +227,13 @@ class NotificationService
         string $title,
         string $message,
         array $data = [],
-        string $actionUrl = null,
+        ?string $actionUrl = null,
         string $priority = Notification::PRIORITY_MEDIUM,
         array $channels = ['in_app'],
         $relatedModel = null
     ) {
         $notifications = [];
-        
+
         foreach ($userIds as $userId) {
             try {
                 $notification = $this->createNotification(
@@ -209,11 +247,13 @@ class NotificationService
                     $relatedModel,
                     $channels
                 );
-                $notifications[] = $notification;
+                if ($notification) {
+                    $notifications[] = $notification;
+                }
             } catch (\Exception $e) {
                 Log::error('Failed to create bulk notification for user', [
                     'error' => $e->getMessage(),
-                    'user_id' => $userId
+                    'user_id' => $userId,
                 ]);
             }
         }
@@ -224,7 +264,6 @@ class NotificationService
     /**
      * Notification helpers for specific events
      */
-
     public function notifyRegistrationApproved(User $user)
     {
         return $this->createNotification(
@@ -244,7 +283,7 @@ class NotificationService
     {
         $message = 'Your registration has been rejected.';
         if ($reason) {
-            $message .= ' Reason: ' . $reason;
+            $message .= ' Reason: '.$reason;
         }
         $message .= ' You can reapply after 30 days.';
 
@@ -267,7 +306,7 @@ class NotificationService
             $business->user_id,
             Notification::TYPE_BUSINESS_VERIFIED,
             'Business Verified!',
-            'Your business "' . $business->business_name . '" has been verified and is now live.',
+            'Your business "'.$business->business_name.'" has been verified and is now live.',
             ['business_id' => $business->id],
             '/business/manage',
             Notification::PRIORITY_HIGH,
@@ -279,14 +318,15 @@ class NotificationService
     public function notifyConnectionRequest($matrimonyProfile, $requesterProfile)
     {
         $requesterName = optional($requesterProfile->user)->name ?? 'Someone';
+
         return $this->createNotification(
             $matrimonyProfile->user_id,
             Notification::TYPE_CONNECTION_REQUEST,
             'New Connection Request',
-            $requesterName . ' has sent you a connection request.',
+            $requesterName.' has sent you a connection request.',
             [
                 'requester_id' => $requesterProfile->user_id,
-                'requester_name' => $requesterName
+                'requester_name' => $requesterName,
             ],
             '/matrimony/requests',
             Notification::PRIORITY_MEDIUM,
@@ -339,13 +379,13 @@ class NotificationService
             $jobPosting->business->user_id,
             Notification::TYPE_JOB_APPLICATION,
             'New Job Application',
-            $applicant->name . ' has applied for "' . $jobPosting->title . '".',
+            $applicant->name.' has applied for "'.$jobPosting->title.'".',
             [
                 'job_id' => $jobPosting->id,
                 'applicant_id' => $applicant->id,
-                'applicant_name' => $applicant->name
+                'applicant_name' => $applicant->name,
             ],
-            '/business/jobs/' . $jobPosting->id . '/applications',
+            '/business/jobs/'.$jobPosting->id.'/applications',
             Notification::PRIORITY_MEDIUM,
             $jobPosting,
             ['in_app', 'email']
@@ -358,11 +398,11 @@ class NotificationService
             1, // Assuming admin user ID is 1
             Notification::TYPE_VOLUNTEER_APPLICATION,
             'New Volunteer Application',
-            $volunteer->name . ' has applied for "' . $opportunity->title . '".',
+            $volunteer->name.' has applied for "'.$opportunity->title.'".',
             [
                 'opportunity_id' => $opportunity->id,
                 'volunteer_id' => $volunteer->id,
-                'volunteer_name' => $volunteer->name
+                'volunteer_name' => $volunteer->name,
             ],
             '/admin/volunteers/applications',
             Notification::PRIORITY_MEDIUM,
@@ -377,11 +417,11 @@ class NotificationService
             $donation->user_id,
             Notification::TYPE_DONATION_RECEIVED,
             'Donation Confirmed',
-            'Thank you for your donation of ₹' . number_format($donation->amount) . ' to "' . $cause->title . '".',
+            'Thank you for your donation of ₹'.number_format($donation->amount).' to "'.$cause->title.'".',
             [
                 'donation_id' => $donation->id,
                 'cause_id' => $cause->id,
-                'amount' => $donation->amount
+                'amount' => $donation->amount,
             ],
             '/donations/history',
             Notification::PRIORITY_MEDIUM,
@@ -396,11 +436,11 @@ class NotificationService
             $transaction->user_id,
             Notification::TYPE_PAYMENT_SUCCESS,
             'Payment Successful',
-            'Your payment of ₹' . number_format($transaction->amount) . ' for ' . $transaction->purpose . ' was successful.',
+            'Your payment of ₹'.number_format($transaction->amount).' for '.$transaction->purpose.' was successful.',
             [
                 'transaction_id' => $transaction->id,
                 'amount' => $transaction->amount,
-                'purpose' => $transaction->purpose
+                'purpose' => $transaction->purpose,
             ],
             '/payments/history',
             Notification::PRIORITY_MEDIUM,
@@ -415,11 +455,11 @@ class NotificationService
             $transaction->user_id,
             Notification::TYPE_PAYMENT_FAILED,
             'Payment Failed',
-            'Your payment of ₹' . number_format($transaction->amount) . ' for ' . $transaction->purpose . ' failed. Please try again.',
+            'Your payment of ₹'.number_format($transaction->amount).' for '.$transaction->purpose.' failed. Please try again.',
             [
                 'transaction_id' => $transaction->id,
                 'amount' => $transaction->amount,
-                'purpose' => $transaction->purpose
+                'purpose' => $transaction->purpose,
             ],
             '/payments/retry',
             Notification::PRIORITY_HIGH,
@@ -448,13 +488,13 @@ class NotificationService
             $receiver->id,
             Notification::TYPE_NEW_MESSAGE,
             'New Message',
-            $sender->name . ' sent you a message.',
+            $sender->name.' sent you a message.',
             [
                 'conversation_id' => $chatConversation->id,
                 'sender_id' => $sender->id,
-                'sender_name' => $sender->name
+                'sender_name' => $sender->name,
             ],
-            '/chat/' . $chatConversation->id,
+            '/chat/'.$chatConversation->id,
             Notification::PRIORITY_MEDIUM,
             $chatConversation,
             ['in_app', 'push']
@@ -469,6 +509,7 @@ class NotificationService
         try {
             $deleted = Notification::deleteOldNotifications($days);
             Log::info('Cleaned up old notifications', ['deleted_count' => $deleted]);
+
             return $deleted;
         } catch (\Exception $e) {
             Log::error('Failed to cleanup old notifications', ['error' => $e->getMessage()]);

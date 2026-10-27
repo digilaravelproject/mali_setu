@@ -65,6 +65,7 @@ class User extends Authenticatable
         'password',
         'remember_token',
         'cast_certificate',
+        'fcm_token',
     ];
 
     /**

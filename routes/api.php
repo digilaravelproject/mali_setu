@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\BusinessController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\DonationController;
 use App\Http\Controllers\Api\EducationController;
+use App\Http\Controllers\Api\FcmTokenController;
 use App\Http\Controllers\Api\GoogleAuthController;
 use App\Http\Controllers\Api\HomepageHeroController;
 use App\Http\Controllers\Api\JobController;
@@ -166,6 +167,8 @@ Route::middleware('auth:sanctum')->prefix('auth')->group(function () {
     Route::put('profile', [AuthController::class, 'updateProfile']);
     Route::post('change-password', [AuthController::class, 'changePassword']);
     Route::delete('delete-account', [AuthController::class, 'deleteAccount']);
+    Route::put('fcm-token', [FcmTokenController::class, 'update']);
+    Route::delete('fcm-token', [FcmTokenController::class, 'destroy']);
 });
 
 // Test route to verify authentication

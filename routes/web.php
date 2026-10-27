@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\Admin\UserManagementController;
 use App\Http\Controllers\Admin\BusinessManagementController;
 use App\Http\Controllers\Admin\MatrimonyManagementController;
+use App\Http\Controllers\Admin\NotificationManagementController;
 use App\Http\Controllers\Admin\PaymentManagementController;
 use App\Http\Controllers\Admin\DonationManagementController;
 use App\Http\Controllers\Admin\CategoryManagementController;
@@ -433,6 +434,18 @@ Route::prefix('admin')->name('admin.')->group(function () {
          // Settings and Reports
          Route::get('settings', [AdminDashboardController::class, 'settings'])->name('settings');
          Route::post('settings', [AdminDashboardController::class, 'updateSettings'])->name('settings.update');
+         Route::prefix('notifications')->name('notifications.')->group(function () {
+             Route::get('/', [NotificationManagementController::class, 'index'])->name('index');
+             Route::get('/create', [NotificationManagementController::class, 'create'])->name('create');
+             Route::post('/', [NotificationManagementController::class, 'store'])->name('store');
+             Route::get('/send/{notificationAction?}', [NotificationManagementController::class, 'sendForm'])->name('send-form');
+             Route::post('/send', [NotificationManagementController::class, 'send'])->name('send');
+             Route::post('/firebase', [NotificationManagementController::class, 'updateFirebase'])->name('firebase.update');
+             Route::post('/settings', [NotificationManagementController::class, 'updateGlobalSettings'])->name('settings.update');
+             Route::get('/{notificationAction}/edit', [NotificationManagementController::class, 'edit'])->name('edit');
+             Route::put('/{notificationAction}', [NotificationManagementController::class, 'update'])->name('update');
+             Route::delete('/{notificationAction}', [NotificationManagementController::class, 'destroy'])->name('destroy');
+         });
          Route::get('app-versions', [AppVersionController::class, 'index'])->name('app-versions.index');
          Route::put('app-versions/{appVersion}', [AppVersionController::class, 'update'])->name('app-versions.update');
          Route::get('reports', [AdminDashboardController::class, 'reports'])->name('reports');
