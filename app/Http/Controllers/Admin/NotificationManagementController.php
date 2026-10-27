@@ -25,7 +25,7 @@ class NotificationManagementController extends Controller
         NotificationAction::ensureDefaults();
 
         return view('admin.notifications.index', [
-            'actions' => NotificationAction::query()->orderBy('name')->get(),
+            'actions' => NotificationAction::query()->orderBy('name')->paginate(8)->withQueryString(),
             'firebase' => $this->credentials->status(),
             'pushEnabled' => SystemSetting::bool('push_notifications_enabled', true),
             'usersWithTokens' => User::query()->whereNotNull('fcm_token')->count(),

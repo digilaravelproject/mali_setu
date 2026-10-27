@@ -7,36 +7,78 @@ use Firebase\JWT\JWT;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 class FirebaseMessagingService
 {
     public function __construct(private readonly FirebaseCredentialService $credentialService) {}
 
-    public function send(string $deviceToken, string $title, string $body, array $data = []): array
-    {
-        if (! SystemSetting::bool('push_notifications_enabled', true)) {
+    public function send(
+        string $deviceToken,
+        string $title,
+        string $body,
+        array $data = [],
+        bool $respectGlobalSetting = true,
+    ): array {
+        if ($respectGlobalSetting && ! SystemSetting::bool('push_notifications_enabled', true)) {
+            Log::warning('Firebase push skipped because push notifications are globally disabled', [
+                'token_fingerprint' => substr(hash('sha256', $deviceToken), 0, 12),
+            ]);
+
             throw new \RuntimeException('Push notifications are disabled globally.');
         }
 
-        $credentials = $this->credentialService->credentials();
-        $accessToken = $this->accessToken($credentials);
-        $url = "https://fcm.googleapis.com/v1/projects/{$credentials['project_id']}/messages:send";
-        $payload = [
-            'message' => [
-                'token' => $deviceToken,
-                'notification' => ['title' => $title, 'body' => $body],
-                'data' => $this->stringifyData($data),
-                'android' => ['priority' => 'high'],
-                'apns' => ['payload' => ['aps' => ['sound' => 'default']]],
-            ],
-        ];
+        $credentials = null;
+        $response = null;
+        $tokenFingerprint = substr(hash('sha256', $deviceToken), 0, 12);
 
-        $response = $this->http()->withToken($accessToken)->post($url, $payload);
-        if ($response->failed()) {
-            throw new \RuntimeException('Firebase rejected the notification: '.$response->json('error.message', $response->body()));
+        try {
+            $credentials = $this->credentialService->credentials();
+            $accessToken = $this->accessToken($credentials);
+            $url = "https://fcm.googleapis.com/v1/projects/{$credentials['project_id']}/messages:send";
+            $payload = [
+                'message' => [
+                    'token' => $deviceToken,
+                    'notification' => ['title' => $title, 'body' => $body],
+                    'data' => $this->stringifyData($data),
+                    'android' => ['priority' => 'high'],
+                    'apns' => ['payload' => ['aps' => ['sound' => 'default']]],
+                ],
+            ];
+
+            Log::info('Firebase push send started', [
+                'project_id' => $credentials['project_id'],
+                'token_fingerprint' => $tokenFingerprint,
+                'title' => $title,
+                'is_test' => ($data['is_test'] ?? null) === '1',
+            ]);
+
+            $response = $this->http()->withToken($accessToken)->post($url, $payload);
+            if ($response->failed()) {
+                throw new \RuntimeException('Firebase rejected the notification: '.$response->json('error.message', $response->body()));
+            }
+
+            $firebaseResponse = $response->json();
+            Log::info('Firebase push send succeeded', [
+                'project_id' => $credentials['project_id'],
+                'token_fingerprint' => $tokenFingerprint,
+                'http_status' => $response->status(),
+                'firebase_response' => $firebaseResponse,
+            ]);
+
+            return $firebaseResponse;
+        } catch (\Throwable $e) {
+            Log::error('Firebase push send failed', [
+                'project_id' => $credentials['project_id'] ?? null,
+                'token_fingerprint' => $tokenFingerprint,
+                'http_status' => $response?->status(),
+                'firebase_response' => $response?->json() ?: $response?->body(),
+                'error' => $e->getMessage(),
+                'exception' => $e::class,
+            ]);
+
+            throw $e;
         }
-
-        return $response->json();
     }
 
     private function accessToken(array $credentials): string

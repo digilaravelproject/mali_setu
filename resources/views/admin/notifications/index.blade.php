@@ -24,6 +24,9 @@
     .notification-action-card .meta-row { font-size: .78rem; color: #667085; }
     .notification-action-card .btn { border-radius: 9px; font-weight: 700; }
     .notification-page .form-check-input:checked { background-color: #84144f; border-color: #84144f; }
+    .notification-page .notification-pagination .pagination { margin-bottom: 0; }
+    .notification-page .notification-pagination .page-link { color: #84144f; border-radius: 8px; margin: 0 .15rem; }
+    .notification-page .notification-pagination .page-item.active .page-link { color: #fff; background: #84144f; border-color: #84144f; }
     @media (max-width: 575.98px) { .notification-page .actions-toolbar { align-items: stretch !important; flex-direction: column; gap: .75rem; } .notification-page .actions-toolbar .btn { width: 100%; } }
 </style>
 @endpush
@@ -77,7 +80,7 @@
     </div>
 
     <div class="card shadow-sm mb-4 actions-panel">
-        <div class="card-header d-flex justify-content-between align-items-center actions-toolbar"><div><h3 class="h5 fw-bold mb-1">Notification actions</h3><small class="text-muted">{{ $actions->count() }} configurable events with separate notification and push controls.</small></div><a href="{{ route('admin.notifications.create') }}" class="btn btn-primary"><i class="fas fa-plus me-2"></i>Add action</a></div>
+        <div class="card-header d-flex justify-content-between align-items-center actions-toolbar"><div><h3 class="h5 fw-bold mb-1">Notification actions</h3><small class="text-muted">{{ $actions->total() }} configurable events with separate notification and push controls.</small></div><a href="{{ route('admin.notifications.create') }}" class="btn btn-primary"><i class="fas fa-plus me-2"></i>Add action</a></div>
         <div class="card-body p-3 p-lg-4">
             <div class="row g-3">
                 @forelse($actions as $action)
@@ -108,6 +111,14 @@
                 @endforelse
             </div>
         </div>
+        @if($actions->hasPages())
+            <div class="card-footer bg-white border-top px-3 px-lg-4 py-3">
+                <div class="d-flex flex-column flex-md-row align-items-center justify-content-between gap-3">
+                    <small class="text-muted">Showing <strong>{{ $actions->firstItem() }}</strong>–<strong>{{ $actions->lastItem() }}</strong> of <strong>{{ $actions->total() }}</strong> actions</small>
+                    <div class="notification-pagination">{{ $actions->onEachSide(1)->links() }}</div>
+                </div>
+            </div>
+        @endif
     </div>
 </div>
 @endsection

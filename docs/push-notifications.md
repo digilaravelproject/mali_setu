@@ -5,7 +5,7 @@
 The mobile app should call this endpoint after login and whenever Firebase refreshes the device token.
 
 ```bash
-curl --request PUT "http://localhost/mali_setu/public/api/auth/fcm-token" \
+curl --request PUT "http://127.0.0.1:8000/api/auth/fcm-token" \
   --header "Accept: application/json" \
   --header "Content-Type: application/json" \
   --header "Authorization: Bearer YOUR_ACCESS_TOKEN" \
@@ -26,9 +26,40 @@ Successful response:
 Remove the token during logout:
 
 ```bash
-curl --request DELETE "http://localhost/mali_setu/public/api/auth/fcm-token" \
+curl --request DELETE "http://127.0.0.1:8000/api/auth/fcm-token" \
   --header "Accept: application/json" \
   --header "Authorization: Bearer YOUR_ACCESS_TOKEN"
+```
+
+## Send a test push notification
+
+This public testing endpoint sends directly to the supplied FCM token. It does not require an access token, does not replace a user's saved token, and does not create an in-app notification. It can be used even when the global push switch is disabled.
+
+```bash
+curl --request POST "http://127.0.0.1:8000/api/notifications/test-push" \
+  --header "Accept: application/json" \
+  --header "Content-Type: application/json" \
+  --data-raw '{
+    "fcm_token": "YOUR_FIREBASE_DEVICE_TOKEN",
+    "title": "Mali Setu Test Notification",
+    "message": "Firebase push notifications are working correctly.",
+    "data": {
+      "screen": "home",
+      "source": "api_test"
+    }
+  }'
+```
+
+Successful response:
+
+```json
+{
+  "success": true,
+  "message": "Test push notification sent successfully.",
+  "data": {
+    "firebase_message_name": "projects/malisetu-live/messages/0:123456789"
+  }
+}
 ```
 
 ## Admin workflow

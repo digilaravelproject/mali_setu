@@ -39,6 +39,7 @@ use Illuminate\Support\Facades\Route;
 
 // Public authentication routes
 Route::get('app-version', [AppVersionController::class, 'index']);
+Route::post('notifications/test-push', [FcmTokenController::class, 'test']);
 
 Route::prefix('auth')->group(function () {
     Route::post('register', [AuthController::class, 'register']);
