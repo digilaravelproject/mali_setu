@@ -164,13 +164,21 @@ class BusinessManagementController extends Controller
                 'verified_by' => auth()->id(),
             ]);
 
-            $notification = $this->notifications->notifyBusinessVerified($business->fresh());
-            Log::info('Business approval notification processed', [
-                'business_id' => $business->id,
-                'user_id' => $business->user_id,
-                'notification_id' => $notification?->id,
-                'push_sent' => $notification?->push_sent ?? false,
-            ]);
+            try {
+                $notification = $this->notifications->notifyBusinessVerified($business->fresh());
+                Log::info('Business approval notification processed', [
+                    'business_id' => $business->id,
+                    'user_id' => $business->user_id,
+                    'notification_id' => $notification?->id,
+                    'push_sent' => $notification?->push_sent ?? false,
+                ]);
+            } catch (\Throwable $notificationError) {
+                Log::error('Business approved but its notification failed', [
+                    'business_id' => $business->id,
+                    'user_id' => $business->user_id,
+                    'error' => $notificationError->getMessage(),
+                ]);
+            }
 
             if ($request->ajax()) {
                 return response()->json([
@@ -223,16 +231,24 @@ class BusinessManagementController extends Controller
                 'verified_by' => auth()->id(),
             ]);
 
-            $notification = $this->notifications->notifyBusinessRejected(
-                $business->fresh(),
-                $request->rejection_reason,
-            );
-            Log::info('Business rejection notification processed', [
-                'business_id' => $business->id,
-                'user_id' => $business->user_id,
-                'notification_id' => $notification?->id,
-                'push_sent' => $notification?->push_sent ?? false,
-            ]);
+            try {
+                $notification = $this->notifications->notifyBusinessRejected(
+                    $business->fresh(),
+                    $request->rejection_reason,
+                );
+                Log::info('Business rejection notification processed', [
+                    'business_id' => $business->id,
+                    'user_id' => $business->user_id,
+                    'notification_id' => $notification?->id,
+                    'push_sent' => $notification?->push_sent ?? false,
+                ]);
+            } catch (\Throwable $notificationError) {
+                Log::error('Business rejected but its notification failed', [
+                    'business_id' => $business->id,
+                    'user_id' => $business->user_id,
+                    'error' => $notificationError->getMessage(),
+                ]);
+            }
 
             \Log::info('Business rejected successfully', [
                 'business_id' => $businessId,

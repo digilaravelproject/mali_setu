@@ -185,8 +185,7 @@
                                                 <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#rejectModal"
                                                     data-action="{{ route('admin.businesses.reject', $business->id) }}"
                                                     data-business-name="{{ $business->business_name }}"
-                                                    title="Reject business"
-                                                    onclick="setRejectForm(this)">
+                                                    title="Reject business">
                                                     <i class="fas fa-times"></i>
                                                 </button>
                                             @endif
@@ -271,24 +270,29 @@
 </div>
 @endsection
 
-@section('scripts')
+@push('scripts')
 <script>
-    function setRejectForm(button) {
-        var action = button.dataset.action;
-        var businessName = button.dataset.businessName;
-        var form = document.getElementById('rejectForm');
-        var message = document.getElementById('rejectModalMessage');
-        var reasonField = document.getElementById('rejection_reason');
+    document.addEventListener('DOMContentLoaded', function () {
+        const modal = document.getElementById('rejectModal');
 
-        if (form) {
-            form.action = action || form.action;
+        if (!modal) {
+            return;
         }
-        if (message) {
-            message.textContent = 'Are you sure you want to reject "' + businessName + '"? This will set the business status to Rejected.';
-        }
-        if (reasonField) {
+
+        modal.addEventListener('show.bs.modal', function (event) {
+            const button = event.relatedTarget;
+            const form = document.getElementById('rejectForm');
+            const message = document.getElementById('rejectModalMessage');
+            const reasonField = document.getElementById('rejection_reason');
+
+            if (!button || !form) {
+                return;
+            }
+
+            form.action = button.dataset.action;
+            message.textContent = 'Are you sure you want to reject "' + button.dataset.businessName + '"? This will set the business status to Rejected.';
             reasonField.value = '';
-        }
-    }
+        });
+    });
 </script>
-@endsection
+@endpush

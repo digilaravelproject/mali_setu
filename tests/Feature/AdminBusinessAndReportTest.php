@@ -8,6 +8,7 @@ use App\Services\NotificationService;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Filesystem\FilesystemAdapter;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Schema;
@@ -233,6 +234,34 @@ class AdminBusinessAndReportTest extends TestCase
         $business->refresh();
         $this->assertSame('rejected', $business->verification_status);
         $this->assertSame('Duplicate listing', $business->rejection_reason);
+    }
+
+    public function test_notification_failure_does_not_block_business_rejection(): void
+    {
+        $business = Business::create($this->businessData());
+
+        $this->mock(NotificationService::class, function (MockInterface $mock) {
+            $mock->shouldReceive('notifyBusinessRejected')
+                ->once()
+                ->andThrow(new \RuntimeException('Firebase is temporarily unavailable'));
+        });
+
+        $this->post(route('admin.businesses.reject', $business), [
+            'rejection_reason' => 'Invalid documents',
+        ])->assertRedirect()->assertSessionHas('success');
+
+        $this->assertSame('rejected', $business->fresh()->verification_status);
+    }
+
+    public function test_business_listing_renders_the_rejection_modal_script(): void
+    {
+        $response = $this->view('admin.businesses.index', [
+            'businesses' => new LengthAwarePaginator([], 0, 20),
+            'stats' => ['total' => 0, 'approved' => 0, 'pending' => 0, 'rejected' => 0],
+            'businessTypes' => [],
+        ]);
+
+        $response->assertSee("modal.addEventListener('show.bs.modal'", false);
     }
 
     public function test_invalid_upload_keeps_the_existing_photo(): void

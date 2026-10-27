@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Notification;
 use App\Models\NotificationAction;
 use App\Models\SystemSetting;
 use App\Models\User;
@@ -120,21 +119,7 @@ class NotificationManagementController extends Controller
         }
 
         $data = json_decode($validated['data'] ?? '{}', true) ?: [];
-        $sent = 0;
-        foreach ($userIds as $userId) {
-            $notification = $this->notifications->createNotification(
-                $userId,
-                $action->key,
-                $action->title_template,
-                $action->body_template,
-                $data,
-                $action->action_url,
-                Notification::PRIORITY_MEDIUM,
-                null,
-                ['in_app']
-            );
-            $sent += $notification ? 1 : 0;
-        }
+        $sent = count($this->notifications->triggerAction($action->key, $userIds, $data));
 
         return redirect()->route('admin.notifications.index')->with('success', "Notification processed for {$sent} user(s).");
     }

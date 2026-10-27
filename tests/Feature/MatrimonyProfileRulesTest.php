@@ -80,6 +80,19 @@ class MatrimonyProfileRulesTest extends TestCase
             $table->unsignedBigInteger('related_id')->nullable();
             $table->timestamps();
         });
+        Schema::create('notification_actions', function (Blueprint $table) {
+            $table->id();
+            $table->string('key')->unique();
+            $table->string('name');
+            $table->text('description')->nullable();
+            $table->string('title_template');
+            $table->text('body_template');
+            $table->string('action_url')->nullable();
+            $table->json('available_variables')->nullable();
+            $table->boolean('is_enabled')->default(true);
+            $table->boolean('push_enabled')->default(false);
+            $table->timestamps();
+        });
 
         foreach ([
             1 => ['Current Male', 'male'],

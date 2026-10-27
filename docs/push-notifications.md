@@ -91,6 +91,18 @@ Open **Admin > Push Notifications** to:
 
 An action must be enabled and have **Send Firebase push** enabled. Existing application events use the saved action content instead of hard-coded push content.
 
+Custom actions can be sent immediately from the admin send screen. To trigger a custom action automatically from application code, use its admin-defined key:
+
+```php
+app(\App\Services\NotificationService::class)->triggerAction(
+    'custom_action_key',
+    $userId,
+    ['variable_name' => 'Variable value'],
+);
+```
+
+`triggerAction` accepts one user ID or an array of IDs. It resolves the title, message, deep link, enabled state, and push state from the admin action at send time. Firebase failures are logged and do not undo completed admin approvals or rejections.
+
 ## Mobile payload
 
 Firebase receives both a `notification` block for standard OS display and a `data` block for app navigation. The data block includes:

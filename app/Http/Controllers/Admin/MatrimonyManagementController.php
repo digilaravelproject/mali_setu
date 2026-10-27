@@ -3,24 +3,32 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\MatrimonyProfile;
-use App\Models\ConnectionRequest;
+use App\Models\Cast;
 use App\Models\ChatConversation;
-use App\Models\User;
+use App\Models\ChatMessage;
+use App\Models\ConnectionRequest;
+use App\Models\Education;
+use App\Models\MatrimonyProfile;
 use App\Models\Payment;
+use App\Models\SubCast;
 use App\Models\Transaction;
-use Illuminate\Support\Facades\Storage;
+use App\Models\User;
+use App\Services\NotificationService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 
 class MatrimonyManagementController extends Controller
 {
+    public function __construct(private readonly NotificationService $notifications) {}
+
     /**
      * Display all matrimony profiles
      */
     public function index(Request $request)
     {
         $query = MatrimonyProfile::with(['user', 'matrimonyTransactions']);
-        
+
         // Filter by approval status
         if ($request->has('approval_status') && $request->approval_status !== '') {
             $query->where('approval_status', $request->approval_status);
@@ -30,7 +38,7 @@ class MatrimonyManagementController extends Controller
         if ($request->filled('gender')) {
             $query->adminGender($request->string('gender')->toString());
         }
-        
+
         // Filter by age range
         if ($request->has('age_min') && $request->age_min !== '') {
             $query->where('age', '>=', $request->age_min);
@@ -38,14 +46,14 @@ class MatrimonyManagementController extends Controller
         if ($request->has('age_max') && $request->age_max !== '') {
             $query->where('age', '<=', $request->age_max);
         }
-        
+
         // Search by candidate name or the owning user account.
         if ($request->filled('search')) {
             $query->adminSearch($request->string('search')->toString());
         }
-        
+
         $profiles = $query->latest()->paginate(20)->withQueryString();
-        
+
         $stats = [
             'total' => MatrimonyProfile::count(),
             'approved' => MatrimonyProfile::where('approval_status', 'approved')->count(),
@@ -53,28 +61,28 @@ class MatrimonyManagementController extends Controller
             'rejected' => MatrimonyProfile::where('approval_status', 'rejected')->count(),
             'connections' => ConnectionRequest::where('status', 'accepted')->count(),
             'active_connections' => ConnectionRequest::where('status', 'accepted')->count(),
-            'total_connections' => ConnectionRequest::count()
+            'total_connections' => ConnectionRequest::count(),
         ];
-        
+
         return view('admin.matrimony.index', compact('profiles', 'stats'));
     }
-    
+
     /**
      * Display pending profile moderations
      */
     public function moderation(Request $request)
     {
         $query = MatrimonyProfile::with(['user', 'matrimonyTransactions']);
-            
+
         // Search functionality
         if ($request->filled('search')) {
             $query->adminSearch($request->string('search')->toString());
         }
-        
+
         $pendingProfiles = $query->orderByRaw("FIELD(approval_status, 'pending', 'approved', 'rejected')")
             ->latest()
             ->paginate(15);
-        
+
         $stats = [
             'pending_count' => MatrimonyProfile::where('approval_status', 'pending')->count(),
             'approved_today' => MatrimonyProfile::where('approval_status', 'approved')
@@ -82,10 +90,10 @@ class MatrimonyManagementController extends Controller
             'rejected_today' => MatrimonyProfile::where('approval_status', 'rejected')
                 ->whereDate('updated_at', today())->count(),
         ];
-        
+
         return view('admin.matrimony.moderation', compact('pendingProfiles', 'stats'));
     }
-    
+
     /**
      * Approve matrimony profile
      */
@@ -93,33 +101,43 @@ class MatrimonyManagementController extends Controller
     {
         try {
             $profile = MatrimonyProfile::findOrFail($profileId);
-            
+
             $profile->update([
                 'approval_status' => 'approved',
                 'approved_at' => now(),
-                'approved_by' => auth()->id()
+                'approved_by' => auth()->id(),
             ]);
-            
+
+            try {
+                $this->notifications->notifyMatrimonyApproved($profile->fresh());
+            } catch (\Throwable $notificationError) {
+                Log::error('Matrimony profile approved but its notification failed', [
+                    'profile_id' => $profile->id,
+                    'user_id' => $profile->user_id,
+                    'error' => $notificationError->getMessage(),
+                ]);
+            }
+
             if ($request->ajax()) {
                 return response()->json([
                     'success' => true,
-                    'message' => 'Profile approved successfully!'
+                    'message' => 'Profile approved successfully!',
                 ]);
             }
-            
+
             return redirect()->back()->with('success', 'Profile approved successfully!');
         } catch (\Exception $e) {
             if ($request->ajax()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Failed to approve profile: ' . $e->getMessage()
+                    'message' => 'Failed to approve profile: '.$e->getMessage(),
                 ], 500);
             }
-            
+
             return redirect()->back()->with('error', 'Failed to approve profile.');
         }
     }
-    
+
     /**
      * Reject matrimony profile
      */
@@ -127,38 +145,51 @@ class MatrimonyManagementController extends Controller
     {
         try {
             $request->validate([
-                'rejection_reason' => 'required|string|max:500'
+                'rejection_reason' => 'required|string|max:500',
             ]);
-            
+
             $profile = MatrimonyProfile::findOrFail($profileId);
-            
+
             $profile->update([
                 'approval_status' => 'rejected',
                 'rejection_reason' => $request->rejection_reason,
                 'approved_at' => now(),
-                'approved_by' => auth()->id()
+                'approved_by' => auth()->id(),
             ]);
-            
+
+            try {
+                $this->notifications->notifyMatrimonyRejected(
+                    $profile->fresh(),
+                    $request->rejection_reason
+                );
+            } catch (\Throwable $notificationError) {
+                Log::error('Matrimony profile rejected but its notification failed', [
+                    'profile_id' => $profile->id,
+                    'user_id' => $profile->user_id,
+                    'error' => $notificationError->getMessage(),
+                ]);
+            }
+
             if ($request->ajax()) {
                 return response()->json([
                     'success' => true,
-                    'message' => 'Profile rejected successfully!'
+                    'message' => 'Profile rejected successfully!',
                 ]);
             }
-            
+
             return redirect()->back()->with('success', 'Profile rejected successfully!');
         } catch (\Exception $e) {
             if ($request->ajax()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Failed to reject profile: ' . $e->getMessage()
+                    'message' => 'Failed to reject profile: '.$e->getMessage(),
                 ], 500);
             }
-            
+
             return redirect()->back()->with('error', 'Failed to reject profile.');
         }
     }
-    
+
     /**
      * Show form to create matrimony profile
      */
@@ -166,11 +197,11 @@ class MatrimonyManagementController extends Controller
     {
         // Get all users who don't have a matrimony profile already
         $users = User::whereDoesntHave('matrimonyProfile')->orderBy('name')->get();
-        
+
         // Fetch active castes and subcasts
-        $castes = \App\Models\Cast::where('is_active', true)->orderBy('name')->get();
-        $subcastes = \App\Models\SubCast::where('is_active', true)->orderBy('name')->get();
-        $educations = \App\Models\Education::where('is_active', true)->orderBy('highest_qualification')->get();
+        $castes = Cast::where('is_active', true)->orderBy('name')->get();
+        $subcastes = SubCast::where('is_active', true)->orderBy('name')->get();
+        $educations = Education::where('is_active', true)->orderBy('highest_qualification')->get();
 
         return view('admin.matrimony.create', compact('users', 'castes', 'subcastes', 'educations'));
     }
@@ -192,7 +223,7 @@ class MatrimonyManagementController extends Controller
             'physical_status' => 'nullable|string|max:50',
             'approval_status' => 'required|in:pending,approved,rejected',
             'profile_expires_at' => 'nullable|date',
-            
+
             'personal_details' => 'required|array',
             'family_details' => 'required|array',
             'education_details' => 'required|array',
@@ -216,11 +247,11 @@ class MatrimonyManagementController extends Controller
         $personal = $request->personal_details;
         $personal['gender'] = $request->gender;
         $personal['photos'] = $photoPaths;
-        
+
         $first = $personal['first_name'] ?? '';
         $middle = $personal['middle_name'] ?? '';
         $last = $personal['last_name'] ?? '';
-        $personal['name'] = trim($first . ' ' . ($middle ? $middle . ' ' : '') . $last);
+        $personal['name'] = trim($first.' '.($middle ? $middle.' ' : '').$last);
 
         // Ensure front-end keys compatibility
         $personal['dob'] = $request->date_of_birth;
@@ -230,7 +261,7 @@ class MatrimonyManagementController extends Controller
         $personal['star_details'] = [
             $personal['star'] ?? '',
             $personal['raasi'] ?? '',
-            'manglik-' . strtolower($personal['manglik'] ?? 'no')
+            'manglik-'.strtolower($personal['manglik'] ?? 'no'),
         ];
         $personal['refferal_name'] = $personal['referral_name'] ?? '';
 
@@ -293,9 +324,9 @@ class MatrimonyManagementController extends Controller
     public function edit($id)
     {
         $profile = MatrimonyProfile::findOrFail($id);
-        $castes = \App\Models\Cast::where('is_active', true)->orderBy('name')->get();
-        $subcastes = \App\Models\SubCast::where('is_active', true)->orderBy('name')->get();
-        $educations = \App\Models\Education::where('is_active', true)->orderBy('highest_qualification')->get();
+        $castes = Cast::where('is_active', true)->orderBy('name')->get();
+        $subcastes = SubCast::where('is_active', true)->orderBy('name')->get();
+        $educations = Education::where('is_active', true)->orderBy('highest_qualification')->get();
 
         return view('admin.matrimony.edit', compact('profile', 'castes', 'subcastes', 'educations'));
     }
@@ -318,7 +349,7 @@ class MatrimonyManagementController extends Controller
             'physical_status' => 'nullable|string|max:50',
             'approval_status' => 'required|in:pending,approved,rejected',
             'profile_expires_at' => 'nullable|date',
-            
+
             'personal_details' => 'required|array',
             'family_details' => 'required|array',
             'education_details' => 'required|array',
@@ -364,11 +395,11 @@ class MatrimonyManagementController extends Controller
         $personal = $request->personal_details;
         $personal['gender'] = $request->gender;
         $personal['photos'] = $photoPaths;
-        
+
         $first = $personal['first_name'] ?? '';
         $middle = $personal['middle_name'] ?? '';
         $last = $personal['last_name'] ?? '';
-        $personal['name'] = trim($first . ' ' . ($middle ? $middle . ' ' : '') . $last);
+        $personal['name'] = trim($first.' '.($middle ? $middle.' ' : '').$last);
 
         // Ensure front-end keys compatibility
         $personal['dob'] = $request->date_of_birth;
@@ -378,7 +409,7 @@ class MatrimonyManagementController extends Controller
         $personal['star_details'] = [
             $personal['star'] ?? '',
             $personal['raasi'] ?? '',
-            'manglik-' . strtolower($personal['manglik'] ?? 'no')
+            'manglik-'.strtolower($personal['manglik'] ?? 'no'),
         ];
         $personal['refferal_name'] = $personal['referral_name'] ?? '';
 
@@ -391,11 +422,11 @@ class MatrimonyManagementController extends Controller
         $family['family_type'] = $family['family_type'] ?? '';
         $family['family_class'] = $family['family_class'] ?? '';
         $family['family_value'] = $family['family_value'] ?? '';
-        
+
         // Preserve other existing family details keys if present in DB
         $existingFamily = $profile->family_details ?? [];
         foreach (['father_name', 'mother_name', 'about_family', 'no_of_brothers', 'no_of_sisters', 'siblings'] as $k) {
-            if (!isset($family[$k]) && isset($existingFamily[$k])) {
+            if (! isset($family[$k]) && isset($existingFamily[$k])) {
                 $family[$k] = $existingFamily[$k];
             }
         }
@@ -405,7 +436,7 @@ class MatrimonyManagementController extends Controller
         $education['college'] = $education['college_name'] ?? '';
         $education['college_name'] = $education['college_name'] ?? '';
         $existingEducation = $profile->education_details ?? [];
-        if (!isset($education['passing_year']) && isset($existingEducation['passing_year'])) {
+        if (! isset($education['passing_year']) && isset($existingEducation['passing_year'])) {
             $education['passing_year'] = $existingEducation['passing_year'];
         }
 
@@ -449,12 +480,12 @@ class MatrimonyManagementController extends Controller
             'user',
             'sentConnectionRequests.receiver',
             'receivedConnectionRequests.sender',
-            'matrimonyTransactions'
+            'matrimonyTransactions',
         ])->findOrFail($id);
-        
+
         return view('admin.matrimony.show', compact('profile'));
     }
-    
+
     /**
      * Suspend profile
      */
@@ -462,10 +493,10 @@ class MatrimonyManagementController extends Controller
     {
         $profile = MatrimonyProfile::findOrFail($id);
         $profile->update(['status' => 'suspended']);
-        
+
         return redirect()->back()->with('success', 'Profile suspended successfully!');
     }
-    
+
     /**
      * Activate profile
      */
@@ -473,55 +504,55 @@ class MatrimonyManagementController extends Controller
     {
         $profile = MatrimonyProfile::findOrFail($id);
         $profile->update(['status' => 'active']);
-        
+
         return redirect()->back()->with('success', 'Profile activated successfully!');
     }
-    
+
     /**
      * View connection requests
      */
     public function connections(Request $request)
     {
         $query = ConnectionRequest::with(['sender.user', 'receiver.user']);
-        
+
         // Filter by status
         if ($request->has('status') && $request->status !== '') {
             $query->where('status', $request->status);
         }
-        
+
         $connections = $query->latest()->paginate(20);
-        
+
         $stats = [
             'total' => ConnectionRequest::count(),
             'pending' => ConnectionRequest::where('status', 'pending')->count(),
             'accepted' => ConnectionRequest::where('status', 'accepted')->count(),
             'rejected' => ConnectionRequest::where('status', 'rejected')->count(),
         ];
-        
+
         return view('admin.matrimony.connections', compact('connections', 'stats'));
     }
-    
+
     /**
      * View chat conversations
      */
     public function chats(Request $request)
     {
-        $query = ChatConversation::with(['user1', 'user2', 'messages' => function($q) {
+        $query = ChatConversation::with(['user1', 'user2', 'messages' => function ($q) {
             $q->latest()->limit(1);
         }]);
-        
+
         $conversations = $query->latest('last_message_at')->paginate(20);
-        
+
         $stats = [
             'total_conversations' => ChatConversation::count(),
             'active_today' => ChatConversation::whereDate('last_message_at', today())->count(),
-            'total_messages' => \App\Models\ChatMessage::count(),
-            'messages_today' => \App\Models\ChatMessage::whereDate('created_at', today())->count(),
+            'total_messages' => ChatMessage::count(),
+            'messages_today' => ChatMessage::whereDate('created_at', today())->count(),
         ];
-        
+
         return view('admin.matrimony.chats', compact('conversations', 'stats'));
     }
-    
+
     /**
      * Delete profile and all associated payment and transaction data
      */
@@ -543,13 +574,13 @@ class MatrimonyManagementController extends Controller
         Payment::where('user_id', $userId)
             ->where(function ($query) use ($transactionIds, $razorpayOrderIds, $razorpayPaymentIds) {
                 $query->where('payment_type', 'matrimony_subscription');
-                if (!empty($transactionIds)) {
+                if (! empty($transactionIds)) {
                     $query->orWhereIn('transaction_id', $transactionIds);
                 }
-                if (!empty($razorpayOrderIds)) {
+                if (! empty($razorpayOrderIds)) {
                     $query->orWhereIn('order_id', $razorpayOrderIds);
                 }
-                if (!empty($razorpayPaymentIds)) {
+                if (! empty($razorpayPaymentIds)) {
                     $query->orWhereIn('payment_id', $razorpayPaymentIds);
                 }
             })
@@ -561,7 +592,7 @@ class MatrimonyManagementController extends Controller
             ->delete();
 
         // Clean up profile photos from storage if available
-        if ($profile->personal_details && is_array($profile->personal_details) && !empty($profile->personal_details['photos'])) {
+        if ($profile->personal_details && is_array($profile->personal_details) && ! empty($profile->personal_details['photos'])) {
             foreach ($profile->personal_details['photos'] as $photo) {
                 if ($photo && Storage::disk('public')->exists($photo)) {
                     Storage::disk('public')->delete($photo);

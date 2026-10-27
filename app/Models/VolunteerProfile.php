@@ -16,6 +16,7 @@ class VolunteerProfile extends Model
         'bio',
         'interests',
         'status',
+        'rejection_reason',
     ];
 
     protected $casts = [

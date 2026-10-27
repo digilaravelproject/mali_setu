@@ -262,6 +262,35 @@ class NotificationService
     }
 
     /**
+     * Trigger any admin-defined notification action by its key.
+     *
+     * Application events can call this method with the action key configured by
+     * the admin, so notification text and push enablement remain data-driven.
+     */
+    public function triggerAction(
+        string $actionKey,
+        array|int $userIds,
+        array $data = [],
+        $relatedModel = null,
+        string $priority = Notification::PRIORITY_MEDIUM,
+        array $channels = ['in_app']
+    ): array {
+        $action = NotificationAction::query()->where('key', $actionKey)->firstOrFail();
+
+        return $this->sendBulkNotifications(
+            (array) $userIds,
+            $action->key,
+            $action->title_template,
+            $action->body_template,
+            $data,
+            $action->action_url,
+            $priority,
+            $channels,
+            $relatedModel
+        );
+    }
+
+    /**
      * Notification helpers for specific events
      */
     public function notifyRegistrationApproved(User $user)
@@ -333,6 +362,72 @@ class NotificationService
             '/business/manage',
             Notification::PRIORITY_HIGH,
             $business,
+            ['in_app', 'email']
+        );
+    }
+
+    public function notifyMatrimonyApproved(MatrimonyProfile $profile)
+    {
+        return $this->createNotification(
+            $profile->user_id,
+            Notification::TYPE_MATRIMONY_APPROVED,
+            'Matrimony Profile Approved',
+            'Your matrimony profile has been approved.',
+            ['profile_id' => $profile->id],
+            '/dashboard/matrimony',
+            Notification::PRIORITY_HIGH,
+            $profile,
+            ['in_app', 'email']
+        );
+    }
+
+    public function notifyMatrimonyRejected(MatrimonyProfile $profile, string $reason)
+    {
+        return $this->createNotification(
+            $profile->user_id,
+            Notification::TYPE_MATRIMONY_REJECTED,
+            'Matrimony Profile Rejected',
+            'Your matrimony profile was rejected. Reason: '.$reason,
+            [
+                'profile_id' => $profile->id,
+                'reason' => $reason,
+            ],
+            '/dashboard/matrimony',
+            Notification::PRIORITY_HIGH,
+            $profile,
+            ['in_app', 'email']
+        );
+    }
+
+    public function notifyVolunteerApproved($volunteer)
+    {
+        return $this->createNotification(
+            $volunteer->user_id,
+            Notification::TYPE_VOLUNTEER_APPROVED,
+            'Volunteer Profile Approved',
+            'Your volunteer profile has been approved.',
+            ['volunteer_id' => $volunteer->id],
+            '/volunteer',
+            Notification::PRIORITY_HIGH,
+            $volunteer,
+            ['in_app', 'email']
+        );
+    }
+
+    public function notifyVolunteerRejected($volunteer, string $reason)
+    {
+        return $this->createNotification(
+            $volunteer->user_id,
+            Notification::TYPE_VOLUNTEER_REJECTED,
+            'Volunteer Profile Rejected',
+            'Your volunteer profile was rejected. Reason: '.$reason,
+            [
+                'volunteer_id' => $volunteer->id,
+                'reason' => $reason,
+            ],
+            '/volunteer',
+            Notification::PRIORITY_HIGH,
+            $volunteer,
             ['in_app', 'email']
         );
     }

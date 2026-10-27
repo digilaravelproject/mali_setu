@@ -2,10 +2,10 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
-use Carbon\Carbon;
 
 class Notification extends Model
 {
@@ -25,7 +25,7 @@ class Notification extends Model
         'push_sent',
         'push_sent_at',
         'related_type',
-        'related_id'
+        'related_id',
     ];
 
     protected $casts = [
@@ -35,49 +35,78 @@ class Notification extends Model
         'push_sent' => 'boolean',
         'read_at' => 'datetime',
         'email_sent_at' => 'datetime',
-        'push_sent_at' => 'datetime'
+        'push_sent_at' => 'datetime',
     ];
 
     protected $dates = [
         'read_at',
         'email_sent_at',
-        'push_sent_at'
+        'push_sent_at',
     ];
 
     // Notification types constants
     const TYPE_REGISTRATION_APPROVED = 'registration_approved';
+
     const TYPE_REGISTRATION_REJECTED = 'registration_rejected';
+
     const TYPE_BUSINESS_VERIFIED = 'business_verified';
+
     const TYPE_BUSINESS_REJECTED = 'business_rejected';
+
     const TYPE_MATRIMONY_APPROVED = 'matrimony_approved';
+
     const TYPE_MATRIMONY_REJECTED = 'matrimony_rejected';
+
     const TYPE_MATRIMONY_PENDING = 'matrimony_pending';
+
     const TYPE_MATRIMONY_PROFILE_CREATED = 'matrimony_profile_created';
+
     const TYPE_CONNECTION_REQUEST = 'connection_request';
+
     const TYPE_CONNECTION_ACCEPTED = 'connection_accepted';
+
     const TYPE_CONNECTION_REJECTED = 'connection_rejected';
+
     const TYPE_JOB_APPLICATION = 'job_application';
+
     const TYPE_JOB_APPLICATION_STATUS = 'job_application_status';
+
     const TYPE_VOLUNTEER_APPLICATION = 'volunteer_application';
+
     const TYPE_VOLUNTEER_APPROVED = 'volunteer_approved';
+
+    const TYPE_VOLUNTEER_REJECTED = 'volunteer_rejected';
+
     const TYPE_DONATION_RECEIVED = 'donation_received';
+
     const TYPE_PAYMENT_SUCCESS = 'payment_success';
+
     const TYPE_PAYMENT_FAILED = 'payment_failed';
+
     const TYPE_ADMIN_ANNOUNCEMENT = 'admin_announcement';
+
     const TYPE_PROFILE_UPDATE = 'profile_update';
+
     const TYPE_NEW_MESSAGE = 'new_message';
+
     const TYPE_SUBSCRIPTION_EXPIRY_REMINDER = 'subscription_expiry_reminder';
 
     // Priority levels
     const PRIORITY_LOW = 'low';
+
     const PRIORITY_MEDIUM = 'medium';
+
     const PRIORITY_HIGH = 'high';
+
     const PRIORITY_URGENT = 'urgent';
 
     // Channels
     const CHANNEL_IN_APP = 'in_app';
+
     const CHANNEL_EMAIL = 'email';
+
     const CHANNEL_PUSH = 'push';
+
     const CHANNEL_SMS = 'sms';
 
     /**
@@ -143,7 +172,7 @@ class Notification extends Model
     {
         $this->update([
             'is_read' => true,
-            'read_at' => Carbon::now()
+            'read_at' => Carbon::now(),
         ]);
     }
 
@@ -154,7 +183,7 @@ class Notification extends Model
     {
         $this->update([
             'is_read' => false,
-            'read_at' => null
+            'read_at' => null,
         ]);
     }
 
@@ -165,7 +194,7 @@ class Notification extends Model
     {
         $this->update([
             'email_sent' => true,
-            'email_sent_at' => Carbon::now()
+            'email_sent_at' => Carbon::now(),
         ]);
     }
 
@@ -176,7 +205,7 @@ class Notification extends Model
     {
         $this->update([
             'push_sent' => true,
-            'push_sent_at' => Carbon::now()
+            'push_sent_at' => Carbon::now(),
         ]);
     }
 
@@ -225,12 +254,13 @@ class Notification extends Model
             self::TYPE_JOB_APPLICATION_STATUS => 'file-text',
             self::TYPE_VOLUNTEER_APPLICATION => 'hand',
             self::TYPE_VOLUNTEER_APPROVED => 'hand',
+            self::TYPE_VOLUNTEER_REJECTED => 'hand',
             self::TYPE_DONATION_RECEIVED => 'gift',
             self::TYPE_PAYMENT_SUCCESS => 'credit-card',
             self::TYPE_PAYMENT_FAILED => 'credit-card',
             self::TYPE_ADMIN_ANNOUNCEMENT => 'megaphone',
             self::TYPE_PROFILE_UPDATE => 'user',
-            self::TYPE_NEW_MESSAGE => 'message-circle'
+            self::TYPE_NEW_MESSAGE => 'message-circle',
         ];
 
         return $icons[$this->type] ?? 'bell';
@@ -261,7 +291,7 @@ class Notification extends Model
             self::TYPE_CONNECTION_REJECTED => 'red',
             self::TYPE_DONATION_RECEIVED => 'purple',
             self::TYPE_PAYMENT_SUCCESS => 'green',
-            self::TYPE_PAYMENT_FAILED => 'red'
+            self::TYPE_PAYMENT_FAILED => 'red',
         ];
 
         return $colors[$this->type] ?? 'gray';
@@ -281,7 +311,7 @@ class Notification extends Model
             'action_url' => $actionUrl,
             'priority' => $priority,
             'related_type' => $relatedModel ? get_class($relatedModel) : null,
-            'related_id' => $relatedModel ? $relatedModel->id : null
+            'related_id' => $relatedModel ? $relatedModel->id : null,
         ]);
 
         return $notification;
@@ -296,7 +326,7 @@ class Notification extends Model
             ->whereIn('id', $notificationIds)
             ->update([
                 'is_read' => true,
-                'read_at' => Carbon::now()
+                'read_at' => Carbon::now(),
             ]);
     }
 
