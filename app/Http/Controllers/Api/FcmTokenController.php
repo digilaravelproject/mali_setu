@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Exceptions\FirebaseMessagingException;
 use App\Http\Controllers\Controller;
 use App\Services\FirebaseMessagingService;
 use Illuminate\Http\JsonResponse;
@@ -70,6 +71,35 @@ class FcmTokenController extends Controller
                 'message' => 'Test push notification sent successfully.',
                 'data' => ['firebase_message_name' => $result['name'] ?? null],
             ]);
+        } catch (FirebaseMessagingException $e) {
+            Log::error('Test push API request rejected by Firebase', $logContext + [
+                'firebase_error_code' => $e->firebaseErrorCode,
+                'project_id' => $e->projectId,
+                'http_status' => $e->httpStatus,
+                'firebase_response' => $e->firebaseResponse,
+            ]);
+
+            if ($e->firebaseErrorCode === 'SENDER_ID_MISMATCH' || str_contains(strtolower($e->getMessage()), 'senderid mismatch')) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'The FCM token belongs to a different Firebase project.',
+                    'error_code' => 'SENDER_ID_MISMATCH',
+                    'configured_project_id' => $e->projectId,
+                    'resolution' => [
+                        "Configure the mobile app with Firebase project {$e->projectId}.",
+                        'Remove the old app installation or clear its app data.',
+                        'Launch the app again and retrieve a newly generated FCM token.',
+                        'Retry this API with the new token.',
+                    ],
+                ], 422);
+            }
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Firebase rejected the test push notification.',
+                'error_code' => $e->firebaseErrorCode,
+                'error' => $e->getMessage(),
+            ], $e->httpStatus && $e->httpStatus >= 400 ? $e->httpStatus : 502);
         } catch (\Throwable $e) {
             Log::error('Test push API request failed', $logContext + [
                 'error' => $e->getMessage(),

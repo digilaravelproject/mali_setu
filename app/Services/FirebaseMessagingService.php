@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Exceptions\FirebaseMessagingException;
 use App\Models\SystemSetting;
 use Firebase\JWT\JWT;
 use Illuminate\Http\Client\PendingRequest;
@@ -55,7 +56,17 @@ class FirebaseMessagingService
 
             $response = $this->http()->withToken($accessToken)->post($url, $payload);
             if ($response->failed()) {
-                throw new \RuntimeException('Firebase rejected the notification: '.$response->json('error.message', $response->body()));
+                $firebaseResponse = $response->json() ?: [];
+                $errorDetails = collect(data_get($firebaseResponse, 'error.details', []))
+                    ->first(fn ($detail) => is_array($detail) && isset($detail['errorCode']));
+
+                throw new FirebaseMessagingException(
+                    $response->json('error.message', 'Firebase rejected the notification.'),
+                    $errorDetails['errorCode'] ?? $response->json('error.status'),
+                    $credentials['project_id'],
+                    $response->status(),
+                    $firebaseResponse,
+                );
             }
 
             $firebaseResponse = $response->json();
@@ -119,6 +130,6 @@ class FirebaseMessagingService
 
     private function http(): PendingRequest
     {
-        return Http::acceptJson()->timeout(15)->retry(2, 250);
+        return Http::acceptJson()->timeout(15)->retry(2, 250, null, false);
     }
 }

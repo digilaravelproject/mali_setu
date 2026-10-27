@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Exceptions\FirebaseMessagingException;
 use App\Services\FirebaseMessagingService;
 use Mockery\MockInterface;
 use Tests\TestCase;
@@ -46,5 +47,27 @@ class TestPushNotificationApiTest extends TestCase
             'message' => 'Test push notification could not be sent.',
             'error' => 'Requested entity was not found.',
         ]);
+    }
+
+    public function test_sender_id_mismatch_returns_actionable_resolution(): void
+    {
+        $this->mock(FirebaseMessagingService::class, function (MockInterface $mock) {
+            $mock->shouldReceive('send')->once()->andThrow(new FirebaseMessagingException(
+                'SenderId mismatch',
+                'SENDER_ID_MISMATCH',
+                'malisetu-live',
+                403,
+                ['error' => ['message' => 'SenderId mismatch']],
+            ));
+        });
+
+        $response = $this->postJson('/api/notifications/test-push', [
+            'fcm_token' => 'token-from-another-project',
+        ]);
+
+        $response->assertStatus(422)
+            ->assertJsonPath('error_code', 'SENDER_ID_MISMATCH')
+            ->assertJsonPath('configured_project_id', 'malisetu-live')
+            ->assertJsonCount(4, 'resolution');
     }
 }
