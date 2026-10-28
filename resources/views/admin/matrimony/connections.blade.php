@@ -6,7 +6,7 @@
 @push('styles')
 <style>
     .request-page { --request-accent:#a60753; --request-soft:#fff1f6; }
-    .request-shell, .request-detail { border:1px solid #e6e9ef; border-radius:14px; background:#fff; }
+    .request-shell { border:1px solid #e6e9ef; border-radius:14px; background:#fff; }
     .request-tabs { display:flex; overflow-x:auto; border-bottom:1px solid #e6e9ef; }
     .request-tabs .nav-link { min-width:130px; padding:1rem; border:0; border-right:1px solid #edf0f4; border-radius:0; color:#4b5563; white-space:nowrap; }
     .request-tabs .nav-link.active { color:var(--request-accent); background:#fff; border-bottom:3px solid var(--request-accent); font-weight:700; }
@@ -32,8 +32,8 @@
     .status-accepted { background:#dff7e9; color:#087a42; }
     .status-rejected { background:#ffe2e5; color:#c82938; }
     .status-removed, .status-cancelled { background:#edf0f4; color:#52606f; }
-    .request-detail { position:sticky; top:1rem; overflow:hidden; }
     .request-detail-header { padding:1rem; border-bottom:1px solid #e6e9ef; font-weight:800; }
+    .request-details-panel { width:min(430px, 100vw) !important; }
     .detail-person { padding:1rem; border:1px solid #e6e9ef; border-radius:12px; }
     .detail-avatar { width:64px; height:64px; border-radius:50%; object-fit:cover; background:#f1f5f9; }
     .detail-arrow { color:#64748b; font-size:1.35rem; text-align:center; padding:.45rem; }
@@ -96,8 +96,7 @@
         </form>
     </div>
 
-    <div class="row g-3 align-items-start">
-        <div class="col-xl-9"><div class="request-shell overflow-hidden">
+    <div class="request-shell overflow-hidden">
             <div class="table-responsive"><table class="table request-table align-middle mb-0">
                 <thead><tr><th>#</th><th>Sender</th><th></th><th>Receiver</th><th>Sent On</th><th>Status</th><th>Responded On</th><th>Action</th></tr></thead>
                 <tbody>
@@ -130,7 +129,7 @@
                         <td class="text-nowrap small">{{ $connection->created_at?->format('d M Y, h:i A') }}</td>
                         <td><span class="status-pill status-{{ $connection->status }}">{{ ucfirst($connection->status) }}</span></td>
                         <td class="text-nowrap small">{{ $connection->responded_at?->format('d M Y, h:i A') ?? '-' }}</td>
-                        <td><button type="button" class="btn btn-sm btn-outline-primary view-request" data-details="{{ json_encode($details) }}"><i class="fas fa-eye me-1"></i> View</button></td>
+                        <td><button type="button" class="btn btn-sm btn-outline-primary view-request" data-bs-toggle="offcanvas" data-bs-target="#requestDetailsPanel" aria-controls="requestDetailsPanel" data-details="{{ json_encode($details) }}"><i class="fas fa-eye me-1"></i> View</button></td>
                     </tr>
                 @empty
                     <tr><td colspan="8" class="request-empty"><i class="fas fa-magnifying-glass fa-2x mb-3 d-block"></i>No matrimony requests match these filters.</td></tr>
@@ -138,17 +137,19 @@
                 </tbody>
             </table></div>
             @if($connections->hasPages())<div class="p-3 border-top">{{ $connections->links('pagination::bootstrap-5') }}</div>@endif
-        </div></div>
-        <aside class="col-xl-3"><div class="request-detail" id="requestDetail">
-            <div class="request-detail-header">Request Details</div>
-            <div class="p-3" id="requestDetailEmpty"><div class="text-center text-muted py-5"><i class="fas fa-eye fa-2x mb-3 d-block"></i>Select a request to view details.</div></div>
-            <div class="p-3" id="requestDetailBody" style="display:none">
+    </div>
+
+    <div class="offcanvas offcanvas-end request-details-panel" tabindex="-1" id="requestDetailsPanel" aria-labelledby="requestDetailsTitle">
+        <div class="offcanvas-header border-bottom">
+            <h5 class="offcanvas-title fw-bold" id="requestDetailsTitle">Request Details</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+        </div>
+        <div class="offcanvas-body">
                 <div class="detail-person"><div class="small fw-bold mb-2">Sender (Sent Request)</div><div class="d-flex align-items-center gap-3"><img id="detailSenderPhoto" class="detail-avatar" alt=""><div><div id="detailSenderName" class="fw-bold"></div><div id="detailSenderPhone" class="small text-muted"></div><div id="detailSenderMeta" class="small text-muted"></div></div></div><a id="detailSenderLink" class="btn btn-sm btn-light border w-100 mt-3">View Profile</a></div>
                 <div class="detail-arrow"><i class="fas fa-arrow-down"></i></div>
                 <div class="detail-person"><div class="small fw-bold text-danger mb-2">Receiver (Received Request)</div><div class="d-flex align-items-center gap-3"><img id="detailReceiverPhoto" class="detail-avatar" alt=""><div><div id="detailReceiverName" class="fw-bold"></div><div id="detailReceiverPhone" class="small text-muted"></div><div id="detailReceiverMeta" class="small text-muted"></div></div></div><a id="detailReceiverLink" class="btn btn-sm btn-light border w-100 mt-3">View Profile</a></div>
                 <div class="bg-light rounded-3 p-3 mt-3 small"><div class="d-flex justify-content-between mb-2"><span class="text-muted">Sent On</span><strong id="detailSent"></strong></div><div class="d-flex justify-content-between mb-2"><span class="text-muted">Responded On</span><strong id="detailResponded"></strong></div><div class="d-flex justify-content-between mb-2"><span class="text-muted">Status</span><span id="detailStatus"></span></div><div class="mb-2"><span class="text-muted d-block">Message</span><span id="detailMessage"></span></div><div><span class="text-muted d-block">Response</span><span id="detailResponse"></span></div></div>
-            </div>
-        </div></aside>
+        </div>
     </div>
 </div>
 @endsection
@@ -160,7 +161,6 @@ document.addEventListener('DOMContentLoaded', function () {
     const setText = (id, value) => { document.getElementById(id).textContent = value || '-'; };
     function showDetails(button) {
         const data = JSON.parse(button.dataset.details);
-        document.getElementById('requestDetailEmpty').style.display = 'none'; document.getElementById('requestDetailBody').style.display = 'block';
         document.getElementById('detailSenderPhoto').src = data.sender_photo; document.getElementById('detailReceiverPhoto').src = data.receiver_photo;
         setText('detailSenderName', data.sender_name); setText('detailSenderPhone', data.sender_phone); setText('detailSenderMeta', data.sender_meta);
         setText('detailReceiverName', data.receiver_name); setText('detailReceiverPhone', data.receiver_phone); setText('detailReceiverMeta', data.receiver_meta);
@@ -170,7 +170,6 @@ document.addEventListener('DOMContentLoaded', function () {
         buttons.forEach(item => item.classList.remove('active')); button.classList.add('active');
     }
     buttons.forEach(button => button.addEventListener('click', () => showDetails(button)));
-    if (buttons[0]) showDetails(buttons[0]);
 });
 </script>
 @endpush

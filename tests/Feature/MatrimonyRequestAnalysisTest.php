@@ -61,6 +61,9 @@ class MatrimonyRequestAnalysisTest extends TestCase
     {
         $this->get(route('admin.matrimony.connections'))->assertOk()
             ->assertSee('Request Details')->assertSee('From Member')->assertSee('To Member')
-            ->assertSee('Age Range')->assertSee('Sent Requests')->assertSee('Received Requests');
+            ->assertSee('Age Range')->assertSee('Sent Requests')->assertSee('Received Requests')
+            ->assertSee('offcanvas offcanvas-end request-details-panel', false)
+            ->assertSee('data-bs-target="#requestDetailsPanel"', false)
+            ->assertDontSee('if (buttons[0])', false);
     }
 }
