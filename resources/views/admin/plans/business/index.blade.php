@@ -37,7 +37,7 @@
                             <tbody>
                                 @foreach($plans as $k => $plan)
                                     <tr>
-                                        <td>#{{ $k+1 }}</td>
+                                        <td>#{{ $plans->firstItem() + $k }}</td>
                                         <td>{{ $plan->company_type }}</td>
                                         <td class="text-center">{{ $plan->duration_years }}</td>
                                         <td>₹{{ number_format($plan->price, 2) }}</td>
@@ -55,6 +55,7 @@
                             </tbody>
                         </table>
                     </div>
+                    @if($plans->hasPages())<div class="mt-3">{{ $plans->links('pagination::bootstrap-5') }}</div>@endif
                 </div>
             </div>
         </div>

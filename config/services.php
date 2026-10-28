@@ -62,6 +62,10 @@ return [
         'redirect'      => env('GOOGLE_REDIRECT_URL', '/auth/google/callback'),
     ],
 
+    'firebase' => [
+        'web_api_key' => env('FIREBASE_WEB_API_KEY'),
+    ],
+
     'facebook' => [
         'client_id'     => env('FACEBOOK_CLIENT_ID'),
         'client_secret' => env('FACEBOOK_CLIENT_SECRET'),

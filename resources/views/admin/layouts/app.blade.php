@@ -342,10 +342,14 @@
             </div>
             
             <div class="nav-item">
-                <a href="{{ route('admin.matrimony.index') }}" class="nav-link {{ request()->routeIs('admin.matrimony.*') ? 'active' : '' }}">
-                    <i class="fas fa-heart"></i>
-                    Matrimony
+                <a class="nav-link d-flex justify-content-between align-items-center {{ request()->routeIs('admin.matrimony.*') ? 'active' : '' }}"
+                   data-bs-toggle="collapse" href="#matrimonyMenu" aria-expanded="{{ request()->routeIs('admin.matrimony.*') ? 'true' : 'false' }}">
+                    <span><i class="fas fa-heart"></i> Matrimony</span><i class="fas fa-chevron-down"></i>
                 </a>
+                <div class="collapse {{ request()->routeIs('admin.matrimony.*') ? 'show' : '' }}" id="matrimonyMenu">
+                    <div class="nav-item" style="margin-left:.6rem"><a href="{{ route('admin.matrimony.index') }}" class="nav-link {{ request()->routeIs('admin.matrimony.index') || request()->routeIs('admin.matrimony.show') || request()->routeIs('admin.matrimony.edit') ? 'active' : '' }}"><i class="fas fa-user-friends"></i> Matrimony Profiles</a></div>
+                    <div class="nav-item" style="margin-left:.6rem"><a href="{{ route('admin.matrimony.connections') }}" class="nav-link {{ request()->routeIs('admin.matrimony.connections') ? 'active' : '' }}"><i class="fas fa-paper-plane"></i> Request Analysis</a></div>
+                </div>
             </div>
 
             <div class="nav-item">
@@ -415,10 +419,13 @@
             </div>
 
             <div class="nav-item">
-                <a href="{{ route('admin.settings') }}" class="nav-link {{ request()->routeIs('admin.settings') ? 'active' : '' }}">
-                    <i class="fas fa-cog"></i>
-                    Settings
+                <a class="nav-link d-flex justify-content-between align-items-center {{ request()->routeIs('admin.settings*') || request()->routeIs('admin.support-numbers.*') ? 'active' : '' }}" data-bs-toggle="collapse" href="#settingsMenu" aria-expanded="{{ request()->routeIs('admin.settings*') || request()->routeIs('admin.support-numbers.*') ? 'true' : 'false' }}">
+                    <span><i class="fas fa-cog"></i> Settings</span><i class="fas fa-chevron-down"></i>
                 </a>
+                <div class="collapse {{ request()->routeIs('admin.settings*') || request()->routeIs('admin.support-numbers.*') ? 'show' : '' }}" id="settingsMenu">
+                    <div class="nav-item" style="margin-left:.6rem"><a href="{{ route('admin.settings') }}" class="nav-link {{ request()->routeIs('admin.settings*') ? 'active' : '' }}"><i class="fas fa-sliders"></i> Other Settings</a></div>
+                    <div class="nav-item" style="margin-left:.6rem"><a href="{{ route('admin.support-numbers.index') }}" class="nav-link {{ request()->routeIs('admin.support-numbers.*') ? 'active' : '' }}"><i class="fas fa-headset"></i> Support Number</a></div>
+                </div>
             </div>
         </nav>
     </div>

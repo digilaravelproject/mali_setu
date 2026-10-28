@@ -15,6 +15,7 @@
                             <i class="fas fa-plus"></i> Add Plan
                         </a>
                     </div>
+                    @if($plans->hasPages())<div class="mt-3">{{ $plans->links('pagination::bootstrap-5') }}</div>@endif
                 </div>
 
                 <div class="card-body">

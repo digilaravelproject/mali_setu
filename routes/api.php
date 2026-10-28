@@ -19,6 +19,8 @@ use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\PasswordResetController;
 use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\PlanController;
+use App\Http\Controllers\Api\PhoneOtpController;
+use App\Http\Controllers\Api\SupportNumberController;
 use App\Http\Controllers\Api\SearchController;
 use App\Http\Controllers\Api\SocialAuthController;
 use App\Http\Controllers\Api\VolunteerController;
@@ -40,6 +42,9 @@ use Illuminate\Support\Facades\Route;
 // Public authentication routes
 Route::get('app-version', [AppVersionController::class, 'index']);
 Route::post('notifications/test-push', [FcmTokenController::class, 'test']);
+Route::post('auth/phone/send-otp', [PhoneOtpController::class, 'send'])->middleware('throttle:5,1');
+Route::post('auth/phone/resend-otp', [PhoneOtpController::class, 'resend'])->middleware('throttle:5,1');
+Route::get('support-numbers', [SupportNumberController::class, 'index']);
 
 Route::prefix('auth')->group(function () {
     Route::post('register', [AuthController::class, 'register']);
@@ -191,6 +196,12 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::delete('{id}', [BusinessController::class, 'destroy']);
         Route::post('products', [BusinessController::class, 'addProduct']);
         Route::post('services', [BusinessController::class, 'addService']);
+        Route::put('products/{id}', [BusinessController::class, 'updateProduct']);
+        Route::post('products/{id}', [BusinessController::class, 'updateProduct']);
+        Route::delete('products/{id}', [BusinessController::class, 'deleteProduct']);
+        Route::put('services/{id}', [BusinessController::class, 'updateService']);
+        Route::post('services/{id}', [BusinessController::class, 'updateService']);
+        Route::delete('services/{id}', [BusinessController::class, 'deleteService']);
     });
 
     // Business Management Routes

@@ -513,14 +513,22 @@ class MatrimonyManagementController extends Controller
      */
     public function connections(Request $request)
     {
-        $query = ConnectionRequest::with(['sender.user', 'receiver.user']);
+        $query = ConnectionRequest::with(['sender.matrimonyProfile', 'receiver.matrimonyProfile']);
 
         // Filter by status
         if ($request->has('status') && $request->status !== '') {
             $query->where('status', $request->status);
         }
 
-        $connections = $query->latest()->paginate(20);
+        if ($request->filled('search')) {
+            $search = $request->string('search')->toString();
+            $query->where(function ($builder) use ($search) {
+                $builder->whereHas('sender', fn ($q) => $q->where('name', 'like', '%'.$search.'%'))
+                    ->orWhereHas('receiver', fn ($q) => $q->where('name', 'like', '%'.$search.'%'));
+            });
+        }
+
+        $connections = $query->latest()->paginate(20)->withQueryString();
 
         $stats = [
             'total' => ConnectionRequest::count(),

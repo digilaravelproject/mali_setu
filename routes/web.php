@@ -19,6 +19,7 @@ use App\Http\Controllers\Admin\BlogCommentManagementController;
 use App\Http\Controllers\Admin\EducationManagementController;
 use App\Http\Controllers\Admin\PlanManagementController;
 use App\Http\Controllers\Admin\AppVersionController;
+use App\Http\Controllers\Admin\SupportNumberController;
 use App\Http\Controllers\AppUpdateController;
 use Illuminate\Support\Facades\Mail;
 
@@ -287,6 +288,8 @@ Route::prefix('admin')->name('admin.')->group(function () {
         // Matrimony Management Routes
         Route::prefix('matrimony')->name('matrimony.')->group(function () {
             Route::get('/', [MatrimonyManagementController::class, 'index'])->name('index');
+            Route::get('/connections', [MatrimonyManagementController::class, 'connections'])->name('connections');
+            Route::get('/chats', [MatrimonyManagementController::class, 'chats'])->name('chats');
             Route::get('/moderation', [MatrimonyManagementController::class, 'moderation'])->name('moderation');
             Route::get('/create', [MatrimonyManagementController::class, 'create'])->name('create');
             Route::post('/', [MatrimonyManagementController::class, 'store'])->name('store');
@@ -297,8 +300,6 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::get('/{id}', [MatrimonyManagementController::class, 'show'])->name('show');
             Route::post('/{id}/suspend', [MatrimonyManagementController::class, 'suspend'])->name('suspend');
             Route::post('/{id}/activate', [MatrimonyManagementController::class, 'activate'])->name('activate');
-            Route::get('/connections', [MatrimonyManagementController::class, 'connections'])->name('connections');
-            Route::get('/chats', [MatrimonyManagementController::class, 'chats'])->name('chats');
             Route::delete('/{id}', [MatrimonyManagementController::class, 'destroy'])->name('destroy');
         });
         
@@ -434,6 +435,9 @@ Route::prefix('admin')->name('admin.')->group(function () {
          // Settings and Reports
          Route::get('settings', [AdminDashboardController::class, 'settings'])->name('settings');
          Route::post('settings', [AdminDashboardController::class, 'updateSettings'])->name('settings.update');
+         Route::get('support-numbers', [SupportNumberController::class, 'index'])->name('support-numbers.index');
+         Route::get('support-numbers/{slot}', [SupportNumberController::class, 'show'])->name('support-numbers.show');
+         Route::put('support-numbers/{slot}', [SupportNumberController::class, 'update'])->name('support-numbers.update');
          Route::prefix('notifications')->name('notifications.')->group(function () {
              Route::get('/', [NotificationManagementController::class, 'index'])->name('index');
              Route::get('/create', [NotificationManagementController::class, 'create'])->name('create');

@@ -37,12 +37,16 @@ class FirebaseMessagingService
             $credentials = $this->credentialService->credentials();
             $accessToken = $this->accessToken($credentials);
             $url = "https://fcm.googleapis.com/v1/projects/{$credentials['project_id']}/messages:send";
+            $data = $this->canonicalData($data);
             $payload = [
                 'message' => [
                     'token' => $deviceToken,
                     'notification' => ['title' => $title, 'body' => $body],
                     'data' => $this->stringifyData($data),
-                    'android' => ['priority' => 'high'],
+                    'android' => [
+                        'priority' => 'high',
+                        'notification' => ['click_action' => $data['click_action']],
+                    ],
                     'apns' => ['payload' => ['aps' => ['sound' => 'default']]],
                 ],
             ];
@@ -126,6 +130,20 @@ class FirebaseMessagingService
                 ? (string) $value
                 : json_encode($value, JSON_UNESCAPED_SLASHES)];
         })->all();
+    }
+
+    private function canonicalData(array $data): array
+    {
+        $entityId = $data['id'] ?? $data['lead_id'] ?? $data['business_id']
+            ?? $data['product_id'] ?? $data['service_id'] ?? $data['profile_id']
+            ?? $data['notification_id'] ?? '';
+
+        return array_merge($data, [
+            'type' => (string) ($data['type'] ?? $data['action_key'] ?? 'notification'),
+            'action' => (string) ($data['action'] ?? 'details'),
+            'id' => (string) $entityId,
+            'click_action' => (string) ($data['click_action'] ?? 'FLUTTER_NOTIFICATION_CLICK'),
+        ]);
     }
 
     private function http(): PendingRequest

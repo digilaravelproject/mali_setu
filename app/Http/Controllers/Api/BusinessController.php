@@ -951,7 +951,9 @@ class BusinessController extends Controller
             'name' => 'required|string|max:255',
             'description' => 'required|string',
             'cost' => 'nullable|numeric|min:0',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,webp,gif|max:5120',
+            'images' => 'nullable|array|max:10',
+            'images.*' => 'image|mimes:jpeg,png,jpg,webp,gif|max:5120',
         ]);
 
         if ($validator->fails()) {
@@ -970,10 +972,8 @@ class BusinessController extends Controller
             ->firstOrFail();
 
         // Handle image upload
-        $imagePath = null;
-        if ($request->hasFile('image')) {
-            $imagePath = $request->file('image')->store('products', 'public');
-        }
+        $imagePaths = $this->storeImages($request, 'products');
+        $imagePath = $imagePaths[0] ?? null;
 
         $product = Product::create([
             'business_id' => $request->business_id,
@@ -981,6 +981,7 @@ class BusinessController extends Controller
             'description' => $request->description,
             'cost' => $request->cost,
             'image_path' => $imagePath,
+            'image_paths' => $imagePaths,
         ]);
 
         // Email: product added
@@ -1016,7 +1017,9 @@ class BusinessController extends Controller
             'name' => 'required|string|max:255',
             'description' => 'required|string',
             'cost' => 'nullable|numeric|min:0',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,webp,gif|max:5120',
+            'images' => 'nullable|array|max:10',
+            'images.*' => 'image|mimes:jpeg,png,jpg,webp,gif|max:5120',
         ]);
 
         if ($validator->fails()) {
@@ -1035,10 +1038,8 @@ class BusinessController extends Controller
             ->firstOrFail();
 
         // Handle image upload
-        $imagePath = null;
-        if ($request->hasFile('image')) {
-            $imagePath = $request->file('image')->store('services', 'public');
-        }
+        $imagePaths = $this->storeImages($request, 'services');
+        $imagePath = $imagePaths[0] ?? null;
 
         $service = Service::create([
             'business_id' => $request->business_id,
@@ -1046,6 +1047,7 @@ class BusinessController extends Controller
             'description' => $request->description,
             'cost' => $request->cost,
             'image_path' => $imagePath,
+            'image_paths' => $imagePaths,
         ]);
 
         // Email: service added
@@ -1116,6 +1118,51 @@ class BusinessController extends Controller
         ]);
     }
 
+    public function updateProduct(Request $request, $id)
+    {
+        $product = Product::whereHas('business', fn ($query) => $query->where('user_id', $request->user()->id))
+            ->findOrFail($id);
+
+        $validated = $request->validate([
+            'name' => 'sometimes|required|string|max:255',
+            'description' => 'sometimes|required|string',
+            'cost' => 'sometimes|nullable|numeric|min:0',
+            'status' => 'sometimes|in:active,inactive',
+            'images' => 'sometimes|array|max:10',
+            'images.*' => 'image|mimes:jpeg,png,jpg,webp,gif|max:5120',
+            'remove_image_paths' => 'sometimes|array',
+            'remove_image_paths.*' => 'string|max:500',
+        ]);
+
+        $paths = $product->image_paths ?: array_values(array_filter([$product->image_path]));
+        $remove = array_intersect($paths, $validated['remove_image_paths'] ?? []);
+        foreach ($remove as $path) {
+            Storage::disk('public')->delete($path);
+        }
+        $paths = array_values(array_diff($paths, $remove));
+        $newPaths = $this->storeImages($request, 'products');
+        $combinedPaths = array_values(array_merge($paths, $newPaths));
+        $paths = array_slice($combinedPaths, 0, 10);
+        $this->deleteImages(array_slice($combinedPaths, 10));
+
+        $product->update(array_merge(
+            $request->only(['name', 'description', 'cost', 'status']),
+            ['image_path' => $paths[0] ?? null, 'image_paths' => $paths]
+        ));
+
+        return response()->json(['success' => true, 'message' => 'Product updated successfully', 'data' => ['product' => $product->fresh()]]);
+    }
+
+    public function deleteProduct(Request $request, $id)
+    {
+        $product = Product::whereHas('business', fn ($query) => $query->where('user_id', $request->user()->id))
+            ->findOrFail($id);
+        $this->deleteImages($product->image_paths ?: array_filter([$product->image_path]));
+        $product->delete();
+
+        return response()->json(['success' => true, 'message' => 'Product deleted successfully']);
+    }
+
     /**
      * Get business services
      */
@@ -1161,6 +1208,51 @@ class BusinessController extends Controller
         ]);
     }
 
+    public function updateService(Request $request, $id)
+    {
+        $service = Service::whereHas('business', fn ($query) => $query->where('user_id', $request->user()->id))
+            ->findOrFail($id);
+
+        $validated = $request->validate([
+            'name' => 'sometimes|required|string|max:255',
+            'description' => 'sometimes|required|string',
+            'cost' => 'sometimes|nullable|numeric|min:0',
+            'status' => 'sometimes|in:active,inactive',
+            'images' => 'sometimes|array|max:10',
+            'images.*' => 'image|mimes:jpeg,png,jpg,webp,gif|max:5120',
+            'remove_image_paths' => 'sometimes|array',
+            'remove_image_paths.*' => 'string|max:500',
+        ]);
+
+        $paths = $service->image_paths ?: array_values(array_filter([$service->image_path]));
+        $remove = array_intersect($paths, $validated['remove_image_paths'] ?? []);
+        foreach ($remove as $path) {
+            Storage::disk('public')->delete($path);
+        }
+        $paths = array_values(array_diff($paths, $remove));
+        $newPaths = $this->storeImages($request, 'services');
+        $combinedPaths = array_values(array_merge($paths, $newPaths));
+        $paths = array_slice($combinedPaths, 0, 10);
+        $this->deleteImages(array_slice($combinedPaths, 10));
+
+        $service->update(array_merge(
+            $request->only(['name', 'description', 'cost', 'status']),
+            ['image_path' => $paths[0] ?? null, 'image_paths' => $paths]
+        ));
+
+        return response()->json(['success' => true, 'message' => 'Service updated successfully', 'data' => ['service' => $service->fresh()]]);
+    }
+
+    public function deleteService(Request $request, $id)
+    {
+        $service = Service::whereHas('business', fn ($query) => $query->where('user_id', $request->user()->id))
+            ->findOrFail($id);
+        $this->deleteImages($service->image_paths ?: array_filter([$service->image_path]));
+        $service->delete();
+
+        return response()->json(['success' => true, 'message' => 'Service deleted successfully']);
+    }
+
     /**
      * Delete business
      */
@@ -1169,11 +1261,35 @@ class BusinessController extends Controller
         $business = Business::where('user_id', $request->user()->id)
             ->findOrFail($id);
 
+        $business->load(['products', 'services']);
+        foreach ($business->products as $product) {
+            $this->deleteImages($product->image_paths ?: array_filter([$product->image_path]));
+        }
+        foreach ($business->services as $service) {
+            $this->deleteImages($service->image_paths ?: array_filter([$service->image_path]));
+        }
         $business->delete();
 
         return response()->json([
             'success' => true,
             'message' => 'Business deleted successfully'
         ]);
+    }
+
+    private function storeImages(Request $request, string $directory): array
+    {
+        $files = $request->file('images', []);
+        if ($request->hasFile('image')) {
+            array_unshift($files, $request->file('image'));
+        }
+
+        return collect($files)->take(10)->map(fn ($file) => $file->store($directory, 'public'))->values()->all();
+    }
+
+    private function deleteImages(array $paths): void
+    {
+        foreach (array_unique(array_filter($paths)) as $path) {
+            Storage::disk('public')->delete($path);
+        }
     }
 }

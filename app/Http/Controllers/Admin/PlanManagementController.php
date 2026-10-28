@@ -13,7 +13,7 @@ class PlanManagementController extends Controller
     // Business plans list
     public function businessIndex(Request $request)
     {
-        $plans = BusinessPlan::orderBy('company_type')->orderBy('duration_years')->get();
+        $plans = BusinessPlan::orderBy('company_type')->orderBy('duration_years')->paginate(20)->withQueryString();
         return view('admin.plans.business.index', compact('plans'));
     }
 
@@ -81,7 +81,7 @@ class PlanManagementController extends Controller
     // --- Matrimony plans
     public function matrimonyIndex(Request $request)
     {
-        $plans = MatrimonyPlan::orderBy('duration_years')->get();
+        $plans = MatrimonyPlan::orderBy('duration_years')->paginate(20)->withQueryString();
         return view('admin.plans.matrimony.index', compact('plans'));
     }
 

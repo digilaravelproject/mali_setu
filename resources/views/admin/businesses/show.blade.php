@@ -194,9 +194,14 @@
                         @foreach($business->products as $product)
                         <div class="col-md-6 mb-3">
                             <div class="border rounded p-3">
+                                <div class="d-flex gap-2 flex-wrap mb-2">
+                                    @foreach($product->images as $image)
+                                        <img src="{{ $image['url'] }}" alt="{{ $product->name }}" class="rounded border" style="width:72px;height:72px;object-fit:cover">
+                                    @endforeach
+                                </div>
                                 <h6 class="font-weight-bold">{{ $product->name }}</h6>
                                 <p class="text-muted mb-1">{{ Str::limit($product->description, 100) }}</p>
-                                <p class="mb-0"><strong>Price:</strong> ₹{{ number_format($product->price, 2) }}</p>
+                                <p class="mb-0"><strong>Price:</strong> ₹{{ number_format($product->cost, 2) }}</p>
                             </div>
                         </div>
                         @endforeach
@@ -216,9 +221,14 @@
                         @foreach($business->services as $service)
                         <div class="col-md-6 mb-3">
                             <div class="border rounded p-3">
+                                <div class="d-flex gap-2 flex-wrap mb-2">
+                                    @foreach($service->images as $image)
+                                        <img src="{{ $image['url'] }}" alt="{{ $service->name }}" class="rounded border" style="width:72px;height:72px;object-fit:cover">
+                                    @endforeach
+                                </div>
                                 <h6 class="font-weight-bold">{{ $service->name }}</h6>
                                 <p class="text-muted mb-1">{{ Str::limit($service->description, 100) }}</p>
-                                <p class="mb-0"><strong>Price:</strong> ₹{{ number_format($service->price, 2) }}</p>
+                                <p class="mb-0"><strong>Price:</strong> ₹{{ number_format($service->cost, 2) }}</p>
                             </div>
                         </div>
                         @endforeach

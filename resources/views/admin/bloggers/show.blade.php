@@ -101,7 +101,7 @@
         <div class="col-lg-8">
             <div class="card border-0 shadow-sm" style="border-radius:16px;">
                 <div class="card-header bg-white py-3">
-                    <h5 class="mb-0 fw-bold text-dark"><i class="fas fa-newspaper me-2 text-primary"></i>Published Articles ({{ count($blogs) }})</h5>
+                    <h5 class="mb-0 fw-bold text-dark"><i class="fas fa-newspaper me-2 text-primary"></i>Published Articles ({{ $blogs->total() }})</h5>
                 </div>
                 <div class="card-body p-4">
                     @if(count($blogs) > 0)
@@ -167,6 +167,7 @@
                                 </tbody>
                             </table>
                         </div>
+                        @if($blogs->hasPages())<div class="mt-3">{{ $blogs->links('pagination::bootstrap-5') }}</div>@endif
                     @else
                         <div class="alert alert-light border-0 text-center py-5">
                             <div class="text-secondary opacity-30 mb-3"><i class="fas fa-book-open fs-1"></i></div>

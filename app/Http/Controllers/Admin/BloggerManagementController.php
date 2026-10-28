@@ -110,7 +110,7 @@ class BloggerManagementController extends Controller
         $blogger = User::where('user_type', 'bloger')->findOrFail($id);
         
         // Fetch blogger's articles
-        $blogs = \App\Models\Blog::where('user_id', $blogger->id)->latest()->get();
+        $blogs = \App\Models\Blog::where('user_id', $blogger->id)->latest()->paginate(10)->withQueryString();
 
         return view('admin.bloggers.show', compact('blogger', 'blogs'));
     }

@@ -16,11 +16,13 @@ class Service extends Model
         'description',
         'cost',
         'image_path',
+        'image_paths',
         'status',
     ];
 
     protected $casts = [
         'cost' => 'decimal:2',
+        'image_paths' => 'array',
     ];
 
     /**
@@ -46,4 +48,16 @@ class Service extends Model
     {
         return '₹' . number_format($this->cost, 2);
     }
+
+    public function getImagesAttribute(): array
+    {
+        $paths = $this->image_paths ?: array_filter([$this->image_path]);
+
+        return collect($paths)->map(fn ($path) => [
+            'path' => $path,
+            'url' => asset('storage/'.$path),
+        ])->values()->all();
+    }
+
+    protected $appends = ['images'];
 }
