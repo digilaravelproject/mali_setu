@@ -53,7 +53,7 @@
                 <div class="card-header bg-white p-3"><strong>Available variables</strong></div>
                 <div class="card-body p-3">
                     @foreach(array_unique(array_merge($action->available_variables ?? [], ['user_name', 'user_email', 'notification_id', 'action_key', 'action_url', 'notification_title', 'notification_message'])) as $variable)
-                        <span class="variable-chip">{{ '{{ '.$variable.' }}' }}</span>
+                        <span class="variable-chip">&#123;&#123; {{ $variable }} &#125;&#125;</span>
                     @endforeach
                     <small class="d-block text-muted mt-2">Variables are replaced separately for each recipient when the push is sent.</small>
                 </div>
