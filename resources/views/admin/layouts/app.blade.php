@@ -405,26 +405,14 @@
             </div>
             
             <div class="nav-item">
-                <a href="{{ route('admin.app-versions.index') }}" class="nav-link {{ request()->routeIs('admin.app-versions.*') ? 'active' : '' }}">
-                    <i class="fas fa-mobile-screen-button"></i>
-                    App Version
-                </a>
-            </div>
-
-            <div class="nav-item">
-                <a href="{{ route('admin.notifications.index') }}" class="nav-link {{ request()->routeIs('admin.notifications.*') ? 'active' : '' }}">
-                    <i class="fas fa-bell"></i>
-                    Push Notifications
-                </a>
-            </div>
-
-            <div class="nav-item">
-                <a class="nav-link d-flex justify-content-between align-items-center {{ request()->routeIs('admin.settings*') || request()->routeIs('admin.support-numbers.*') ? 'active' : '' }}" data-bs-toggle="collapse" href="#settingsMenu" aria-expanded="{{ request()->routeIs('admin.settings*') || request()->routeIs('admin.support-numbers.*') ? 'true' : 'false' }}">
+                <a class="nav-link d-flex justify-content-between align-items-center {{ request()->routeIs('admin.settings*') || request()->routeIs('admin.support-numbers.*') || request()->routeIs('admin.notifications.*') || request()->routeIs('admin.app-versions.*') ? 'active' : '' }}" data-bs-toggle="collapse" href="#settingsMenu" aria-expanded="{{ request()->routeIs('admin.settings*') || request()->routeIs('admin.support-numbers.*') || request()->routeIs('admin.notifications.*') || request()->routeIs('admin.app-versions.*') ? 'true' : 'false' }}">
                     <span><i class="fas fa-cog"></i> Settings</span><i class="fas fa-chevron-down"></i>
                 </a>
-                <div class="collapse {{ request()->routeIs('admin.settings*') || request()->routeIs('admin.support-numbers.*') ? 'show' : '' }}" id="settingsMenu">
+                <div class="collapse {{ request()->routeIs('admin.settings*') || request()->routeIs('admin.support-numbers.*') || request()->routeIs('admin.notifications.*') || request()->routeIs('admin.app-versions.*') ? 'show' : '' }}" id="settingsMenu">
                     <div class="nav-item" style="margin-left:.6rem"><a href="{{ route('admin.settings') }}" class="nav-link {{ request()->routeIs('admin.settings*') ? 'active' : '' }}"><i class="fas fa-sliders"></i> Other Settings</a></div>
                     <div class="nav-item" style="margin-left:.6rem"><a href="{{ route('admin.support-numbers.index') }}" class="nav-link {{ request()->routeIs('admin.support-numbers.*') ? 'active' : '' }}"><i class="fas fa-headset"></i> Support Number</a></div>
+                    <div class="nav-item" style="margin-left:.6rem"><a href="{{ route('admin.notifications.index') }}" class="nav-link {{ request()->routeIs('admin.notifications.*') ? 'active' : '' }}"><i class="fas fa-bell"></i> Push Notifications</a></div>
+                    <div class="nav-item" style="margin-left:.6rem"><a href="{{ route('admin.app-versions.index') }}" class="nav-link {{ request()->routeIs('admin.app-versions.*') ? 'active' : '' }}"><i class="fas fa-mobile-screen-button"></i> App Version</a></div>
                 </div>
             </div>
         </nav>

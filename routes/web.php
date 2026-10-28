@@ -289,6 +289,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::prefix('matrimony')->name('matrimony.')->group(function () {
             Route::get('/', [MatrimonyManagementController::class, 'index'])->name('index');
             Route::get('/connections', [MatrimonyManagementController::class, 'connections'])->name('connections');
+            Route::get('/connections/export', [MatrimonyManagementController::class, 'exportConnections'])->name('connections.export');
             Route::get('/chats', [MatrimonyManagementController::class, 'chats'])->name('chats');
             Route::get('/moderation', [MatrimonyManagementController::class, 'moderation'])->name('moderation');
             Route::get('/create', [MatrimonyManagementController::class, 'create'])->name('create');

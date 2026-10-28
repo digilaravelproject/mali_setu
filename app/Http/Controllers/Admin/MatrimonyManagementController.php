@@ -515,29 +515,118 @@ class MatrimonyManagementController extends Controller
     {
         $query = ConnectionRequest::with(['sender.matrimonyProfile', 'receiver.matrimonyProfile']);
 
-        // Filter by status
-        if ($request->has('status') && $request->status !== '') {
-            $query->where('status', $request->status);
-        }
-
-        if ($request->filled('search')) {
-            $search = $request->string('search')->toString();
-            $query->where(function ($builder) use ($search) {
-                $builder->whereHas('sender', fn ($q) => $q->where('name', 'like', '%'.$search.'%'))
-                    ->orWhereHas('receiver', fn ($q) => $q->where('name', 'like', '%'.$search.'%'));
-            });
-        }
+        $this->applyConnectionFilters($query, $request);
 
         $connections = $query->latest()->paginate(20)->withQueryString();
 
         $stats = [
             'total' => ConnectionRequest::count(),
+            'sent' => ConnectionRequest::whereNotNull('sender_id')->count(),
+            'received' => ConnectionRequest::whereNotNull('receiver_id')->count(),
             'pending' => ConnectionRequest::where('status', 'pending')->count(),
             'accepted' => ConnectionRequest::where('status', 'accepted')->count(),
             'rejected' => ConnectionRequest::where('status', 'rejected')->count(),
+            'removed' => ConnectionRequest::where('status', 'removed')->count(),
         ];
 
-        return view('admin.matrimony.connections', compact('connections', 'stats'));
+        $memberIds = ConnectionRequest::query()
+            ->select('sender_id as user_id')
+            ->union(ConnectionRequest::query()->select('receiver_id as user_id'));
+        $members = User::query()->with('matrimonyProfile')->whereIn('id', $memberIds)->orderBy('name')->get(['id', 'name', 'phone']);
+
+        return view('admin.matrimony.connections', compact('connections', 'stats', 'members'));
+    }
+
+    public function exportConnections(Request $request)
+    {
+        $query = ConnectionRequest::with(['sender.matrimonyProfile', 'receiver.matrimonyProfile']);
+        $this->applyConnectionFilters($query, $request);
+
+        return response()->streamDownload(function () use ($query) {
+            $output = fopen('php://output', 'w');
+            fputcsv($output, ['ID', 'Sender', 'Sender Mobile', 'Receiver', 'Receiver Mobile', 'Sent On', 'Status', 'Responded On']);
+            foreach ($query->latest()->cursor() as $connection) {
+                fputcsv($output, [
+                    $connection->id,
+                    $connection->sender?->matrimonyProfile?->candidate_name ?: $connection->sender?->name,
+                    $connection->sender?->phone,
+                    $connection->receiver?->matrimonyProfile?->candidate_name ?: $connection->receiver?->name,
+                    $connection->receiver?->phone,
+                    $connection->created_at?->format('Y-m-d H:i:s'),
+                    $connection->status,
+                    $connection->responded_at?->format('Y-m-d H:i:s'),
+                ]);
+            }
+            fclose($output);
+        }, 'matrimony-requests-'.now()->format('Y-m-d-His').'.csv', ['Content-Type' => 'text/csv']);
+    }
+
+    private function applyConnectionFilters($query, Request $request): void
+    {
+        if ($request->filled('status')) {
+            $query->where('status', $request->string('status')->toString());
+        }
+
+        if ($request->filled('from_member')) {
+            $query->where('sender_id', $request->integer('from_member'));
+        }
+
+        if ($request->filled('to_member')) {
+            $query->where('receiver_id', $request->integer('to_member'));
+        }
+
+        foreach (['sender_gender' => 'sender', 'receiver_gender' => 'receiver'] as $field => $relation) {
+            if ($request->filled($field)) {
+                $gender = $request->string($field)->toString();
+                $query->whereHas($relation.'.matrimonyProfile', fn ($profile) => $profile->adminGender($gender));
+            }
+        }
+
+        if ($request->filled('age_range') && preg_match('/^(\d{2})-(\d{2})$/', $request->string('age_range')->toString(), $ages)) {
+            $query->where(function ($builder) use ($ages) {
+                $builder->whereHas('sender.matrimonyProfile', fn ($profile) => $profile->whereBetween('age', [(int) $ages[1], (int) $ages[2]]))
+                    ->orWhereHas('receiver.matrimonyProfile', fn ($profile) => $profile->whereBetween('age', [(int) $ages[1], (int) $ages[2]]));
+            });
+        }
+
+        if ($request->filled('date_from')) {
+            $query->whereDate('created_at', '>=', $request->date('date_from'));
+        }
+        if ($request->filled('date_to')) {
+            $query->whereDate('created_at', '<=', $request->date('date_to'));
+        }
+
+        if (! $request->filled('search')) {
+            return;
+        }
+
+        $search = trim($request->string('search')->toString());
+        $terms = preg_split('/\s+/', $search, -1, PREG_SPLIT_NO_EMPTY) ?: [];
+        $phoneDigits = preg_replace('/\D+/', '', $search);
+
+        foreach ($terms as $term) {
+            $query->where(function ($builder) use ($term, $phoneDigits) {
+                foreach (['sender', 'receiver'] as $relation) {
+                    $method = $relation === 'sender' ? 'whereHas' : 'orWhereHas';
+                    $builder->{$method}($relation, function ($user) use ($term, $phoneDigits) {
+                        $user->where(function ($fields) use ($term, $phoneDigits) {
+                            $fields->where('name', 'like', '%'.$term.'%')
+                                ->orWhere('phone', 'like', '%'.$term.'%')
+                                ->orWhere('email', 'like', '%'.$term.'%');
+
+                            if (strlen($phoneDigits) >= 4) {
+                                $fields->orWhereRaw(
+                                    "REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(phone, '+', ''), ' ', ''), '-', ''), '(', ''), ')', ''), '.', '') LIKE ?",
+                                    ['%'.$phoneDigits.'%']
+                                );
+                            }
+                        })->orWhereHas('matrimonyProfile', function ($profile) use ($term) {
+                            $profile->where('personal_details', 'like', '%'.$term.'%');
+                        });
+                    });
+                }
+            });
+        }
     }
 
     /**
