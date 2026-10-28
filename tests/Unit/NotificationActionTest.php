@@ -31,4 +31,21 @@ class NotificationActionTest extends TestCase
         $this->assertTrue((new NotificationAction(['key' => 'new_message']))->isSystemAction());
         $this->assertFalse((new NotificationAction(['key' => 'custom_campaign']))->isSystemAction());
     }
+
+    public function test_it_renders_nested_payload_values_and_preserves_json_types(): void
+    {
+        $action = new NotificationAction([
+            'payload_template' => [
+                'screen' => 'business/{{ business_id }}',
+                'meta' => ['recipient' => '{{user_name}}', 'featured' => true, 'attempts' => 2],
+            ],
+        ]);
+
+        $payload = $action->renderPayload(['business_id' => 42, 'user_name' => 'Darshan']);
+
+        $this->assertSame('business/42', $payload['screen']);
+        $this->assertSame('Darshan', $payload['meta']['recipient']);
+        $this->assertTrue($payload['meta']['featured']);
+        $this->assertSame(2, $payload['meta']['attempts']);
+    }
 }

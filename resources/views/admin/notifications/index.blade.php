@@ -109,6 +109,7 @@
                             <div class="d-flex flex-wrap gap-2 mt-auto pt-2 border-top">
                                 <a class="btn btn-sm btn-success px-3" href="{{ route('admin.notifications.send-form', $action) }}"><i class="fas fa-paper-plane me-1"></i>Send</a>
                                 <a class="btn btn-sm btn-outline-primary px-3" href="{{ route('admin.notifications.edit', $action) }}"><i class="fas fa-pen-to-square me-1"></i>Edit & preview</a>
+                                <a class="btn btn-sm {{ $action->payload_template ? 'btn-primary' : 'btn-outline-secondary' }} px-3" href="{{ route('admin.notifications.payload.edit', $action) }}"><i class="fas fa-code me-1"></i>Payload format</a>
                                 @unless($action->isSystemAction())<form method="POST" action="{{ route('admin.notifications.destroy', $action) }}" class="ms-auto" onsubmit="return confirm('Delete this notification action?')">@csrf @method('DELETE')<button class="btn btn-sm btn-outline-danger"><i class="fas fa-trash me-1"></i>Delete</button></form>@endunless
                             </div>
                         </div></article>

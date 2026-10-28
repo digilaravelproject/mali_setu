@@ -9,12 +9,14 @@ class NotificationAction extends Model
     protected $fillable = [
         'key', 'name', 'description', 'title_template', 'body_template',
         'action_url', 'available_variables', 'is_enabled', 'push_enabled',
+        'payload_template',
     ];
 
     protected function casts(): array
     {
         return [
             'available_variables' => 'array',
+            'payload_template' => 'array',
             'is_enabled' => 'boolean',
             'push_enabled' => 'boolean',
         ];
@@ -74,5 +76,22 @@ class NotificationAction extends Model
 
             return is_scalar($value) ? (string) $value : '';
         }, $template) ?? $template;
+    }
+
+    /**
+     * Render every string value in the configured Firebase data payload.
+     * Non-string JSON values retain their original type.
+     */
+    public function renderPayload(array $data): array
+    {
+        $renderValue = function ($value) use (&$renderValue, $data) {
+            if (is_array($value)) {
+                return array_map($renderValue, $value);
+            }
+
+            return is_string($value) ? $this->render($value, $data) : $value;
+        };
+
+        return $renderValue($this->payload_template ?? []);
     }
 }

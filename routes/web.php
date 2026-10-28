@@ -447,6 +447,8 @@ Route::prefix('admin')->name('admin.')->group(function () {
              Route::post('/send', [NotificationManagementController::class, 'send'])->name('send');
              Route::post('/firebase', [NotificationManagementController::class, 'updateFirebase'])->name('firebase.update');
              Route::post('/settings', [NotificationManagementController::class, 'updateGlobalSettings'])->name('settings.update');
+             Route::get('/{notificationAction}/payload', [NotificationManagementController::class, 'editPayload'])->name('payload.edit');
+             Route::put('/{notificationAction}/payload', [NotificationManagementController::class, 'updatePayload'])->name('payload.update');
              Route::get('/{notificationAction}/edit', [NotificationManagementController::class, 'edit'])->name('edit');
              Route::put('/{notificationAction}', [NotificationManagementController::class, 'update'])->name('update');
              Route::delete('/{notificationAction}', [NotificationManagementController::class, 'destroy'])->name('destroy');

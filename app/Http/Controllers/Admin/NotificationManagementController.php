@@ -10,6 +10,7 @@ use App\Services\FirebaseCredentialService;
 use App\Services\NotificationService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 class NotificationManagementController extends Controller
@@ -53,6 +54,36 @@ class NotificationManagementController extends Controller
         $notificationAction->update($this->validatedAction($request, $notificationAction));
 
         return back()->with('success', 'Notification action updated.');
+    }
+
+    public function editPayload(NotificationAction $notificationAction): View
+    {
+        return view('admin.notifications.payload', ['action' => $notificationAction]);
+    }
+
+    public function updatePayload(Request $request, NotificationAction $notificationAction): RedirectResponse
+    {
+        $validated = $request->validate([
+            'payload_format' => ['nullable', 'json', 'max:20000'],
+        ]);
+
+        $json = trim($validated['payload_format'] ?? '');
+        if ($json === '') {
+            $notificationAction->update(['payload_template' => null]);
+
+            return back()->with('success', 'Custom payload format removed. Default push payload will be used.');
+        }
+
+        $payload = json_decode($json, true, 512, JSON_THROW_ON_ERROR);
+        if (! is_array($payload) || (! empty($payload) && array_is_list($payload)) || ! str_starts_with($json, '{')) {
+            throw ValidationException::withMessages([
+                'payload_format' => 'The payload format must be a JSON object with named keys.',
+            ]);
+        }
+
+        $notificationAction->update(['payload_template' => $payload]);
+
+        return back()->with('success', 'Payload format saved. Future pushes for this notification will include it.');
     }
 
     public function destroy(NotificationAction $notificationAction): RedirectResponse

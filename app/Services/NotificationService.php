@@ -171,20 +171,48 @@ class NotificationService
             return;
         }
 
-        $this->firebase->send($user->fcm_token, $notification->title, $notification->message, array_merge(
-            $notification->data ?? [],
-            [
-                'notification_id' => $notification->id,
-                'action_key' => $notification->type,
-                'action_url' => $notification->action_url ?? '',
-            ]
-        ));
+        $action = NotificationAction::query()->where('key', $notification->type)->first();
+        $this->firebase->send(
+            $user->fcm_token,
+            $notification->title,
+            $notification->message,
+            $this->pushData($notification, $user, $action),
+        );
 
         $notification->markPushSent();
         Log::info('Firebase push notification sent', [
             'notification_id' => $notification->id,
             'user_id' => $user->id,
         ]);
+    }
+
+    private function pushData(Notification $notification, User $user, ?NotificationAction $action): array
+    {
+        $pushData = array_merge(
+            $notification->data ?? [],
+            [
+                'notification_id' => $notification->id,
+                'action_key' => $notification->type,
+                'action_url' => $notification->action_url ?? '',
+            ],
+        );
+
+        if (! $action?->payload_template) {
+            return $pushData;
+        }
+
+        return array_merge($pushData, $action->renderPayload(array_merge(
+            $notification->data ?? [],
+            [
+                'user_name' => $user->name ?? '',
+                'user_email' => $user->email ?? '',
+                'notification_id' => $notification->id,
+                'action_key' => $notification->type,
+                'action_url' => $notification->action_url ?? '',
+                'notification_title' => $notification->title,
+                'notification_message' => $notification->message,
+            ],
+        )));
     }
 
     /**
