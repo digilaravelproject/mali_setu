@@ -85,6 +85,15 @@
             margin-right: 0.75rem;
             font-size: 1.1rem;
         }
+
+        .nav-link .dropdown-chevron {
+            margin: 0 0 0 auto;
+            transition: transform 0.25s ease;
+        }
+
+        .nav-link[aria-expanded="true"] .dropdown-chevron {
+            transform: rotate(180deg);
+        }
         
         .main-content {
             margin-left: var(--sidebar-width);
@@ -325,6 +334,21 @@
                     <i class="fas fa-building"></i>
                     Businesses
                 </a>
+            </div>
+
+            <div class="nav-item">
+                <a class="nav-link d-flex align-items-center {{ request()->routeIs('admin.jobs.*') ? 'active' : '' }}"
+                   data-bs-toggle="collapse" href="#jobsCareersMenu" role="button"
+                   aria-expanded="{{ request()->routeIs('admin.jobs.*') ? 'true' : 'false' }}" aria-controls="jobsCareersMenu">
+                    <i class="fas fa-briefcase"></i>
+                    <span>Jobs &amp; Careers</span>
+                    <i class="fas fa-chevron-down dropdown-chevron"></i>
+                </a>
+                <div class="collapse {{ request()->routeIs('admin.jobs.*') ? 'show' : '' }}" id="jobsCareersMenu">
+                    <div class="nav-item" style="margin-left:.6rem"><a href="{{ route('admin.jobs.index') }}" class="nav-link {{ request()->routeIs('admin.jobs.index') || request()->routeIs('admin.jobs.edit') ? 'active' : '' }}"><i class="fas fa-list"></i> All Jobs</a></div>
+                    <div class="nav-item" style="margin-left:.6rem"><a href="{{ route('admin.jobs.create') }}" class="nav-link {{ request()->routeIs('admin.jobs.create') ? 'active' : '' }}"><i class="fas fa-plus-circle"></i> Add Job</a></div>
+                    <div class="nav-item" style="margin-left:.6rem"><a href="{{ route('admin.jobs.applications') }}" class="nav-link {{ request()->routeIs('admin.jobs.applications*') ? 'active' : '' }}"><i class="fas fa-file-alt"></i> Applications</a></div>
+                </div>
             </div>
             
             <?php /*<div class="nav-item">

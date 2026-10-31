@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Cache;
 
 class JobController extends Controller
 {
@@ -31,7 +32,8 @@ class JobController extends Controller
     public function index(Request $request)
     {
         $query = JobPosting::with(['business', 'business.user'])
-            // ->active()
+            ->withCount('applications')
+            ->active()
             ->latest();
             
         if ($request->filled('business_id')) {
@@ -55,18 +57,25 @@ class JobController extends Controller
             $query->byEmploymentType($request->employment_type);
         }
 
+        if ($request->filled('job_type')) {
+            $query->where('job_type', $request->job_type);
+        }
+
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function($q) use ($search) {
                 $q->where('title', 'like', "%{$search}%")
                   ->orWhere('description', 'like', "%{$search}%")
-                  ->orWhere('requirements', 'like', "%{$search}%");
+                  ->orWhere('requirements', 'like', "%{$search}%")
+                  ->orWhereHas('business', fn ($business) => $business->where('business_name', 'like', "%{$search}%"));
             });
         }
-        
-        // $query->where('status', 'approved');
 
-        $jobs = $query->paginate($request->get('per_page', 15));
+        $jobs = $query->paginate(min(max((int) $request->get('per_page', 15), 1), 100));
+        $likedJobIds = $this->likedJobIds($request->user('sanctum'));
+        $jobs->getCollection()->each(function (JobPosting $job) use ($likedJobIds) {
+            $job->setAttribute('is_liked', in_array($job->id, $likedJobIds, true));
+        });
 
         return response()->json([
             'success' => true,
@@ -83,16 +92,19 @@ class JobController extends Controller
     /**
      * Get a specific job posting
      */
-    public function show($id)
+    public function show(Request $request, $id)
     {
         $job = JobPosting::with(['business', 'business.user', 'applications'])
             ->findOrFail($id);
 
         // Check if current user has applied (if authenticated)
         $hasApplied = false;
-        if (Auth::check()) {
-            $hasApplied = $job->hasUserApplied(Auth::id());
+        $user = $request->user('sanctum');
+        if ($user) {
+            $hasApplied = $job->hasUserApplied($user->id);
         }
+
+        $job->setAttribute('is_liked', in_array($job->id, $this->likedJobIds($user), true));
 
         return response()->json([
             'success' => true,
@@ -495,13 +507,64 @@ class JobController extends Controller
         
         $applications = JobApplication::with(['jobPosting.business'])
             ->where('user_id', $user->id)
+            ->when($request->filled('status'), function ($query) use ($request) {
+                $query->where('status', $request->status);
+            })
             ->latest('applied_at')
-            ->paginate($request->get('per_page', 15));
+            ->paginate(min(max((int) $request->get('per_page', 15), 1), 100));
 
         return response()->json([
             'success' => true,
             'data' => $applications
         ]);
+    }
+
+    /**
+     * Like or unlike a job without changing the existing jobs schema.
+     * Saved IDs are kept in Laravel's configured cache store per user.
+     */
+    public function toggleLike(Request $request, $id)
+    {
+        $job = JobPosting::findOrFail($id);
+        $user = $request->user();
+        $cacheKey = $this->likedJobsCacheKey($user->id);
+        $likedJobIds = $this->likedJobIds($user);
+
+        if (in_array($job->id, $likedJobIds, true)) {
+            $likedJobIds = array_values(array_diff($likedJobIds, [$job->id]));
+            $isLiked = false;
+            $message = 'Job removed from saved jobs.';
+        } else {
+            $likedJobIds[] = $job->id;
+            $likedJobIds = array_values(array_unique($likedJobIds));
+            $isLiked = true;
+            $message = 'Job saved successfully.';
+        }
+
+        Cache::forever($cacheKey, $likedJobIds);
+
+        return response()->json([
+            'success' => true,
+            'message' => $message,
+            'data' => [
+                'job_id' => $job->id,
+                'is_liked' => $isLiked,
+            ],
+        ]);
+    }
+
+    private function likedJobIds($user): array
+    {
+        if (! $user) {
+            return [];
+        }
+
+        return array_values(array_map('intval', Cache::get($this->likedJobsCacheKey($user->id), [])));
+    }
+
+    private function likedJobsCacheKey(int $userId): string
+    {
+        return 'jobs:liked:user:'.$userId;
     }
 
     /**

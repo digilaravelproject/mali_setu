@@ -317,7 +317,8 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
         // Job application management
         Route::post('/apply', [JobController::class, 'apply']);
-        Route::post('/my-applications', [JobController::class, 'getUserApplications']);
+        Route::match(['get', 'post'], '/my-applications', [JobController::class, 'getUserApplications']);
+        Route::post('/{id}/like-toggle', [JobController::class, 'toggleLike']);
         Route::get('/{jobId}/applications', [JobController::class, 'getJobApplications']);
         Route::put('/applications/{applicationId}/status', [JobController::class, 'updateApplicationStatus']);
 

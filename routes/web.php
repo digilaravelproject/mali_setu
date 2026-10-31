@@ -20,6 +20,7 @@ use App\Http\Controllers\Admin\EducationManagementController;
 use App\Http\Controllers\Admin\PlanManagementController;
 use App\Http\Controllers\Admin\AppVersionController;
 use App\Http\Controllers\Admin\SupportNumberController;
+use App\Http\Controllers\Admin\JobManagementController;
 use App\Http\Controllers\AppUpdateController;
 use Illuminate\Support\Facades\Mail;
 
@@ -266,6 +267,20 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::post('/{id}/suspend', [BusinessManagementController::class, 'suspend'])->name('suspend');
             Route::post('/{id}/activate', [BusinessManagementController::class, 'activate'])->name('activate');
             Route::delete('/{id}', [BusinessManagementController::class, 'destroy'])->name('destroy');
+        });
+
+        // Jobs & Careers (the sidebar intentionally exposes only these three pages)
+        Route::prefix('jobs')->name('jobs.')->group(function () {
+            Route::get('/', [JobManagementController::class, 'index'])->name('index');
+            Route::get('/create', [JobManagementController::class, 'create'])->name('create');
+            Route::post('/', [JobManagementController::class, 'store'])->name('store');
+            Route::get('/applications', [JobManagementController::class, 'applications'])->name('applications');
+            Route::patch('/applications/{application}/status', [JobManagementController::class, 'updateApplicationStatus'])->name('applications.status');
+            Route::delete('/applications/{application}', [JobManagementController::class, 'destroyApplication'])->name('applications.destroy');
+            Route::get('/{job}/edit', [JobManagementController::class, 'edit'])->name('edit');
+            Route::put('/{job}', [JobManagementController::class, 'update'])->name('update');
+            Route::patch('/{job}/toggle', [JobManagementController::class, 'toggle'])->name('toggle');
+            Route::delete('/{job}', [JobManagementController::class, 'destroy'])->name('destroy');
         });
 
         // Donation Management Routes
