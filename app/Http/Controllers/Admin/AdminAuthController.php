@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Support\AdminPermissionRegistry;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
@@ -71,33 +72,6 @@ class AdminAuthController extends Controller
 
     private function landingRoute($user): string
     {
-        $modules = [
-            'dashboard' => 'admin.dashboard',
-            'analytics' => 'admin.analytics',
-            'homepage_heroes' => 'heroes.index',
-            'users' => 'admin.users.index',
-            'bloggers' => 'admin.bloggers.index',
-            'plans' => 'admin.plans.business.index',
-            'categories' => 'admin.category.index',
-            'businesses' => 'admin.businesses.index',
-            'jobs' => 'admin.jobs.index',
-            'matrimony' => 'admin.matrimony.index',
-            'casts' => 'admin.casts.index',
-            'payments' => 'admin.payments.index',
-            'blogs' => 'admin.blogs.index',
-            'education' => 'admin.educations.index',
-            'donations' => 'admin.donations.index',
-            'volunteers' => 'admin.volunteers.index',
-            'reports' => 'admin.reports',
-            'settings' => 'admin.settings',
-        ];
-
-        foreach ($modules as $module => $route) {
-            if ($user->canAccessAdminModule($module)) {
-                return $route;
-            }
-        }
-
-        return 'admin.profile';
+        return $user->isSuperAdmin() ? 'admin.dashboard' : AdminPermissionRegistry::firstAccessibleRoute($user);
     }
 }

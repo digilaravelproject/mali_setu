@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Mail\AdminTeamInvitationMail;
 use App\Models\AdminTeamMember;
 use App\Models\User;
+use App\Support\AdminPermissionRegistry;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -29,7 +30,8 @@ class TeamManagementController extends Controller
     {
         return view('admin.teams.form', [
             'member' => new AdminTeamMember,
-            'permissionGroups' => config('admin_permissions.groups'),
+            'permissionGroups' => AdminPermissionRegistry::groups(),
+            'selectedPermissions' => [],
         ]);
     }
 
@@ -83,7 +85,8 @@ class TeamManagementController extends Controller
 
         return view('admin.teams.form', [
             'member' => $team->load('user'),
-            'permissionGroups' => config('admin_permissions.groups'),
+            'permissionGroups' => AdminPermissionRegistry::groups(),
+            'selectedPermissions' => AdminPermissionRegistry::expandLegacyPermissions($team->permissions ?? []),
         ]);
     }
 
@@ -136,27 +139,12 @@ class TeamManagementController extends Controller
 
     private function normalizePermissions(array $permissions): array
     {
-        $permissions = array_values(array_unique($permissions));
-        foreach ($permissions as $permission) {
-            if (str_ends_with($permission, '.manage')) {
-                $permissions[] = str_replace('.manage', '.view', $permission);
-            }
-        }
-
-        return array_values(array_unique($permissions));
+        return AdminPermissionRegistry::withPageDependencies($permissions);
     }
 
     private function allPermissionKeys(): array
     {
-        $keys = [];
-        foreach (config('admin_permissions.groups') as $modules) {
-            foreach (array_keys($modules) as $module) {
-                $keys[] = $module.'.view';
-                $keys[] = $module.'.manage';
-            }
-        }
-
-        return $keys;
+        return AdminPermissionRegistry::keys();
     }
 
     private function ownedMember(AdminTeamMember $member): AdminTeamMember

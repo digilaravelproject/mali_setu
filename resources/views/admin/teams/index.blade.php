@@ -21,7 +21,12 @@
                         <td>{{ $members->firstItem() + $loop->index }}</td>
                         <td class="fw-semibold">{{ $member->first_name }} {{ $member->last_name }}</td>
                         <td>{{ $member->user->email }}</td>
-                        <td><span class="badge bg-light text-dark border">{{ collect($member->permissions)->filter(fn($permission) => str_ends_with($permission, '.view'))->count() }} modules</span></td>
+                        <td>
+                            @php($menuLabels = \App\Support\AdminPermissionRegistry::menuLabelsFor($member->permissions ?? []))
+                            @foreach(array_slice($menuLabels, 0, 3) as $menuLabel)<span class="badge bg-light text-dark border me-1 mb-1">{{ $menuLabel }}</span>@endforeach
+                            @if(count($menuLabels) > 3)<span class="badge bg-secondary">+{{ count($menuLabels) - 3 }}</span>@endif
+                            @if(count($menuLabels) === 0)<span class="text-muted small">No access</span>@endif
+                        </td>
                         <td><span class="badge bg-{{ $member->is_active ? 'success' : 'secondary' }}">{{ $member->is_active ? 'Active' : 'Inactive' }}</span></td>
                         <td>{{ $member->created_at->format('d M Y') }}</td>
                         <td class="text-end text-nowrap">

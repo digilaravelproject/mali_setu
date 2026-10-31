@@ -260,8 +260,8 @@
                 </a>
             </div>
             
-            <div class="nav-item {{ auth()->user()->canAccessAdminModule('users') ? '' : 'd-none' }}">
-                <a href="{{ route('admin.users.index') }}" class="nav-link {{ request()->routeIs('admin.users.*') ? 'active' : '' }}">
+            <div class="nav-item {{ auth()->user()->hasAdminPermission('users.list') ? '' : 'd-none' }}">
+                <a href="{{ route('admin.users.index') }}" class="nav-link {{ request()->routeIs('admin.users.*') && !request()->routeIs('admin.users.verification.*') ? 'active' : '' }}">
                     <i class="fas fa-users"></i>
                     User Management
                 </a>
@@ -284,14 +284,14 @@
                 </a>
 
                 <div class="collapse {{ request()->routeIs('admin.bloggers.*') || request()->routeIs('admin.blogs.access') ? 'show' : '' }}" id="bloggersMenu">
-                    <div class="nav-item" style="margin-left: .6rem;">
+                    <div class="nav-item {{ auth()->user()->hasAdminPermission('bloggers.list') || auth()->user()->hasAdminPermission('bloggers.create') ? '' : 'd-none' }}" style="margin-left: .6rem;">
                         <a href="{{ route('admin.bloggers.index') }}" class="nav-link {{ request()->routeIs('admin.bloggers.index') || request()->routeIs('admin.bloggers.create') || request()->routeIs('admin.bloggers.edit') ? 'active' : '' }}">
                             <i class="fas fa-user-plus"></i>
                             Add Blogger
                         </a>
                     </div>
 
-                    <div class="nav-item" style="margin-left: .6rem;">
+                    <div class="nav-item {{ auth()->user()->hasAdminPermission('bloggers.access.view') ? '' : 'd-none' }}" style="margin-left: .6rem;">
                         <a href="{{ route('admin.blogs.access') }}" class="nav-link {{ request()->routeIs('admin.blogs.access') ? 'active' : '' }}">
                             <i class="fas fa-user-lock"></i>
                             Blog Access
@@ -300,7 +300,7 @@
                 </div>
             </div>
             
-            <div class="nav-item {{ auth()->user()->canAccessAdminModule('users') ? '' : 'd-none' }}">
+            <div class="nav-item {{ auth()->user()->hasAdminPermission('users.verification.list') ? '' : 'd-none' }}">
                 <a href="{{ route('admin.users.verification.pending') }}" class="nav-link {{ request()->routeIs('admin.users.verification.*') ? 'active' : '' }}">
                     <i class="fas fa-certificate"></i>
                     Verifications
@@ -315,14 +315,14 @@
                 </a>
 
                 <div class="collapse {{ request()->routeIs('admin.plans.*') ? 'show' : '' }}" id="plansMenu">
-                    <div class="nav-item" style="margin-left: .6rem;">
+                    <div class="nav-item {{ auth()->user()->hasAdminPermission('plans.business.list') ? '' : 'd-none' }}" style="margin-left: .6rem;">
                         <a href="{{ route('admin.plans.business.index') }}" class="nav-link {{ request()->routeIs('admin.plans.business.*') ? 'active' : '' }}">
                             <i class="fas fa-briefcase"></i>
                             Business Plans
                         </a>
                     </div>
 
-                    <div class="nav-item" style="margin-left: .6rem;">
+                    <div class="nav-item {{ auth()->user()->hasAdminPermission('plans.matrimony.list') ? '' : 'd-none' }}" style="margin-left: .6rem;">
                         <a href="{{ route('admin.plans.matrimony.index') }}" class="nav-link {{ request()->routeIs('admin.plans.matrimony.*') ? 'active' : '' }}">
                             <i class="fas fa-user-friends"></i>
                             Matrimony Plans
@@ -339,10 +339,13 @@
             </div>
             
             <div class="nav-item {{ auth()->user()->canAccessAdminModule('businesses') ? '' : 'd-none' }}">
-                <a href="{{ route('admin.businesses.index') }}" class="nav-link {{ request()->routeIs('admin.businesses.*') ? 'active' : '' }}">
-                    <i class="fas fa-building"></i>
-                    Businesses
+                <a class="nav-link d-flex align-items-center {{ request()->routeIs('admin.businesses.*') ? 'active' : '' }}" data-bs-toggle="collapse" href="#businessesMenu" aria-expanded="{{ request()->routeIs('admin.businesses.*') ? 'true' : 'false' }}">
+                    <i class="fas fa-building"></i><span>Businesses</span><i class="fas fa-chevron-down dropdown-chevron"></i>
                 </a>
+                <div class="collapse {{ request()->routeIs('admin.businesses.*') ? 'show' : '' }}" id="businessesMenu">
+                    <div class="nav-item {{ auth()->user()->hasAdminPermission('businesses.list') ? '' : 'd-none' }}" style="margin-left:.6rem"><a href="{{ route('admin.businesses.index') }}" class="nav-link"><i class="fas fa-list"></i> All Businesses</a></div>
+                    <div class="nav-item {{ auth()->user()->hasAdminPermission('businesses.verification.list') ? '' : 'd-none' }}" style="margin-left:.6rem"><a href="{{ route('admin.businesses.verification') }}" class="nav-link"><i class="fas fa-check-circle"></i> Verification</a></div>
+                </div>
             </div>
 
             <div class="nav-item {{ auth()->user()->canAccessAdminModule('jobs') ? '' : 'd-none' }}">
@@ -354,9 +357,9 @@
                     <i class="fas fa-chevron-down dropdown-chevron"></i>
                 </a>
                 <div class="collapse {{ request()->routeIs('admin.jobs.*') ? 'show' : '' }}" id="jobsCareersMenu">
-                    <div class="nav-item" style="margin-left:.6rem"><a href="{{ route('admin.jobs.index') }}" class="nav-link {{ request()->routeIs('admin.jobs.index') || request()->routeIs('admin.jobs.edit') ? 'active' : '' }}"><i class="fas fa-list"></i> All Jobs</a></div>
-                    <div class="nav-item {{ auth()->user()->hasAdminPermission('jobs.manage') ? '' : 'd-none' }}" style="margin-left:.6rem"><a href="{{ route('admin.jobs.create') }}" class="nav-link {{ request()->routeIs('admin.jobs.create') ? 'active' : '' }}"><i class="fas fa-plus-circle"></i> Add Job</a></div>
-                    <div class="nav-item" style="margin-left:.6rem"><a href="{{ route('admin.jobs.applications') }}" class="nav-link {{ request()->routeIs('admin.jobs.applications*') ? 'active' : '' }}"><i class="fas fa-file-alt"></i> Applications</a></div>
+                    <div class="nav-item {{ auth()->user()->hasAdminPermission('jobs.list') ? '' : 'd-none' }}" style="margin-left:.6rem"><a href="{{ route('admin.jobs.index') }}" class="nav-link {{ request()->routeIs('admin.jobs.index') || request()->routeIs('admin.jobs.edit') ? 'active' : '' }}"><i class="fas fa-list"></i> All Jobs</a></div>
+                    <div class="nav-item {{ auth()->user()->hasAdminPermission('jobs.create') ? '' : 'd-none' }}" style="margin-left:.6rem"><a href="{{ route('admin.jobs.create') }}" class="nav-link {{ request()->routeIs('admin.jobs.create') ? 'active' : '' }}"><i class="fas fa-plus-circle"></i> Add Job</a></div>
+                    <div class="nav-item {{ auth()->user()->hasAdminPermission('jobs.applications.list') ? '' : 'd-none' }}" style="margin-left:.6rem"><a href="{{ route('admin.jobs.applications') }}" class="nav-link {{ request()->routeIs('admin.jobs.applications*') ? 'active' : '' }}"><i class="fas fa-file-alt"></i> Applications</a></div>
                 </div>
             </div>
             
@@ -368,10 +371,13 @@
             </div> */?>
             
             <div class="nav-item {{ auth()->user()->canAccessAdminModule('donations') ? '' : 'd-none' }}">
-                <a href="{{ route('admin.donations.index') }}" class="nav-link {{ request()->routeIs('admin.donations.*') ? 'active' : '' }}">
-                    <i class="fas fa-heart"></i>
-                    Contribution
+                <a class="nav-link d-flex align-items-center {{ request()->routeIs('admin.donations.*') ? 'active' : '' }}" data-bs-toggle="collapse" href="#contributionMenu" aria-expanded="{{ request()->routeIs('admin.donations.*') ? 'true' : 'false' }}">
+                    <i class="fas fa-heart"></i><span>Contribution</span><i class="fas fa-chevron-down dropdown-chevron"></i>
                 </a>
+                <div class="collapse {{ request()->routeIs('admin.donations.*') ? 'show' : '' }}" id="contributionMenu">
+                    <div class="nav-item {{ auth()->user()->hasAdminPermission('donations.list') ? '' : 'd-none' }}" style="margin-left:.6rem"><a href="{{ route('admin.donations.index') }}" class="nav-link"><i class="fas fa-list"></i> Contributions</a></div>
+                    <div class="nav-item {{ auth()->user()->hasAdminPermission('donations.causes.list') ? '' : 'd-none' }}" style="margin-left:.6rem"><a href="{{ route('admin.donations.causes') }}" class="nav-link"><i class="fas fa-bullseye"></i> Causes</a></div>
+                </div>
             </div>
             
             <div class="nav-item {{ auth()->user()->canAccessAdminModule('matrimony') ? '' : 'd-none' }}">
@@ -380,8 +386,9 @@
                     <span><i class="fas fa-heart"></i> Matrimony</span><i class="fas fa-chevron-down"></i>
                 </a>
                 <div class="collapse {{ request()->routeIs('admin.matrimony.*') ? 'show' : '' }}" id="matrimonyMenu">
-                    <div class="nav-item" style="margin-left:.6rem"><a href="{{ route('admin.matrimony.index') }}" class="nav-link {{ request()->routeIs('admin.matrimony.index') || request()->routeIs('admin.matrimony.show') || request()->routeIs('admin.matrimony.edit') ? 'active' : '' }}"><i class="fas fa-user-friends"></i> Matrimony Profiles</a></div>
-                    <div class="nav-item" style="margin-left:.6rem"><a href="{{ route('admin.matrimony.connections') }}" class="nav-link {{ request()->routeIs('admin.matrimony.connections') ? 'active' : '' }}"><i class="fas fa-paper-plane"></i> Request Analysis</a></div>
+                    <div class="nav-item {{ auth()->user()->hasAdminPermission('matrimony.profiles.list') ? '' : 'd-none' }}" style="margin-left:.6rem"><a href="{{ route('admin.matrimony.index') }}" class="nav-link {{ request()->routeIs('admin.matrimony.index') || request()->routeIs('admin.matrimony.show') || request()->routeIs('admin.matrimony.edit') ? 'active' : '' }}"><i class="fas fa-user-friends"></i> Matrimony Profiles</a></div>
+                    <div class="nav-item {{ auth()->user()->hasAdminPermission('matrimony.connections.view') ? '' : 'd-none' }}" style="margin-left:.6rem"><a href="{{ route('admin.matrimony.connections') }}" class="nav-link {{ request()->routeIs('admin.matrimony.connections') ? 'active' : '' }}"><i class="fas fa-paper-plane"></i> Request Analysis</a></div>
+                    <div class="nav-item {{ auth()->user()->hasAdminPermission('matrimony.chats.view') ? '' : 'd-none' }}" style="margin-left:.6rem"><a href="{{ route('admin.matrimony.chats') }}" class="nav-link {{ request()->routeIs('admin.matrimony.chats') ? 'active' : '' }}"><i class="fas fa-comments"></i> Chats</a></div>
                 </div>
             </div>
 
@@ -400,14 +407,14 @@
                 </a>
 
                 <div class="collapse {{ request()->routeIs('admin.blogs.*') || request()->routeIs('admin.blog-categories.*') ? 'show' : '' }}" id="blogsMenu">
-                    <div class="nav-item" style="margin-left: .6rem;">
+                    <div class="nav-item {{ auth()->user()->hasAdminPermission('blogs.list') ? '' : 'd-none' }}" style="margin-left: .6rem;">
                         <a href="{{ route('admin.blogs.index') }}" class="nav-link {{ request()->routeIs('admin.blogs.index') || request()->routeIs('admin.blogs.create') || request()->routeIs('admin.blogs.edit') ? 'active' : '' }}">
                             <i class="fas fa-file-alt"></i>
                             Blogs
                         </a>
                     </div>
 
-                    <div class="nav-item" style="margin-left: .6rem;">
+                    <div class="nav-item {{ auth()->user()->hasAdminPermission('blogs.categories.list') ? '' : 'd-none' }}" style="margin-left: .6rem;">
                         <a href="{{ route('admin.blog-categories.index') }}" class="nav-link {{ request()->routeIs('admin.blog-categories.*') ? 'active' : '' }}">
                             <i class="fas fa-tags"></i>
                             Category
@@ -424,10 +431,13 @@
             </div>
             
             <div class="nav-item {{ auth()->user()->canAccessAdminModule('payments') ? '' : 'd-none' }}">
-                <a href="{{ route('admin.payments.index') }}" class="nav-link {{ request()->routeIs('admin.payments.*') ? 'active' : '' }}">
-                    <i class="fas fa-credit-card"></i>
-                    Payments
+                <a class="nav-link d-flex align-items-center {{ request()->routeIs('admin.payments.*') ? 'active' : '' }}" data-bs-toggle="collapse" href="#paymentsMenu" aria-expanded="{{ request()->routeIs('admin.payments.*') ? 'true' : 'false' }}">
+                    <i class="fas fa-credit-card"></i><span>Payments</span><i class="fas fa-chevron-down dropdown-chevron"></i>
                 </a>
+                <div class="collapse {{ request()->routeIs('admin.payments.*') ? 'show' : '' }}" id="paymentsMenu">
+                    <div class="nav-item {{ auth()->user()->hasAdminPermission('payments.list') ? '' : 'd-none' }}" style="margin-left:.6rem"><a href="{{ route('admin.payments.index') }}" class="nav-link"><i class="fas fa-receipt"></i> Transactions</a></div>
+                    <div class="nav-item {{ auth()->user()->hasAdminPermission('payments.analytics') ? '' : 'd-none' }}" style="margin-left:.6rem"><a href="{{ route('admin.payments.analytics') }}" class="nav-link"><i class="fas fa-chart-pie"></i> Analytics</a></div>
+                </div>
             </div>
             
             <div class="nav-item {{ auth()->user()->canAccessAdminModule('reports') ? '' : 'd-none' }}">
@@ -442,10 +452,10 @@
                     <span><i class="fas fa-cog"></i> Settings</span><i class="fas fa-chevron-down"></i>
                 </a>
                 <div class="collapse {{ request()->routeIs('admin.settings*') || request()->routeIs('admin.support-numbers.*') || request()->routeIs('admin.notifications.*') || request()->routeIs('admin.app-versions.*') ? 'show' : '' }}" id="settingsMenu">
-                    <div class="nav-item" style="margin-left:.6rem"><a href="{{ route('admin.settings') }}" class="nav-link {{ request()->routeIs('admin.settings*') ? 'active' : '' }}"><i class="fas fa-sliders"></i> Other Settings</a></div>
-                    <div class="nav-item" style="margin-left:.6rem"><a href="{{ route('admin.support-numbers.index') }}" class="nav-link {{ request()->routeIs('admin.support-numbers.*') ? 'active' : '' }}"><i class="fas fa-headset"></i> Support Number</a></div>
-                    <div class="nav-item" style="margin-left:.6rem"><a href="{{ route('admin.notifications.index') }}" class="nav-link {{ request()->routeIs('admin.notifications.*') ? 'active' : '' }}"><i class="fas fa-bell"></i> Push Notifications</a></div>
-                    <div class="nav-item" style="margin-left:.6rem"><a href="{{ route('admin.app-versions.index') }}" class="nav-link {{ request()->routeIs('admin.app-versions.*') ? 'active' : '' }}"><i class="fas fa-mobile-screen-button"></i> App Version</a></div>
+                    <div class="nav-item {{ auth()->user()->hasAdminPermission('settings.general.view') ? '' : 'd-none' }}" style="margin-left:.6rem"><a href="{{ route('admin.settings') }}" class="nav-link {{ request()->routeIs('admin.settings*') ? 'active' : '' }}"><i class="fas fa-sliders"></i> Other Settings</a></div>
+                    <div class="nav-item {{ auth()->user()->hasAdminPermission('settings.support.view') ? '' : 'd-none' }}" style="margin-left:.6rem"><a href="{{ route('admin.support-numbers.index') }}" class="nav-link {{ request()->routeIs('admin.support-numbers.*') ? 'active' : '' }}"><i class="fas fa-headset"></i> Support Number</a></div>
+                    <div class="nav-item {{ auth()->user()->hasAdminPermission('settings.notifications.list') ? '' : 'd-none' }}" style="margin-left:.6rem"><a href="{{ route('admin.notifications.index') }}" class="nav-link {{ request()->routeIs('admin.notifications.*') ? 'active' : '' }}"><i class="fas fa-bell"></i> Push Notifications</a></div>
+                    <div class="nav-item {{ auth()->user()->hasAdminPermission('settings.app_version.view') ? '' : 'd-none' }}" style="margin-left:.6rem"><a href="{{ route('admin.app-versions.index') }}" class="nav-link {{ request()->routeIs('admin.app-versions.*') ? 'active' : '' }}"><i class="fas fa-mobile-screen-button"></i> App Version</a></div>
                 </div>
             </div>
         </nav>
@@ -608,6 +618,33 @@
             });
         });
     </script>
+    @unless(auth()->user()->isSuperAdmin())
+    <script>
+        // Remove links and forms for actions the current team member cannot use.
+        // The middleware still enforces the same rules for direct URL requests.
+        document.addEventListener('DOMContentLoaded', function () {
+            const deniedRoutes = @json(\App\Support\AdminPermissionRegistry::deniedRouteRules(auth()->user()));
+            const escapeRegex = value => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const matches = (path, method) => deniedRoutes.some(rule => {
+                const pattern = '^' + rule.uri.split('/').map(part => part.startsWith('{') ? '[^/]+' : escapeRegex(part)).join('/') + '/?$';
+                return rule.methods.includes(method.toUpperCase()) && new RegExp(pattern).test(path);
+            });
+            document.querySelectorAll('a[href]').forEach(link => {
+                if (!link.href || link.getAttribute('href').startsWith('#')) return;
+                const url = new URL(link.href, window.location.origin);
+                if (url.origin === window.location.origin && matches(url.pathname, 'GET')) link.classList.add('d-none');
+            });
+            document.querySelectorAll('form[action]').forEach(form => {
+                const action = form.getAttribute('action');
+                if (!action) return;
+                const methodOverride = form.querySelector('input[name="_method"]')?.value;
+                const method = methodOverride || form.getAttribute('method') || 'GET';
+                const url = new URL(action, window.location.origin);
+                if (url.origin === window.location.origin && matches(url.pathname, method)) form.classList.add('d-none');
+            });
+        });
+    </script>
+    @endunless
     @stack('scripts')
 </body>
 </html>

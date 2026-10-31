@@ -4,6 +4,9 @@ namespace Tests\Unit;
 
 use App\Models\AdminTeamMember;
 use App\Models\User;
+use App\Support\AdminPermissionRegistry;
+use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Str;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
@@ -36,5 +39,34 @@ class AdminTeamPermissionTest extends TestCase
         $user->setRelation('adminTeamMember', $member);
 
         $this->assertFalse($user->hasAdminPermission('users.view'));
+    }
+
+    #[Test]
+    public function every_admin_panel_route_is_assigned_to_a_permission_or_explicitly_exempt(): void
+    {
+        $unmapped = [];
+        foreach (Route::getRoutes() as $route) {
+            $name = $route->getName();
+            if (! $name || (! str_starts_with($name, 'admin.') && ! str_starts_with($name, 'heroes.'))) {
+                continue;
+            }
+            if (Str::is(['admin.login*', 'admin.logout', 'admin.profile*', 'admin.teams.*'], $name)) {
+                continue;
+            }
+            if (! AdminPermissionRegistry::permissionForRoute($name)) {
+                $unmapped[] = $name;
+            }
+        }
+
+        $this->assertSame([], $unmapped);
+    }
+
+    #[Test]
+    public function action_permissions_automatically_include_their_page_permission(): void
+    {
+        $this->assertSame(
+            ['jobs.edit', 'jobs.list'],
+            AdminPermissionRegistry::withPageDependencies(['jobs.edit'])
+        );
     }
 }

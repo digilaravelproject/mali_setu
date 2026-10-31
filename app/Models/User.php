@@ -3,6 +3,7 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Support\AdminPermissionRegistry;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasOne;
@@ -122,12 +123,38 @@ class User extends Authenticatable
             return true;
         }
 
-        return $this->adminTeamMember?->hasPermission($permission) ?? false;
+        $member = $this->adminTeamMember;
+        if (! $member?->is_active) {
+            return false;
+        }
+
+        if ($member->hasPermission($permission)) {
+            return true;
+        }
+
+        // Backward compatibility for members saved with the former View/Manage model.
+        $module = AdminPermissionRegistry::moduleForPermission($permission);
+        if ($member->hasPermission($module.'.manage')) {
+            return true;
+        }
+
+        return AdminPermissionRegistry::isViewPermission($permission)
+            && $member->hasPermission($module.'.view');
     }
 
     public function canAccessAdminModule(string $module): bool
     {
-        return $this->hasAdminPermission($module.'.view') || $this->hasAdminPermission($module.'.manage');
+        if ($this->isSuperAdmin()) {
+            return true;
+        }
+
+        foreach (AdminPermissionRegistry::permissions() as $key => $permission) {
+            if ($permission['module'] === $module && $this->hasAdminPermission($key)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**

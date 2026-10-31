@@ -21,7 +21,7 @@ class UserManagementController extends Controller
      */
     public function index(Request $request)
     {
-        $query = User::with(['casteCertificate']);
+        $query = User::with(['casteCertificate'])->whereDoesntHave('adminTeamMember');
 
         // Filter by user type if provided
         if ($request->has('user_type') && $request->user_type != '') {
@@ -54,22 +54,24 @@ class UserManagementController extends Controller
         $users = $query->latest()->paginate(20);
 
         $stats = [
-            'total' => User::count(),
-            'verified' => User::where('caste_verification_status', 'approved')->count(),
-            'pending' => User::where('caste_verification_status', 'pending')->count(),
-            'rejected' => User::where('caste_verification_status', 'rejected')->count(),
-            'total_users' => User::count(),
-            'verified_users' => User::where('caste_verification_status', 'approved')->count(),
-            'pending_verification' => User::where('caste_verification_status', 'pending')->count(),
-            'active_today' => User::whereDate('created_at', today())->orWhereDate('updated_at', today())->count(),
-            'by_type' => User::selectRaw('user_type, COUNT(*) as count')
+            'total' => User::whereDoesntHave('adminTeamMember')->count(),
+            'verified' => User::whereDoesntHave('adminTeamMember')->where('caste_verification_status', 'approved')->count(),
+            'pending' => User::whereDoesntHave('adminTeamMember')->where('caste_verification_status', 'pending')->count(),
+            'rejected' => User::whereDoesntHave('adminTeamMember')->where('caste_verification_status', 'rejected')->count(),
+            'total_users' => User::whereDoesntHave('adminTeamMember')->count(),
+            'verified_users' => User::whereDoesntHave('adminTeamMember')->where('caste_verification_status', 'approved')->count(),
+            'pending_verification' => User::whereDoesntHave('adminTeamMember')->where('caste_verification_status', 'pending')->count(),
+            'active_today' => User::whereDoesntHave('adminTeamMember')->where(function ($query) {
+                $query->whereDate('created_at', today())->orWhereDate('updated_at', today());
+            })->count(),
+            'by_type' => User::whereDoesntHave('adminTeamMember')->selectRaw('user_type, COUNT(*) as count')
                 ->groupBy('user_type')
                 ->pluck('count', 'user_type')
                 ->toArray(),
         ];
 
         // Fetch all distinct user types added in DB
-        $userTypes = User::select('user_type')
+        $userTypes = User::whereDoesntHave('adminTeamMember')->select('user_type')
             ->distinct()
             ->whereNotNull('user_type')
             ->where('user_type', '!=', '')
@@ -84,7 +86,7 @@ class UserManagementController extends Controller
      */
     public function pendingVerifications(Request $request)
     {
-        $query = User::with(['casteCertificate']);
+        $query = User::with(['casteCertificate'])->whereDoesntHave('adminTeamMember');
 
         // Search functionality
         if ($request->has('search') && $request->search !== '') {
@@ -99,12 +101,12 @@ class UserManagementController extends Controller
             ->paginate(15);
 
         $stats = [
-            'pending_count' => User::where('caste_verification_status', 'pending')->count(),
-            'approved_today' => User::where('caste_verification_status', 'approved')
+            'pending_count' => User::whereDoesntHave('adminTeamMember')->where('caste_verification_status', 'pending')->count(),
+            'approved_today' => User::whereDoesntHave('adminTeamMember')->where('caste_verification_status', 'approved')
                 ->whereDate('updated_at', today())->count(),
-            'rejected_today' => User::where('caste_verification_status', 'rejected')
+            'rejected_today' => User::whereDoesntHave('adminTeamMember')->where('caste_verification_status', 'rejected')
                 ->whereDate('updated_at', today())->count(),
-            'caste_certificates' => User::where('caste_verification_status', 'pending')->count(),
+            'caste_certificates' => User::whereDoesntHave('adminTeamMember')->where('caste_verification_status', 'pending')->count(),
             'businesses' => Business::where('verification_status', 'pending')->count(),
             'matrimony_profiles' => MatrimonyProfile::where('approval_status', 'pending')->count(),
         ];

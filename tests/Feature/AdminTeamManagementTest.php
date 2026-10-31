@@ -25,15 +25,23 @@ class AdminTeamManagementTest extends TestCase
             'first_name' => 'Asha',
             'last_name' => 'Patil',
             'email' => 'asha.team@example.test',
-            'permissions' => ['jobs.manage'],
+            'permissions' => ['jobs.edit'],
         ]);
 
         $response->assertRedirect(route('admin.teams.index'));
         $member = AdminTeamMember::with('user')->where('created_by', $admin->id)->firstOrFail();
 
-        $this->assertSame(['jobs.manage', 'jobs.view'], $member->permissions);
+        $this->assertSame(['jobs.edit', 'jobs.list'], $member->permissions);
         $this->assertTrue(Hash::check('Asha@123', $member->user->password));
         Mail::assertSent(AdminTeamInvitationMail::class, fn ($mail) => $mail->hasTo('asha.team@example.test'));
+
+        $this->get(route('admin.teams.edit', $member))
+            ->assertOk()
+            ->assertSee('Menu, Submenu &amp; Action Permissions', false)
+            ->assertSee('Menu: Jobs &amp; Careers', false)
+            ->assertSee('Submenu/Page: Applications')
+            ->assertSee('Change application status');
+        $this->get(route('admin.users.index'))->assertDontSee('asha.team@example.test');
 
         $this->post(route('admin.logout'));
         $this->post(route('admin.login.post'), [
@@ -53,11 +61,12 @@ class AdminTeamManagementTest extends TestCase
             'created_by' => $admin->id,
             'first_name' => 'Read',
             'last_name' => 'Only',
-            'permissions' => ['jobs.view'],
+            'permissions' => ['jobs.list'],
             'is_active' => true,
         ]);
 
         $this->actingAs($user)->get(route('admin.payments.index'))->assertForbidden();
         $this->actingAs($user)->get(route('admin.jobs.index'))->assertOk();
+        $this->actingAs($user)->get(route('admin.jobs.create'))->assertForbidden();
     }
 }
