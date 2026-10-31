@@ -1,5 +1,10 @@
 <?php
 
+use App\Http\Middleware\AdminPermissionMiddleware;
+use App\Http\Middleware\RedirectAdmin;
+use App\Http\Middleware\RoleMiddleware;
+use App\Http\Middleware\SuperAdminMiddleware;
+use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -11,7 +16,7 @@ return Application::configure(basePath: dirname(__DIR__))
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
     )
-    ->withSchedule(function (\Illuminate\Console\Scheduling\Schedule $schedule) {
+    ->withSchedule(function (Schedule $schedule) {
         $schedule->command('subscriptions:send-reminders')->daily();
         $schedule->command('payment:backfill-audit-rows')->everyFiveMinutes();
         $schedule->command('payment:pending-reminders')->everyMinute();
@@ -22,8 +27,10 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->trustProxies(at: '*');
         $middleware->alias([
-            'role' => \App\Http\Middleware\RoleMiddleware::class,
-            'redirect.admin' => \App\Http\Middleware\RedirectAdmin::class,
+            'role' => RoleMiddleware::class,
+            'redirect.admin' => RedirectAdmin::class,
+            'admin.permission' => AdminPermissionMiddleware::class,
+            'admin.super' => SuperAdminMiddleware::class,
         ]);
         $middleware->validateCsrfTokens(except: [
             '/ccavenue/callback',

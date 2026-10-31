@@ -21,6 +21,7 @@ use App\Http\Controllers\Admin\PlanManagementController;
 use App\Http\Controllers\Admin\AppVersionController;
 use App\Http\Controllers\Admin\SupportNumberController;
 use App\Http\Controllers\Admin\JobManagementController;
+use App\Http\Controllers\Admin\TeamManagementController;
 use App\Http\Controllers\AppUpdateController;
 use Illuminate\Support\Facades\Mail;
 
@@ -197,7 +198,8 @@ Route::middleware(['auth', 'redirect.admin'])->group(function () {
     });
 });
 
-Route::resource('heroes', HomepageHeroController::class);
+Route::resource('heroes', HomepageHeroController::class)
+    ->middleware(['auth', 'role:admin', 'admin.permission:homepage_heroes']);
 
 // Admin Authentication Routes
 Route::prefix('admin')->name('admin.')->group(function () {
@@ -208,8 +210,18 @@ Route::prefix('admin')->name('admin.')->group(function () {
     });
     
     // Authenticated admin routes
-    Route::middleware(['auth', 'role:admin'])->group(function () {
+    Route::middleware(['auth', 'role:admin', 'admin.permission'])->group(function () {
         Route::post('logout', [AdminAuthController::class, 'logout'])->name('logout');
+
+        Route::prefix('teams')->name('teams.')->middleware('admin.super')->group(function () {
+            Route::get('/', [TeamManagementController::class, 'index'])->name('index');
+            Route::get('/create', [TeamManagementController::class, 'create'])->name('create');
+            Route::post('/', [TeamManagementController::class, 'store'])->name('store');
+            Route::get('/{team}/edit', [TeamManagementController::class, 'edit'])->name('edit');
+            Route::put('/{team}', [TeamManagementController::class, 'update'])->name('update');
+            Route::patch('/{team}/toggle', [TeamManagementController::class, 'toggle'])->name('toggle');
+            Route::delete('/{team}', [TeamManagementController::class, 'destroy'])->name('destroy');
+        });
         
         // Dashboard
         Route::get('dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');

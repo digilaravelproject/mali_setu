@@ -13,7 +13,7 @@ class RedirectAdmin
      */
     public function handle(Request $request, Closure $next): Response
     {
-        if ($request->user() && $request->user()->user_type === 'admin') {
+        if ($request->user() && ($request->user()->user_type === 'admin' || $request->user()->isAdminTeamMember())) {
             return redirect()->route('admin.dashboard');
         }
 

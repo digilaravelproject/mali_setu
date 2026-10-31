@@ -3,15 +3,17 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
 {
-    /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable, HasApiTokens;
+    /** @use HasFactory<UserFactory> */
+    use HasApiTokens, HasFactory, Notifiable;
 
     /**
      * The attributes that are mass assignable.
@@ -89,14 +91,43 @@ class User extends Authenticatable
     {
         static::saved(function ($user) {
             if ($user->cast_certificate) {
-                \App\Models\CasteCertificate::updateOrCreate(
+                CasteCertificate::updateOrCreate(
                     ['user_id' => $user->id],
                     ['file_path' => $user->cast_certificate]
                 );
             } else {
-                \App\Models\CasteCertificate::where('user_id', $user->id)->delete();
+                CasteCertificate::where('user_id', $user->id)->delete();
             }
         });
+    }
+
+    public function adminTeamMember(): HasOne
+    {
+        return $this->hasOne(AdminTeamMember::class);
+    }
+
+    public function isAdminTeamMember(): bool
+    {
+        return $this->adminTeamMember()->where('is_active', true)->exists();
+    }
+
+    public function isSuperAdmin(): bool
+    {
+        return $this->user_type === 'admin' && ! $this->adminTeamMember()->exists();
+    }
+
+    public function hasAdminPermission(string $permission): bool
+    {
+        if ($this->isSuperAdmin()) {
+            return true;
+        }
+
+        return $this->adminTeamMember?->hasPermission($permission) ?? false;
+    }
+
+    public function canAccessAdminModule(string $module): bool
+    {
+        return $this->hasAdminPermission($module.'.view') || $this->hasAdminPermission($module.'.manage');
     }
 
     /**
