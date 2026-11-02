@@ -22,6 +22,8 @@ use App\Http\Controllers\Admin\AppVersionController;
 use App\Http\Controllers\Admin\SupportNumberController;
 use App\Http\Controllers\Admin\JobManagementController;
 use App\Http\Controllers\Admin\TeamManagementController;
+use App\Http\Controllers\Admin\WebinarManagementController;
+use App\Http\Controllers\WebinarController;
 use App\Http\Controllers\AppUpdateController;
 use Illuminate\Support\Facades\Mail;
 
@@ -196,6 +198,15 @@ Route::middleware(['auth', 'redirect.admin'])->group(function () {
         Route::post('/{blogId}/comments', [\App\Http\Controllers\BlogCommentController::class, 'store'])->name('comments.store');
         Route::delete('/comments/{id}', [\App\Http\Controllers\BlogCommentController::class, 'destroy'])->name('comments.destroy');
     });
+
+    Route::prefix('dashboard/webinars')->name('webinars.')->group(function () {
+        Route::get('/', [WebinarController::class, 'index'])->name('index');
+        Route::get('/my-registrations', [WebinarController::class, 'myRegistrations'])->name('my');
+        Route::get('/{webinar}', [WebinarController::class, 'show'])->name('show');
+        Route::post('/{webinar}/register', [WebinarController::class, 'register'])->name('register');
+        Route::post('/{webinar}/comments', [WebinarController::class, 'comment'])->name('comment');
+        Route::get('/{webinar}/join/live', [WebinarController::class, 'join'])->name('join');
+    });
 });
 
 Route::resource('heroes', HomepageHeroController::class)
@@ -226,6 +237,15 @@ Route::prefix('admin')->name('admin.')->group(function () {
         // Dashboard
         Route::get('dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
         Route::get('analytics', [AdminDashboardController::class, 'analytics'])->name('analytics');
+
+        Route::prefix('webinars')->name('webinars.')->group(function () {
+            Route::get('/', [WebinarManagementController::class, 'index'])->name('index');
+            Route::get('/create', [WebinarManagementController::class, 'create'])->name('create');
+            Route::post('/', [WebinarManagementController::class, 'store'])->name('store');
+            Route::get('/{webinar}/edit', [WebinarManagementController::class, 'edit'])->name('edit');
+            Route::put('/{webinar}', [WebinarManagementController::class, 'update'])->name('update');
+            Route::delete('/{webinar}', [WebinarManagementController::class, 'destroy'])->name('destroy');
+        });
         
         // User Management Routes
         Route::prefix('users')->name('users.')->group(function () {

@@ -33,7 +33,7 @@ class JobController extends Controller
     {
         $query = JobPosting::with(['business', 'business.user'])
             ->withCount('applications')
-            ->active()
+            ->where('status', 'approved')
             ->latest();
             
         if ($request->filled('business_id')) {

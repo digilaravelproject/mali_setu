@@ -489,6 +489,7 @@ class PaymentController extends Controller
 
             $profile->update([
                 'profile_expires_at' => $expiresAt,
+                'approval_status' => 'pending',
             ]);
         }
     }

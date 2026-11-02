@@ -24,6 +24,7 @@ use App\Http\Controllers\Api\SupportNumberController;
 use App\Http\Controllers\Api\SearchController;
 use App\Http\Controllers\Api\SocialAuthController;
 use App\Http\Controllers\Api\VolunteerController;
+use App\Http\Controllers\Api\WebinarController;
 use App\Http\Controllers\CCAvenueController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -71,6 +72,11 @@ Route::prefix('banner')->group(function () {
     Route::get('/', [HomepageHeroController::class, 'index']);   // list
     Route::get('/{hero}', [HomepageHeroController::class, 'show']); // single
 });
+
+Route::get('webinars', [WebinarController::class, 'index']);
+Route::get('webinars/upcoming', [WebinarController::class, 'upcoming']);
+Route::get('webinars/{webinar}', [WebinarController::class, 'show']);
+Route::get('webinars/{webinar}/comments', [WebinarController::class, 'comments']);
 
 // Public business routes (for browsing)
 Route::prefix('business')->group(function () {
@@ -187,6 +193,10 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 
 // Protected routes for authenticated users
 Route::middleware(['auth:sanctum'])->group(function () {
+
+    Route::post('webinars/{webinar}/register', [WebinarController::class, 'register']);
+    Route::post('webinars/{webinar}/comments', [WebinarController::class, 'storeComment']);
+    Route::get('my-webinar-registrations', [WebinarController::class, 'myRegistrations']);
 
     // Business Management Routes
     Route::prefix('business')->group(function () {

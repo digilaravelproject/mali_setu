@@ -252,6 +252,16 @@
                 </a>
             </div>
 
+            <div class="nav-item {{ auth()->user()->canAccessAdminModule('webinars') ? '' : 'd-none' }}">
+                <a class="nav-link d-flex justify-content-between align-items-center {{ request()->routeIs('admin.webinars.*') ? 'active' : '' }}" data-bs-toggle="collapse" href="#webinarsMenu" aria-expanded="{{ request()->routeIs('admin.webinars.*') ? 'true' : 'false' }}">
+                    <span><i class="fas fa-video"></i> Broadcast / Webinars</span><i class="fas fa-chevron-down"></i>
+                </a>
+                <div class="collapse {{ request()->routeIs('admin.webinars.*') ? 'show' : '' }}" id="webinarsMenu">
+                    <div class="nav-item {{ auth()->user()->hasAdminPermission('webinars.list') ? '' : 'd-none' }}" style="margin-left:.6rem"><a href="{{ route('admin.webinars.index') }}" class="nav-link {{ request()->routeIs('admin.webinars.index') || request()->routeIs('admin.webinars.edit') ? 'active' : '' }}"><i class="fas fa-list"></i> All Webinars</a></div>
+                    <div class="nav-item {{ auth()->user()->hasAdminPermission('webinars.create') ? '' : 'd-none' }}" style="margin-left:.6rem"><a href="{{ route('admin.webinars.create') }}" class="nav-link {{ request()->routeIs('admin.webinars.create') ? 'active' : '' }}"><i class="fas fa-plus-circle"></i> Create Webinar</a></div>
+                </div>
+            </div>
+
             <div class="nav-item {{ auth()->user()->canAccessAdminModule('homepage_heroes') ? '' : 'd-none' }}">
                 <a href="{{ route('heroes.index') }}" 
                 class="nav-link {{ request()->routeIs('heroes.*') ? 'active' : '' }}">

@@ -37,7 +37,7 @@ class SocialAuthController extends Controller
                         'name' => $googleUser->getName(),
                         'google_id' => $googleUser->getId(),
                         'password' => bcrypt(Str::random(12)),
-                        'caste_verification_status' => 'approved',
+                        'caste_verification_status' => 'pending',
                     ]);
                 }
 
@@ -61,7 +61,7 @@ class SocialAuthController extends Controller
                     'google_id' => $googleUser->getId(),
                     'user_type' => 'general',
                     'password' => bcrypt(Str::random(16)),
-                    'caste_verification_status' => 'approved',
+                    'caste_verification_status' => 'pending',
                 ]);
 
                 return redirect()->route('register')->withErrors([
@@ -101,11 +101,13 @@ class SocialAuthController extends Controller
         try {
             $fbUser = Socialite::driver('facebook')->stateless()->user();
 
-            $user = User::updateOrCreate(
+            $user = User::firstOrCreate(
                 ['email' => $fbUser->getEmail()],
                 [
                     'name' => $fbUser->getName(),
                     'password' => bcrypt(Str::random(12)),
+                    'user_type' => 'general',
+                    'caste_verification_status' => 'pending',
                 ]
             );
 

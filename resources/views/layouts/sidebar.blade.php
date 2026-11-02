@@ -64,6 +64,17 @@
                     </a>
                 </li>
 
+                <li class="nav-item has-dropdown {{ Request::routeIs('webinars.*') ? 'open' : '' }}">
+                    <a class="nav-link-custom dropdown-toggle-custom" onclick="toggleSidebarDropdown(event)">
+                        <i class="fa-solid fa-video"></i> Broadcast &amp; Webinars
+                        <i class="fa-solid fa-chevron-down ms-auto dropdown-arrow"></i>
+                    </a>
+                    <ul class="submenu-menu">
+                        <li><a href="{{ route('webinars.index') }}" class="nav-link-custom submenu-link {{ Request::routeIs('webinars.index') || Request::routeIs('webinars.show') ? 'active' : '' }}"><i class="fa-solid fa-list"></i> All Webinars</a></li>
+                        <li><a href="{{ route('webinars.my') }}" class="nav-link-custom submenu-link {{ Request::routeIs('webinars.my') ? 'active' : '' }}"><i class="fa-solid fa-ticket"></i> My Registrations</a></li>
+                    </ul>
+                </li>
+
                 <!-- Matrimony Module Dropdown -->
                 <li class="nav-item has-dropdown {{ Request::routeIs('matrimony.*') ? 'open' : '' }}">
                     <a class="nav-link-custom dropdown-toggle-custom" onclick="toggleSidebarDropdown(event)">

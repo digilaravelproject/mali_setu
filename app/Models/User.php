@@ -270,6 +270,11 @@ class User extends Authenticatable
         return $this->hasMany(JobApplication::class);
     }
 
+    public function webinarRegistrations()
+    {
+        return $this->hasMany(WebinarRegistration::class);
+    }
+
     /**
      * Get pending job applications made by this user
      */

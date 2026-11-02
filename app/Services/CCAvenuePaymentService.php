@@ -216,6 +216,7 @@ class CCAvenuePaymentService
             $profile = MatrimonyProfile::where('user_id', $transaction->user_id)->first();
             $profile?->update([
                 'profile_expires_at' => now()->addMonths($this->subscriptionMonths($transaction)),
+                'approval_status' => 'pending',
             ]);
 
             return;

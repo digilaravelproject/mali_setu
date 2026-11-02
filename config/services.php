@@ -72,4 +72,10 @@ return [
         'redirect'      => env('FACEBOOK_REDIRECT_URL'),
     ],
 
+    'agora' => [
+        'app_id' => env('AGORA_APP_ID'),
+        'app_certificate' => env('AGORA_APP_CERTIFICATE'),
+        'temporary_token' => env('AGORA_TEMPORARY_TOKEN'),
+    ],
+
 ];

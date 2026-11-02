@@ -44,6 +44,10 @@
                     Dashboard
                 </a>
 
+                <a href="{{ route('webinars.index') }}" class="nav-link-navbar {{ Request::routeIs('webinars.*') ? 'active' : '' }}">
+                    Webinars
+                </a>
+
                 <!-- Matrimony Dropdown -->
                 <div class="nav-item-navbar dropdown-custom">
                     <button class="nav-link-navbar dropdown-toggle-navbar {{ Request::routeIs('matrimony.*') ? 'active' : '' }}">

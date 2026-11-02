@@ -53,6 +53,7 @@ class AuthController extends Controller
                 'longitude'        => 'nullable|numeric|between:-180,180',
                 'password'         => 'required|string|confirmed',
                 'user_type'        => 'required|in:general,business,matrimony,volunteer',
+                'cast_certificate' => 'required_if:user_type,business,matrimony',
                 'term_condition'   => 'accepted', // must be checked (true/1)
             ]);
 
@@ -77,6 +78,8 @@ class AuthController extends Controller
                     ], 422);
                 }
             }
+
+            $certificatePath = $this->storeCasteProof($request);
 
             $user = User::create([
                 'name'                   => $request->name,
@@ -106,7 +109,8 @@ class AuthController extends Controller
                 'respected_person_name' => $request->respected_person_name,
                 'respected_person_mobile_number' => $request->respected_person_mobile_number,
                 'user_type'              => $request->user_type,
-                'caste_verification_status' => 'approved'
+                'cast_certificate'          => $certificatePath,
+                'caste_verification_status' => 'pending'
             ]);
             
             // ✅ NEW: Send welcome email (do not break registration on mail failure)
@@ -132,6 +136,8 @@ class AuthController extends Controller
                     'token_type' => 'Bearer'
                 ]
             ], 201);
+        } catch (ValidationException $e) {
+            throw $e;
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -139,6 +145,53 @@ class AuthController extends Controller
                 'error' => $e->getMessage()
             ], 500);
         }
+    }
+
+    private function storeCasteProof(Request $request): ?string
+    {
+        if (! in_array($request->user_type, ['business', 'matrimony'], true)) {
+            return null;
+        }
+
+        if ($request->hasFile('cast_certificate')) {
+            $request->validate([
+                'cast_certificate' => 'file|mimes:jpg,jpeg,png,pdf|max:5120',
+            ]);
+
+            return $request->file('cast_certificate')->store('caste-certificates', 'public');
+        }
+
+        $value = (string) $request->input('cast_certificate');
+        if (! preg_match('/^(?:data:([\w\/+.-]+);base64,)?(.+)$/s', $value, $matches)) {
+            throw ValidationException::withMessages([
+                'cast_certificate' => 'Upload a JPG, PNG or PDF caste/LC/marriage certificate.',
+            ]);
+        }
+
+        $binary = base64_decode($matches[2], true);
+        if ($binary === false || strlen($binary) > 5 * 1024 * 1024) {
+            throw ValidationException::withMessages([
+                'cast_certificate' => 'The certificate must be valid base64 and no larger than 5 MB.',
+            ]);
+        }
+
+        $mime = $matches[1] ?? (new \finfo(FILEINFO_MIME_TYPE))->buffer($binary);
+        $extension = match ($mime) {
+            'image/jpeg', 'image/jpg' => 'jpg',
+            'image/png' => 'png',
+            'application/pdf' => 'pdf',
+            default => null,
+        };
+        if (! $extension) {
+            throw ValidationException::withMessages([
+                'cast_certificate' => 'Only JPG, PNG and PDF certificates are accepted.',
+            ]);
+        }
+
+        $path = 'caste-certificates/'.uniqid('proof_', true).'.'.$extension;
+        Storage::disk('public')->put($path, $binary);
+
+        return $path;
     }
 
     /**

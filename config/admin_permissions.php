@@ -23,6 +23,14 @@ return [
             ]],
         ],
         'People & Content' => [
+            'webinars' => ['label' => 'Broadcast / Webinars', 'icon' => 'video', 'sections' => [
+                'Webinars' => [
+                    ['key' => 'webinars.list', 'label' => 'List webinars', 'description' => 'View and search webinar sessions.', 'level' => 'view', 'routes' => ['admin.webinars.index']],
+                    ['key' => 'webinars.create', 'label' => 'Create webinar', 'description' => 'Create and publish an Agora webinar.', 'level' => 'action', 'routes' => ['admin.webinars.create', 'admin.webinars.store']],
+                    ['key' => 'webinars.edit', 'label' => 'Edit webinar', 'description' => 'Update webinar details and publishing status.', 'level' => 'action', 'routes' => ['admin.webinars.edit', 'admin.webinars.update']],
+                    ['key' => 'webinars.delete', 'label' => 'Delete webinar', 'description' => 'Delete a webinar and its registrations.', 'level' => 'action', 'routes' => ['admin.webinars.destroy']],
+                ],
+            ]],
             'users' => ['label' => 'User Management', 'icon' => 'users', 'sections' => [
                 'All Users' => [
                     ['key' => 'users.list', 'label' => 'List users', 'description' => 'Open and search the user list.', 'level' => 'view', 'routes' => ['admin.users.index', 'admin.users.pending']],
