@@ -25,12 +25,14 @@ class WebinarController extends Controller
         abort_unless($webinar->status === 'published', 404);
         $webinar->loadCount('registrations')->load(['comments' => fn($q) => $q->with('user:id,name,photo')->latest()->limit(30)]);
         $registered = $webinar->registrations()->where('user_id', auth()->id())->exists();
-        return view('webinars.show', compact('webinar','registered'));
+        $canAccess = $webinar->userCanAccess(auth()->user());
+        return view('webinars.show', compact('webinar','registered','canAccess'));
     }
 
     public function register(Webinar $webinar)
     {
         abort_unless($webinar->status === 'published' && $webinar->starts_at->isFuture(), 422);
+        abort_unless($webinar->userCanAccess(auth()->user()), 403, 'You do not have access to this webinar.');
         WebinarRegistration::firstOrCreate(['webinar_id'=>$webinar->id,'user_id'=>auth()->id()]);
         try { Mail::to(auth()->user()->email)->send(new WebinarRegistrationMail($webinar)); }
         catch (\Throwable $e) { Log::warning('Webinar mail failed', ['error'=>$e->getMessage()]); }
@@ -39,6 +41,7 @@ class WebinarController extends Controller
 
     public function comment(Request $request, Webinar $webinar)
     {
+        abort_unless($webinar->allow_qa, 403, 'Q&A is disabled for this webinar.');
         $data = $request->validate(['comment'=>'required|string|max:1000']);
         WebinarComment::create($data+['webinar_id'=>$webinar->id,'user_id'=>auth()->id()]);
         return back()->with('success','Comment posted.');
@@ -52,7 +55,8 @@ class WebinarController extends Controller
 
     public function join(Webinar $webinar)
     {
-        abort_unless($webinar->registrations()->where('user_id',auth()->id())->exists() || auth()->user()->user_type === 'admin', 403);
+        abort_unless($webinar->userCanAccess(auth()->user()), 403);
+        abort_unless(! $webinar->require_registration || $webinar->registrations()->where('user_id',auth()->id())->exists() || auth()->user()->user_type === 'admin', 403);
         return view('webinars.join', ['webinar'=>$webinar, 'agoraAppId'=>config('services.agora.app_id'), 'agoraToken'=>config('services.agora.temporary_token')]);
     }
 }

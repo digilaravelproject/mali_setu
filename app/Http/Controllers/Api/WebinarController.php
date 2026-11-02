@@ -47,6 +47,7 @@ class WebinarController extends Controller
     public function register(Request $request, Webinar $webinar)
     {
         abort_unless($webinar->status === 'published' && $webinar->starts_at->isFuture(), 422, 'This webinar is not open for registration.');
+        abort_unless($webinar->userCanAccess($request->user()), 403, 'You do not have access to this webinar.');
         $registration = WebinarRegistration::firstOrCreate(['webinar_id' => $webinar->id, 'user_id' => $request->user()->id]);
         try {
             Mail::to($request->user()->email)->send(new WebinarRegistrationMail($webinar));
@@ -58,12 +59,14 @@ class WebinarController extends Controller
 
     public function comments(Webinar $webinar)
     {
+        abort_unless($webinar->allow_qa, 403, 'Q&A is disabled for this webinar.');
         $comments = $webinar->comments()->with('user:id,name,photo')->latest()->paginate(20);
         return response()->json(['success' => true, 'data' => $comments]);
     }
 
     public function storeComment(Request $request, Webinar $webinar)
     {
+        abort_unless($webinar->allow_qa, 403, 'Q&A is disabled for this webinar.');
         $data = $request->validate(['comment' => 'required|string|max:1000']);
         $comment = WebinarComment::create($data + ['webinar_id' => $webinar->id, 'user_id' => $request->user()->id]);
         return response()->json(['success' => true, 'message' => 'Comment posted.', 'data' => $comment->load('user:id,name,photo')], 201);
