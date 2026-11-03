@@ -45,6 +45,7 @@ Route::get('app-version', [AppVersionController::class, 'index']);
 Route::post('notifications/test-push', [FcmTokenController::class, 'test']);
 Route::post('auth/phone/send-otp', [PhoneOtpController::class, 'send'])->middleware('throttle:5,1');
 Route::post('auth/phone/resend-otp', [PhoneOtpController::class, 'resend'])->middleware('throttle:5,1');
+Route::post('auth/phone/verify-otp', [PhoneOtpController::class, 'verify'])->middleware('throttle:10,1');
 Route::get('support-numbers', [SupportNumberController::class, 'index']);
 
 Route::prefix('auth')->group(function () {

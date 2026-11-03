@@ -43,6 +43,26 @@ class PublicUtilityApiTest extends TestCase
         ])->assertOk()->assertJsonPath('data.session_info', 'firebase-session');
     }
 
+    public function test_verify_phone_otp_is_public_and_returns_verified_identity(): void
+    {
+        $this->mock(FirebasePhoneAuthService::class, function (MockInterface $mock) {
+            $mock->shouldReceive('verifyCode')->once()->with('firebase-session', '123456')->andReturn([
+                'phoneNumber' => '+919876543210',
+                'localId' => 'firebase-user-id',
+                'idToken' => 'firebase-id-token',
+                'expiresIn' => '3600',
+                'isNewUser' => false,
+            ]);
+        });
+
+        $this->postJson('/api/auth/phone/verify-otp', [
+            'session_info' => 'firebase-session', 'otp' => '123456',
+        ])->assertOk()
+            ->assertJsonPath('data.verified', true)
+            ->assertJsonPath('data.phone_number', '+919876543210')
+            ->assertJsonPath('data.firebase_uid', 'firebase-user-id');
+    }
+
     public function test_support_numbers_are_available_without_authentication(): void
     {
         SystemSetting::setValue('support_number_primary', '+919876543210');

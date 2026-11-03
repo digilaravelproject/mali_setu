@@ -26,6 +26,25 @@ class FirebasePhoneAuthService
         return $response->json();
     }
 
+    public function verifyCode(string $sessionInfo, string $code): array
+    {
+        $apiKey = config('services.firebase.web_api_key');
+        if (! $apiKey) {
+            throw new \RuntimeException('Firebase phone authentication is not configured.');
+        }
+
+        $response = $this->http()->post(
+            'https://identitytoolkit.googleapis.com/v1/accounts:signInWithPhoneNumber?key='.$apiKey,
+            ['sessionInfo' => $sessionInfo, 'code' => $code]
+        );
+
+        if ($response->failed()) {
+            throw new \RuntimeException($response->json('error.message', 'Firebase could not verify the OTP.'));
+        }
+
+        return $response->json();
+    }
+
     private function http(): PendingRequest
     {
         return Http::acceptJson()->timeout(15)->retry(2, 250, null, false);
