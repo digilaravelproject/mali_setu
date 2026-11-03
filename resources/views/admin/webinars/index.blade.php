@@ -12,7 +12,7 @@
 @endpush
 @section('content')
 <div class="d-flex justify-content-between align-items-center mb-3">
- <div class="text-muted small">Home <span class="mx-2">›</span> Broadcast / Webinars</div>
+ <div class="text-muted small">Home <span class="mx-2">›</span>Webinars</div>
  <a class="btn btn-primary" href="{{ route('admin.webinars.create') }}"><i class="fas fa-plus me-2"></i>Create Webinar</a>
 </div>
 <div class="card border-0 shadow-sm"><div class="card-body">
