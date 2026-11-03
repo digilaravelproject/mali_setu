@@ -207,6 +207,8 @@ Route::middleware(['auth', 'redirect.admin'])->group(function () {
         Route::post('/{webinar}/comments', [WebinarController::class, 'comment'])->name('comment');
         Route::get('/{webinar}/join/live', [WebinarController::class, 'join'])->name('join');
         Route::get('/{webinar}/join/token', [WebinarController::class, 'token'])->name('token')->middleware('throttle:30,1');
+        Route::match(['get','post'], '/{webinar}/live/comments', [WebinarController::class, 'liveComments'])->name('live-comments')->middleware('throttle:60,1');
+        Route::get('/{webinar}/live/controls', [WebinarController::class, 'controls'])->name('controls')->middleware('throttle:60,1');
     });
 });
 
@@ -247,6 +249,9 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::put('/{webinar}', [WebinarManagementController::class, 'update'])->name('update');
             Route::get('/{webinar}/go-live', [WebinarManagementController::class, 'goLive'])->name('go-live');
             Route::get('/{webinar}/go-live/token', [WebinarManagementController::class, 'token'])->name('token')->middleware('throttle:30,1');
+            Route::match(['get','post'], '/{webinar}/go-live/comments', [WebinarManagementController::class, 'comments'])->name('comments')->middleware('throttle:60,1');
+            Route::post('/{webinar}/go-live/participant-control', [WebinarManagementController::class, 'controlParticipant'])->name('participant-control')->middleware('throttle:60,1');
+            Route::get('/{webinar}/go-live/participants/{user}', [WebinarManagementController::class, 'participant'])->name('participant')->middleware('throttle:60,1');
             Route::delete('/{webinar}', [WebinarManagementController::class, 'destroy'])->name('destroy');
         });
         

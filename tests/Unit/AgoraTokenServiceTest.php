@@ -11,7 +11,7 @@ use Tests\TestCase;
 
 class AgoraTokenServiceTest extends TestCase
 {
-    public function test_it_generates_channel_and_user_bound_host_and_audience_tokens(): void
+    public function test_it_generates_channel_and_user_bound_host_and_participant_tokens(): void
     {
         Config::set('services.agora.app_id', str_repeat('a', 32));
         Config::set('services.agora.app_certificate', str_repeat('b', 32));
@@ -26,13 +26,14 @@ class AgoraTokenServiceTest extends TestCase
 
         $this->assertSame('host-42', $host['uid']);
         $this->assertSame('user-42', $audience['uid']);
+        $this->assertSame('participant', $audience['role']);
         $this->assertSame('007', substr($host['token'], 0, 3));
         $this->assertSame('007', substr($audience['token'], 0, 3));
 
         $hostPayload = $this->rtcPayload($host['token']);
         $audiencePayload = $this->rtcPayload($audience['token']);
         $this->assertSame([1, 2, 3, 4], array_keys($hostPayload['privileges']));
-        $this->assertSame([1], array_keys($audiencePayload['privileges']));
+        $this->assertSame([1, 2, 3, 4], array_keys($audiencePayload['privileges']));
         $this->assertSame('webinar-test-channel', $hostPayload['channel']);
         $this->assertSame('host-42', $hostPayload['uid']);
     }

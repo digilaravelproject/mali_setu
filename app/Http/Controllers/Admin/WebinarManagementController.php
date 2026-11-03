@@ -10,7 +10,10 @@ use App\Services\AgoraTokenService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
+use App\Models\User;
+use App\Models\WebinarComment;
 
 class WebinarManagementController extends Controller
 {
@@ -104,6 +107,10 @@ class WebinarManagementController extends Controller
             'webinar' => $webinar,
             'isHost' => true,
             'tokenUrl' => route('admin.webinars.token', $webinar),
+            'commentsUrl' => route('admin.webinars.comments', $webinar),
+            'controlsUrl' => null,
+            'moderationUrl' => route('admin.webinars.participant-control', $webinar),
+            'participantUrl' => route('admin.webinars.participant', [$webinar, '__USER__']),
         ]);
     }
 
@@ -112,6 +119,48 @@ class WebinarManagementController extends Controller
         abort_unless($webinar->adminCanGoLive(), 403, 'You can go live from 10 minutes before the webinar until it ends.');
 
         return response()->json($tokens->credentials($webinar, $request->user(), true));
+    }
+
+    public function comments(Request $request, Webinar $webinar)
+    {
+        abort_unless($webinar->adminCanGoLive(), 403);
+        abort_unless($webinar->allow_qa, 403, 'Chat is disabled for this webinar.');
+
+        if ($request->isMethod('post')) {
+            $data = $request->validate(['comment' => 'required|string|max:1000']);
+            WebinarComment::create($data + ['webinar_id' => $webinar->id, 'user_id' => $request->user()->id]);
+        }
+
+        $comments = $webinar->comments()->with('user:id,name')->where('id', '>', $request->integer('after'))
+            ->oldest('id')->limit(100)->get()->map(fn ($comment) => [
+                'id' => $comment->id,
+                'name' => $comment->user?->name ?? 'Member',
+                'message' => $comment->comment,
+                'time' => $comment->created_at->format('h:i A'),
+                'mine' => $comment->user_id === $request->user()->id,
+            ]);
+
+        return response()->json($comments);
+    }
+
+    public function controlParticipant(Request $request, Webinar $webinar)
+    {
+        abort_unless($webinar->adminCanGoLive(), 403);
+        $data = $request->validate([
+            'user_id' => 'required|integer|exists:users,id',
+            'action' => 'required|in:mute_audio,disable_video,ask_unmute,ask_video,remove',
+        ]);
+        $command = ['id' => (string) Str::uuid(), 'action' => $data['action']];
+        Cache::put("webinar:{$webinar->id}:user:{$data['user_id']}:control", $command, now()->addMinutes(10));
+
+        return response()->json(['success' => true, 'command' => $command]);
+    }
+
+    public function participant(Webinar $webinar, User $user)
+    {
+        abort_unless($webinar->adminCanGoLive(), 403);
+
+        return response()->json(['id' => $user->id, 'name' => $user->name]);
     }
 
     private function validated(Request $request): array

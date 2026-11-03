@@ -164,4 +164,4 @@ curl --request GET "{{base_url}}/api/webinars/{{webinar_id}}/join-token" \
   --header "Authorization: Bearer {{token}}"
 ```
 
-Use the returned `app_id`, `channel`, `uid`, and `token` with the Agora SDK in `live` mode and the `audience` role. The web client renews this token automatically before expiry.
+Use the returned `app_id`, `channel`, `uid`, and `token` with the Agora SDK in `live` mode. Joined members use the `host` SDK role so they can publish their own microphone, camera, and screen; application moderation remains restricted to the administrator. The web client renews this token automatically before expiry.

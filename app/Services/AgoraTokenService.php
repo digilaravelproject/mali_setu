@@ -27,7 +27,9 @@ class AgoraTokenService
         $client = (new Agora($appId, $certificate))->setExpiration($expiresIn);
         $agoraUser = (new AgoraUser($account))
             ->setChannel($webinar->agora_channel)
-            ->setRole($isHost ? Roles::RTC_PUBLISHER : Roles::RTC_SUBSCRIBER)
+            // Meeting participants publish their own camera/microphone; only the
+            // administrator receives moderation endpoints for other members.
+            ->setRole(Roles::RTC_PUBLISHER)
             ->setPrivilegeExpire($expiresIn);
 
         return [
@@ -36,7 +38,8 @@ class AgoraTokenService
             'uid' => $account,
             'token' => RtcToken::buildTokenWithUserAccount($client, $agoraUser),
             'expires_in' => $expiresIn,
-            'role' => $isHost ? 'host' : 'audience',
+            'role' => $isHost ? 'host' : 'participant',
+            'display_name' => $user->name,
         ];
     }
 }
