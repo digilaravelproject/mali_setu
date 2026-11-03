@@ -63,6 +63,28 @@ class PublicUtilityApiTest extends TestCase
             ->assertJsonPath('data.firebase_uid', 'firebase-user-id');
     }
 
+    public function test_resend_otp_returns_a_new_firebase_session(): void
+    {
+        $this->mock(FirebasePhoneAuthService::class, function (MockInterface $mock) {
+            $mock->shouldReceive('sendVerificationCode')->once()
+                ->with('+919876543210', 'new-captcha-token')
+                ->andReturn(['sessionInfo' => 'new-firebase-session']);
+        });
+
+        $this->postJson('/api/auth/phone/resend-otp', [
+            'phone_number' => '+919876543210', 'recaptcha_token' => 'new-captcha-token',
+        ])->assertOk()
+            ->assertJsonPath('message', 'OTP resent successfully.')
+            ->assertJsonPath('data.session_info', 'new-firebase-session');
+    }
+
+    public function test_send_otp_rejects_documentation_placeholder_as_a_token(): void
+    {
+        $this->postJson('/api/auth/phone/send-otp', [
+            'phone_number' => '+919876543210', 'recaptcha_token' => 'FIREBASE_RECAPTCHA_TOKEN',
+        ])->assertUnprocessable()->assertJsonValidationErrors('recaptcha_token');
+    }
+
     public function test_support_numbers_are_available_without_authentication(): void
     {
         SystemSetting::setValue('support_number_primary', '+919876543210');

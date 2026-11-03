@@ -56,7 +56,7 @@ class PhoneOtpController extends Controller
     {
         $validated = $request->validate([
             'phone_number' => ['required', 'regex:/^\+[1-9]\d{7,14}$/'],
-            'recaptcha_token' => ['required', 'string', 'max:4096'],
+            'recaptcha_token' => ['required', 'string', 'max:4096', 'not_in:FIREBASE_RECAPTCHA_TOKEN,NEW_FIREBASE_RECAPTCHA_TOKEN'],
         ]);
 
         try {
@@ -68,7 +68,10 @@ class PhoneOtpController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => $message,
-                'data' => ['session_info' => $result['sessionInfo'] ?? null],
+                'data' => [
+                    'phone_number' => $validated['phone_number'],
+                    'session_info' => $result['sessionInfo'],
+                ],
             ]);
         } catch (\Throwable $e) {
             return response()->json([

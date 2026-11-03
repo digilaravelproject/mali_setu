@@ -23,7 +23,12 @@ class FirebasePhoneAuthService
             throw new \RuntimeException($response->json('error.message', 'Firebase could not send the OTP.'));
         }
 
-        return $response->json();
+        $result = $response->json();
+        if (empty($result['sessionInfo'])) {
+            throw new \RuntimeException('Firebase did not return OTP session information.');
+        }
+
+        return $result;
     }
 
     public function verifyCode(string $sessionInfo, string $code): array
@@ -42,7 +47,12 @@ class FirebasePhoneAuthService
             throw new \RuntimeException($response->json('error.message', 'Firebase could not verify the OTP.'));
         }
 
-        return $response->json();
+        $result = $response->json();
+        if (empty($result['phoneNumber']) || empty($result['idToken'])) {
+            throw new \RuntimeException('Firebase did not confirm the phone number.');
+        }
+
+        return $result;
     }
 
     private function http(): PendingRequest
