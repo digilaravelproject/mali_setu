@@ -206,6 +206,7 @@ Route::middleware(['auth', 'redirect.admin'])->group(function () {
         Route::post('/{webinar}/register', [WebinarController::class, 'register'])->name('register');
         Route::post('/{webinar}/comments', [WebinarController::class, 'comment'])->name('comment');
         Route::get('/{webinar}/join/live', [WebinarController::class, 'join'])->name('join');
+        Route::get('/{webinar}/join/token', [WebinarController::class, 'token'])->name('token')->middleware('throttle:30,1');
     });
 });
 
@@ -245,6 +246,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::get('/{webinar}/edit', [WebinarManagementController::class, 'edit'])->name('edit');
             Route::put('/{webinar}', [WebinarManagementController::class, 'update'])->name('update');
             Route::get('/{webinar}/go-live', [WebinarManagementController::class, 'goLive'])->name('go-live');
+            Route::get('/{webinar}/go-live/token', [WebinarManagementController::class, 'token'])->name('token')->middleware('throttle:30,1');
             Route::delete('/{webinar}', [WebinarManagementController::class, 'destroy'])->name('destroy');
         });
         

@@ -196,6 +196,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
     Route::post('webinars/{webinar}/register', [WebinarController::class, 'register']);
     Route::post('webinars/{webinar}/comments', [WebinarController::class, 'storeComment']);
+    Route::get('webinars/{webinar}/join-token', [WebinarController::class, 'joinToken'])->middleware('throttle:30,1');
     Route::get('my-webinar-registrations', [WebinarController::class, 'myRegistrations']);
 
     // Business Management Routes

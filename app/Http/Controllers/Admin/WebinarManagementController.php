@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Webinar;
 use App\Models\BusinessPlan;
 use App\Models\MatrimonyPlan;
+use App\Services\AgoraTokenService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -101,10 +102,16 @@ class WebinarManagementController extends Controller
 
         return view('webinars.join', [
             'webinar' => $webinar,
-            'agoraAppId' => config('services.agora.app_id'),
-            'agoraToken' => config('services.agora.temporary_token'),
             'isHost' => true,
+            'tokenUrl' => route('admin.webinars.token', $webinar),
         ]);
+    }
+
+    public function token(Request $request, Webinar $webinar, AgoraTokenService $tokens)
+    {
+        abort_unless($webinar->adminCanGoLive(), 403, 'You can go live from 10 minutes before the webinar until it ends.');
+
+        return response()->json($tokens->credentials($webinar, $request->user(), true));
     }
 
     private function validated(Request $request): array

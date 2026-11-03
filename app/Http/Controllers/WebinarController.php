@@ -6,6 +6,7 @@ use App\Mail\WebinarRegistrationMail;
 use App\Models\Webinar;
 use App\Models\WebinarComment;
 use App\Models\WebinarRegistration;
+use App\Services\AgoraTokenService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
@@ -55,9 +56,26 @@ class WebinarController extends Controller
 
     public function join(Webinar $webinar)
     {
+        $this->authorizeAttendee($webinar);
+
+        return view('webinars.join', [
+            'webinar' => $webinar,
+            'isHost' => false,
+            'tokenUrl' => route('webinars.token', $webinar),
+        ]);
+    }
+
+    public function token(Request $request, Webinar $webinar, AgoraTokenService $tokens)
+    {
+        $this->authorizeAttendee($webinar);
+
+        return response()->json($tokens->credentials($webinar, $request->user(), false));
+    }
+
+    private function authorizeAttendee(Webinar $webinar): void
+    {
         abort_unless($webinar->userCanAccess(auth()->user()), 403);
-        abort_unless(! $webinar->require_registration || $webinar->registrations()->where('user_id',auth()->id())->exists(), 403);
+        abort_unless(! $webinar->require_registration || $webinar->registrations()->where('user_id', auth()->id())->exists(), 403);
         abort_unless($webinar->attendeeCanJoin(), 403, 'Attendees can join when the webinar starts.');
-        return view('webinars.join', ['webinar'=>$webinar, 'agoraAppId'=>config('services.agora.app_id'), 'agoraToken'=>config('services.agora.temporary_token'), 'isHost'=>false]);
     }
 }

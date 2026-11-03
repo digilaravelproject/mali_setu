@@ -75,7 +75,7 @@ return [
     'agora' => [
         'app_id' => env('AGORA_APP_ID'),
         'app_certificate' => env('AGORA_APP_CERTIFICATE'),
-        'temporary_token' => env('AGORA_TEMPORARY_TOKEN'),
+        'token_expiration' => env('AGORA_TOKEN_EXPIRATION', 3600),
     ],
 
 ];

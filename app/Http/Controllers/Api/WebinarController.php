@@ -7,6 +7,7 @@ use App\Mail\WebinarRegistrationMail;
 use App\Models\Webinar;
 use App\Models\WebinarComment;
 use App\Models\WebinarRegistration;
+use App\Services\AgoraTokenService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
@@ -77,5 +78,14 @@ class WebinarController extends Controller
         $items = WebinarRegistration::where('user_id', $request->user()->id)
             ->with(['webinar' => fn ($q) => $q->withCount('registrations')])->latest()->paginate(12);
         return response()->json(['success' => true, 'data' => $items]);
+    }
+
+    public function joinToken(Request $request, Webinar $webinar, AgoraTokenService $tokens)
+    {
+        abort_unless($webinar->userCanAccess($request->user()), 403, 'You do not have access to this webinar.');
+        abort_unless(! $webinar->require_registration || $webinar->registrations()->where('user_id', $request->user()->id)->exists(), 403, 'Registration is required.');
+        abort_unless($webinar->attendeeCanJoin(), 403, 'Attendees can join when the webinar starts.');
+
+        return response()->json(['success' => true, 'data' => $tokens->credentials($webinar, $request->user(), false)]);
     }
 }

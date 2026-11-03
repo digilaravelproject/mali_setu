@@ -145,11 +145,23 @@ Add the Agora credentials to `.env`, then clear Laravel's configuration cache:
 ```dotenv
 AGORA_APP_ID=your_agora_app_id
 AGORA_APP_CERTIFICATE=your_agora_app_certificate
-AGORA_TEMPORARY_TOKEN=channel_matching_token_or_leave_empty_when_app_certificate_is_disabled
+AGORA_TOKEN_EXPIRATION=3600
 ```
 
 ```bash
 php artisan config:clear
 ```
 
-For an Agora project using App ID-only testing mode, leave `AGORA_TEMPORARY_TOKEN` empty. If App Certificate authentication is enabled, the token must be valid for the generated webinar channel.
+The Laravel server generates a short-lived AccessToken2 for the authenticated user and webinar channel. Never expose `AGORA_APP_CERTIFICATE` in browser or mobile code.
+
+## Join token for the live webinar
+
+Available to an authorized, registered attendee from the scheduled start time until the webinar ends:
+
+```bash
+curl --request GET "{{base_url}}/api/webinars/{{webinar_id}}/join-token" \
+  --header "Accept: application/json" \
+  --header "Authorization: Bearer {{token}}"
+```
+
+Use the returned `app_id`, `channel`, `uid`, and `token` with the Agora SDK in `live` mode and the `audience` role. The web client renews this token automatically before expiry.
