@@ -119,16 +119,6 @@
                                     </div>
                                     <div class="card-body">
                                         <div class="mb-3">
-                                            <label for="caste_verification_status" class="form-label font-weight-bold small">Caste Verification Status</label>
-                                            <select class="form-select @error('caste_verification_status') is-invalid @enderror" 
-                                                    id="caste_verification_status" name="caste_verification_status">
-                                                <option value="pending" {{ old('caste_verification_status') == 'pending' ? 'selected' : '' }}>Pending</option>
-                                                <option value="approved" {{ old('caste_verification_status') == 'approved' ? 'selected' : '' }}>Approved</option>
-                                                <option value="rejected" {{ old('caste_verification_status') == 'rejected' ? 'selected' : '' }}>Rejected</option>
-                                            </select>
-                                        </div>
-                                        
-                                        <div class="mb-3">
                                             <label for="respected_person_name" class="form-label font-weight-bold small">Respected Person Name</label>
                                             <input type="text" class="form-control @error('respected_person_name') is-invalid @enderror"
                                                    id="respected_person_name" name="respected_person_name" value="{{ old('respected_person_name') }}" placeholder="Enter respected person's name">

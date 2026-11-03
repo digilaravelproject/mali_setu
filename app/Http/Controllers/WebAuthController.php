@@ -91,7 +91,6 @@ class WebAuthController extends Controller
             'taluka'           => 'nullable|string|max:100',
             'village'          => 'required|string|max:100',
             'user_type'        => 'required|in:general,business,matrimony,volunteer',
-            'cast_certificate' => 'required_if:user_type,business,matrimony|nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
             'occupation'       => 'nullable|string|max:255',
             'company_name'     => 'nullable|string|max:255',
             'dept_name'        => 'nullable|string|max:255',
@@ -109,10 +108,6 @@ class WebAuthController extends Controller
         try {
             // Concatenate title, first, middle, last name into name
             $name = trim($request->title . ' ' . $request->first_name . ' ' . ($request->middle_name ? $request->middle_name . ' ' : '') . $request->last_name);
-
-            $certificatePath = $request->hasFile('cast_certificate')
-                ? $request->file('cast_certificate')->store('caste-certificates', 'public')
-                : null;
 
             $user = User::create([
                 'name'                   => $name,
@@ -134,8 +129,7 @@ class WebAuthController extends Controller
                 'designation'            => $request->designation,
                 'password'               => Hash::make($request->password),
                 'user_type'              => $request->user_type,
-                'cast_certificate'          => $certificatePath,
-                'caste_verification_status' => 'pending',
+                'caste_verification_status' => 'approved',
                 'latitude'               => $request->latitude,
                 'longitude'              => $request->longitude,
             ]);

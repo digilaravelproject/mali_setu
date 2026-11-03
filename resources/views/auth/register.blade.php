@@ -556,16 +556,6 @@
                     </div>
                 </div>
 
-                <div class="mb-4 px-4" id="caste-proof-wrap" style="display:none;">
-                    <label class="form-label small fw-bold text-secondary" for="cast_certificate">
-                        Proof of caste / LC / caste certificate / marriage certificate <span class="text-danger">*</span>
-                    </label>
-                    <input type="file" name="cast_certificate" id="cast_certificate" class="form-control form-control-lg"
-                           accept=".jpg,.jpeg,.png,.pdf">
-                    <div class="form-text">Required for Business and Matrimony accounts. JPG, PNG or PDF, maximum 5 MB.</div>
-                    @error('cast_certificate')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
-                </div>
-
                 <!-- Terms & Conditions Checkbox -->
                 <div class="mb-4 form-check d-flex align-items-center gap-2 px-4">
                     <input type="checkbox" name="term_condition" class="form-check-input shadow-none cursor-pointer" id="term_condition" value="1" required>
@@ -619,12 +609,6 @@
         document.getElementById('info-title').innerText = profilesInfo[type].title;
         document.getElementById('info-description').innerText = profilesInfo[type].desc;
 
-        const proofWrap = document.getElementById('caste-proof-wrap');
-        const proofInput = document.getElementById('cast_certificate');
-        const proofRequired = type === 'business' || type === 'matrimony';
-        proofWrap.style.display = proofRequired ? 'block' : 'none';
-        proofInput.required = proofRequired;
-        if (!proofRequired) proofInput.value = '';
     }
 
     // Toggle Password Visibility

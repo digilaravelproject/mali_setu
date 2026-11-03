@@ -8,9 +8,9 @@ token = PASTE_SANCTUM_TOKEN_HERE
 webinar_id = 1
 ```
 
-## Register a business or matrimony user (multipart certificate upload)
+## Register a business or matrimony user
 
-`cast_certificate` is required when `user_type` is `business` or `matrimony`. It accepts JPG, PNG or PDF up to 5 MB. New users are saved with `caste_verification_status=pending`.
+Newly registered users are automatically approved; registration no longer accepts or requires a caste certificate.
 
 ```bash
 curl --request POST "{{base_url}}/api/auth/register" \
@@ -21,11 +21,10 @@ curl --request POST "{{base_url}}/api/auth/register" \
   --form "password=Password@123" \
   --form "password_confirmation=Password@123" \
   --form "user_type=matrimony" \
-  --form "term_condition=1" \
-  --form "cast_certificate=@C:/path/to/caste-certificate.pdf"
+  --form "term_condition=1"
 ```
 
-The same endpoint also accepts a base64 data URI in JSON:
+The same endpoint also accepts JSON:
 
 ```bash
 curl --request POST "{{base_url}}/api/auth/register" \
@@ -38,12 +37,11 @@ curl --request POST "{{base_url}}/api/auth/register" \
     "password": "Password@123",
     "password_confirmation": "Password@123",
     "user_type": "business",
-    "term_condition": true,
-    "cast_certificate": "data:application/pdf;base64,PASTE_BASE64_HERE"
+    "term_condition": true
   }'
 ```
 
-## Login and obtain a token (after admin approval)
+## Login and obtain a token
 
 ```bash
 curl --request POST "{{base_url}}/api/auth/login" \
