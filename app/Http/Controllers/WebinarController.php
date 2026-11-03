@@ -56,7 +56,8 @@ class WebinarController extends Controller
     public function join(Webinar $webinar)
     {
         abort_unless($webinar->userCanAccess(auth()->user()), 403);
-        abort_unless(! $webinar->require_registration || $webinar->registrations()->where('user_id',auth()->id())->exists() || auth()->user()->user_type === 'admin', 403);
-        return view('webinars.join', ['webinar'=>$webinar, 'agoraAppId'=>config('services.agora.app_id'), 'agoraToken'=>config('services.agora.temporary_token')]);
+        abort_unless(! $webinar->require_registration || $webinar->registrations()->where('user_id',auth()->id())->exists(), 403);
+        abort_unless($webinar->attendeeCanJoin(), 403, 'Attendees can join when the webinar starts.');
+        return view('webinars.join', ['webinar'=>$webinar, 'agoraAppId'=>config('services.agora.app_id'), 'agoraToken'=>config('services.agora.temporary_token'), 'isHost'=>false]);
     }
 }

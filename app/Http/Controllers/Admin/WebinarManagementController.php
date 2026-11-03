@@ -55,11 +55,12 @@ class WebinarManagementController extends Controller
     public function store(Request $request)
     {
         $data = $this->validated($request);
+        $data['category'] = $data['categories'][0];
         $data['require_registration'] = $request->boolean('require_registration');
         $data['allow_qa'] = $request->boolean('allow_qa');
         $data['allow_recording'] = $request->boolean('allow_recording');
         $data['plan_ids'] = $data['access_type'] === 'specific_plans' ? ($data['plan_ids'] ?? []) : null;
-        $data['starts_at'] = Carbon::createFromFormat('Y-m-d H:i', $data['webinar_date'].' '.$data['webinar_time']);
+        $data['starts_at'] = Carbon::createFromFormat('Y-m-d H:i', $data['webinar_date'].' '.$data['webinar_time'], config('app.webinar_timezone'));
         unset($data['webinar_date'], $data['webinar_time']);
         if ($request->hasFile('banner')) $data['banner_path'] = $request->file('banner')->store('webinars', 'public');
         $data['created_by'] = $request->user()->id;
@@ -72,11 +73,12 @@ class WebinarManagementController extends Controller
     public function update(Request $request, Webinar $webinar)
     {
         $data = $this->validated($request);
+        $data['category'] = $data['categories'][0];
         $data['require_registration'] = $request->boolean('require_registration');
         $data['allow_qa'] = $request->boolean('allow_qa');
         $data['allow_recording'] = $request->boolean('allow_recording');
         $data['plan_ids'] = $data['access_type'] === 'specific_plans' ? ($data['plan_ids'] ?? []) : null;
-        $data['starts_at'] = Carbon::createFromFormat('Y-m-d H:i', $data['webinar_date'].' '.$data['webinar_time']);
+        $data['starts_at'] = Carbon::createFromFormat('Y-m-d H:i', $data['webinar_date'].' '.$data['webinar_time'], config('app.webinar_timezone'));
         unset($data['webinar_date'], $data['webinar_time']);
         if ($request->hasFile('banner')) {
             if ($webinar->banner_path) Storage::disk('public')->delete($webinar->banner_path);
@@ -93,11 +95,24 @@ class WebinarManagementController extends Controller
         return back()->with('success', 'Webinar deleted.');
     }
 
+    public function goLive(Webinar $webinar)
+    {
+        abort_unless($webinar->adminCanGoLive(), 403, 'You can go live from 10 minutes before the webinar until it ends.');
+
+        return view('webinars.join', [
+            'webinar' => $webinar,
+            'agoraAppId' => config('services.agora.app_id'),
+            'agoraToken' => config('services.agora.temporary_token'),
+            'isHost' => true,
+        ]);
+    }
+
     private function validated(Request $request): array
     {
         return $request->validate([
             'title' => 'required|string|max:255',
-            'category' => 'required|in:business,matrimony,other',
+            'categories' => 'required|array|min:1',
+            'categories.*' => 'distinct|in:business,matrimony,other',
             'description' => 'required|string|max:5000',
             'banner' => 'nullable|image|max:5120', 'speaker_name' => 'nullable|string|max:255',
             'agenda' => 'nullable|string|max:5000',

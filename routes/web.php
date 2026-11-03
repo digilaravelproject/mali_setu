@@ -244,6 +244,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::post('/', [WebinarManagementController::class, 'store'])->name('store');
             Route::get('/{webinar}/edit', [WebinarManagementController::class, 'edit'])->name('edit');
             Route::put('/{webinar}', [WebinarManagementController::class, 'update'])->name('update');
+            Route::get('/{webinar}/go-live', [WebinarManagementController::class, 'goLive'])->name('go-live');
             Route::delete('/{webinar}', [WebinarManagementController::class, 'destroy'])->name('destroy');
         });
         

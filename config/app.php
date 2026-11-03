@@ -65,7 +65,10 @@ return [
     |
     */
 
-    'timezone' => 'UTC',
+    // India uses the IANA timezone name Asia/Kolkata (formerly Asia/Calcutta).
+    'timezone' => env('APP_TIMEZONE', 'Asia/Kolkata'),
+
+    'webinar_timezone' => env('WEBINAR_TIMEZONE', 'Asia/Kolkata'),
 
     /*
     |--------------------------------------------------------------------------

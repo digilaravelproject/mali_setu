@@ -11,7 +11,7 @@ class Webinar extends Model
     use HasFactory;
 
     protected $fillable = [
-        'created_by', 'title', 'category', 'description', 'banner_path', 'speaker_name', 'agenda',
+        'created_by', 'title', 'category', 'categories', 'description', 'banner_path', 'speaker_name', 'agenda',
         'starts_at', 'duration_minutes', 'agora_channel', 'agora_link', 'audience',
         'require_registration', 'allow_qa', 'allow_recording', 'access_type', 'plan_ids', 'status',
     ];
@@ -22,6 +22,7 @@ class Webinar extends Model
         'allow_qa' => 'boolean',
         'allow_recording' => 'boolean',
         'plan_ids' => 'array',
+        'categories' => 'array',
     ];
     protected $appends = ['banner_url', 'ends_at', 'webinar_status'];
 
@@ -46,6 +47,23 @@ class Webinar extends Model
         if (now()->lt($this->starts_at)) return 'upcoming';
         if (now()->lte($this->ends_at)) return 'live';
         return 'completed';
+    }
+
+    public function getSelectedCategoriesAttribute(): array
+    {
+        return $this->categories ?: array_filter([$this->category]);
+    }
+
+    public function adminCanGoLive(): bool
+    {
+        return $this->status === 'published'
+            && now()->between($this->starts_at->copy()->subMinutes(10), $this->ends_at);
+    }
+
+    public function attendeeCanJoin(): bool
+    {
+        return $this->status === 'published'
+            && now()->between($this->starts_at, $this->ends_at);
     }
 
     public function userCanAccess(User $user): bool

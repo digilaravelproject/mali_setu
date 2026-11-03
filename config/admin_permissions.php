@@ -27,7 +27,7 @@ return [
                 'Webinars' => [
                     ['key' => 'webinars.list', 'label' => 'List webinars', 'description' => 'View and search webinar sessions.', 'level' => 'view', 'routes' => ['admin.webinars.index']],
                     ['key' => 'webinars.create', 'label' => 'Create webinar', 'description' => 'Create and publish an Agora webinar.', 'level' => 'action', 'routes' => ['admin.webinars.create', 'admin.webinars.store']],
-                    ['key' => 'webinars.edit', 'label' => 'Edit webinar', 'description' => 'Update webinar details and publishing status.', 'level' => 'action', 'routes' => ['admin.webinars.edit', 'admin.webinars.update']],
+                    ['key' => 'webinars.edit', 'label' => 'Edit / host webinar', 'description' => 'Update webinar details and go live as its host.', 'level' => 'action', 'routes' => ['admin.webinars.edit', 'admin.webinars.update', 'admin.webinars.go-live']],
                     ['key' => 'webinars.delete', 'label' => 'Delete webinar', 'description' => 'Delete a webinar and its registrations.', 'level' => 'action', 'routes' => ['admin.webinars.destroy']],
                 ],
             ]],

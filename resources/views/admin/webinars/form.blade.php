@@ -31,7 +31,7 @@
 
 @section('content')
 @php
-    $selectedCategory = old('category', $webinar->category ?: 'business');
+    $selectedCategories = old('categories', $webinar->exists ? $webinar->selected_categories : ['business']);
     $selectedAudience = old('audience', $webinar->audience ?: 'all');
     $selectedAccess = old('access_type', $webinar->access_type ?: 'free');
     $selectedPlans = old('plan_ids', $webinar->plan_ids ?: []);
@@ -56,13 +56,15 @@
                 </div>
 
                 <div class="mb-3">
-                    <label class="form-label">Category / Section <span class="text-danger">*</span></label>
+                    <label class="form-label">Categories / Sections <span class="text-danger">*</span></label>
                     <div class="category-grid">
-                        <label class="category-option business"><input type="radio" name="category" value="business" @checked($selectedCategory==='business')><span><i class="fas fa-store"></i>Business</span></label>
-                        <label class="category-option matrimony"><input type="radio" name="category" value="matrimony" @checked($selectedCategory==='matrimony')><span><i class="fas fa-heart"></i>Matrimony</span></label>
-                        <label class="category-option other"><input type="radio" name="category" value="other" @checked($selectedCategory==='other')><span><i class="fas fa-shapes"></i>Other</span></label>
+                        <label class="category-option business"><input type="checkbox" name="categories[]" value="business" @checked(in_array('business', $selectedCategories))><span><i class="fas fa-store"></i>Business</span></label>
+                        <label class="category-option matrimony"><input type="checkbox" name="categories[]" value="matrimony" @checked(in_array('matrimony', $selectedCategories))><span><i class="fas fa-heart"></i>Matrimony</span></label>
+                        <label class="category-option other"><input type="checkbox" name="categories[]" value="other" @checked(in_array('other', $selectedCategories))><span><i class="fas fa-shapes"></i>Other</span></label>
                     </div>
-                    @error('category')<small class="text-danger">{{ $message }}</small>@enderror
+                    <div class="form-text">Select one or more sections where this webinar should appear.</div>
+                    @error('categories')<small class="text-danger">{{ $message }}</small>@enderror
+                    @error('categories.*')<small class="text-danger">{{ $message }}</small>@enderror
                 </div>
 
                 <div class="mb-3">
@@ -72,8 +74,8 @@
                 </div>
 
                 <div class="row g-2">
-                    <div class="col-md-5 mb-3"><label class="form-label">Date <span class="text-danger">*</span></label><input type="date" required name="webinar_date" class="form-control" value="{{ old('webinar_date',$webinar->starts_at?->format('Y-m-d')) }}">@error('webinar_date')<small class="text-danger">{{ $message }}</small>@enderror</div>
-                    <div class="col-md-4 mb-3"><label class="form-label">Time <span class="text-danger">*</span></label><input type="time" required name="webinar_time" class="form-control" value="{{ old('webinar_time',$webinar->starts_at?->format('H:i')) }}">@error('webinar_time')<small class="text-danger">{{ $message }}</small>@enderror</div>
+                    <div class="col-md-5 mb-3"><label class="form-label">Date (India) <span class="text-danger">*</span></label><input type="date" required name="webinar_date" class="form-control" value="{{ old('webinar_date',$webinar->starts_at?->timezone(config('app.webinar_timezone'))->format('Y-m-d')) }}">@error('webinar_date')<small class="text-danger">{{ $message }}</small>@enderror</div>
+                    <div class="col-md-4 mb-3"><label class="form-label">Time (IST) <span class="text-danger">*</span></label><input type="time" required name="webinar_time" class="form-control" value="{{ old('webinar_time',$webinar->starts_at?->timezone(config('app.webinar_timezone'))->format('H:i')) }}">@error('webinar_time')<small class="text-danger">{{ $message }}</small>@enderror</div>
                     <div class="col-md-3 mb-3"><label class="form-label">Duration (Minutes) <span class="text-danger">*</span></label><input type="number" min="15" max="480" required name="duration_minutes" class="form-control" value="{{ old('duration_minutes',$webinar->duration_minutes ?: 60) }}"></div>
                 </div>
 
