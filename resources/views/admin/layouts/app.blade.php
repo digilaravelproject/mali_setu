@@ -257,9 +257,9 @@
                     <span><i class="fas fa-location-dot"></i> Locations</span><i class="fas fa-chevron-down"></i>
                 </a>
                 <div class="collapse {{ request()->routeIs('admin.locations.*') ? 'show' : '' }}" id="locationsMenu">
-                    <div class="nav-item" style="margin-left:.6rem"><a href="{{ route('admin.locations.index',['section'=>'districts']) }}#districts" class="nav-link"><i class="fas fa-map"></i> Districts</a></div>
-                    <div class="nav-item" style="margin-left:.6rem"><a href="{{ route('admin.locations.index',['section'=>'talukas']) }}#talukas" class="nav-link"><i class="fas fa-diagram-project"></i> Talukas</a></div>
-                    <div class="nav-item" style="margin-left:.6rem"><a href="{{ route('admin.locations.index',['section'=>'localities']) }}#localities" class="nav-link"><i class="fas fa-city"></i> City / Village</a></div>
+                    <div class="nav-item" style="margin-left:.6rem"><a href="{{ route('admin.locations.districts.index') }}" class="nav-link {{ request()->routeIs('admin.locations.districts.*') ? 'active' : '' }}"><i class="fas fa-map"></i> Districts</a></div>
+                    <div class="nav-item" style="margin-left:.6rem"><a href="{{ route('admin.locations.talukas.index') }}" class="nav-link {{ request()->routeIs('admin.locations.talukas.*') ? 'active' : '' }}"><i class="fas fa-diagram-project"></i> Talukas</a></div>
+                    <div class="nav-item" style="margin-left:.6rem"><a href="{{ route('admin.locations.localities.index') }}" class="nav-link {{ request()->routeIs('admin.locations.localities.*') ? 'active' : '' }}"><i class="fas fa-city"></i> City / Village</a></div>
                 </div>
             </div>
 

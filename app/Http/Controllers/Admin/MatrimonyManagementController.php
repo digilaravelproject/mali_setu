@@ -660,6 +660,30 @@ class MatrimonyManagementController extends Controller
         return view('admin.matrimony.chats', compact('conversations', 'stats'));
     }
 
+    public function showChat(ChatConversation $conversation)
+    {
+        $conversation->load(['user1.matrimonyProfile', 'user2.matrimonyProfile']);
+        $messages = $conversation->messages()->with('sender')->oldest()->paginate(100);
+
+        return view('admin.matrimony.chat-show', compact('conversation', 'messages'));
+    }
+
+    public function destroyChatMessage(ChatConversation $conversation, ChatMessage $message)
+    {
+        abort_unless($message->conversation_id === $conversation->id, 404);
+
+        if ($message->attachment_path && Storage::disk('public')->exists($message->attachment_path)) {
+            Storage::disk('public')->delete($message->attachment_path);
+        }
+
+        $message->delete();
+        $conversation->update([
+            'last_message_at' => $conversation->messages()->max('created_at'),
+        ]);
+
+        return back()->with('success', 'Message deleted successfully.');
+    }
+
     /**
      * Delete profile and all associated payment and transaction data
      */

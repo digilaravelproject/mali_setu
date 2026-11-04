@@ -17,7 +17,7 @@
 <div class="card"><div class="card-body border-bottom">
  <form class="d-flex gap-2"><input class="form-control" name="search" value="{{ request('search') }}" placeholder="Search member name or phone"><button class="btn btn-primary"><i class="fas fa-search me-1"></i>Search</button>@if(request('search'))<a class="btn btn-light border" href="{{ route('admin.matrimony.chats') }}">Reset</a>@endif</form>
 </div><div class="table-responsive"><table class="table table-hover align-middle mb-0">
- <thead><tr><th>#</th><th>Members</th><th>Last Message</th><th>Messages</th><th>Last Activity</th></tr></thead>
+ <thead><tr><th>#</th><th>Members</th><th>Last Message</th><th>Messages</th><th>Last Activity</th><th class="text-end">Action</th></tr></thead>
  <tbody>
  @forelse($conversations as $conversation)
  @php
@@ -31,8 +31,9 @@
   <td><div class="text-truncate" style="max-width:380px">{{ $last?->message_text ?: ($last?->message ?: 'No messages') }}</div><div class="small text-muted">{{ $last?->sender?->name }}</div></td>
   <td><span class="badge text-bg-light border">{{ $conversation->messages_count }}</span></td>
   <td class="text-nowrap">{{ $conversation->last_message_at?->format('d M Y, h:i A') ?: '-' }}</td>
+  <td class="text-end"><a href="{{ route('admin.matrimony.chats.show',$conversation) }}" class="btn btn-sm btn-outline-primary" title="View conversation"><i class="fas fa-eye"></i></a></td>
  </tr>
- @empty<tr><td colspan="5" class="text-center text-muted py-5">No conversations found.</td></tr>@endforelse
+ @empty<tr><td colspan="6" class="text-center text-muted py-5">No conversations found.</td></tr>@endforelse
  </tbody>
 </table></div></div><div class="mt-3">{{ $conversations->links() }}</div>
 @endsection

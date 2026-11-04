@@ -244,6 +244,9 @@ Route::prefix('admin')->name('admin.')->group(function () {
 
         Route::prefix('locations')->name('locations.')->group(function () {
             Route::get('/', [LocationManagementController::class, 'index'])->name('index');
+            Route::get('/districts', [LocationManagementController::class, 'districts'])->name('districts.index');
+            Route::get('/talukas', [LocationManagementController::class, 'talukas'])->name('talukas.index');
+            Route::get('/city-villages', [LocationManagementController::class, 'localities'])->name('localities.index');
             Route::post('/districts', [LocationManagementController::class, 'storeDistrict'])->name('districts.store');
             Route::put('/districts/{district}', [LocationManagementController::class, 'updateDistrict'])->name('districts.update');
             Route::delete('/districts/{district}', [LocationManagementController::class, 'destroyDistrict'])->name('districts.destroy');
@@ -361,6 +364,8 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::get('/connections', [MatrimonyManagementController::class, 'connections'])->name('connections');
             Route::get('/connections/export', [MatrimonyManagementController::class, 'exportConnections'])->name('connections.export');
             Route::get('/chats', [MatrimonyManagementController::class, 'chats'])->name('chats');
+            Route::get('/chats/{conversation}', [MatrimonyManagementController::class, 'showChat'])->name('chats.show');
+            Route::delete('/chats/{conversation}/messages/{message}', [MatrimonyManagementController::class, 'destroyChatMessage'])->name('chats.messages.destroy');
             Route::get('/moderation', [MatrimonyManagementController::class, 'moderation'])->name('moderation');
             Route::get('/create', [MatrimonyManagementController::class, 'create'])->name('create');
             Route::post('/', [MatrimonyManagementController::class, 'store'])->name('store');

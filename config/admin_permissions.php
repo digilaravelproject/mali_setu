@@ -23,7 +23,7 @@ return [
             ]],
             'locations' => ['label' => 'Locations', 'icon' => 'location-dot', 'sections' => [
                 'Location Hierarchy' => [
-                    ['key' => 'locations.list', 'label' => 'View locations', 'description' => 'View districts, talukas, cities and villages.', 'level' => 'view', 'routes' => ['admin.locations.index']],
+                    ['key' => 'locations.list', 'label' => 'View locations', 'description' => 'View districts, talukas, cities and villages.', 'level' => 'view', 'routes' => ['admin.locations.index', 'admin.locations.districts.index', 'admin.locations.talukas.index', 'admin.locations.localities.index']],
                     ['key' => 'locations.create', 'label' => 'Add locations', 'description' => 'Add districts, talukas, cities and villages.', 'level' => 'action', 'routes' => ['admin.locations.districts.store', 'admin.locations.talukas.store', 'admin.locations.localities.store']],
                     ['key' => 'locations.edit', 'label' => 'Edit locations', 'description' => 'Update districts, talukas, cities and villages.', 'level' => 'action', 'routes' => ['admin.locations.districts.update', 'admin.locations.talukas.update', 'admin.locations.localities.update']],
                     ['key' => 'locations.delete', 'label' => 'Delete locations', 'description' => 'Delete locations and their dependent children.', 'level' => 'action', 'routes' => ['admin.locations.districts.destroy', 'admin.locations.talukas.destroy', 'admin.locations.localities.destroy']],
@@ -187,7 +187,8 @@ return [
                     ['key' => 'matrimony.connections.export', 'label' => 'Export connections', 'description' => 'Download connection analysis.', 'level' => 'action', 'routes' => ['admin.matrimony.connections.export']],
                 ],
                 'Chats' => [
-                    ['key' => 'matrimony.chats.view', 'label' => 'View chats', 'description' => 'View matrimony chat conversations for moderation.', 'level' => 'view', 'routes' => ['admin.matrimony.chats']],
+                    ['key' => 'matrimony.chats.view', 'label' => 'View chats', 'description' => 'View matrimony chat conversations and messages.', 'level' => 'view', 'routes' => ['admin.matrimony.chats', 'admin.matrimony.chats.show']],
+                    ['key' => 'matrimony.chats.delete', 'label' => 'Delete chat messages', 'description' => 'Delete an individual message from any matrimony conversation.', 'level' => 'action', 'routes' => ['admin.matrimony.chats.messages.destroy']],
                 ],
             ]],
             'casts' => ['label' => 'Manage Casts', 'icon' => 'sitemap', 'sections' => [
