@@ -34,6 +34,7 @@ class BloggerCreatedMail extends Mailable
                 'email' => $this->user->email,
                 'password' => $this->password,
                 'category' => $this->user->blogCategory ? $this->user->blogCategory->name : 'N/A',
+                'referralCode' => $this->user->reffral_code,
             ]);
     }
 }

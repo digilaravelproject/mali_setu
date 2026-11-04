@@ -1,273 +1,30 @@
 @extends('admin.layouts.app')
-
-@section('title', 'Volunteer Management')
-
+@section('title','Manage Volunteers')
+@section('page-title','Manage Volunteers')
+@push('styles')
+<style>.vol-tabs{display:flex;overflow:auto;border-bottom:1px solid #e5e7eb}.vol-tabs a{padding:.85rem 1rem;color:#4b5563;text-decoration:none;white-space:nowrap}.vol-tabs a.active{color:#9b0056;border-bottom:3px solid #9b0056;font-weight:700}.user-avatar{width:38px;height:38px;border-radius:50%;object-fit:cover;background:#eef2f6}.filter-card label{font-size:.75rem;font-weight:700}.table td,.table th{white-space:nowrap}.action-group{display:flex;gap:.3rem;justify-content:flex-end}.commission-input{width:76px}</style>
+@endpush
 @section('content')
-<div class="content-area">
-    <div class="row mb-4">
-        <div class="col-md-12">
-            <h2 class="mb-4">
-                <i class="fas fa-hands-helping me-2"></i>
-                Volunteer Management
-            </h2>
-        </div>
-    </div>
-
-    <!-- Stats Row -->
-    <div class="row mb-4">
-        <div class="col-md-3">
-            <div class="card stats-card">
-                <div class="card-body">
-                    <div class="d-flex align-items-start">
-                        <div class="stats-icon" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
-                            <i class="fas fa-users"></i>
-                        </div>
-                        <div class="ms-3">
-                            <p class="stats-label">Total Volunteers</p>
-                            <p class="stats-number">{{ $stats['total'] }}</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card stats-card">
-                <div class="card-body">
-                    <div class="d-flex align-items-start">
-                        <div class="stats-icon" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);">
-                            <i class="fas fa-check-circle"></i>
-                        </div>
-                        <div class="ms-3">
-                            <p class="stats-label">Approved</p>
-                            <p class="stats-number">{{ $stats['approved'] }}</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card stats-card">
-                <div class="card-body">
-                    <div class="d-flex align-items-start">
-                        <div class="stats-icon" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
-                            <i class="fas fa-clock"></i>
-                        </div>
-                        <div class="ms-3">
-                            <p class="stats-label">Pending</p>
-                            <p class="stats-number">{{ $stats['pending'] }}</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card stats-card">
-                <div class="card-body">
-                    <div class="d-flex align-items-start">
-                        <div class="stats-icon" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
-                            <i class="fas fa-times-circle"></i>
-                        </div>
-                        <div class="ms-3">
-                            <p class="stats-label">Rejected</p>
-                            <p class="stats-number">{{ $stats['rejected'] }}</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Volunteers Table -->
-    <div class="card">
-        <div class="card-header d-flex justify-content-between align-items-center">
-            <h5 class="mb-0">All Volunteers</h5>
-            <a href="{{ route('admin.volunteers.verification') }}" class="btn btn-sm btn-primary">
-                <i class="fas fa-filter me-1"></i>
-                Pending Verification
-            </a>
-        </div>
-        <div class="card-body">
-            <!-- Search and Filter -->
-            <form method="GET" class="mb-4">
-                <div class="row">
-                    <div class="col-md-6">
-                        <input type="text" name="search" class="form-control" 
-                               placeholder="Search by name, email, or location..." 
-                               value="{{ request('search') }}">
-                    </div>
-                    <div class="col-md-4">
-                        <select name="status" class="form-control">
-                            <option value="">All Status</option>
-                            <option value="pending" {{ request('status') === 'pending' ? 'selected' : '' }}>Pending</option>
-                            <option value="active" {{ request('status') === 'active' ? 'selected' : '' }}>Approved</option>
-                            <option value="inactive" {{ request('status') === 'inactive' ? 'selected' : '' }}>Rejected</option>
-                        </select>
-                    </div>
-                    <div class="col-md-2">
-                        <button type="submit" class="btn btn-primary w-100">
-                            <i class="fas fa-search"></i> Search
-                        </button>
-                    </div>
-                </div>
-            </form>
-
-            @if($volunteers->count() > 0)
-                <div class="table-responsive">
-                    <table class="table table-hover">
-                        <thead>
-                            <tr>
-                                <th>Name</th>
-                                <th>Email</th>
-                                <th>Location</th>
-                                <th>Skills</th>
-                                <th>Status</th>
-                                <th>Created</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach($volunteers as $volunteer)
-                            <tr>
-                                <td>
-                                    <strong>{{ $volunteer->user->name }}</strong>
-                                </td>
-                                <td>{{ $volunteer->user->email }}</td>
-                                <td>{{ $volunteer->location ?? 'N/A' }}</td>
-                                <td>
-                                    <small>{{ Str::limit($volunteer->skills ?? 'N/A', 30) }}</small>
-                                </td>
-                                <td>
-                                    @if($volunteer->status === 'active')
-                                        <span class="badge bg-success">Approved</span>
-                                    @elseif($volunteer->status === 'pending')
-                                        <span class="badge bg-warning">Pending</span>
-                                    @elseif($volunteer->status === 'inactive')
-                                        <span class="badge bg-danger">Rejected</span>
-                                    @endif
-                                </td>
-                                <td>{{ $volunteer->created_at->format('M d, Y') }}</td>
-                                <td>
-                                    <div class="btn-group" role="group">
-                                        <a href="{{ route('admin.volunteers.show', $volunteer->id) }}" 
-                                           class="btn btn-sm btn-info" title="View Details">
-                                            <i class="fas fa-eye"></i>
-                                        </a>
-                                        
-                                        @if($volunteer->status === 'pending')
-                                            <button type="button" class="btn btn-sm btn-success" 
-                                                    data-bs-toggle="modal" 
-                                                    data-bs-target="#approveModal"
-                                                    data-volunteer-id="{{ $volunteer->id }}"
-                                                    data-volunteer-name="{{ $volunteer->user->name }}">
-                                                <i class="fas fa-thumbs-up"></i>
-                                            </button>
-                                            <button type="button" class="btn btn-sm btn-danger" 
-                                                    data-bs-toggle="modal" 
-                                                    data-bs-target="#rejectModal"
-                                                    data-volunteer-id="{{ $volunteer->id }}"
-                                                    data-volunteer-name="{{ $volunteer->user->name }}">
-                                                <i class="fas fa-thumbs-down"></i>
-                                            </button>
-                                        @endif
-                                        
-                                        <form method="POST" 
-                                              action="{{ route('admin.volunteers.destroy', $volunteer->id) }}"
-                                              style="display: inline;"
-                                              onsubmit="return confirm('Are you sure you want to delete this volunteer profile?');">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit" class="btn btn-sm btn-danger">
-                                                <i class="fas fa-trash"></i>
-                                            </button>
-                                        </form>
-                                    </div>
-                                </td>
-                            </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
-
-                {{ $volunteers->links('pagination::bootstrap-4') }}
-            @else
-                <div class="alert alert-info">
-                    <i class="fas fa-info-circle me-2"></i>
-                    No volunteers found.
-                </div>
-            @endif
-        </div>
-    </div>
-</div>
-
-<!-- Approve Modal -->
-<div class="modal fade" id="approveModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Approve Volunteer</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <form id="approveForm" method="POST">
-                @csrf
-                <div class="modal-body">
-                    <p>Are you sure you want to approve <strong id="volunteerNameApprove"></strong>?</p>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-success">
-                        <i class="fas fa-check me-1"></i> Approve
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-<!-- Reject Modal -->
-<div class="modal fade" id="rejectModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Reject Volunteer</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <form id="rejectForm" method="POST">
-                @csrf
-                <div class="modal-body">
-                    <p>Provide a reason for rejecting <strong id="volunteerNameReject"></strong>:</p>
-                    <textarea name="rejection_reason" class="form-control" rows="4" 
-                              placeholder="Enter rejection reason..." required></textarea>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-danger">
-                        <i class="fas fa-times me-1"></i> Reject
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-<script>
-    // Handle approve modal
-    const approveModalEl = document.getElementById('approveModal');
-    approveModalEl.addEventListener('show.bs.modal', function (e) {
-        const volunteerId = e.relatedTarget.getAttribute('data-volunteer-id');
-        const volunteerName = e.relatedTarget.getAttribute('data-volunteer-name');
-        
-        document.getElementById('volunteerNameApprove').textContent = volunteerName;
-        document.getElementById('approveForm').action = `/admin/volunteers/${volunteerId}/approve`;
-    });
-
-    // Handle reject modal
-    const rejectModalEl = document.getElementById('rejectModal');
-    rejectModalEl.addEventListener('show.bs.modal', function (e) {
-        const volunteerId = e.relatedTarget.getAttribute('data-volunteer-id');
-        const volunteerName = e.relatedTarget.getAttribute('data-volunteer-name');
-        
-        document.getElementById('volunteerNameReject').textContent = volunteerName;
-        document.getElementById('rejectForm').action = `/admin/volunteers/${volunteerId}/reject`;
-    });
-</script>
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3"><div><h3 class="fw-bold mb-1">Manage Volunteers</h3><div class="text-muted small">Manage all members, volunteer referrals, commission and allocated areas.</div></div><a href="{{ route('admin.volunteers.create') }}" class="btn btn-success"><i class="fas fa-plus me-1"></i>Add Volunteer</a></div>
+<div class="card mb-3"><div class="vol-tabs">@foreach([''=>'All Users','general'=>'General','matrimony'=>'Matrimony','business'=>'Business','volunteer'=>'Volunteers'] as $type=>$label)<a class="{{ request('user_type','')===$type?'active':'' }}" href="{{ route('admin.volunteers.index',array_filter(['user_type'=>$type])) }}">{{ $label }} ({{ $counts[$type?:'all'] }})</a>@endforeach</div>
+<div class="card-body filter-card"><form class="row g-2 align-items-end">
+ <div class="col-6 col-lg-2"><label>District</label><select name="district_id" class="form-select"><option value="">All</option>@foreach($districts as $d)<option value="{{ $d->id }}" @selected(request('district_id')==$d->id)>{{ $d->name }}</option>@endforeach</select></div>
+ <div class="col-6 col-lg-2"><label>Taluka</label><select name="taluka_id" class="form-select"><option value="">All</option>@foreach($talukas as $t)<option value="{{ $t->id }}" @selected(request('taluka_id')==$t->id)>{{ $t->name }}</option>@endforeach</select></div>
+ <div class="col-6 col-lg-2"><label>City / Village</label><select name="locality_id" class="form-select"><option value="">All</option>@foreach($localities as $l)<option value="{{ $l->id }}" @selected(request('locality_id')==$l->id)>{{ $l->name }}</option>@endforeach</select></div>
+ <div class="col-6 col-lg-2"><label>User Type</label><select name="user_type" class="form-select"><option value="">All Types</option>@foreach(['general','matrimony','business','volunteer'] as $type)<option value="{{ $type }}" @selected(request('user_type')===$type)>{{ ucfirst($type) }}</option>@endforeach</select></div>
+ <div class="col-6 col-lg-2"><label>Status</label><select name="status" class="form-select"><option value="">All</option><option value="active" @selected(request('status')==='active')>Active</option><option value="inactive" @selected(request('status')==='inactive')>Inactive</option></select></div>
+ <div class="col-6 col-lg-2"><label>Registered Users</label><select name="registered_sort" class="form-select"><option value="">Default</option><option value="high_low" @selected(request('registered_sort')==='high_low')>High to Low</option><option value="low_high" @selected(request('registered_sort')==='low_high')>Low to High</option></select></div>
+ <div class="col-lg-10"><input name="search" value="{{ request('search') }}" class="form-control" placeholder="Search by name, email, mobile or unique referral code..."></div><div class="col-6 col-lg-1"><button class="btn btn-primary w-100"><i class="fas fa-search"></i></button></div><div class="col-6 col-lg-1"><a href="{{ route('admin.volunteers.index') }}" class="btn btn-light border w-100">Reset</a></div>
+</form></div></div>
+<div class="card"><div class="table-responsive"><table class="table table-hover align-middle mb-0"><thead><tr><th>#</th><th>User Code</th><th>Name</th><th>User Type</th><th>Location</th><th>Registered Users</th><th>Commission (0-100)</th><th>Status</th><th class="text-end">Actions</th></tr></thead><tbody>
+@forelse($volunteers as $user)@php($rp=$user->volunteerReferralProfile)@php($location=collect([$rp?->district?->name,$rp?->taluka?->name,$rp?->locality?->name])->filter()->implode(', '))<tr>
+ <td>{{ $volunteers->firstItem()+$loop->index }}</td><td><strong>{{ $user->reffral_code }}</strong></td><td><div class="d-flex align-items-center gap-2">@if($user->photo)<img src="{{ asset('storage/'.$user->photo) }}" class="user-avatar" alt="">@else<div class="user-avatar d-grid" style="place-items:center"><i class="fas fa-user text-muted"></i></div>@endif<div><strong>{{ $user->name }}</strong><div class="small text-muted">{{ $user->phone }}</div></div></div></td>
+ <td><span class="badge text-bg-light border">{{ ucfirst($user->user_type) }}</span></td><td>{{ $location ?: 'Not allocated' }}</td><td><a href="{{ route('admin.volunteers.registered-users',$user) }}" class="fw-bold">{{ $user->referrals_made_count }}</a></td>
+ <td>@if($user->volunteer || $user->user_type==='volunteer')<form method="POST" action="{{ route('admin.volunteers.commission',$user) }}" class="d-flex gap-1">@csrf @method('PATCH')<input type="number" name="commission_points" value="{{ $rp?->commission_points ?? 2 }}" min="0" max="100" class="form-control form-control-sm commission-input"><button class="btn btn-sm btn-outline-primary"><i class="fas fa-save"></i></button></form>@else<span class="text-muted">—</span>@endif</td>
+ <td><span class="badge {{ $user->status==='active'?'text-bg-success':'text-bg-secondary' }}">{{ ucfirst($user->status ?? 'inactive') }}</span></td>
+ <td><div class="action-group"><form method="POST" action="{{ route('admin.volunteers.toggle',$user) }}">@csrf @method('PATCH')<button class="btn btn-sm {{ $user->status==='active'?'btn-outline-success':'btn-outline-secondary' }}" title="Active / inactive"><i class="fas fa-toggle-{{ $user->status==='active'?'on':'off' }}"></i></button></form><button class="btn btn-sm btn-outline-danger" title="Allocate location" data-bs-toggle="modal" data-bs-target="#locationModal" data-user-id="{{ $user->id }}" data-district="{{ $rp?->district_id }}" data-taluka="{{ $rp?->taluka_id }}" data-locality="{{ $rp?->locality_id }}"><i class="fas fa-location-dot"></i></button><a href="{{ route('admin.users.show',$user) }}" class="btn btn-sm btn-outline-secondary" title="View"><i class="fas fa-eye"></i></a><a href="{{ route('admin.users.edit',$user) }}" class="btn btn-sm btn-outline-primary" title="Edit"><i class="fas fa-pen"></i></a><form method="POST" action="{{ route('admin.volunteers.users.destroy',$user) }}" onsubmit="return confirm('Delete this user permanently?')">@csrf @method('DELETE')<button class="btn btn-sm btn-outline-danger" title="Delete"><i class="fas fa-trash"></i></button></form></div></td>
+</tr>@empty<tr><td colspan="9" class="text-center text-muted py-5">No users found.</td></tr>@endforelse
+</tbody></table></div></div><div class="mt-3">{{ $volunteers->links() }}</div>
+<div class="modal fade" id="locationModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><form method="POST" id="locationForm" class="modal-content">@csrf @method('PATCH')<div class="modal-header"><h5 class="modal-title">Allocate Location</h5><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="mb-3"><label class="form-label">District</label><select name="district_id" id="allocDistrict" class="form-select" required><option value="">Select</option>@foreach($districts as $d)<option value="{{ $d->id }}">{{ $d->name }}</option>@endforeach</select></div><div class="mb-3"><label class="form-label">Taluka</label><select name="taluka_id" id="allocTaluka" class="form-select" required><option value="">Select</option>@foreach($talukas as $t)<option value="{{ $t->id }}" data-district="{{ $t->district_id }}">{{ $t->name }}</option>@endforeach</select></div><div><label class="form-label">City / Village</label><select name="locality_id" id="allocLocality" class="form-select" required><option value="">Select</option>@foreach($localities as $l)<option value="{{ $l->id }}" data-taluka="{{ $l->taluka_id }}">{{ $l->name }} ({{ ucfirst($l->type) }})</option>@endforeach</select></div></div><div class="modal-footer"><button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button><button class="btn btn-primary">Allocate</button></div></form></div></div>
 @endsection
+@push('scripts')<script>document.addEventListener('DOMContentLoaded',()=>{const modal=document.getElementById('locationModal'),district=document.getElementById('allocDistrict'),taluka=document.getElementById('allocTaluka'),locality=document.getElementById('allocLocality');const filter=()=>{[...taluka.options].forEach((o,i)=>{if(i)o.hidden=o.dataset.district!==district.value});[...locality.options].forEach((o,i)=>{if(i)o.hidden=o.dataset.taluka!==taluka.value})};district.addEventListener('change',()=>{taluka.value='';locality.value='';filter()});taluka.addEventListener('change',()=>{locality.value='';filter()});modal.addEventListener('show.bs.modal',e=>{const b=e.relatedTarget;document.getElementById('locationForm').action=`{{ url('/admin/volunteers/users') }}/${b.dataset.userId}/location`;district.value=b.dataset.district||'';filter();taluka.value=b.dataset.taluka||'';filter();locality.value=b.dataset.locality||''})});</script>@endpush

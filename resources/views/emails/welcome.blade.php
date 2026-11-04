@@ -76,7 +76,10 @@
     <p>Thank you for joining <strong>Mali Setu</strong>! Your account has been successfully created.</p>
 
     <div class="welcome-box">
-        Start exploring your dashboard and enjoy all the features we’ve built for you.
+        <div>Start exploring your dashboard and enjoy all the features we’ve built for you.</div>
+        <div style="margin-top:16px;font-size:14px;color:#666;">Your unique referral code</div>
+        <div style="font-size:24px;color:#84144f;font-weight:700;letter-spacing:2px;">{{ $referralCode }}</div>
+        <div style="font-size:13px;color:#777;margin-top:6px;">Share this code when inviting someone to Mali Setu.</div>
     </div>
 
     <!-- <p style="text-align: center;">

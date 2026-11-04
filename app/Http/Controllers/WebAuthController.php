@@ -16,6 +16,7 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Laravel\Socialite\Facades\Socialite;
+use App\Services\ReferralService;
 
 class WebAuthController extends Controller
 {
@@ -71,7 +72,7 @@ class WebAuthController extends Controller
     /**
      * Handle Web Registration Request
      */
-    public function register(Request $request)
+    public function register(Request $request, ReferralService $referrals)
     {
         $validator = Validator::make($request->all(), [
             'title'            => 'required|string|in:Mr.,Mrs.,Ms.,Dr.',
@@ -95,6 +96,7 @@ class WebAuthController extends Controller
             'company_name'     => 'nullable|string|max:255',
             'dept_name'        => 'nullable|string|max:255',
             'designation'      => 'nullable|string|max:255',
+            'referral_code'    => 'nullable|string|max:50|exists:users,reffral_code',
             'password'         => 'required|string|min:8|confirmed',
             'term_condition'   => 'accepted',
             'latitude'         => 'nullable|numeric|between:-90,90',
@@ -133,6 +135,8 @@ class WebAuthController extends Controller
                 'latitude'               => $request->latitude,
                 'longitude'              => $request->longitude,
             ]);
+
+            $referrals->record($request->referral_code, $user);
 
             // Fire the Welcome Email (do not crash registration on fail)
             try {
@@ -310,7 +314,7 @@ class WebAuthController extends Controller
                 $user = User::where('email', $email)->first();
                 if (!$user) {
                     // Auto-register sandbox user with user type general
-                    User::create([
+                    $user = User::create([
                         'name' => 'Sandbox Google User',
                         'email' => $email,
                         'google_id' => 'sandbox_google_id_12345',
@@ -318,6 +322,7 @@ class WebAuthController extends Controller
                         'password' => Hash::make('sandbox123'),
                         'caste_verification_status' => 'pending',
                     ]);
+                    $this->sendWelcomeEmail($user);
 
                     return redirect()->route('register')->withErrors([
                         'email' => 'Account does not exist. Please complete your registration.'
@@ -333,7 +338,7 @@ class WebAuthController extends Controller
 
             if (!$user) {
                 // Auto-register user with user type general
-                User::create([
+                $user = User::create([
                     'name' => $googleUser->getName(),
                     'email' => $email,
                     'google_id' => $googleUser->getId(),
@@ -341,6 +346,7 @@ class WebAuthController extends Controller
                     'password' => Hash::make(Str::random(16)),
                     'caste_verification_status' => 'pending',
                 ]);
+                $this->sendWelcomeEmail($user);
 
                 return redirect()->route('register')->withErrors([
                     'email' => 'Account does not exist. Please complete your registration.'
@@ -361,6 +367,18 @@ class WebAuthController extends Controller
             return redirect()->route('dashboard')->with('success', 'Successfully logged in with Google!');
         } catch (\Exception $e) {
             return redirect()->route('login')->withErrors(['error' => 'Google Authentication failed: ' . $e->getMessage()]);
+        }
+    }
+
+    private function sendWelcomeEmail(User $user): void
+    {
+        try {
+            Mail::to($user->email)->send(new WelcomeMail($user));
+        } catch (\Throwable $exception) {
+            \Log::warning('Social registration welcome email failed', [
+                'user_id' => $user->id,
+                'error' => $exception->getMessage(),
+            ]);
         }
     }
 }

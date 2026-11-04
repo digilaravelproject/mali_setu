@@ -7,10 +7,12 @@ use App\Models\Business;
 use App\Models\MatrimonyProfile;
 use App\Models\User;
 use App\Services\NotificationService;
+use App\Mail\WelcomeMail;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Mail;
 
 class UserManagementController extends Controller
 {
@@ -348,7 +350,6 @@ class UserManagementController extends Controller
             'company_name' => 'nullable|string|max:255',
             'dept_name' => 'nullable|string|max:255',
             'designation' => 'nullable|string|max:255',
-            'reffral_code' => 'nullable|string|max:50',
             'address' => 'nullable|string|max:500',
             'nearby_location' => 'nullable|string|max:255',
             'pincode' => 'nullable|digits:6',
@@ -383,7 +384,6 @@ class UserManagementController extends Controller
             'company_name' => $request->company_name,
             'dept_name' => $request->dept_name,
             'designation' => $request->designation,
-            'reffral_code' => $request->reffral_code,
             'address' => $request->address,
             'nearby_location' => $request->nearby_location,
             'pincode' => $request->pincode,
@@ -406,6 +406,12 @@ class UserManagementController extends Controller
         }
 
         $user = User::create($userData);
+
+        try {
+            Mail::to($user->email)->send(new WelcomeMail($user));
+        } catch (\Throwable $e) {
+            Log::warning('Admin-created user welcome email failed', ['user_id' => $user->id, 'error' => $e->getMessage()]);
+        }
 
         return redirect()->route('admin.users.show', $user->id)
             ->with('success', 'User created successfully!');
@@ -447,7 +453,6 @@ class UserManagementController extends Controller
             'company_name' => 'nullable|string|max:255',
             'dept_name' => 'nullable|string|max:255',
             'designation' => 'nullable|string|max:255',
-            'reffral_code' => 'nullable|string|max:50',
             'address' => 'nullable|string|max:500',
             'nearby_location' => 'nullable|string|max:255',
             'pincode' => 'nullable|digits:6',
@@ -481,7 +486,6 @@ class UserManagementController extends Controller
             'company_name' => $request->company_name,
             'dept_name' => $request->dept_name,
             'designation' => $request->designation,
-            'reffral_code' => $request->reffral_code,
             'address' => $request->address,
             'nearby_location' => $request->nearby_location,
             'pincode' => $request->pincode,

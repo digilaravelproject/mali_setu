@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\Mail;
 use App\Mail\WelcomeMail;
 use App\Mail\PasswordChangedMail;
 use Carbon\Carbon;
+use App\Services\ReferralService;
 
 
 class AuthController extends Controller
@@ -22,7 +23,7 @@ class AuthController extends Controller
     /**
      * Register a new user
      */
-    public function register(Request $request)
+    public function register(Request $request, ReferralService $referrals)
     {
         try {
             $validator = Validator::make($request->all(), [
@@ -38,7 +39,8 @@ class AuthController extends Controller
                 'dob' => 'nullable|date_format:d/m/Y',
                 'designation'      => 'nullable|string|max:255',
 
-                'reffral_code'     => 'nullable|string|max:50',
+                'reffral_code'     => 'nullable|string|max:50|exists:users,reffral_code',
+                'referral_code'    => 'nullable|string|max:50|exists:users,reffral_code',
                 'address'          => 'nullable|string|max:500',
                 'nearby_location'  => 'nullable|string|max:255',
                 'pincode'          => 'nullable|digits:6', // Indian pincode format
@@ -78,6 +80,8 @@ class AuthController extends Controller
                 }
             }
 
+            $submittedReferralCode = $request->input('referral_code', $request->input('reffral_code'));
+
             $user = User::create([
                 'name'                   => $request->name,
                 'email'                  => $request->email,
@@ -90,7 +94,6 @@ class AuthController extends Controller
                 'dept_name'              => $request->dept_name,
                 'dob'                    => $request->dob,
                 'designation'            => $request->designation,
-                'reffral_code'           => $request->reffral_code,
                 'address'                => $request->address,
                 'nearby_location'        => $request->nearby_location,
                 'pincode'                => $request->pincode,
@@ -108,6 +111,8 @@ class AuthController extends Controller
                 'user_type'              => $request->user_type,
                 'caste_verification_status' => 'approved'
             ]);
+
+            $referrals->record($submittedReferralCode, $user);
             
             // ✅ NEW: Send welcome email (do not break registration on mail failure)
             try {
@@ -128,6 +133,7 @@ class AuthController extends Controller
                 'message' => 'User registered successfully',
                 'data' => [
                     'user' => $user,
+                    'referral_code' => $user->reffral_code,
                     'token' => $token,
                     'token_type' => 'Bearer'
                 ]

@@ -9,6 +9,8 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Str;
 use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
@@ -42,6 +44,7 @@ class User extends Authenticatable
         'dob',
         'designation',
         'reffral_code',
+        'referred_by_user_id',
         'address',
         'nearby_location',
         'pincode',
@@ -90,6 +93,18 @@ class User extends Authenticatable
      */
     protected static function booted()
     {
+        static::creating(function ($user) {
+            if (! Schema::hasColumn($user->getTable(), 'reffral_code') || $user->reffral_code) {
+                return;
+            }
+
+            do {
+                $code = 'MSU'.strtoupper(Str::random(7));
+            } while (static::where('reffral_code', $code)->exists());
+
+            $user->reffral_code = $code;
+        });
+
         static::saved(function ($user) {
             if ($user->cast_certificate) {
                 CasteCertificate::updateOrCreate(
@@ -236,6 +251,31 @@ class User extends Authenticatable
     public function volunteer()
     {
         return $this->hasOne(VolunteerProfile::class);
+    }
+
+    public function volunteerReferralProfile()
+    {
+        return $this->hasOne(VolunteerReferralProfile::class);
+    }
+
+    public function referralsMade()
+    {
+        return $this->hasMany(Referral::class, 'referrer_user_id');
+    }
+
+    public function referralReceived()
+    {
+        return $this->hasOne(Referral::class, 'referred_user_id');
+    }
+
+    public function referredUsers()
+    {
+        return $this->hasMany(User::class, 'referred_by_user_id');
+    }
+
+    public function referrer()
+    {
+        return $this->belongsTo(User::class, 'referred_by_user_id');
     }
 
     /**

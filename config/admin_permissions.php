@@ -209,10 +209,16 @@ return [
             ]],
             'volunteers' => ['label' => 'Volunteers', 'icon' => 'hands-helping', 'sections' => [
                 'Volunteers' => [
-                    ['key' => 'volunteers.list', 'label' => 'List volunteers', 'description' => 'View volunteer profiles.', 'level' => 'view', 'routes' => ['admin.volunteers.index', 'admin.volunteers.show']],
+                    ['key' => 'volunteers.list', 'label' => 'List volunteers', 'description' => 'View users, volunteers and their registered users.', 'level' => 'view', 'routes' => ['admin.volunteers.index', 'admin.volunteers.show', 'admin.volunteers.registered-users']],
+                    ['key' => 'volunteers.create', 'label' => 'Add volunteer', 'description' => 'Create a volunteer account.', 'level' => 'action', 'routes' => ['admin.volunteers.create', 'admin.volunteers.store']],
+                    ['key' => 'volunteers.manage', 'label' => 'Manage volunteers', 'description' => 'Toggle status, commission and allocated location.', 'level' => 'action', 'routes' => ['admin.volunteers.toggle', 'admin.volunteers.commission', 'admin.volunteers.location']],
                     ['key' => 'volunteers.verification', 'label' => 'View verification', 'description' => 'See pending volunteer verification.', 'level' => 'view', 'routes' => ['admin.volunteers.pending', 'admin.volunteers.verification']],
                     ['key' => 'volunteers.moderate', 'label' => 'Approve / reject', 'description' => 'Moderate volunteer profiles.', 'level' => 'action', 'routes' => ['admin.volunteers.approve', 'admin.volunteers.reject']],
-                    ['key' => 'volunteers.delete', 'label' => 'Delete volunteer', 'description' => 'Remove a volunteer profile.', 'level' => 'action', 'routes' => ['admin.volunteers.destroy']],
+                    ['key' => 'volunteers.delete', 'label' => 'Delete volunteer', 'description' => 'Remove a volunteer profile or managed user.', 'level' => 'action', 'routes' => ['admin.volunteers.destroy', 'admin.volunteers.users.destroy']],
+                ],
+                'Referral Reports' => [
+                    ['key' => 'volunteers.referrals.list', 'label' => 'View referral reports', 'description' => 'Search referral history and commission points.', 'level' => 'view', 'routes' => ['admin.volunteers.referral-reports']],
+                    ['key' => 'volunteers.referrals.export', 'label' => 'Export referral reports', 'description' => 'Download referral reports as Excel or PDF.', 'level' => 'action', 'routes' => ['admin.volunteers.referral-reports.excel', 'admin.volunteers.referral-reports.pdf']],
                 ],
             ]],
         ],

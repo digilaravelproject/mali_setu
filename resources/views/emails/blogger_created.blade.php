@@ -92,6 +92,9 @@
         <div class="credentials-row">
             <strong>Category:</strong> {{ $category }}
         </div>
+        <div class="credentials-row">
+            <strong>Referral Code:</strong> {{ $referralCode }}
+        </div>
     </div>
 
     <p style="text-align: center;">

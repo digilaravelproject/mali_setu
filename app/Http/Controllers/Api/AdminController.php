@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Mail\WelcomeMail;
 use App\Models\User;
 use App\Models\CasteCertificate;
 use App\Models\Business;
@@ -21,6 +22,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 
 class AdminController extends Controller
 {
@@ -360,6 +363,15 @@ class AdminController extends Controller
             'caste_verification_status' => 'approved',
             'email_verified_at' => now(),
         ]);
+
+        try {
+            Mail::to($admin->email)->send(new WelcomeMail($admin));
+        } catch (\Throwable $exception) {
+            Log::warning('Admin account welcome email failed', [
+                'user_id' => $admin->id,
+                'error' => $exception->getMessage(),
+            ]);
+        }
 
         // You might want to create a roles table and assign roles properly
         // For now, we'll use a simple approach

@@ -403,6 +403,16 @@ Route::prefix('admin')->name('admin.')->group(function () {
         // Volunteer Management Routes
         Route::prefix('volunteers')->name('volunteers.')->group(function () {
             Route::get('/', [VolunteerManagementController::class, 'index'])->name('index');
+            Route::get('/create', [VolunteerManagementController::class, 'create'])->name('create');
+            Route::post('/', [VolunteerManagementController::class, 'store'])->name('store');
+            Route::get('/referral-reports', [VolunteerManagementController::class, 'referralReports'])->name('referral-reports');
+            Route::get('/referral-reports/excel', [VolunteerManagementController::class, 'exportReferralExcel'])->name('referral-reports.excel');
+            Route::get('/referral-reports/pdf', [VolunteerManagementController::class, 'exportReferralPdf'])->name('referral-reports.pdf');
+            Route::get('/users/{user}/registered-users', [VolunteerManagementController::class, 'registeredUsers'])->name('registered-users');
+            Route::patch('/users/{user}/toggle', [VolunteerManagementController::class, 'toggle'])->name('toggle');
+            Route::patch('/users/{user}/commission', [VolunteerManagementController::class, 'updateCommission'])->name('commission');
+            Route::patch('/users/{user}/location', [VolunteerManagementController::class, 'allocateLocation'])->name('location');
+            Route::delete('/users/{user}', [VolunteerManagementController::class, 'destroyUser'])->name('users.destroy');
             Route::get('/pending', [VolunteerManagementController::class, 'pending'])->name('pending');
             Route::get('/verification', [VolunteerManagementController::class, 'verification'])->name('verification');
             Route::post('/{id}/approve', [VolunteerManagementController::class, 'approve'])->name('approve');

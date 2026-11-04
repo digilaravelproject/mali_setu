@@ -8,6 +8,7 @@ use App\Models\VolunteerApplication;
 use App\Models\VolunteerProfile;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use App\Services\ReferralService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
@@ -417,7 +418,7 @@ class VolunteerController extends Controller
      * Create or update volunteer profile
      */
 
-    public function updateVolunteerProfile(Request $request)
+    public function updateVolunteerProfile(Request $request, ReferralService $referrals)
     {
         $validator = Validator::make($request->all(), [
             'skills'       => 'nullable|array',     // coming as array from UI
@@ -476,6 +477,7 @@ class VolunteerController extends Controller
                 $data,
                 ['user_id' => $user->id, 'status' => $data['status'] ?? 'pending']
             ));
+            $referrals->activateVolunteer($user);
             $message = 'Volunteer profile created successfully';
         }
     

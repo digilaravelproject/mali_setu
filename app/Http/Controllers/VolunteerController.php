@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use Carbon\Carbon;
+use App\Services\ReferralService;
 
 class VolunteerController extends Controller
 {
@@ -53,7 +54,7 @@ class VolunteerController extends Controller
     /**
      * Register or update a volunteer profile.
      */
-    public function updateProfile(Request $request)
+    public function updateProfile(Request $request, ReferralService $referrals)
     {
         $user = Auth::user();
 
@@ -95,6 +96,7 @@ class VolunteerController extends Controller
             $data['user_id'] = $user->id;
             $data['status'] = 'active';
             VolunteerProfile::create($data);
+            $referrals->activateVolunteer($user);
             $message = 'Congratulations! You are now registered as a volunteer.';
         }
 

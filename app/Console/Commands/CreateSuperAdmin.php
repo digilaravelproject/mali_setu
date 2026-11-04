@@ -3,8 +3,10 @@
 namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
+use App\Mail\WelcomeMail;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
 
 class CreateSuperAdmin extends Command
 {
@@ -68,6 +70,12 @@ class CreateSuperAdmin extends Command
             'created_at' => now(),
             'updated_at' => now()
         ]);
+
+        try {
+            Mail::to($superAdmin->email)->send(new WelcomeMail($superAdmin));
+        } catch (\Throwable $exception) {
+            $this->warn('Welcome email could not be sent: '.$exception->getMessage());
+        }
         
         if ($superAdmin) {
             $this->info('✅ Super Admin created successfully!');
@@ -75,6 +83,7 @@ class CreateSuperAdmin extends Command
             $this->line('📧 Email: admin@malisetu.com');
             $this->line('🔑 Password: admin123');
             $this->line('👤 Role: Super Admin');
+            $this->line('🎟️ Referral Code: '.$superAdmin->reffral_code);
             $this->line('🌐 Access: http://127.0.0.1:8000/admin/login');
             $this->line('');
             $this->warn('⚠️  Please change the default password after first login!');

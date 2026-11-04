@@ -31,6 +31,7 @@ class WelcomeMail extends Mailable
             ->view('emails.welcome')
             ->with([
                 'name' => $this->user->name,
+                'referralCode' => $this->user->reffral_code,
             ]);
     }
 }

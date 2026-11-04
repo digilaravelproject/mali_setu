@@ -207,8 +207,8 @@
                                                 <input type="text" class="form-control" id="dept_name" name="dept_name" value="{{ old('dept_name') }}" placeholder="IT / Engineering">
                                             </div>
                                             <div class="col-md-4 mb-3">
-                                                <label for="reffral_code" class="form-label font-weight-bold small">Referral Code</label>
-                                                <input type="text" class="form-control" id="reffral_code" name="reffral_code" value="{{ old('reffral_code') }}" placeholder="REF123">
+                                                <label class="form-label font-weight-bold small">Referral Code</label>
+                                                <input type="text" class="form-control" value="Generated automatically" disabled>
                                             </div>
                                         </div>
                                     </div>

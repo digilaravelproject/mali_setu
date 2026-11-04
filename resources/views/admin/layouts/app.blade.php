@@ -384,12 +384,15 @@
                 </div>
             </div>
             
-            <?php /*<div class="nav-item">
-                <a href="{{ route('admin.volunteers.index') }}" class="nav-link {{ request()->routeIs('admin.volunteers.*') ? 'active' : '' }}">
-                    <i class="fas fa-hands-helping"></i>
-                    Volunteers
+            <div class="nav-item {{ auth()->user()->canAccessAdminModule('volunteers') ? '' : 'd-none' }}">
+                <a class="nav-link d-flex align-items-center {{ request()->routeIs('admin.volunteers.*') ? 'active' : '' }}" data-bs-toggle="collapse" href="#volunteersMenu" aria-expanded="{{ request()->routeIs('admin.volunteers.*') ? 'true' : 'false' }}">
+                    <i class="fas fa-hands-helping"></i><span>Volunteers</span><i class="fas fa-chevron-down dropdown-chevron"></i>
                 </a>
-            </div> */?>
+                <div class="collapse {{ request()->routeIs('admin.volunteers.*') ? 'show' : '' }}" id="volunteersMenu">
+                    <div class="nav-item {{ auth()->user()->hasAdminPermission('volunteers.list') ? '' : 'd-none' }}" style="margin-left:.6rem"><a href="{{ route('admin.volunteers.index') }}" class="nav-link {{ request()->routeIs('admin.volunteers.index') || request()->routeIs('admin.volunteers.registered-users') ? 'active' : '' }}"><i class="fas fa-users"></i> All Volunteers</a></div>
+                    <div class="nav-item {{ auth()->user()->hasAdminPermission('volunteers.referrals.list') ? '' : 'd-none' }}" style="margin-left:.6rem"><a href="{{ route('admin.volunteers.referral-reports') }}" class="nav-link {{ request()->routeIs('admin.volunteers.referral-reports*') ? 'active' : '' }}"><i class="fas fa-chart-column"></i> Referral Reports</a></div>
+                </div>
+            </div>
             
             <div class="nav-item {{ auth()->user()->canAccessAdminModule('donations') ? '' : 'd-none' }}">
                 <a class="nav-link d-flex align-items-center {{ request()->routeIs('admin.donations.*') ? 'active' : '' }}" data-bs-toggle="collapse" href="#contributionMenu" aria-expanded="{{ request()->routeIs('admin.donations.*') ? 'true' : 'false' }}">

@@ -1,0 +1,5 @@
+<!doctype html><html><head><meta charset="utf-8"><style>body{font-family:DejaVu Sans,sans-serif;font-size:9px;color:#1f2937}h2{color:#84144f}table{width:100%;border-collapse:collapse}th,td{border:1px solid #d1d5db;padding:5px}th{background:#84144f;color:#fff}</style></head><body>
+<h2>Mali Setu - Referral Report</h2><p>Generated: {{ now()->format('d M Y, h:i A') }}</p>
+<table><thead><tr><th>#</th><th>Date</th><th>Volunteer / Code</th><th>Referred User</th><th>Type</th><th>Location</th><th>Points</th><th>Status</th></tr></thead><tbody>
+@foreach($reports as $report)@php($p=$report->referrer?->volunteerReferralProfile)<tr><td>{{ $loop->iteration }}</td><td>{{ $report->created_at?->format('d M Y') }}</td><td>{{ $report->referrer?->name }}<br>{{ $report->referrer?->reffral_code }}</td><td>{{ $report->referredUser?->name }}</td><td>{{ ucfirst((string)$report->referredUser?->user_type) }}</td><td>{{ collect([$p?->district?->name,$p?->taluka?->name,$p?->locality?->name])->filter()->implode(', ') }}</td><td>{{ $report->commission_points }}</td><td>{{ ucfirst($report->status) }}</td></tr>@endforeach
+</tbody></table></body></html>

@@ -237,7 +237,7 @@
                                             </div>
                                             <div class="col-md-4 mb-3">
                                                 <label for="reffral_code" class="form-label font-weight-bold small">Referral Code</label>
-                                                <input type="text" class="form-control" id="reffral_code" name="reffral_code" value="{{ old('reffral_code', $user->reffral_code) }}" placeholder="REF123">
+                                                <input type="text" class="form-control" id="reffral_code" value="{{ $user->reffral_code }}" readonly>
                                             </div>
                                         </div>
                                     </div>

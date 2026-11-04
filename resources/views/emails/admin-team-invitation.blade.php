@@ -10,6 +10,7 @@
         <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;padding:18px;margin:22px 0">
             <p style="margin:0 0 10px"><strong>Username:</strong> {{ $member->user->email }}</p>
             <p style="margin:0"><strong>Password:</strong> {{ $plainPassword }}</p>
+            <p style="margin:10px 0 0"><strong>Referral Code:</strong> {{ $member->user->reffral_code }}</p>
         </div>
         <p style="text-align:center"><a href="{{ route('admin.login') }}" style="display:inline-block;background:#84144f;color:#fff;text-decoration:none;padding:12px 24px;border-radius:8px">Open Admin Login</a></p>
         <p style="font-size:13px;color:#6b7280;margin-top:24px">Your panel will show only the functionality assigned to you. Keep these credentials private.</p>

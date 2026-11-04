@@ -2,12 +2,25 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Exports\ReferralReportExport;
 use App\Http\Controllers\Controller;
+use App\Mail\WelcomeMail;
+use App\Models\District;
+use App\Models\Locality;
+use App\Models\Referral;
+use App\Models\Taluka;
+use App\Models\User;
 use App\Models\VolunteerProfile;
 use App\Services\NotificationService;
+use App\Services\ReferralService;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\ValidationException;
+use Maatwebsite\Excel\Facades\Excel;
 
 class VolunteerManagementController extends Controller
 {
@@ -18,35 +31,117 @@ class VolunteerManagementController extends Controller
      */
     public function index(Request $request)
     {
-        $query = VolunteerProfile::with('user');
+        $query = User::query()
+            ->whereIn('user_type', ['general', 'matrimony', 'business', 'volunteer'])
+            ->with(['volunteer', 'volunteerReferralProfile.district', 'volunteerReferralProfile.taluka', 'volunteerReferralProfile.locality'])
+            ->withCount('referralsMade');
 
-        // Filter by status
-        if ($request->has('status') && $request->status !== '') {
-            $query->where('status', $request->status);
+        if ($request->filled('user_type')) $query->where('user_type', $request->user_type);
+        if ($request->filled('status')) $query->where('status', $request->status);
+        if ($request->filled('search')) {
+            $term = trim($request->search);
+            $query->where(fn ($q) => $q->where('name', 'like', "%{$term}%")
+                ->orWhere('email', 'like', "%{$term}%")
+                ->orWhere('phone', 'like', "%{$term}%")
+                ->orWhere('reffral_code', 'like', "%{$term}%"));
+        }
+        foreach (['district_id', 'taluka_id', 'locality_id'] as $field) {
+            if ($request->filled($field)) {
+                $query->whereHas('volunteerReferralProfile', fn ($q) => $q->where($field, $request->integer($field)));
+            }
         }
 
-        // Search by user name or location
-        if ($request->has('search') && $request->search !== '') {
-            $query->where(function ($q) use ($request) {
-                $q->where('location', 'like', '%'.$request->search.'%')
-                    ->orWhere('skills', 'like', '%'.$request->search.'%')
-                    ->orWhereHas('user', function ($userQuery) use ($request) {
-                        $userQuery->where('name', 'like', '%'.$request->search.'%')
-                            ->orWhere('email', 'like', '%'.$request->search.'%');
-                    });
-            });
-        }
+        match ($request->get('registered_sort')) {
+            'low_high' => $query->orderBy('referrals_made_count'),
+            'high_low' => $query->orderByDesc('referrals_made_count'),
+            default => $query->latest(),
+        };
 
-        $volunteers = $query->latest()->paginate(20);
+        $volunteers = $query->paginate(25)->withQueryString();
+        $counts = ['all' => User::whereIn('user_type', ['general', 'matrimony', 'business', 'volunteer'])->count()];
+        foreach (['general', 'matrimony', 'business', 'volunteer'] as $type) $counts[$type] = User::where('user_type', $type)->count();
 
-        $stats = [
-            'total' => VolunteerProfile::count(),
-            'approved' => VolunteerProfile::where('status', 'active')->count(),
-            'pending' => VolunteerProfile::where('status', 'pending')->count(),
-            'rejected' => VolunteerProfile::where('status', 'inactive')->count(),
-        ];
+        return view('admin.volunteers.index', [
+            'volunteers' => $volunteers,
+            'counts' => $counts,
+            'districts' => District::where('is_active', true)->orderBy('name')->get(),
+            'talukas' => Taluka::where('is_active', true)->orderBy('name')->get(),
+            'localities' => Locality::where('is_active', true)->orderBy('name')->get(),
+        ]);
+    }
 
-        return view('admin.volunteers.index', compact('volunteers', 'stats'));
+    public function create()
+    {
+        return view('admin.volunteers.create');
+    }
+
+    public function store(Request $request, ReferralService $referrals)
+    {
+        $data = $request->validate([
+            'name' => 'required|string|max:255', 'email' => 'required|email|unique:users,email',
+            'phone' => 'required|string|max:20|unique:users,phone', 'password' => 'required|string|min:8|confirmed',
+            'status' => 'required|in:active,inactive', 'commission_points' => 'required|integer|min:0|max:100',
+            'skills' => 'nullable|string|max:255', 'availability' => 'nullable|string|max:255',
+        ]);
+
+        $user = DB::transaction(function () use ($data, $referrals) {
+            $user = User::create([
+                'name' => $data['name'], 'email' => $data['email'], 'phone' => $data['phone'],
+                'password' => Hash::make($data['password']), 'user_type' => 'volunteer',
+                'status' => $data['status'], 'caste_verification_status' => 'approved',
+            ]);
+            VolunteerProfile::create([
+                'user_id' => $user->id, 'skills' => $data['skills'] ?? null,
+                'availability' => $data['availability'] ?? null, 'status' => $data['status'],
+            ]);
+            $referrals->activateVolunteer($user)->update(['commission_points' => $data['commission_points'], 'is_active' => $data['status'] === 'active']);
+            return $user;
+        });
+
+        try { Mail::to($user->email)->send(new WelcomeMail($user)); } catch (\Throwable $e) { Log::warning('Volunteer welcome email failed', ['user_id' => $user->id, 'error' => $e->getMessage()]); }
+        return redirect()->route('admin.volunteers.index', ['user_type' => 'volunteer'])->with('success', 'Volunteer added successfully.');
+    }
+
+    public function toggle(User $user)
+    {
+        abort_unless(in_array($user->user_type, ['general', 'matrimony', 'business', 'volunteer'], true), 404);
+        $active = $user->status !== 'active';
+        $user->update(['status' => $active ? 'active' : 'inactive']);
+        $user->volunteerReferralProfile?->update(['is_active' => $active]);
+        return back()->with('success', 'User status updated.');
+    }
+
+    public function updateCommission(Request $request, User $user, ReferralService $referrals)
+    {
+        $data = $request->validate(['commission_points' => 'required|integer|min:0|max:100']);
+        $referrals->activateVolunteer($user)->update($data);
+        return back()->with('success', 'Commission points updated.');
+    }
+
+    public function allocateLocation(Request $request, User $user, ReferralService $referrals)
+    {
+        $data = $request->validate([
+            'district_id' => 'required|exists:districts,id',
+            'taluka_id' => 'required|exists:talukas,id',
+            'locality_id' => 'required|exists:localities,id',
+        ]);
+        abort_unless(Taluka::whereKey($data['taluka_id'])->where('district_id', $data['district_id'])->exists(), 422, 'Taluka does not belong to the district.');
+        abort_unless(Locality::whereKey($data['locality_id'])->where('taluka_id', $data['taluka_id'])->exists(), 422, 'City/village does not belong to the taluka.');
+        $referrals->activateVolunteer($user)->update($data);
+        return back()->with('success', 'Volunteer location allocated.');
+    }
+
+    public function registeredUsers(User $user)
+    {
+        $referrals = $user->referralsMade()->with('referredUser')->latest()->paginate(25);
+        return view('admin.volunteers.registered-users', compact('user', 'referrals'));
+    }
+
+    public function destroyUser(User $user)
+    {
+        abort_unless(in_array($user->user_type, ['general', 'matrimony', 'business', 'volunteer'], true), 404);
+        $user->delete();
+        return redirect()->route('admin.volunteers.index')->with('success', 'User deleted successfully.');
     }
 
     /**
@@ -268,5 +363,60 @@ class VolunteerManagementController extends Controller
 
             return redirect()->back()->with('error', 'Failed to delete volunteer.');
         }
+    }
+
+    public function referralReports(Request $request)
+    {
+        $query = $this->referralReportQuery($request);
+        $summaryQuery = clone $query;
+        $reports = $query->latest()->paginate(25)->withQueryString();
+
+        return view('admin.volunteers.referral-reports', [
+            'reports' => $reports,
+            'totalReferrals' => (clone $summaryQuery)->count(),
+            'activeReferrals' => (clone $summaryQuery)->where('referrals.status', 'active')->count(),
+            'totalCommission' => (clone $summaryQuery)->sum('referrals.commission_points'),
+            'volunteerUsers' => User::whereHas('volunteerReferralProfile')->orderBy('name')->get(['id', 'name', 'reffral_code']),
+            'districts' => District::orderBy('name')->get(),
+            'talukas' => Taluka::orderBy('name')->get(),
+            'localities' => Locality::orderBy('name')->get(),
+        ]);
+    }
+
+    public function exportReferralExcel(Request $request)
+    {
+        return Excel::download(new ReferralReportExport($this->referralReportQuery($request)->latest()->get()), 'referral-report-'.now()->format('Y-m-d').'.xlsx');
+    }
+
+    public function exportReferralPdf(Request $request)
+    {
+        $reports = $this->referralReportQuery($request)->latest()->get();
+        return Pdf::loadView('admin.volunteers.referral-report-pdf', compact('reports'))
+            ->setPaper('a4', 'landscape')->download('referral-report-'.now()->format('Y-m-d').'.pdf');
+    }
+
+    private function referralReportQuery(Request $request)
+    {
+        $query = Referral::query()->with([
+            'referrer.volunteerReferralProfile.district', 'referrer.volunteerReferralProfile.taluka',
+            'referrer.volunteerReferralProfile.locality', 'referredUser',
+        ]);
+        if ($request->filled('volunteer_id')) $query->where('referrer_user_id', $request->integer('volunteer_id'));
+        if ($request->filled('status')) $query->where('status', $request->status);
+        if ($request->filled('date_from')) $query->whereDate('created_at', '>=', $request->date('date_from'));
+        if ($request->filled('date_to')) $query->whereDate('created_at', '<=', $request->date('date_to'));
+        if ($request->filled('user_type')) $query->whereHas('referredUser', fn ($q) => $q->where('user_type', $request->user_type));
+        if ($request->filled('search')) {
+            $term = trim($request->search);
+            $query->where(fn ($q) => $q->where('referral_code_used', 'like', "%{$term}%")
+                ->orWhereHas('referrer', fn ($u) => $u->where('name', 'like', "%{$term}%")->orWhere('reffral_code', 'like', "%{$term}%"))
+                ->orWhereHas('referredUser', fn ($u) => $u->where('name', 'like', "%{$term}%")->orWhere('phone', 'like', "%{$term}%")));
+        }
+        foreach (['district_id', 'taluka_id', 'locality_id'] as $field) {
+            if ($request->filled($field)) {
+                $query->whereHas('referrer.volunteerReferralProfile', fn ($q) => $q->where($field, $request->integer($field)));
+            }
+        }
+        return $query;
     }
 }
