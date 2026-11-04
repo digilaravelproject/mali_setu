@@ -634,11 +634,21 @@ class MatrimonyManagementController extends Controller
      */
     public function chats(Request $request)
     {
-        $query = ChatConversation::with(['user1', 'user2', 'messages' => function ($q) {
-            $q->latest()->limit(1);
-        }]);
+        $query = ChatConversation::with([
+            'user1.matrimonyProfile',
+            'user2.matrimonyProfile',
+            'latestMessage.sender',
+        ])->withCount('messages');
 
-        $conversations = $query->latest('last_message_at')->paginate(20);
+        if ($request->filled('search')) {
+            $search = trim($request->string('search')->toString());
+            $query->where(function ($conversation) use ($search) {
+                $conversation->whereHas('user1', fn ($user) => $user->where('name', 'like', '%'.$search.'%')->orWhere('phone', 'like', '%'.$search.'%'))
+                    ->orWhereHas('user2', fn ($user) => $user->where('name', 'like', '%'.$search.'%')->orWhere('phone', 'like', '%'.$search.'%'));
+            });
+        }
+
+        $conversations = $query->latest('last_message_at')->paginate(20)->withQueryString();
 
         $stats = [
             'total_conversations' => ChatConversation::count(),

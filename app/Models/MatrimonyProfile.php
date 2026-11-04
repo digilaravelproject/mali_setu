@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Storage;
 
 class MatrimonyProfile extends Model
 {
@@ -106,6 +107,22 @@ class MatrimonyProfile extends Model
 
         return trim(implode(' ', $nameParts))
             ?: trim((string) ($personalDetails['full_name'] ?? $personalDetails['name'] ?? ''));
+    }
+
+    /** Prefer the first matrimony photo and fall back to the account photo. */
+    public function getProfilePhotoUrlAttribute(): ?string
+    {
+        $photos = $this->personal_details['photos'] ?? [];
+        $path = is_array($photos) ? ($photos[0] ?? null) : null;
+        $path ??= $this->user?->photo;
+
+        if (! $path) {
+            return null;
+        }
+
+        return str_starts_with($path, 'http://') || str_starts_with($path, 'https://')
+            ? $path
+            : Storage::disk('public')->url($path);
     }
 
     /**

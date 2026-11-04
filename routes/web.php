@@ -23,6 +23,7 @@ use App\Http\Controllers\Admin\SupportNumberController;
 use App\Http\Controllers\Admin\JobManagementController;
 use App\Http\Controllers\Admin\TeamManagementController;
 use App\Http\Controllers\Admin\WebinarManagementController;
+use App\Http\Controllers\Admin\LocationManagementController;
 use App\Http\Controllers\WebinarController;
 use App\Http\Controllers\AppUpdateController;
 use Illuminate\Support\Facades\Mail;
@@ -241,10 +242,24 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
         Route::get('analytics', [AdminDashboardController::class, 'analytics'])->name('analytics');
 
+        Route::prefix('locations')->name('locations.')->group(function () {
+            Route::get('/', [LocationManagementController::class, 'index'])->name('index');
+            Route::post('/districts', [LocationManagementController::class, 'storeDistrict'])->name('districts.store');
+            Route::put('/districts/{district}', [LocationManagementController::class, 'updateDistrict'])->name('districts.update');
+            Route::delete('/districts/{district}', [LocationManagementController::class, 'destroyDistrict'])->name('districts.destroy');
+            Route::post('/talukas', [LocationManagementController::class, 'storeTaluka'])->name('talukas.store');
+            Route::put('/talukas/{taluka}', [LocationManagementController::class, 'updateTaluka'])->name('talukas.update');
+            Route::delete('/talukas/{taluka}', [LocationManagementController::class, 'destroyTaluka'])->name('talukas.destroy');
+            Route::post('/localities', [LocationManagementController::class, 'storeLocality'])->name('localities.store');
+            Route::put('/localities/{locality}', [LocationManagementController::class, 'updateLocality'])->name('localities.update');
+            Route::delete('/localities/{locality}', [LocationManagementController::class, 'destroyLocality'])->name('localities.destroy');
+        });
+
         Route::prefix('webinars')->name('webinars.')->group(function () {
             Route::get('/', [WebinarManagementController::class, 'index'])->name('index');
             Route::get('/create', [WebinarManagementController::class, 'create'])->name('create');
             Route::post('/', [WebinarManagementController::class, 'store'])->name('store');
+            Route::get('/{webinar}/registrations', [WebinarManagementController::class, 'registrations'])->name('registrations');
             Route::get('/{webinar}/edit', [WebinarManagementController::class, 'edit'])->name('edit');
             Route::put('/{webinar}', [WebinarManagementController::class, 'update'])->name('update');
             Route::get('/{webinar}/go-live', [WebinarManagementController::class, 'goLive'])->name('go-live');

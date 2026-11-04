@@ -108,8 +108,8 @@
                         $receiverName = $receiverProfile?->candidate_name ?: ($connection->receiver?->name ?? 'Deleted user');
                         $senderLocation = collect([$senderProfile?->location_details['city'] ?? null, $senderProfile?->location_details['state'] ?? null])->filter()->implode(', ');
                         $receiverLocation = collect([$receiverProfile?->location_details['city'] ?? null, $receiverProfile?->location_details['state'] ?? null])->filter()->implode(', ');
-                        $senderPhoto = $connection->sender?->photo ? asset('storage/'.$connection->sender->photo) : asset('default-avatar.png');
-                        $receiverPhoto = $connection->receiver?->photo ? asset('storage/'.$connection->receiver->photo) : asset('default-avatar.png');
+                        $senderPhoto = $senderProfile?->profile_photo_url ?: asset('default-avatar.png');
+                        $receiverPhoto = $receiverProfile?->profile_photo_url ?: asset('default-avatar.png');
                         $details = [
                             'sender_name' => $senderName, 'sender_phone' => $connection->sender?->phone ?: '-', 'sender_photo' => $senderPhoto,
                             'sender_meta' => collect([$senderProfile?->age ? $senderProfile->age.' Years' : null, $senderLocation])->filter()->implode(' · '),

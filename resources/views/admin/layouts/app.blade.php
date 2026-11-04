@@ -86,12 +86,12 @@
             font-size: 1.1rem;
         }
 
-        .nav-link .dropdown-chevron {
+        .nav-link[data-bs-toggle="collapse"] .fa-chevron-down {
             margin: 0 0 0 auto;
             transition: transform 0.25s ease;
         }
 
-        .nav-link[aria-expanded="true"] .dropdown-chevron {
+        .nav-link[data-bs-toggle="collapse"][aria-expanded="true"] .fa-chevron-down {
             transform: rotate(180deg);
         }
         
@@ -250,6 +250,17 @@
                     <i class="fas fa-chart-line"></i>
                     Analytics
                 </a>
+            </div>
+
+            <div class="nav-item {{ auth()->user()->canAccessAdminModule('locations') ? '' : 'd-none' }}">
+                <a class="nav-link d-flex justify-content-between align-items-center {{ request()->routeIs('admin.locations.*') ? 'active' : '' }}" data-bs-toggle="collapse" href="#locationsMenu" aria-expanded="{{ request()->routeIs('admin.locations.*') ? 'true' : 'false' }}">
+                    <span><i class="fas fa-location-dot"></i> Locations</span><i class="fas fa-chevron-down"></i>
+                </a>
+                <div class="collapse {{ request()->routeIs('admin.locations.*') ? 'show' : '' }}" id="locationsMenu">
+                    <div class="nav-item" style="margin-left:.6rem"><a href="{{ route('admin.locations.index',['section'=>'districts']) }}#districts" class="nav-link"><i class="fas fa-map"></i> Districts</a></div>
+                    <div class="nav-item" style="margin-left:.6rem"><a href="{{ route('admin.locations.index',['section'=>'talukas']) }}#talukas" class="nav-link"><i class="fas fa-diagram-project"></i> Talukas</a></div>
+                    <div class="nav-item" style="margin-left:.6rem"><a href="{{ route('admin.locations.index',['section'=>'localities']) }}#localities" class="nav-link"><i class="fas fa-city"></i> City / Village</a></div>
+                </div>
             </div>
 
             <div class="nav-item {{ auth()->user()->canAccessAdminModule('webinars') ? '' : 'd-none' }}">

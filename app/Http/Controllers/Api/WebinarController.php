@@ -26,13 +26,17 @@ class WebinarController extends Controller
         if ($request->status === 'upcoming') $query->where('starts_at', '>', now());
         if ($request->status === 'completed') $query->where('starts_at', '<', now());
 
-        return response()->json(['success' => true, 'data' => $query->orderBy('starts_at')->paginate($request->integer('per_page', 12))]);
+        $webinars = $query->orderBy('starts_at')->paginate($request->integer('per_page', 12));
+        $this->applyEffectiveRegistrationRequirement($webinars->getCollection(), $request);
+
+        return response()->json(['success' => true, 'data' => $webinars]);
     }
 
-    public function upcoming()
+    public function upcoming(Request $request)
     {
         $webinars = Webinar::where('status', 'published')->where('starts_at', '>', now())
             ->withCount('registrations')->orderBy('starts_at')->limit(3)->get();
+        $this->applyEffectiveRegistrationRequirement($webinars, $request);
         return response()->json(['success' => true, 'data' => $webinars]);
     }
 
@@ -40,8 +44,12 @@ class WebinarController extends Controller
     {
         abort_unless($webinar->status === 'published', 404);
         $webinar->loadCount('registrations');
-        $webinar->is_registered = $request->user()
-            ? $webinar->registrations()->where('user_id', $request->user()->id)->exists() : false;
+        $user = $this->authenticatedUser($request);
+        $webinar->is_registered = $user
+            ? $webinar->registrations()->where('user_id', $user->id)->exists() : false;
+        $webinar->require_registration = $webinar->require_registration
+            && ! $webinar->is_registered
+            && $webinar->ends_at->isFuture();
         return response()->json(['success' => true, 'data' => $webinar]);
     }
 
@@ -87,5 +95,30 @@ class WebinarController extends Controller
         abort_unless($webinar->attendeeCanJoin(), 403, 'Attendees can join when the webinar starts.');
 
         return response()->json(['success' => true, 'data' => $tokens->credentials($webinar, $request->user(), false)]);
+    }
+
+    private function applyEffectiveRegistrationRequirement($webinars, Request $request): void
+    {
+        $userId = $this->authenticatedUser($request)?->id;
+        $registeredWebinarIds = $userId
+            ? WebinarRegistration::where('user_id', $userId)
+                ->whereIn('webinar_id', $webinars->pluck('id'))
+                ->pluck('webinar_id')
+                ->all()
+            : [];
+
+        foreach ($webinars as $webinar) {
+            $isRegistered = in_array($webinar->id, $registeredWebinarIds, true);
+            $webinar->setAttribute('is_registered', $isRegistered);
+            $webinar->setAttribute(
+                'require_registration',
+                $webinar->require_registration && ! $isRegistered && $webinar->ends_at->isFuture()
+            );
+        }
+    }
+
+    private function authenticatedUser(Request $request)
+    {
+        return $request->user('sanctum') ?? $request->user();
     }
 }

@@ -21,11 +21,19 @@ return [
                     ['key' => 'reports.download', 'label' => 'Download reports', 'description' => 'Download PDF or spreadsheet reports.', 'level' => 'action', 'routes' => ['admin.reports.download*']],
                 ],
             ]],
+            'locations' => ['label' => 'Locations', 'icon' => 'location-dot', 'sections' => [
+                'Location Hierarchy' => [
+                    ['key' => 'locations.list', 'label' => 'View locations', 'description' => 'View districts, talukas, cities and villages.', 'level' => 'view', 'routes' => ['admin.locations.index']],
+                    ['key' => 'locations.create', 'label' => 'Add locations', 'description' => 'Add districts, talukas, cities and villages.', 'level' => 'action', 'routes' => ['admin.locations.districts.store', 'admin.locations.talukas.store', 'admin.locations.localities.store']],
+                    ['key' => 'locations.edit', 'label' => 'Edit locations', 'description' => 'Update districts, talukas, cities and villages.', 'level' => 'action', 'routes' => ['admin.locations.districts.update', 'admin.locations.talukas.update', 'admin.locations.localities.update']],
+                    ['key' => 'locations.delete', 'label' => 'Delete locations', 'description' => 'Delete locations and their dependent children.', 'level' => 'action', 'routes' => ['admin.locations.districts.destroy', 'admin.locations.talukas.destroy', 'admin.locations.localities.destroy']],
+                ],
+            ]],
         ],
         'People & Content' => [
             'webinars' => ['label' => 'Broadcast / Webinars', 'icon' => 'video', 'sections' => [
                 'Webinars' => [
-                    ['key' => 'webinars.list', 'label' => 'List webinars', 'description' => 'View and search webinar sessions.', 'level' => 'view', 'routes' => ['admin.webinars.index']],
+                    ['key' => 'webinars.list', 'label' => 'List webinars', 'description' => 'View webinars and their registered users.', 'level' => 'view', 'routes' => ['admin.webinars.index', 'admin.webinars.registrations']],
                     ['key' => 'webinars.create', 'label' => 'Create webinar', 'description' => 'Create and publish an Agora webinar.', 'level' => 'action', 'routes' => ['admin.webinars.create', 'admin.webinars.store']],
                     ['key' => 'webinars.edit', 'label' => 'Edit / host webinar', 'description' => 'Update webinar details and go live as its host.', 'level' => 'action', 'routes' => ['admin.webinars.edit', 'admin.webinars.update', 'admin.webinars.go-live', 'admin.webinars.token', 'admin.webinars.comments', 'admin.webinars.participant-control', 'admin.webinars.participant']],
                     ['key' => 'webinars.delete', 'label' => 'Delete webinar', 'description' => 'Delete a webinar and its registrations.', 'level' => 'action', 'routes' => ['admin.webinars.destroy']],

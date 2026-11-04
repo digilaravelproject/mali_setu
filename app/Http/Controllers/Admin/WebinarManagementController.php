@@ -56,6 +56,16 @@ class WebinarManagementController extends Controller
         ]);
     }
 
+    public function registrations(Webinar $webinar)
+    {
+        $registrations = $webinar->registrations()
+            ->with('user')
+            ->latest()
+            ->paginate(25);
+
+        return view('admin.webinars.registrations', compact('webinar', 'registrations'));
+    }
+
     public function store(Request $request)
     {
         $data = $this->validated($request);

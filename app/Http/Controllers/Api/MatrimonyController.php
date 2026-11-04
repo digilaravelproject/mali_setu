@@ -52,6 +52,7 @@ class MatrimonyController extends Controller
             'location_details' => 'required|array',
             'partner_preferences' => 'required|array',
             'privacy_settings' => 'nullable|array',
+            'cast_certificate' => 'nullable|file|mimes:pdf,jpeg,jpg,png|max:5120',
             'photos' => 'required_without:personal_details.photos|array|min:2|max:5',
             'photos.*' => 'image|mimes:jpeg,png,jpg|max:5120',
             'personal_details.photos' => 'required_without:photos|array|min:2|max:5',
@@ -140,6 +141,17 @@ class MatrimonyController extends Controller
             'approval_status' => 'pending',
         ]);
 
+        // A member-created profile must always wait for admin approval.  The
+        // optional caste certificate belongs to the user verification record,
+        // which is also used by the existing admin verification screens.
+        if ($request->hasFile('cast_certificate')) {
+            $certificatePath = $request->file('cast_certificate')->store('caste-certificates', 'public');
+            $user->update([
+                'cast_certificate' => $certificatePath,
+                'caste_verification_status' => 'pending',
+            ]);
+        }
+
         // Store photo paths if any
         if (!empty($photoPaths)) {
             $profile->update([
@@ -160,7 +172,12 @@ class MatrimonyController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Matrimony profile created successfully',
-            'data' => ['profile' => $profile]
+            'data' => [
+                'profile' => $profile->fresh(),
+                'cast_certificate_url' => $user->cast_certificate
+                    ? Storage::disk('public')->url($user->cast_certificate)
+                    : null,
+            ]
         ], 201);
     }
 
