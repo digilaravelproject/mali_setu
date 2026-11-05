@@ -200,6 +200,7 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 // Protected routes for authenticated users
 Route::middleware(['auth:sanctum'])->group(function () {
     Route::prefix('referrals/{code}')->group(function () {
+        Route::post('send-email', [ReferralController::class, 'sendEmail'])->middleware('throttle:10,1');
         Route::get('referred-users', [ReferralController::class, 'referredUsers']);
         Route::get('history', [ReferralController::class, 'history']);
         Route::get('network', [ReferralController::class, 'network']);

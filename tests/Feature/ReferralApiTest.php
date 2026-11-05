@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Mail\ReferralLinkMail;
 use App\Models\User;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
@@ -244,6 +245,29 @@ class ReferralApiTest extends TestCase
             ->assertSee('value="MSUINVITE"', false)
             ->assertSee('readonly', false)
             ->assertSee('Referral code applied from your invitation link.');
+    }
+
+    public function test_owner_can_send_referral_link_by_email(): void
+    {
+        Mail::fake();
+        $ownerId = DB::table('users')->insertGetId($this->userRow('Email Inviter', 'email-inviter@example.com', '9111111111', 'volunteer', 'MSUEMAIL'));
+        DB::table('volunteer_profiles')->insert(['user_id' => $ownerId, 'status' => 'active', 'created_at' => now(), 'updated_at' => now()]);
+        Sanctum::actingAs(User::findOrFail($ownerId));
+
+        $this->postJson('/api/referrals/MSUEMAIL/send-email', [
+            'email' => 'friend@example.com',
+            'recipient_name' => 'Ravi Patil',
+            'message' => 'Please join using my invitation.',
+        ])->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('data.email', 'friend@example.com')
+            ->assertJsonPath('data.referral_code', 'MSUEMAIL');
+
+        Mail::assertSent(ReferralLinkMail::class, function (ReferralLinkMail $mail) {
+            return $mail->hasTo('friend@example.com')
+                && $mail->recipientName === 'Ravi Patil'
+                && str_contains($mail->referralLink, 'referral_code=MSUEMAIL');
+        });
     }
 
     private function userRow(string $name, string $email, string $phone, string $type, string $code): array

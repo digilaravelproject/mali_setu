@@ -56,7 +56,23 @@ curl --request GET "$BASE_URL/api/referrals/$REFERRAL_CODE/share-link" \
   --header "Accept: application/json"
 ```
 
-## 5. Get referred users and their commission points
+## 5. Send the referral link by email
+
+This endpoint requires the bearer token of the referral-code owner. An admin token may send a link for any referral code. `recipient_name` and `message` are optional.
+
+```bash
+curl --request POST "$BASE_URL/api/referrals/$REFERRAL_CODE/send-email" \
+  --header "Accept: application/json" \
+  --header "Content-Type: application/json" \
+  --header "Authorization: Bearer $TOKEN" \
+  --data '{
+    "email": "friend@example.com",
+    "recipient_name": "Ravi Patil",
+    "message": "Please join Mali Setu using my referral invitation."
+  }'
+```
+
+## 6. Get referred users and their commission points
 
 Optional query parameters are `user_type`, `status`, `per_page`, and `page`.
 
@@ -66,7 +82,7 @@ curl --request GET "$BASE_URL/api/referrals/$REFERRAL_CODE/referred-users?user_t
   --header "Authorization: Bearer $TOKEN"
 ```
 
-## 6. Get referral history
+## 7. Get referral history
 
 `from` and `to` use `YYYY-MM-DD`.
 
@@ -76,7 +92,7 @@ curl --request GET "$BASE_URL/api/referrals/$REFERRAL_CODE/history?from=2026-01-
   --header "Authorization: Bearer $TOKEN"
 ```
 
-## 7. Get referral network
+## 8. Get referral network
 
 `depth` can be 1 through 5. Location filters are optional.
 
@@ -94,7 +110,7 @@ curl --request GET "$BASE_URL/api/referrals/$REFERRAL_CODE/network?depth=3" \
   --header "Authorization: Bearer $TOKEN"
 ```
 
-## 8. Get volunteer earnings and referral totals
+## 9. Get volunteer earnings and referral totals
 
 ```bash
 curl --request GET "$BASE_URL/api/referrals/$REFERRAL_CODE/earnings" \
@@ -102,7 +118,7 @@ curl --request GET "$BASE_URL/api/referrals/$REFERRAL_CODE/earnings" \
   --header "Authorization: Bearer $TOKEN"
 ```
 
-## 9. Get banners with the top-three volunteer leaderboard
+## 10. Get banners with the top-three volunteer leaderboard
 
 The response contains the existing `data` banner array and the new `leaderboard` array.
 
@@ -113,4 +129,4 @@ curl --request GET "$BASE_URL/api/banner" \
 
 ## Authorization behavior
 
-Volunteer summary and share-link endpoints are public and do not expose referred-user contact details. Referred users, history, network, and earnings require a Sanctum bearer token. A normal user can request only their own referral code; an admin token can inspect any code.
+Volunteer summary and share-link endpoints are public and do not expose referred-user contact details. Sending email, referred users, history, network, and earnings require a Sanctum bearer token. A normal user can act only on their own referral code; an admin token can act on any code. The email endpoint is rate limited to 10 requests per minute.

@@ -3,11 +3,14 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Mail\ReferralLinkMail;
 use App\Models\Referral;
 use App\Models\User;
 use App\Services\ReferralService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 
 class ReferralController extends Controller
 {
@@ -59,6 +62,47 @@ class ReferralController extends Controller
             'success' => true,
             'data' => collect($page->items())->map(fn (Referral $referral) => $this->referralData($referral))->values(),
             'meta' => $this->paginationMeta($page),
+        ]);
+    }
+
+    public function sendEmail(Request $request, string $code, ReferralService $referrals): JsonResponse
+    {
+        $owner = $this->authorizedOwner($request, $code, $referrals);
+        $validated = $request->validate([
+            'email' => ['required', 'email:rfc', 'max:255'],
+            'recipient_name' => ['nullable', 'string', 'max:120'],
+            'message' => ['nullable', 'string', 'max:500'],
+        ]);
+        $link = $referrals->shareLink($owner);
+
+        try {
+            Mail::to($validated['email'])->send(new ReferralLinkMail(
+                $owner,
+                $link,
+                $validated['recipient_name'] ?? null,
+                $validated['message'] ?? null,
+            ));
+        } catch (\Throwable $exception) {
+            Log::error('Referral email failed to send', [
+                'user_id' => $owner->id,
+                'recipient' => $validated['email'],
+                'error' => $exception->getMessage(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'The referral email could not be sent. Please try again later.',
+            ], 502);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Referral link sent successfully.',
+            'data' => [
+                'email' => $validated['email'],
+                'referral_code' => $owner->reffral_code,
+                'referral_link' => $link,
+            ],
         ]);
     }
 
