@@ -2,14 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\VolunteerProfile;
-use App\Models\VolunteerOpportunity;
 use App\Models\VolunteerApplication;
+use App\Models\VolunteerOpportunity;
+use App\Models\VolunteerProfile;
+use App\Services\ReferralService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Validator;
-use Carbon\Carbon;
-use App\Services\ReferralService;
 
 class VolunteerController extends Controller
 {
@@ -20,7 +18,7 @@ class VolunteerController extends Controller
     {
         $user = Auth::user();
         $volunteer = $user->volunteer;
-        
+
         $applications = [];
         $matchedOpportunities = [];
 
@@ -37,12 +35,12 @@ class VolunteerController extends Controller
 
             // Exclude already applied
             $appliedIds = $applications->pluck('volunteer_opportunity_id')->toArray();
-            if (!empty($appliedIds)) {
+            if (! empty($appliedIds)) {
                 $matchQuery->whereNotIn('id', $appliedIds);
             }
 
             if ($volunteer->location) {
-                $matchQuery->where('location', 'like', '%' . $volunteer->location . '%');
+                $matchQuery->where('location', 'like', '%'.$volunteer->location.'%');
             }
 
             $matchedOpportunities = $matchQuery->latest()->take(3)->get();
@@ -59,14 +57,14 @@ class VolunteerController extends Controller
         $user = Auth::user();
 
         $request->validate([
-            'bio'          => 'nullable|string|max:1000',
-            'experience'   => 'nullable|string|max:1000',
-            'skills'       => 'required|array|min:1',
-            'skills.*'     => 'string|max:50',
+            'bio' => 'nullable|string|max:1000',
+            'experience' => 'nullable|string|max:1000',
+            'skills' => 'required|array|min:1',
+            'skills.*' => 'string|max:50',
             'availability' => 'required|string|max:255',
-            'location'     => 'required|string|max:255',
-            'interests'    => 'required|array|min:1',
-            'interests.*'  => 'string|max:50',
+            'location' => 'required|string|max:255',
+            'interests' => 'required|array|min:1',
+            'interests.*' => 'string|max:50',
         ], [
             'skills.required' => 'Please select or add at least one skill.',
             'interests.required' => 'Please select at least one field of interest.',
@@ -78,12 +76,12 @@ class VolunteerController extends Controller
         $interestsArr = array_filter(array_map('trim', $request->interests));
 
         $data = [
-            'bio'          => $request->bio,
-            'experience'   => $request->experience,
-            'skills'       => mb_substr($skillsCsv, 0, 255),
+            'bio' => $request->bio,
+            'experience' => $request->experience,
+            'skills' => mb_substr($skillsCsv, 0, 255),
             'availability' => $request->availability,
-            'location'     => $request->location,
-            'interests'    => $interestsArr,
+            'location' => $request->location,
+            'interests' => $interestsArr,
         ];
 
         $volunteer = $user->volunteer;
@@ -92,12 +90,11 @@ class VolunteerController extends Controller
             $volunteer->update($data);
             $message = 'Your volunteer profile has been updated successfully!';
         } else {
-            // Default new web volunteer to active so they can participate immediately
             $data['user_id'] = $user->id;
-            $data['status'] = 'active';
+            $data['status'] = 'inactive';
             VolunteerProfile::create($data);
-            $referrals->activateVolunteer($user);
-            $message = 'Congratulations! You are now registered as a volunteer.';
+            $referrals->activateVolunteer($user)->update(['is_active' => false]);
+            $message = 'Your volunteer registration was submitted and is awaiting administrator activation.';
         }
 
         return redirect()->route('volunteers.index')->with('success', $message);
@@ -116,14 +113,14 @@ class VolunteerController extends Controller
             $search = $request->q;
             $query->where(function ($q) use ($search) {
                 $q->where('title', 'like', "%{$search}%")
-                  ->orWhere('organization', 'like', "%{$search}%")
-                  ->orWhere('description', 'like', "%{$search}%");
+                    ->orWhere('organization', 'like', "%{$search}%")
+                    ->orWhere('description', 'like', "%{$search}%");
             });
         }
 
         // Location Filter
         if ($request->filled('location')) {
-            $query->where('location', 'like', '%' . $request->location . '%');
+            $query->where('location', 'like', '%'.$request->location.'%');
         }
 
         // Skills Filter
@@ -147,7 +144,7 @@ class VolunteerController extends Controller
         $opportunity = VolunteerOpportunity::findOrFail($id);
         $user = Auth::user();
         $volunteer = $user->volunteer;
-        
+
         $hasApplied = false;
         $application = null;
 
@@ -155,7 +152,7 @@ class VolunteerController extends Controller
             $application = VolunteerApplication::where('volunteer_profile_id', $volunteer->id)
                 ->where('volunteer_opportunity_id', $id)
                 ->first();
-            $hasApplied = !is_null($application);
+            $hasApplied = ! is_null($application);
         }
 
         return view('volunteer.show', compact('opportunity', 'volunteer', 'hasApplied', 'application'));
@@ -174,14 +171,18 @@ class VolunteerController extends Controller
         $user = Auth::user();
         $volunteer = $user->volunteer;
 
-        if (!$volunteer) {
+        if (! $volunteer) {
             return redirect()->route('volunteers.index')
                 ->with('error', 'You must register a volunteer profile before applying for opportunities.');
         }
 
+        if ($volunteer->status !== 'active') {
+            return redirect()->route('volunteers.index')->with('error', 'Your volunteer profile must be activated by an administrator before you can apply.');
+        }
+
         $opportunity = VolunteerOpportunity::findOrFail($request->volunteer_opportunity_id);
 
-        if (!$opportunity->isAcceptingApplications()) {
+        if (! $opportunity->isAcceptingApplications()) {
             return back()->withErrors(['message' => 'This opportunity is no longer accepting applications or is full.']);
         }
 
@@ -214,7 +215,7 @@ class VolunteerController extends Controller
         $user = Auth::user();
         $volunteer = $user->volunteer;
 
-        if (!$volunteer) {
+        if (! $volunteer) {
             return redirect()->route('volunteers.index')->with('error', 'Volunteer profile not found.');
         }
 

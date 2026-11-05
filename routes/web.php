@@ -1,50 +1,55 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Admin\AdminAuthController;
 use App\Http\Controllers\Admin\AdminDashboardController;
-use App\Http\Controllers\Admin\UserManagementController;
+use App\Http\Controllers\Admin\AppVersionController;
+use App\Http\Controllers\Admin\BlogCategoryManagementController;
+use App\Http\Controllers\Admin\BlogManagementController;
 use App\Http\Controllers\Admin\BusinessManagementController;
+use App\Http\Controllers\Admin\CastManagementController;
+use App\Http\Controllers\Admin\CategoryManagementController;
+use App\Http\Controllers\Admin\DonationManagementController;
+use App\Http\Controllers\Admin\EducationManagementController;
+use App\Http\Controllers\Admin\HomepageHeroController;
+use App\Http\Controllers\Admin\JobManagementController;
+use App\Http\Controllers\Admin\LocationManagementController;
 use App\Http\Controllers\Admin\MatrimonyManagementController;
 use App\Http\Controllers\Admin\NotificationManagementController;
 use App\Http\Controllers\Admin\PaymentManagementController;
-use App\Http\Controllers\Admin\DonationManagementController;
-use App\Http\Controllers\Admin\CategoryManagementController;
-use App\Http\Controllers\Admin\HomepageHeroController;
-use App\Http\Controllers\Admin\VolunteerManagementController;
-use App\Http\Controllers\Admin\CastManagementController;
-use App\Http\Controllers\Admin\BlogManagementController;
-use App\Http\Controllers\Admin\BlogCategoryManagementController;
-use App\Http\Controllers\Admin\BlogCommentManagementController;
-use App\Http\Controllers\Admin\EducationManagementController;
 use App\Http\Controllers\Admin\PlanManagementController;
-use App\Http\Controllers\Admin\AppVersionController;
 use App\Http\Controllers\Admin\SupportNumberController;
-use App\Http\Controllers\Admin\JobManagementController;
 use App\Http\Controllers\Admin\TeamManagementController;
+use App\Http\Controllers\Admin\UserManagementController;
+use App\Http\Controllers\Admin\VolunteerManagementController;
 use App\Http\Controllers\Admin\WebinarManagementController;
-use App\Http\Controllers\Admin\LocationManagementController;
-use App\Http\Controllers\WebinarController;
 use App\Http\Controllers\AppUpdateController;
+use App\Http\Controllers\WebinarController;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Route;
 
 Route::get('/test-mail', function () {
 
     Mail::raw('This is a test email from Laravel.', function ($message) {
         $message->to('darshankondekar01@gmail.com')
-                ->subject('Laravel Test Email');
+            ->subject('Laravel Test Email');
     });
 
-    return "Test email sent successfully!";
+    return 'Test email sent successfully!';
 });
 
-
-use App\Http\Controllers\PageController;
-use App\Http\Controllers\WebAuthController;
-use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\Admin\BloggerManagementController;
+use App\Http\Controllers\BlogCommentController;
+use App\Http\Controllers\BlogController;
 use App\Http\Controllers\BusinessController;
+use App\Http\Controllers\CCAvenueController;
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\DonationController;
+use App\Http\Controllers\MatrimonyController;
+use App\Http\Controllers\PageController;
+use App\Http\Controllers\ReferralController;
 use App\Http\Controllers\SubscriptionController;
 use App\Http\Controllers\VolunteerController;
+use App\Http\Controllers\WebAuthController;
 
 // Public route
 Route::get('/', function () {
@@ -60,15 +65,14 @@ Route::get('/app', AppUpdateController::class)->name('app.update');
 Route::get('/privacy-policy', [PageController::class, 'privacyPolicy'])->name('privacy-policy');
 Route::get('/terms-condition', [PageController::class, 'termsCondition'])->name('terms-condition');
 Route::get('/contact-us', [PageController::class, 'contactUs'])->name('contact-us');
-Route::get('/payment/redirect-back', [\App\Http\Controllers\CCAvenueController::class, 'paymentRedirectBack'])->name('payment.redirect-back');
-Route::get('/payment/summary/{order_id}', [\App\Http\Controllers\CCAvenueController::class, 'paymentSummary'])->name('payment.summary');
-Route::get('/payment/summary/{order_id}/back', [\App\Http\Controllers\CCAvenueController::class, 'paymentSummaryBack'])->name('payment.summary.back');
-
+Route::get('/payment/redirect-back', [CCAvenueController::class, 'paymentRedirectBack'])->name('payment.redirect-back');
+Route::get('/payment/summary/{order_id}', [CCAvenueController::class, 'paymentSummary'])->name('payment.summary');
+Route::get('/payment/summary/{order_id}/back', [CCAvenueController::class, 'paymentSummaryBack'])->name('payment.summary.back');
 
 // Public Blog Routes
-Route::get('/blog/{id}', [\App\Http\Controllers\BlogController::class, 'showPublic'])->name('blog.public.show');
-Route::get('/blogs/{id}', [\App\Http\Controllers\BlogController::class, 'showPublic'])->name('blogs.public.show');
-Route::post('/blogs/{id}/like', [\App\Http\Controllers\BlogController::class, 'likePublic'])->name('blogs.public.like');
+Route::get('/blog/{id}', [BlogController::class, 'showPublic'])->name('blog.public.show');
+Route::get('/blogs/{id}', [BlogController::class, 'showPublic'])->name('blogs.public.show');
+Route::post('/blogs/{id}/like', [BlogController::class, 'likePublic'])->name('blogs.public.like');
 
 // Guest (Before-Login) Routes
 Route::middleware('guest')->group(function () {
@@ -92,6 +96,7 @@ Route::middleware(['auth', 'redirect.admin'])->group(function () {
     Route::post('/logout', [WebAuthController::class, 'logout'])->name('logout');
 
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/dashboard/referrals', [ReferralController::class, 'index'])->name('referrals.index');
     Route::get('/dashboard/businesses/search', [DashboardController::class, 'searchDirectoryBusinesses'])->name('dashboard.businesses.search');
     Route::post('/dashboard/profile', [DashboardController::class, 'updateProfile'])->name('dashboard.profile.update');
     Route::post('/dashboard/change-password', [DashboardController::class, 'changePassword'])->name('dashboard.password.change');
@@ -138,24 +143,24 @@ Route::middleware(['auth', 'redirect.admin'])->group(function () {
 
     // ── Matrimony Module ──────────────────────────────────────────────────
     Route::prefix('dashboard/matrimony')->name('matrimony.')->group(function () {
-        Route::get('/',                          [\App\Http\Controllers\MatrimonyController::class, 'index'])->name('index');
-        Route::get('/create',                    [\App\Http\Controllers\MatrimonyController::class, 'create'])->name('create');
-        Route::get('/subscription',              [\App\Http\Controllers\MatrimonyController::class, 'selectSubscription'])->name('subscription');
-        Route::post('/create',                   [\App\Http\Controllers\MatrimonyController::class, 'store'])->name('store');
-        Route::get('/edit',                      [\App\Http\Controllers\MatrimonyController::class, 'edit'])->name('edit');
-        Route::post('/update',                   [\App\Http\Controllers\MatrimonyController::class, 'update'])->name('update');
-        Route::delete('/delete',                 [\App\Http\Controllers\MatrimonyController::class, 'destroy'])->name('delete');
-        Route::get('/browse',                    [\App\Http\Controllers\MatrimonyController::class, 'browse'])->name('browse');
-        Route::get('/profile/{id}',              [\App\Http\Controllers\MatrimonyController::class, 'show'])->name('show');
-        Route::post('/request/send',             [\App\Http\Controllers\MatrimonyController::class, 'sendRequest'])->name('request.send');
-        Route::get('/requests',                  [\App\Http\Controllers\MatrimonyController::class, 'requests'])->name('requests');
-        Route::post('/request/{id}/respond',     [\App\Http\Controllers\MatrimonyController::class, 'respondRequest'])->name('request.respond');
-        Route::get('/conversations',             [\App\Http\Controllers\MatrimonyController::class, 'conversations'])->name('conversations');
-        Route::get('/chat/{conversationId}',     [\App\Http\Controllers\MatrimonyController::class, 'chat'])->name('chat');
-        Route::post('/chat/send',                [\App\Http\Controllers\MatrimonyController::class, 'sendMessage'])->name('chat.send');
-        Route::get('/chat/{conversationId}/fetch', [\App\Http\Controllers\MatrimonyController::class, 'fetchMessages'])->name('chat.fetch');
-        Route::post('/subscribe',                [\App\Http\Controllers\MatrimonyController::class, 'subscribe'])->name('subscribe');
-        Route::post('/verify-payment',           [\App\Http\Controllers\MatrimonyController::class, 'verifyPayment'])->name('verify-payment');
+        Route::get('/', [MatrimonyController::class, 'index'])->name('index');
+        Route::get('/create', [MatrimonyController::class, 'create'])->name('create');
+        Route::get('/subscription', [MatrimonyController::class, 'selectSubscription'])->name('subscription');
+        Route::post('/create', [MatrimonyController::class, 'store'])->name('store');
+        Route::get('/edit', [MatrimonyController::class, 'edit'])->name('edit');
+        Route::post('/update', [MatrimonyController::class, 'update'])->name('update');
+        Route::delete('/delete', [MatrimonyController::class, 'destroy'])->name('delete');
+        Route::get('/browse', [MatrimonyController::class, 'browse'])->name('browse');
+        Route::get('/profile/{id}', [MatrimonyController::class, 'show'])->name('show');
+        Route::post('/request/send', [MatrimonyController::class, 'sendRequest'])->name('request.send');
+        Route::get('/requests', [MatrimonyController::class, 'requests'])->name('requests');
+        Route::post('/request/{id}/respond', [MatrimonyController::class, 'respondRequest'])->name('request.respond');
+        Route::get('/conversations', [MatrimonyController::class, 'conversations'])->name('conversations');
+        Route::get('/chat/{conversationId}', [MatrimonyController::class, 'chat'])->name('chat');
+        Route::post('/chat/send', [MatrimonyController::class, 'sendMessage'])->name('chat.send');
+        Route::get('/chat/{conversationId}/fetch', [MatrimonyController::class, 'fetchMessages'])->name('chat.fetch');
+        Route::post('/subscribe', [MatrimonyController::class, 'subscribe'])->name('subscribe');
+        Route::post('/verify-payment', [MatrimonyController::class, 'verifyPayment'])->name('verify-payment');
     });
 
     // ── Subscription Module ───────────────────────────────────────────────
@@ -172,9 +177,9 @@ Route::middleware(['auth', 'redirect.admin'])->group(function () {
     Route::get('/dashboard/jobs/applied', [DashboardController::class, 'appliedJobs'])->name('dashboard.jobs.applied');
 
     // ── Donation Intent Checkout ──────────────────────────────────────────
-    Route::get('/dashboard/donations/suggest', [\App\Http\Controllers\DonationController::class, 'suggestCause'])->name('dashboard.donations.suggest');
-    Route::post('/dashboard/donations/checkout', [\App\Http\Controllers\DonationController::class, 'createOrder'])->name('dashboard.donations.checkout');
-    Route::post('/dashboard/donations/verify', [\App\Http\Controllers\DonationController::class, 'verifyPayment'])->name('dashboard.donations.verify');
+    Route::get('/dashboard/donations/suggest', [DonationController::class, 'suggestCause'])->name('dashboard.donations.suggest');
+    Route::post('/dashboard/donations/checkout', [DonationController::class, 'createOrder'])->name('dashboard.donations.checkout');
+    Route::post('/dashboard/donations/verify', [DonationController::class, 'verifyPayment'])->name('dashboard.donations.verify');
 
     // ── Volunteers Module ─────────────────────────────────────────────────
     Route::prefix('dashboard/volunteers')->name('volunteers.')->group(function () {
@@ -188,16 +193,16 @@ Route::middleware(['auth', 'redirect.admin'])->group(function () {
 
     // ── Blog Module ───────────────────────────────────────────────────────
     Route::prefix('dashboard/blogs')->name('blogs.')->group(function () {
-        Route::get('/', [\App\Http\Controllers\BlogController::class, 'index'])->name('index');
-        Route::get('/create', [\App\Http\Controllers\BlogController::class, 'create'])->name('create');
-        Route::post('/', [\App\Http\Controllers\BlogController::class, 'store'])->name('store');
-        Route::get('/{id}', [\App\Http\Controllers\BlogController::class, 'show'])->name('show');
-        Route::get('/{id}/edit', [\App\Http\Controllers\BlogController::class, 'edit'])->name('edit');
-        Route::post('/{id}/update', [\App\Http\Controllers\BlogController::class, 'update'])->name('update');
-        Route::delete('/{id}', [\App\Http\Controllers\BlogController::class, 'destroy'])->name('destroy');
-        Route::post('/{id}/like', [\App\Http\Controllers\BlogController::class, 'like'])->name('like');
-        Route::post('/{blogId}/comments', [\App\Http\Controllers\BlogCommentController::class, 'store'])->name('comments.store');
-        Route::delete('/comments/{id}', [\App\Http\Controllers\BlogCommentController::class, 'destroy'])->name('comments.destroy');
+        Route::get('/', [BlogController::class, 'index'])->name('index');
+        Route::get('/create', [BlogController::class, 'create'])->name('create');
+        Route::post('/', [BlogController::class, 'store'])->name('store');
+        Route::get('/{id}', [BlogController::class, 'show'])->name('show');
+        Route::get('/{id}/edit', [BlogController::class, 'edit'])->name('edit');
+        Route::post('/{id}/update', [BlogController::class, 'update'])->name('update');
+        Route::delete('/{id}', [BlogController::class, 'destroy'])->name('destroy');
+        Route::post('/{id}/like', [BlogController::class, 'like'])->name('like');
+        Route::post('/{blogId}/comments', [BlogCommentController::class, 'store'])->name('comments.store');
+        Route::delete('/comments/{id}', [BlogCommentController::class, 'destroy'])->name('comments.destroy');
     });
 
     Route::prefix('dashboard/webinars')->name('webinars.')->group(function () {
@@ -208,7 +213,7 @@ Route::middleware(['auth', 'redirect.admin'])->group(function () {
         Route::post('/{webinar}/comments', [WebinarController::class, 'comment'])->name('comment');
         Route::get('/{webinar}/join/live', [WebinarController::class, 'join'])->name('join');
         Route::get('/{webinar}/join/token', [WebinarController::class, 'token'])->name('token')->middleware('throttle:30,1');
-        Route::match(['get','post'], '/{webinar}/live/comments', [WebinarController::class, 'liveComments'])->name('live-comments')->middleware('throttle:60,1');
+        Route::match(['get', 'post'], '/{webinar}/live/comments', [WebinarController::class, 'liveComments'])->name('live-comments')->middleware('throttle:60,1');
         Route::get('/{webinar}/live/controls', [WebinarController::class, 'controls'])->name('controls')->middleware('throttle:60,1');
     });
 });
@@ -223,7 +228,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('login', [AdminAuthController::class, 'showLoginForm'])->name('login');
         Route::post('login', [AdminAuthController::class, 'login'])->name('login.post');
     });
-    
+
     // Authenticated admin routes
     Route::middleware(['auth', 'role:admin', 'admin.permission'])->group(function () {
         Route::post('logout', [AdminAuthController::class, 'logout'])->name('logout');
@@ -237,7 +242,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::patch('/{team}/toggle', [TeamManagementController::class, 'toggle'])->name('toggle');
             Route::delete('/{team}', [TeamManagementController::class, 'destroy'])->name('destroy');
         });
-        
+
         // Dashboard
         Route::get('dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
         Route::get('analytics', [AdminDashboardController::class, 'analytics'])->name('analytics');
@@ -267,12 +272,12 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::put('/{webinar}', [WebinarManagementController::class, 'update'])->name('update');
             Route::get('/{webinar}/go-live', [WebinarManagementController::class, 'goLive'])->name('go-live');
             Route::get('/{webinar}/go-live/token', [WebinarManagementController::class, 'token'])->name('token')->middleware('throttle:30,1');
-            Route::match(['get','post'], '/{webinar}/go-live/comments', [WebinarManagementController::class, 'comments'])->name('comments')->middleware('throttle:60,1');
+            Route::match(['get', 'post'], '/{webinar}/go-live/comments', [WebinarManagementController::class, 'comments'])->name('comments')->middleware('throttle:60,1');
             Route::post('/{webinar}/go-live/participant-control', [WebinarManagementController::class, 'controlParticipant'])->name('participant-control')->middleware('throttle:60,1');
             Route::get('/{webinar}/go-live/participants/{user}', [WebinarManagementController::class, 'participant'])->name('participant')->middleware('throttle:60,1');
             Route::delete('/{webinar}', [WebinarManagementController::class, 'destroy'])->name('destroy');
         });
-        
+
         // User Management Routes
         Route::prefix('users')->name('users.')->group(function () {
             Route::get('/', [UserManagementController::class, 'index'])->name('index');
@@ -291,7 +296,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::get('/verification/pending', [UserManagementController::class, 'pendingVerifications'])->name('verification.pending');
             Route::get('/{id}/pdf', [UserManagementController::class, 'downloadPdf'])->name('pdf');
         });
-        
+
         // Category Management Routes
         Route::prefix('category')->name('category.')->group(function () {
             Route::get('/', [CategoryManagementController::class, 'index'])->name('index');
@@ -351,13 +356,13 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::put('/causes/{id}', [DonationManagementController::class, 'updateCause'])->name('causes.update');
             Route::delete('/causes/{id}', [DonationManagementController::class, 'destroyCause'])->name('causes.destroy');
             Route::patch('/causes/{id}/toggle-status', [DonationManagementController::class, 'toggleCauseStatus'])->name('causes.toggle-status');
-            
+
             // Donations list and detail
             Route::get('/', [DonationManagementController::class, 'index'])->name('index');
             Route::get('/{id}', [DonationManagementController::class, 'show'])->name('show');
             Route::delete('/{id}', [DonationManagementController::class, 'destroy'])->name('destroy');
         });
-        
+
         // Matrimony Management Routes
         Route::prefix('matrimony')->name('matrimony.')->group(function () {
             Route::get('/', [MatrimonyManagementController::class, 'index'])->name('index');
@@ -378,7 +383,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::post('/{id}/activate', [MatrimonyManagementController::class, 'activate'])->name('activate');
             Route::delete('/{id}', [MatrimonyManagementController::class, 'destroy'])->name('destroy');
         });
-        
+
         // Payment Management Routes
         Route::prefix('payments')->name('payments.')->group(function () {
             Route::get('/', [PaymentManagementController::class, 'index'])->name('index');
@@ -431,7 +436,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
                 Route::put('/{id}', [PlanManagementController::class, 'updateBusiness'])->name('update');
                 Route::delete('/{id}', [PlanManagementController::class, 'destroyBusiness'])->name('destroy');
             });
-            
+
             // Matrimony plans
             Route::prefix('matrimony')->name('matrimony.')->group(function () {
                 Route::get('/', [PlanManagementController::class, 'matrimonyIndex'])->name('index');
@@ -492,17 +497,17 @@ Route::prefix('admin')->name('admin.')->group(function () {
 
         // Blogger Management Routes
         Route::prefix('bloggers')->name('bloggers.')->group(function () {
-            Route::get('/', [\App\Http\Controllers\Admin\BloggerManagementController::class, 'index'])->name('index');
-            Route::post('/check-email', [\App\Http\Controllers\Admin\BloggerManagementController::class, 'checkEmail'])->name('check-email');
-            Route::get('/create', [\App\Http\Controllers\Admin\BloggerManagementController::class, 'create'])->name('create');
-            Route::post('/', [\App\Http\Controllers\Admin\BloggerManagementController::class, 'store'])->name('store');
-            Route::get('/{id}', [\App\Http\Controllers\Admin\BloggerManagementController::class, 'show'])->name('show');
-            Route::get('/{id}/edit', [\App\Http\Controllers\Admin\BloggerManagementController::class, 'edit'])->name('edit');
-            Route::put('/{id}', [\App\Http\Controllers\Admin\BloggerManagementController::class, 'update'])->name('update');
-            Route::delete('/{id}', [\App\Http\Controllers\Admin\BloggerManagementController::class, 'destroy'])->name('destroy');
-            Route::post('/{id}/toggle-status', [\App\Http\Controllers\Admin\BloggerManagementController::class, 'toggleStatus'])->name('toggle-status');
+            Route::get('/', [BloggerManagementController::class, 'index'])->name('index');
+            Route::post('/check-email', [BloggerManagementController::class, 'checkEmail'])->name('check-email');
+            Route::get('/create', [BloggerManagementController::class, 'create'])->name('create');
+            Route::post('/', [BloggerManagementController::class, 'store'])->name('store');
+            Route::get('/{id}', [BloggerManagementController::class, 'show'])->name('show');
+            Route::get('/{id}/edit', [BloggerManagementController::class, 'edit'])->name('edit');
+            Route::put('/{id}', [BloggerManagementController::class, 'update'])->name('update');
+            Route::delete('/{id}', [BloggerManagementController::class, 'destroy'])->name('destroy');
+            Route::post('/{id}/toggle-status', [BloggerManagementController::class, 'toggleStatus'])->name('toggle-status');
         });
-        
+
         // Education Management Routes
         Route::prefix('educations')->name('educations.')->group(function () {
             Route::get('/', [EducationManagementController::class, 'index'])->name('index');
@@ -513,45 +518,45 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::delete('/{id}', [EducationManagementController::class, 'destroy'])->name('destroy');
             Route::patch('/{id}/toggle-status', [EducationManagementController::class, 'toggleStatus'])->name('toggle-status');
         });
-        
-        // Profile
-         Route::get('profile', [AdminDashboardController::class, 'profile'])->name('profile');
-         Route::post('profile', [AdminDashboardController::class, 'updateProfile'])->name('profile.update');
 
-         // Settings and Reports
-         Route::get('settings', [AdminDashboardController::class, 'settings'])->name('settings');
-         Route::post('settings', [AdminDashboardController::class, 'updateSettings'])->name('settings.update');
-         Route::get('support-numbers', [SupportNumberController::class, 'index'])->name('support-numbers.index');
-         Route::get('support-numbers/{slot}', [SupportNumberController::class, 'show'])->name('support-numbers.show');
-         Route::put('support-numbers/{slot}', [SupportNumberController::class, 'update'])->name('support-numbers.update');
-         Route::prefix('notifications')->name('notifications.')->group(function () {
-             Route::get('/', [NotificationManagementController::class, 'index'])->name('index');
-             Route::get('/create', [NotificationManagementController::class, 'create'])->name('create');
-             Route::post('/', [NotificationManagementController::class, 'store'])->name('store');
-             Route::get('/send/{notificationAction?}', [NotificationManagementController::class, 'sendForm'])->name('send-form');
-             Route::post('/send', [NotificationManagementController::class, 'send'])->name('send');
-             Route::post('/firebase', [NotificationManagementController::class, 'updateFirebase'])->name('firebase.update');
-             Route::post('/settings', [NotificationManagementController::class, 'updateGlobalSettings'])->name('settings.update');
-             Route::get('/{notificationAction}/payload', [NotificationManagementController::class, 'editPayload'])->name('payload.edit');
-             Route::put('/{notificationAction}/payload', [NotificationManagementController::class, 'updatePayload'])->name('payload.update');
-             Route::get('/{notificationAction}/edit', [NotificationManagementController::class, 'edit'])->name('edit');
-             Route::put('/{notificationAction}', [NotificationManagementController::class, 'update'])->name('update');
-             Route::delete('/{notificationAction}', [NotificationManagementController::class, 'destroy'])->name('destroy');
-         });
-         Route::get('app-versions', [AppVersionController::class, 'index'])->name('app-versions.index');
-         Route::put('app-versions/{appVersion}', [AppVersionController::class, 'update'])->name('app-versions.update');
-         Route::get('reports', [AdminDashboardController::class, 'reports'])->name('reports');
-         Route::get('reports/download/{type}', [AdminDashboardController::class, 'downloadReportPdf'])->name('reports.download');
-         Route::get('reports/download-xls/{type}', [AdminDashboardController::class, 'downloadReportXls'])->name('reports.download.xls');
-         
-         // System Actions
-         Route::post('system/clear-cache', [AdminDashboardController::class, 'clearCache'])->name('system.clear-cache');
-         Route::post('system/run-migrations', [AdminDashboardController::class, 'runMigrations'])->name('system.run-migrations');
-         Route::post('system/optimize', [AdminDashboardController::class, 'optimizeApp'])->name('system.optimize');
-         Route::post('system/clear-logs', [AdminDashboardController::class, 'clearLogs'])->name('system.clear-logs');
-         Route::post('system/generate-key', [AdminDashboardController::class, 'generateKey'])->name('system.generate-key');
-         Route::post('system/storage-link', [AdminDashboardController::class, 'createStorageLink'])->name('system.storage-link');
-         Route::post('system/backup-database', [AdminDashboardController::class, 'backupDatabase'])->name('system.backup-database');
-         Route::get('system/info', [AdminDashboardController::class, 'getSystemInfo'])->name('system.info');
+        // Profile
+        Route::get('profile', [AdminDashboardController::class, 'profile'])->name('profile');
+        Route::post('profile', [AdminDashboardController::class, 'updateProfile'])->name('profile.update');
+
+        // Settings and Reports
+        Route::get('settings', [AdminDashboardController::class, 'settings'])->name('settings');
+        Route::post('settings', [AdminDashboardController::class, 'updateSettings'])->name('settings.update');
+        Route::get('support-numbers', [SupportNumberController::class, 'index'])->name('support-numbers.index');
+        Route::get('support-numbers/{slot}', [SupportNumberController::class, 'show'])->name('support-numbers.show');
+        Route::put('support-numbers/{slot}', [SupportNumberController::class, 'update'])->name('support-numbers.update');
+        Route::prefix('notifications')->name('notifications.')->group(function () {
+            Route::get('/', [NotificationManagementController::class, 'index'])->name('index');
+            Route::get('/create', [NotificationManagementController::class, 'create'])->name('create');
+            Route::post('/', [NotificationManagementController::class, 'store'])->name('store');
+            Route::get('/send/{notificationAction?}', [NotificationManagementController::class, 'sendForm'])->name('send-form');
+            Route::post('/send', [NotificationManagementController::class, 'send'])->name('send');
+            Route::post('/firebase', [NotificationManagementController::class, 'updateFirebase'])->name('firebase.update');
+            Route::post('/settings', [NotificationManagementController::class, 'updateGlobalSettings'])->name('settings.update');
+            Route::get('/{notificationAction}/payload', [NotificationManagementController::class, 'editPayload'])->name('payload.edit');
+            Route::put('/{notificationAction}/payload', [NotificationManagementController::class, 'updatePayload'])->name('payload.update');
+            Route::get('/{notificationAction}/edit', [NotificationManagementController::class, 'edit'])->name('edit');
+            Route::put('/{notificationAction}', [NotificationManagementController::class, 'update'])->name('update');
+            Route::delete('/{notificationAction}', [NotificationManagementController::class, 'destroy'])->name('destroy');
+        });
+        Route::get('app-versions', [AppVersionController::class, 'index'])->name('app-versions.index');
+        Route::put('app-versions/{appVersion}', [AppVersionController::class, 'update'])->name('app-versions.update');
+        Route::get('reports', [AdminDashboardController::class, 'reports'])->name('reports');
+        Route::get('reports/download/{type}', [AdminDashboardController::class, 'downloadReportPdf'])->name('reports.download');
+        Route::get('reports/download-xls/{type}', [AdminDashboardController::class, 'downloadReportXls'])->name('reports.download.xls');
+
+        // System Actions
+        Route::post('system/clear-cache', [AdminDashboardController::class, 'clearCache'])->name('system.clear-cache');
+        Route::post('system/run-migrations', [AdminDashboardController::class, 'runMigrations'])->name('system.run-migrations');
+        Route::post('system/optimize', [AdminDashboardController::class, 'optimizeApp'])->name('system.optimize');
+        Route::post('system/clear-logs', [AdminDashboardController::class, 'clearLogs'])->name('system.clear-logs');
+        Route::post('system/generate-key', [AdminDashboardController::class, 'generateKey'])->name('system.generate-key');
+        Route::post('system/storage-link', [AdminDashboardController::class, 'createStorageLink'])->name('system.storage-link');
+        Route::post('system/backup-database', [AdminDashboardController::class, 'backupDatabase'])->name('system.backup-database');
+        Route::get('system/info', [AdminDashboardController::class, 'getSystemInfo'])->name('system.info');
     });
 });

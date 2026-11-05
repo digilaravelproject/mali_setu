@@ -386,6 +386,15 @@
                 </div>
             @endif
 
+            <div class="glass-card mb-4 text-start">
+                <div class="d-flex justify-content-between align-items-center mb-3"><div><h5 class="fw-bold mb-1"><i class="fa-solid fa-trophy text-warning me-2"></i>Leaderboard</h5><p class="small text-muted mb-0">Top volunteers by successful referrals</p></div>@if($user->volunteer)<a href="{{ route('referrals.index') }}" class="btn btn-sm btn-outline-primary">Check Referrals</a>@endif</div>
+                <div class="row g-3">
+                    @forelse($leaderboard as $leader)
+                    <div class="col-md-4"><div class="border rounded-4 p-3 h-100 d-flex align-items-center gap-3"><div class="rounded-circle bg-warning bg-opacity-10 text-warning fw-bold d-grid" style="width:46px;height:46px;place-items:center">#{{ $loop->iteration }}</div><img src="{{ $leader->photo ? asset('storage/'.$leader->photo) : asset('default-avatar.png') }}" alt="{{ $leader->name }}" class="rounded-circle" style="width:48px;height:48px;object-fit:cover"><div><div class="fw-bold">{{ $leader->name }}</div><div class="small text-muted">{{ $leader->referrals_count }} referrals</div></div></div></div>
+                    @empty<div class="col-12 text-center text-muted py-3">No referral activity yet.</div>@endforelse
+                </div>
+            </div>
+
             <!-- Search Business input bar -->
             <div class="glass-card mb-4 text-start">
                 <div class="row align-items-center">
@@ -649,6 +658,10 @@
                             Access Blog <i class="fa-solid fa-arrow-right"></i>
                         </a>
                     </div>
+                </div>
+
+                <div class="col-6 col-md-6 col-lg-4">
+                    <div class="quick-access-card"><div><div class="d-flex align-items-center justify-content-between mb-3"><div class="quick-icon-square" style="background-color:#0f8f5f"><i class="fa-solid fa-people-group fs-5 text-white"></i></div>@if($user->volunteer)<span class="quick-badge" style="background-color:#d1fae5;color:#065f46">{{ ucfirst($user->volunteer->status) }}</span>@else<span class="quick-badge">Not Registered</span>@endif</div><h5 class="fw-bold text-dark mt-3 mb-2" style="font-size:1.25rem">Volunteer & Referrals</h5><p class="text-secondary small mb-0" style="line-height:1.6">{{ $user->volunteer ? 'Check your referral code, users, history, network and earned commission points.' : 'Register as a volunteer and receive your referral code after admin activation.' }}</p></div><a href="{{ $user->volunteer ? route('referrals.index') : route('volunteers.index') }}" class="quick-btn mt-4">{{ $user->volunteer ? 'Check Referrals' : 'Register as a Volunteer' }} <i class="fa-solid fa-arrow-right"></i></a></div>
                 </div>
             </div>
 

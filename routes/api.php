@@ -18,11 +18,12 @@ use App\Http\Controllers\Api\MatrimonyController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\PasswordResetController;
 use App\Http\Controllers\Api\PaymentController;
-use App\Http\Controllers\Api\PlanController;
 use App\Http\Controllers\Api\PhoneOtpController;
-use App\Http\Controllers\Api\SupportNumberController;
+use App\Http\Controllers\Api\PlanController;
+use App\Http\Controllers\Api\ReferralController;
 use App\Http\Controllers\Api\SearchController;
 use App\Http\Controllers\Api\SocialAuthController;
+use App\Http\Controllers\Api\SupportNumberController;
 use App\Http\Controllers\Api\VolunteerController;
 use App\Http\Controllers\Api\WebinarController;
 use App\Http\Controllers\CCAvenueController;
@@ -114,6 +115,10 @@ Route::prefix('volunteer')->group(function () {
     Route::get('/opportunity/{id}', [VolunteerController::class, 'getOpportunity']);
 });
 
+// Referral code lookup and share endpoints do not expose referred-user PII.
+Route::get('referrals/{code}/volunteer', [ReferralController::class, 'volunteer']);
+Route::get('referrals/{code}/share-link', [ReferralController::class, 'shareLink']);
+
 // Public donation routes (for browsing)
 Route::prefix('donation')->group(function () {
     Route::get('/causes', [DonationController::class, 'getCauses']);
@@ -194,6 +199,12 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 
 // Protected routes for authenticated users
 Route::middleware(['auth:sanctum'])->group(function () {
+    Route::prefix('referrals/{code}')->group(function () {
+        Route::get('referred-users', [ReferralController::class, 'referredUsers']);
+        Route::get('history', [ReferralController::class, 'history']);
+        Route::get('network', [ReferralController::class, 'network']);
+        Route::get('earnings', [ReferralController::class, 'earnings']);
+    });
 
     Route::post('webinars/{webinar}/register', [WebinarController::class, 'register']);
     Route::post('webinars/{webinar}/comments', [WebinarController::class, 'storeComment']);

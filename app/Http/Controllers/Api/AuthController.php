@@ -3,20 +3,20 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\User;
+use App\Mail\PasswordChangedMail;
+use App\Mail\WelcomeMail;
 use App\Models\Transaction;
+use App\Models\User;
+use App\Models\VolunteerProfile;
+use App\Services\ReferralService;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\Mail;
-use App\Mail\WelcomeMail;
-use App\Mail\PasswordChangedMail;
-use Carbon\Carbon;
-use App\Services\ReferralService;
-
 
 class AuthController extends Controller
 {
@@ -27,42 +27,42 @@ class AuthController extends Controller
     {
         try {
             $validator = Validator::make($request->all(), [
-                'name'             => 'required|string|max:255',
-                'email'            => 'required|string|email|max:255|unique:users',
-                'age'              => 'nullable|integer|min:18|max:100', // optional, must be 18-100 if provided
-                'phone'            => 'required|string|max:15|unique:users',
+                'name' => 'required|string|max:255',
+                'email' => 'required|string|email|max:255|unique:users',
+                'age' => 'nullable|integer|min:18|max:100', // optional, must be 18-100 if provided
+                'phone' => 'required|string|max:15|unique:users',
                 'respected_person_name' => 'nullable|string|max:255',
                 'respected_person_mobile_number' => 'nullable|digits:10',
-                'occupation'       => 'nullable|string|max:255',
-                'company_name'     => 'nullable|string|max:255',
-                'dept_name'        => 'nullable|string|max:255',
+                'occupation' => 'nullable|string|max:255',
+                'company_name' => 'nullable|string|max:255',
+                'dept_name' => 'nullable|string|max:255',
                 'dob' => 'nullable|date_format:d/m/Y',
-                'designation'      => 'nullable|string|max:255',
+                'designation' => 'nullable|string|max:255',
 
-                'reffral_code'     => 'nullable|string|max:50|exists:users,reffral_code',
-                'referral_code'    => 'nullable|string|max:50|exists:users,reffral_code',
-                'address'          => 'nullable|string|max:500',
-                'nearby_location'  => 'nullable|string|max:255',
-                'pincode'          => 'nullable|digits:6', // Indian pincode format
-                'road_number'      => 'nullable|string|max:50',
-                'state'            => 'nullable|string|max:100',
-                'city'             => 'nullable|string|max:100',
-                'sector'           => 'nullable|string|max:100',
-                'district'         => 'nullable|string|max:100',
-                'village'          => 'nullable|string|max:100',
-                'destination'      => 'nullable|string|max:255',
-                'latitude'         => 'nullable|numeric|between:-90,90',
-                'longitude'        => 'nullable|numeric|between:-180,180',
-                'password'         => 'required|string|confirmed',
-                'user_type'        => 'required|in:general,business,matrimony,volunteer',
-                'term_condition'   => 'accepted', // must be checked (true/1)
+                'reffral_code' => 'nullable|string|max:50|exists:users,reffral_code',
+                'referral_code' => 'nullable|string|max:50|exists:users,reffral_code',
+                'address' => 'nullable|string|max:500',
+                'nearby_location' => 'nullable|string|max:255',
+                'pincode' => 'nullable|digits:6', // Indian pincode format
+                'road_number' => 'nullable|string|max:50',
+                'state' => 'nullable|string|max:100',
+                'city' => 'nullable|string|max:100',
+                'sector' => 'nullable|string|max:100',
+                'district' => 'nullable|string|max:100',
+                'village' => 'nullable|string|max:100',
+                'destination' => 'nullable|string|max:255',
+                'latitude' => 'nullable|numeric|between:-90,90',
+                'longitude' => 'nullable|numeric|between:-180,180',
+                'password' => 'required|string|confirmed',
+                'user_type' => 'required|in:general,business,matrimony,volunteer',
+                'term_condition' => 'accepted', // must be checked (true/1)
             ]);
 
             if ($validator->fails()) {
                 return response()->json([
                     'success' => false,
                     'message' => $validator->errors(),
-                    'errors' => $validator->errors()
+                    'errors' => $validator->errors(),
                 ], 422);
             }
 
@@ -70,12 +70,12 @@ class AuthController extends Controller
                 try {
                     // Convert dd/mm/yyyy to yyyy-mm-dd
                     $request->merge([
-                        'dob' => Carbon::createFromFormat('d/m/Y', $request->dob)->format('Y-m-d')
+                        'dob' => Carbon::createFromFormat('d/m/Y', $request->dob)->format('Y-m-d'),
                     ]);
                 } catch (\Exception $e) {
                     // Handle invalid date format if needed
                     return response()->json([
-                        'error' => 'Invalid date format. Expected dd/mm/yyyy.'
+                        'error' => 'Invalid date format. Expected dd/mm/yyyy.',
                     ], 422);
                 }
             }
@@ -83,37 +83,46 @@ class AuthController extends Controller
             $submittedReferralCode = $request->input('referral_code', $request->input('reffral_code'));
 
             $user = User::create([
-                'name'                   => $request->name,
-                'email'                  => $request->email,
-                'phone'                  => $request->phone,
-                'password'               => Hash::make($request->password),
+                'name' => $request->name,
+                'email' => $request->email,
+                'phone' => $request->phone,
+                'password' => Hash::make($request->password),
                 // optional fields
-                'age'                    => $request->age,
-                'occupation'             => $request->occupation,
-                'company_name'           => $request->company_name,
-                'dept_name'              => $request->dept_name,
-                'dob'                    => $request->dob,
-                'designation'            => $request->designation,
-                'address'                => $request->address,
-                'nearby_location'        => $request->nearby_location,
-                'pincode'                => $request->pincode,
-                'road_number'            => $request->road_number,
-                'state'                  => $request->state,
-                'city'                   => $request->city,
-                'sector'                 => $request->sector,
-                'district'               => $request->district,                
-                'village'                 => $request->village,                
-                'destination'            => $request->destination,
-                'latitude'               => $request->latitude,
-                'longitude'              => $request->longitude,
+                'age' => $request->age,
+                'occupation' => $request->occupation,
+                'company_name' => $request->company_name,
+                'dept_name' => $request->dept_name,
+                'dob' => $request->dob,
+                'designation' => $request->designation,
+                'address' => $request->address,
+                'nearby_location' => $request->nearby_location,
+                'pincode' => $request->pincode,
+                'road_number' => $request->road_number,
+                'state' => $request->state,
+                'city' => $request->city,
+                'sector' => $request->sector,
+                'district' => $request->district,
+                'village' => $request->village,
+                'destination' => $request->destination,
+                'latitude' => $request->latitude,
+                'longitude' => $request->longitude,
                 'respected_person_name' => $request->respected_person_name,
                 'respected_person_mobile_number' => $request->respected_person_mobile_number,
-                'user_type'              => $request->user_type,
-                'caste_verification_status' => 'approved'
+                'user_type' => $request->user_type,
+                'caste_verification_status' => 'approved',
+                'status' => $request->user_type === 'volunteer' ? 'inactive' : 'active',
             ]);
 
             $referrals->record($submittedReferralCode, $user);
-            
+
+            if ($user->user_type === 'volunteer') {
+                VolunteerProfile::firstOrCreate(
+                    ['user_id' => $user->id],
+                    ['status' => 'inactive']
+                );
+                $referrals->activateVolunteer($user)->update(['is_active' => false]);
+            }
+
             // ✅ NEW: Send welcome email (do not break registration on mail failure)
             try {
                 Mail::to($user->email)->send(new WelcomeMail($user));
@@ -121,22 +130,26 @@ class AuthController extends Controller
                 // Optional: log it if you use logging
                 \Log::warning('Welcome email failed to send', [
                     'user_id' => $user->id,
-                    'error'   => $mailEx->getMessage(),
+                    'error' => $mailEx->getMessage(),
                 ]);
                 // Do not return error; registration succeeded
             }
 
-            $token = $user->createToken('auth_token')->plainTextToken;
+            $token = $user->status === 'active'
+                ? $user->createToken('auth_token')->plainTextToken
+                : null;
 
             return response()->json([
                 'success' => true,
-                'message' => 'User registered successfully',
+                'message' => $user->status === 'inactive'
+                    ? 'Volunteer registration submitted. An administrator must activate the account before login.'
+                    : 'User registered successfully',
                 'data' => [
                     'user' => $user,
                     'referral_code' => $user->reffral_code,
                     'token' => $token,
-                    'token_type' => 'Bearer'
-                ]
+                    'token_type' => 'Bearer',
+                ],
             ], 201);
         } catch (ValidationException $e) {
             throw $e;
@@ -144,7 +157,7 @@ class AuthController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to register the user',
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ], 500);
         }
     }
@@ -161,28 +174,37 @@ class AuthController extends Controller
 
         if ($validator->fails()) {
             $errors = $validator->errors();
-        
+
             return response()->json([
                 'success' => false,
                 'message' => $errors->first(), // 👈 get first error message
-                'errors' => $errors
+                'errors' => $errors,
             ], 422);
         }
 
-        if (!Auth::attempt($request->only('email', 'password'))) {
+        if (! Auth::attempt($request->only('email', 'password'))) {
             return response()->json([
                 'success' => false,
-                'message' => 'Invalid credentials'
+                'message' => 'Invalid credentials',
             ], 401);
         }
 
         $user = Auth::user();
-        
+
+        if ($user->status !== 'active') {
+            Auth::logout();
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Your account is inactive. Please wait for administrator activation.',
+            ], 403);
+        }
+
         // Prevent when cast certificate is in pending
         if ($user->caste_verification_status == 'pending' || $user->caste_verification_status == 'rejected') {
             return response()->json([
                 'success' => false,
-                'message' => 'Cast verification status is not approved'
+                'message' => 'Cast verification status is not approved',
             ], 401);
         }
 
@@ -199,8 +221,8 @@ class AuthController extends Controller
             'data' => [
                 'user' => $user,
                 'token' => $token,
-                'token_type' => 'Bearer'
-            ]
+                'token_type' => 'Bearer',
+            ],
         ]);
     }
 
@@ -213,7 +235,7 @@ class AuthController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Logged out successfully'
+            'message' => 'Logged out successfully',
         ]);
     }
 
@@ -225,8 +247,8 @@ class AuthController extends Controller
         return response()->json([
             'success' => true,
             'data' => [
-                'user' => $request->user()->load(['casteCertificate', 'business', 'matrimonyProfile'])
-            ]
+                'user' => $request->user()->load(['casteCertificate', 'business', 'matrimonyProfile']),
+            ],
         ]);
     }
 
@@ -236,7 +258,7 @@ class AuthController extends Controller
             'casteCertificate',
             'business',
             'matrimonyProfile',
-            'blogCategory'
+            'blogCategory',
         ]);
 
         if ($user->blog_category_id) {
@@ -263,7 +285,7 @@ class AuthController extends Controller
             ->latest()
             ->first();
 
-        $user->has_matrimony_payment = !is_null($matrimonyPayment);
+        $user->has_matrimony_payment = ! is_null($matrimonyPayment);
 
         /*
         |--------------------------------------------------------------------------
@@ -276,76 +298,75 @@ class AuthController extends Controller
             ->latest()
             ->first();
 
-        $user->has_business_payment = !is_null($businessPayment);
+        $user->has_business_payment = ! is_null($businessPayment);
 
         return response()->json([
             'success' => true,
             'data' => [
-                'user' => $user
-            ]
+                'user' => $user,
+            ],
         ]);
     }
 
     /**
      * Update user profile
      */
-
     public function updateProfile(Request $request)
     {
         $user = $request->user();
 
         $validator = Validator::make($request->all(), [
-            'name'             => 'required|string|max:255',
-            'email'            => 'required|string|email|max:255|unique:users,email,' . $user->id,
-            'age'              => 'nullable|integer|min:18|max:100',
-            'phone'            => 'required|string|max:15|unique:users,phone,' . $user->id,
+            'name' => 'required|string|max:255',
+            'email' => 'required|string|email|max:255|unique:users,email,'.$user->id,
+            'age' => 'nullable|integer|min:18|max:100',
+            'phone' => 'required|string|max:15|unique:users,phone,'.$user->id,
             'respected_person_name' => 'nullable|string|max:255',
             'respected_person_mobile_number' => 'nullable|digits:10',
-            'occupation'       => 'nullable|string|max:255',
-            'company_name'     => 'nullable|string|max:255',
-            'dept_name'        => 'nullable|string|max:255',
-            'dob'              => 'nullable|date',
-            'designation'      => 'nullable|string|max:255',
-            'address'          => 'nullable|string|max:500',
-            'nearby_location'  => 'nullable|string|max:255',
-            'pincode'          => 'nullable|digits:6',
-            'road_number'      => 'nullable|string|max:50',
-            'state'            => 'nullable|string|max:100',
-            'country'          => 'nullable|string|max:100',
-            'city'             => 'nullable|string|max:100',
-            'sector'           => 'nullable|string|max:100',
-            'district'         => 'nullable|string|max:100',
-            'village'          => 'nullable|string|max:100',
-            'destination'      => 'nullable|string|max:255',
-            'latitude'         => 'nullable|numeric|between:-90,90',
-            'longitude'        => 'nullable|numeric|between:-180,180',
+            'occupation' => 'nullable|string|max:255',
+            'company_name' => 'nullable|string|max:255',
+            'dept_name' => 'nullable|string|max:255',
+            'dob' => 'nullable|date',
+            'designation' => 'nullable|string|max:255',
+            'address' => 'nullable|string|max:500',
+            'nearby_location' => 'nullable|string|max:255',
+            'pincode' => 'nullable|digits:6',
+            'road_number' => 'nullable|string|max:50',
+            'state' => 'nullable|string|max:100',
+            'country' => 'nullable|string|max:100',
+            'city' => 'nullable|string|max:100',
+            'sector' => 'nullable|string|max:100',
+            'district' => 'nullable|string|max:100',
+            'village' => 'nullable|string|max:100',
+            'destination' => 'nullable|string|max:255',
+            'latitude' => 'nullable|numeric|between:-90,90',
+            'longitude' => 'nullable|numeric|between:-180,180',
         ]);
 
         if ($validator->fails()) {
             $errors = $validator->errors();
-        
+
             return response()->json([
                 'success' => false,
                 'message' => $errors->first(), // 👈 get first error message
-                'errors' => $errors
+                'errors' => $errors,
             ], 422);
         }
-    
+
         $photoPaths = [];
 
         if ($request->photos) {
             foreach ($request->photos as $base64Image) {
-        
+
                 if (str_contains($base64Image, 'base64,')) {
                     $base64Image = explode('base64,', $base64Image)[1];
                 }
-        
+
                 $imageData = base64_decode($base64Image);
-        
-                $fileName = 'profile/photos/' . uniqid() . '.jpg';
-        
+
+                $fileName = 'profile/photos/'.uniqid().'.jpg';
+
                 Storage::disk('public')->put($fileName, $imageData);
-        
+
                 $photoPaths[] = $fileName;
             }
         }
@@ -356,26 +377,25 @@ class AuthController extends Controller
             'company_name', 'dept_name', 'dob', 'designation',
             'address', 'nearby_location', 'pincode', 'road_number',
             'state', 'country', 'city', 'sector', 'district', 'village', 'destination',
-            'latitude', 'longitude'
+            'latitude', 'longitude',
         ]);
-        
+
         if ($request->filled('name') && $request->name !== $user->name) {
             $data['status'] = 'inactive';
         }
-        
-        if (!empty($photoPaths)) {
+
+        if (! empty($photoPaths)) {
             $data['photo'] = implode(',', $photoPaths);
         }
-        
+
         $user->update($data);
 
         return response()->json([
             'success' => true,
             'message' => 'Profile updated successfully',
-            'data' => ['user' => $user]
+            'data' => ['user' => $user],
         ]);
     }
-
 
     /**
      * Change password
@@ -389,25 +409,25 @@ class AuthController extends Controller
 
         if ($validator->fails()) {
             $errors = $validator->errors();
-        
+
             return response()->json([
                 'success' => false,
                 'message' => $errors->first(), // 👈 get first error message
-                'errors' => $errors
+                'errors' => $errors,
             ], 422);
         }
 
         $user = $request->user();
 
-        if (!Hash::check($request->current_password, $user->password)) {
+        if (! Hash::check($request->current_password, $user->password)) {
             return response()->json([
                 'success' => false,
-                'message' => 'Current password is incorrect'
+                'message' => 'Current password is incorrect',
             ], 400);
         }
 
         $user->update([
-            'password' => Hash::make($request->password)
+            'password' => Hash::make($request->password),
         ]);
 
         // --- Send notification email ---
@@ -420,14 +440,14 @@ class AuthController extends Controller
         } catch (\Throwable $mailEx) {
             \Log::warning('Password change email failed to send', [
                 'user_id' => $user->id,
-                'error'   => $mailEx->getMessage(),
+                'error' => $mailEx->getMessage(),
             ]);
             // Don't fail the API response just because email failed
         }
 
         return response()->json([
             'success' => true,
-            'message' => 'Password changed successfully'
+            'message' => 'Password changed successfully',
         ]);
     }
 
@@ -444,7 +464,7 @@ class AuthController extends Controller
                 Storage::disk('public')->delete($user->cast_certificate);
             }
 
-            if (!empty($user->photo)) {
+            if (! empty($user->photo)) {
                 foreach (explode(',', $user->photo) as $p) {
                     $p = trim($p);
                     if ($p && Storage::disk('public')->exists($p)) {
@@ -463,13 +483,13 @@ class AuthController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Account deleted successfully'
+                'message' => 'Account deleted successfully',
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to delete account',
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ], 500);
         }
     }

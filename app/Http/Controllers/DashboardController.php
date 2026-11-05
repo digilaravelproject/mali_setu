@@ -2,16 +2,21 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Controllers\Controller;
-use App\Models\User;
-use App\Models\Transaction;
 use App\Mail\PasswordChangedMail;
+use App\Models\Business;
+use App\Models\BusinessCategory;
+use App\Models\HomepageHero;
+use App\Models\JobApplication;
+use App\Models\JobPosting;
+use App\Models\Page;
+use App\Models\Transaction;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Validator;
 
 class DashboardController extends Controller
 {
@@ -32,7 +37,7 @@ class DashboardController extends Controller
             'matrimonyProfile',
             'volunteer',
             'donations',
-            'jobApplications'
+            'jobApplications',
         ]);
 
         $user->is_matrimony = $user->matrimonyProfile ? true : false;
@@ -43,14 +48,14 @@ class DashboardController extends Controller
             ->whereNotNull('razorpay_payment_id')
             ->latest()
             ->first();
-        $user->has_matrimony_payment = !is_null($matrimonyPayment);
+        $user->has_matrimony_payment = ! is_null($matrimonyPayment);
 
         $businessPayment = Transaction::where('user_id', $user->id)
             ->where('purpose', 'business_registration')
             ->whereNotNull('razorpay_payment_id')
             ->latest()
             ->first();
-        $user->has_business_payment = !is_null($businessPayment);
+        $user->has_business_payment = ! is_null($businessPayment);
 
         // Stats specific to the logged-in user's business
         $userBusiness = $user->business;
@@ -62,27 +67,35 @@ class DashboardController extends Controller
             'businesses_count' => $userBusiness ? 1 : 0,
             'products_count' => $userBusiness ? $userBusiness->products()->count() : 0,
             'services_count' => $userBusiness ? $userBusiness->services()->count() : 0,
-            'jobs_count' => $userBusiness ? \App\Models\JobPosting::where('business_id', $userBusiness->id)->count() : 0,
+            'jobs_count' => $userBusiness ? JobPosting::where('business_id', $userBusiness->id)->count() : 0,
         ];
 
         // Fetch categories & active banner heroes
-        $categories = \App\Models\BusinessCategory::where('is_active', true)->orderBy('sort_order', 'asc')->orderBy('id', 'asc')->get();
+        $categories = BusinessCategory::where('is_active', true)->orderBy('sort_order', 'asc')->orderBy('id', 'asc')->get();
         // $banners = \App\Models\HomepageHero::all();
-        $banners = \App\Models\HomepageHero::whereNotNull('web_image_path')
+        $banners = HomepageHero::whereNotNull('web_image_path')
             ->where('web_image_path', '!=', '')
             ->select('id', 'title', 'url', 'image_path', 'web_image_path', 'created_at', 'updated_at')
             ->get();
-        $featuredBusinesses = \App\Models\Business::where('verification_status', 'approved')
+        $featuredBusinesses = Business::where('verification_status', 'approved')
             ->with(['category', 'products', 'services'])
             ->latest()
             ->take(10)
+            ->get();
+
+        $leaderboard = User::query()
+            ->whereHas('volunteer', fn ($q) => $q->where('status', 'active'))
+            ->withCount(['referralsMade as referrals_count' => fn ($q) => $q->where('status', 'active')])
+            ->orderByDesc('referrals_count')
+            ->orderBy('name')
+            ->limit(3)
             ->get();
 
         foreach ($featuredBusinesses as $b) {
             $b->distance = $this->calculateDistance($user->latitude, $user->longitude, $b->latitude, $b->longitude);
         }
 
-        return view('dashboard.dashboard', compact('user', 'stats', 'categories', 'banners', 'featuredBusinesses'));
+        return view('dashboard.dashboard', compact('user', 'stats', 'categories', 'banners', 'featuredBusinesses', 'leaderboard'));
     }
 
     /**
@@ -92,18 +105,18 @@ class DashboardController extends Controller
     {
         $query = $request->query('q');
         $user = Auth::user();
-        
-        $businesses = \App\Models\Business::where('verification_status', 'approved')
-            ->where(function($q) use ($query) {
+
+        $businesses = Business::where('verification_status', 'approved')
+            ->where(function ($q) use ($query) {
                 $q->where('business_name', 'like', "%{$query}%")
-                  ->orWhere('description', 'like', "%{$query}%")
-                  ->orWhere('city', 'like', "%{$query}%")
-                  ->orWhere('state', 'like', "%{$query}%");
+                    ->orWhere('description', 'like', "%{$query}%")
+                    ->orWhere('city', 'like', "%{$query}%")
+                    ->orWhere('state', 'like', "%{$query}%");
             })
             ->with(['category', 'products', 'services'])
             ->latest()
             ->get()
-            ->map(function($b) use ($user) {
+            ->map(function ($b) use ($user) {
                 return [
                     'id' => $b->id,
                     'business_name' => $b->business_name,
@@ -117,7 +130,7 @@ class DashboardController extends Controller
                     'address' => $b->address,
                     'pincode' => $b->pincode,
                     'website' => $b->website,
-                    'photo' => $b->photo ? asset('storage/' . trim(explode(',', $b->photo)[0])) : null,
+                    'photo' => $b->photo ? asset('storage/'.trim(explode(',', $b->photo)[0])) : null,
                     'products_count' => $b->products->count(),
                     'services_count' => $b->services->count(),
                     'opening_time' => $b->opening_time,
@@ -128,7 +141,7 @@ class DashboardController extends Controller
 
         return response()->json([
             'success' => true,
-            'businesses' => $businesses
+            'businesses' => $businesses,
         ]);
     }
 
@@ -138,12 +151,12 @@ class DashboardController extends Controller
     public function getCategoryBusinesses($id)
     {
         $user = Auth::user();
-        $businesses = \App\Models\Business::where('verification_status', 'approved')
+        $businesses = Business::where('verification_status', 'approved')
             ->where('category_id', $id)
             ->with(['category', 'products', 'services'])
             ->latest()
             ->get()
-            ->map(function($b) use ($user) {
+            ->map(function ($b) use ($user) {
                 return [
                     'id' => $b->id,
                     'business_name' => $b->business_name,
@@ -157,7 +170,7 @@ class DashboardController extends Controller
                     'address' => $b->address,
                     'pincode' => $b->pincode,
                     'website' => $b->website,
-                    'photo' => $b->photo ? asset('storage/' . trim(explode(',', $b->photo)[0])) : null,
+                    'photo' => $b->photo ? asset('storage/'.trim(explode(',', $b->photo)[0])) : null,
                     'products_count' => $b->products->count(),
                     'services_count' => $b->services->count(),
                     'opening_time' => $b->opening_time,
@@ -168,7 +181,7 @@ class DashboardController extends Controller
 
         return response()->json([
             'success' => true,
-            'businesses' => $businesses
+            'businesses' => $businesses,
         ]);
     }
 
@@ -180,29 +193,29 @@ class DashboardController extends Controller
         $user = Auth::user();
 
         $request->validate([
-            'name'             => 'required|string|max:255',
-            'email'            => 'required|string|email|max:255|unique:users,email,' . $user->id,
-            'phone'            => 'required|string|max:15|unique:users,phone,' . $user->id,
-            'age'              => 'nullable|integer|min:18|max:100',
-            'occupation'       => 'nullable|string|max:255',
-            'company_name'     => 'nullable|string|max:255',
-            'dept_name'        => 'nullable|string|max:255',
-            'dob'              => 'nullable|date',
-            'designation'      => 'nullable|string|max:255',
-            'address'          => 'nullable|string|max:500',
-            'nearby_location'  => 'nullable|string|max:255',
-            'pincode'          => 'nullable|digits:6',
-            'road_number'      => 'nullable|string|max:50',
-            'state'            => 'nullable|string|max:100',
-            'country'          => 'nullable|string|max:100',
-            'city'             => 'nullable|string|max:100',
-            'sector'           => 'nullable|string|max:100',
-            'district'         => 'nullable|string|max:100',
-            'village'          => 'nullable|string|max:100',
-            'destination'      => 'nullable|string|max:255',
-            'photo'            => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
-            'latitude'         => 'nullable|numeric|between:-90,90',
-            'longitude'        => 'nullable|numeric|between:-180,180',
+            'name' => 'required|string|max:255',
+            'email' => 'required|string|email|max:255|unique:users,email,'.$user->id,
+            'phone' => 'required|string|max:15|unique:users,phone,'.$user->id,
+            'age' => 'nullable|integer|min:18|max:100',
+            'occupation' => 'nullable|string|max:255',
+            'company_name' => 'nullable|string|max:255',
+            'dept_name' => 'nullable|string|max:255',
+            'dob' => 'nullable|date',
+            'designation' => 'nullable|string|max:255',
+            'address' => 'nullable|string|max:500',
+            'nearby_location' => 'nullable|string|max:255',
+            'pincode' => 'nullable|digits:6',
+            'road_number' => 'nullable|string|max:50',
+            'state' => 'nullable|string|max:100',
+            'country' => 'nullable|string|max:100',
+            'city' => 'nullable|string|max:100',
+            'sector' => 'nullable|string|max:100',
+            'district' => 'nullable|string|max:100',
+            'village' => 'nullable|string|max:100',
+            'destination' => 'nullable|string|max:255',
+            'photo' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
+            'latitude' => 'nullable|numeric|between:-90,90',
+            'longitude' => 'nullable|numeric|between:-180,180',
             'respected_person_name' => 'nullable|string|max:255',
             'respected_person_mobile_number' => 'nullable|digits:10',
         ]);
@@ -212,7 +225,7 @@ class DashboardController extends Controller
             'dept_name', 'dob', 'designation', 'address', 'nearby_location',
             'pincode', 'road_number', 'state', 'country', 'city', 'sector', 'district',
             'village', 'destination', 'latitude', 'longitude',
-            'respected_person_name', 'respected_person_mobile_number'
+            'respected_person_name', 'respected_person_mobile_number',
         ]);
 
         if ($request->filled('name') && $request->name !== $user->name) {
@@ -220,7 +233,7 @@ class DashboardController extends Controller
         }
 
         if ($request->hasFile('photo')) {
-            if (!empty($user->photo)) {
+            if (! empty($user->photo)) {
                 foreach (explode(',', $user->photo) as $p) {
                     $p = trim($p);
                     if ($p && Storage::disk('public')->exists($p)) {
@@ -230,9 +243,9 @@ class DashboardController extends Controller
             }
 
             $file = $request->file('photo');
-            $fileName = 'profile/photos/' . uniqid() . '.' . $file->getClientOriginalExtension();
-            
-            if (!Storage::disk('public')->exists('profile/photos')) {
+            $fileName = 'profile/photos/'.uniqid().'.'.$file->getClientOriginalExtension();
+
+            if (! Storage::disk('public')->exists('profile/photos')) {
                 Storage::disk('public')->makeDirectory('profile/photos');
             }
 
@@ -258,18 +271,18 @@ class DashboardController extends Controller
         if ($validator->fails()) {
             return response()->json([
                 'success' => false,
-                'errors' => $validator->errors()
+                'errors' => $validator->errors(),
             ], 422);
         }
 
         $user = Auth::user();
-        
+
         $lat = round(floatval($request->latitude), 6);
         $lon = round(floatval($request->longitude), 6);
-        
+
         $oldLat = $user->latitude ? round(floatval($user->latitude), 6) : null;
         $oldLon = $user->longitude ? round(floatval($user->longitude), 6) : null;
-        
+
         $updated = false;
         if (is_null($oldLat) || is_null($oldLon) || abs($oldLat - $lat) > 0.0001 || abs($oldLon - $lon) > 0.0001) {
             $user->update([
@@ -298,15 +311,15 @@ class DashboardController extends Controller
 
         $request->validate([
             'current_password' => 'required|string',
-            'password'         => 'required|string|min:8|confirmed',
+            'password' => 'required|string|min:8|confirmed',
         ]);
 
-        if (!Hash::check($request->current_password, $user->password)) {
+        if (! Hash::check($request->current_password, $user->password)) {
             return back()->withErrors(['current_password' => 'Current password is incorrect.']);
         }
 
         $user->update([
-            'password' => Hash::make($request->password)
+            'password' => Hash::make($request->password),
         ]);
 
         try {
@@ -314,7 +327,7 @@ class DashboardController extends Controller
         } catch (\Throwable $mailEx) {
             \Log::warning('Web password change email failed', [
                 'user_id' => $user->id,
-                'error'   => $mailEx->getMessage()
+                'error' => $mailEx->getMessage(),
             ]);
         }
 
@@ -333,7 +346,7 @@ class DashboardController extends Controller
                 Storage::disk('public')->delete($user->cast_certificate);
             }
 
-            if (!empty($user->photo)) {
+            if (! empty($user->photo)) {
                 foreach (explode(',', $user->photo) as $p) {
                     $p = trim($p);
                     if ($p && Storage::disk('public')->exists($p)) {
@@ -352,7 +365,7 @@ class DashboardController extends Controller
             return redirect()->route('login')->with('success', 'Your account has been successfully deleted.');
 
         } catch (\Exception $e) {
-            return back()->withErrors(['error' => 'Failed to delete account. ' . $e->getMessage()]);
+            return back()->withErrors(['error' => 'Failed to delete account. '.$e->getMessage()]);
         }
     }
 
@@ -361,9 +374,9 @@ class DashboardController extends Controller
      */
     public function privacyPolicy()
     {
-        $page = \App\Models\Page::where('page_type', 'privacy_policy')
-                    ->where('status', 1)
-                    ->first();
+        $page = Page::where('page_type', 'privacy_policy')
+            ->where('status', 1)
+            ->first();
 
         return view('dashboard.page', compact('page'));
     }
@@ -373,9 +386,9 @@ class DashboardController extends Controller
      */
     public function termsConditions()
     {
-        $page = \App\Models\Page::where('page_type', 'terms_condition')
-                    ->where('status', 1)
-                    ->first();
+        $page = Page::where('page_type', 'terms_condition')
+            ->where('status', 1)
+            ->first();
 
         return view('dashboard.page', compact('page'));
     }
@@ -385,9 +398,9 @@ class DashboardController extends Controller
      */
     public function contactSupport()
     {
-        $page = \App\Models\Page::where('page_type', 'contact_us')
-                    ->where('status', 1)
-                    ->first();
+        $page = Page::where('page_type', 'contact_us')
+            ->where('status', 1)
+            ->first();
 
         return view('dashboard.page', compact('page'));
     }
@@ -397,26 +410,26 @@ class DashboardController extends Controller
      */
     public function appliedJobs(Request $request)
     {
-        $applications = \App\Models\JobApplication::where('user_id', Auth::id())
+        $applications = JobApplication::where('user_id', Auth::id())
             ->with(['jobPosting.business'])
             ->latest('applied_at')
             ->paginate(10, ['*'], 'applications_page');
 
-        $query = \App\Models\JobPosting::where('is_active', true)
+        $query = JobPosting::where('is_active', true)
             ->where('status', 'approved')
             ->with('business');
 
         // Apply filters
         if ($request->filled('search')) {
             $search = $request->search;
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('title', 'like', "%{$search}%")
-                  ->orWhere('description', 'like', "%{$search}%")
-                  ->orWhere('category', 'like', "%{$search}%")
-                  ->orWhere('location', 'like', "%{$search}%")
-                  ->orWhereHas('business', function($bQ) use ($search) {
-                      $bQ->where('business_name', 'like', "%{$search}%");
-                  });
+                    ->orWhere('description', 'like', "%{$search}%")
+                    ->orWhere('category', 'like', "%{$search}%")
+                    ->orWhere('location', 'like', "%{$search}%")
+                    ->orWhereHas('business', function ($bQ) use ($search) {
+                        $bQ->where('business_name', 'like', "%{$search}%");
+                    });
             });
         }
 

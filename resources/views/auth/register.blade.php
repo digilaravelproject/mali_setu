@@ -327,7 +327,8 @@
 
                         <div class="mb-4">
                             <label class="form-label small fw-bold text-secondary">Referral Code</label>
-                            <input type="text" name="referral_code" value="{{ old('referral_code') }}" class="form-control form-control-lg text-uppercase @error('referral_code') is-invalid @enderror" maxlength="50" placeholder="Enter referral code (optional)">
+                            <input type="text" name="referral_code" value="{{ old('referral_code', $referralCode ?? '') }}" class="form-control form-control-lg text-uppercase @error('referral_code') is-invalid @enderror" maxlength="50" placeholder="Enter referral code (optional)" @readonly($referralCodeLocked ?? false)>
+                            @if($referralCodeLocked ?? false)<div class="form-text text-success"><i class="fa-solid fa-link me-1"></i>Referral code applied from your invitation link.</div>@endif
                             @error('referral_code')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         </div>
                     </div>

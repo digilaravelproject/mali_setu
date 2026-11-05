@@ -2,21 +2,19 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Controllers\Controller;
-use App\Models\User;
-use App\Mail\WelcomeMail;
 use App\Mail\SendOtpMail;
+use App\Mail\WelcomeMail;
+use App\Models\User;
+use App\Models\VolunteerProfile;
+use App\Services\ReferralService;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Mail;
-use Carbon\Carbon;
-
-use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Laravel\Socialite\Facades\Socialite;
-use App\Services\ReferralService;
 
 class WebAuthController extends Controller
 {
@@ -44,16 +42,26 @@ class WebAuthController extends Controller
         if (Auth::attempt($credentials, $remember)) {
             $user = Auth::user();
 
+            if ($user->status !== 'active') {
+                Auth::logout();
+
+                return back()->withErrors([
+                    'email' => 'Your account is inactive. Please wait for administrator activation.',
+                ])->withInput($request->only('email'));
+            }
+
             // Mirror API check: block pending/rejected cast certs
             if ($user->caste_verification_status === 'pending' || $user->caste_verification_status === 'rejected') {
                 Auth::logout();
+
                 return back()->withErrors([
                     'email' => 'Your caste verification status is not approved yet.',
                 ])->withInput($request->only('email'));
             }
 
             $request->session()->regenerate();
-            return redirect()->intended(route('dashboard'))->with('success', 'Welcome back, ' . $user->name . '!');
+
+            return redirect()->intended(route('dashboard'))->with('success', 'Welcome back, '.$user->name.'!');
         }
 
         return back()->withErrors([
@@ -64,9 +72,17 @@ class WebAuthController extends Controller
     /**
      * Show Web Registration Form
      */
-    public function showRegister()
+    public function showRegister(Request $request)
     {
-        return view('auth.register');
+        $referralCode = strtoupper(trim((string) $request->query('referral_code', $request->query('ref'))));
+        if ($referralCode !== '' && ! User::whereRaw('UPPER(reffral_code) = ?', [$referralCode])->exists()) {
+            $referralCode = '';
+        }
+
+        return view('auth.register', [
+            'referralCode' => $referralCode,
+            'referralCodeLocked' => $referralCode !== '',
+        ]);
     }
 
     /**
@@ -75,32 +91,32 @@ class WebAuthController extends Controller
     public function register(Request $request, ReferralService $referrals)
     {
         $validator = Validator::make($request->all(), [
-            'title'            => 'required|string|in:Mr.,Mrs.,Ms.,Dr.',
-            'first_name'       => 'required|string|max:100',
-            'middle_name'      => 'nullable|string|max:100',
-            'last_name'        => 'required|string|max:100',
-            'email'            => 'required|string|email|max:255|unique:users,email',
-            'phone'            => 'required|string|max:15|unique:users,phone',
-            'dob'              => 'required|date',
+            'title' => 'required|string|in:Mr.,Mrs.,Ms.,Dr.',
+            'first_name' => 'required|string|max:100',
+            'middle_name' => 'nullable|string|max:100',
+            'last_name' => 'required|string|max:100',
+            'email' => 'required|string|email|max:255|unique:users,email',
+            'phone' => 'required|string|max:15|unique:users,phone',
+            'dob' => 'required|date',
             'respected_person_name' => 'nullable|string|max:255',
             'respected_person_mobile_number' => 'nullable|digits:10',
-            'address'          => 'required|string|max:500',
-            'pincode'          => 'required|digits:6',
-            'state'            => 'required|string|max:100',
-            'city'             => 'required|string|max:100',
-            'country'          => 'required|string|max:100',
-            'taluka'           => 'nullable|string|max:100',
-            'village'          => 'required|string|max:100',
-            'user_type'        => 'required|in:general,business,matrimony,volunteer',
-            'occupation'       => 'nullable|string|max:255',
-            'company_name'     => 'nullable|string|max:255',
-            'dept_name'        => 'nullable|string|max:255',
-            'designation'      => 'nullable|string|max:255',
-            'referral_code'    => 'nullable|string|max:50|exists:users,reffral_code',
-            'password'         => 'required|string|min:8|confirmed',
-            'term_condition'   => 'accepted',
-            'latitude'         => 'nullable|numeric|between:-90,90',
-            'longitude'        => 'nullable|numeric|between:-180,180',
+            'address' => 'required|string|max:500',
+            'pincode' => 'required|digits:6',
+            'state' => 'required|string|max:100',
+            'city' => 'required|string|max:100',
+            'country' => 'required|string|max:100',
+            'taluka' => 'nullable|string|max:100',
+            'village' => 'required|string|max:100',
+            'user_type' => 'required|in:general,business,matrimony,volunteer',
+            'occupation' => 'nullable|string|max:255',
+            'company_name' => 'nullable|string|max:255',
+            'dept_name' => 'nullable|string|max:255',
+            'designation' => 'nullable|string|max:255',
+            'referral_code' => 'nullable|string|max:50|exists:users,reffral_code',
+            'password' => 'required|string|min:8|confirmed',
+            'term_condition' => 'accepted',
+            'latitude' => 'nullable|numeric|between:-90,90',
+            'longitude' => 'nullable|numeric|between:-180,180',
         ]);
 
         if ($validator->fails()) {
@@ -109,34 +125,40 @@ class WebAuthController extends Controller
 
         try {
             // Concatenate title, first, middle, last name into name
-            $name = trim($request->title . ' ' . $request->first_name . ' ' . ($request->middle_name ? $request->middle_name . ' ' : '') . $request->last_name);
+            $name = trim($request->title.' '.$request->first_name.' '.($request->middle_name ? $request->middle_name.' ' : '').$request->last_name);
 
             $user = User::create([
-                'name'                   => $name,
-                'email'                  => $request->email,
-                'phone'                  => $request->phone,
-                'dob'                    => $request->dob,
+                'name' => $name,
+                'email' => $request->email,
+                'phone' => $request->phone,
+                'dob' => $request->dob,
                 'respected_person_name' => $request->respected_person_name,
                 'respected_person_mobile_number' => $request->respected_person_mobile_number,
-                'address'                => $request->address,
-                'pincode'                => $request->pincode,
-                'state'                  => $request->state,
-                'city'                   => $request->city,
-                'country'                => $request->country,
-                'taluka'                 => $request->taluka,
-                'village'                => $request->village,
-                'occupation'             => $request->occupation,
-                'company_name'           => $request->company_name,
-                'dept_name'              => $request->dept_name,
-                'designation'            => $request->designation,
-                'password'               => Hash::make($request->password),
-                'user_type'              => $request->user_type,
+                'address' => $request->address,
+                'pincode' => $request->pincode,
+                'state' => $request->state,
+                'city' => $request->city,
+                'country' => $request->country,
+                'taluka' => $request->taluka,
+                'village' => $request->village,
+                'occupation' => $request->occupation,
+                'company_name' => $request->company_name,
+                'dept_name' => $request->dept_name,
+                'designation' => $request->designation,
+                'password' => Hash::make($request->password),
+                'user_type' => $request->user_type,
                 'caste_verification_status' => 'approved',
-                'latitude'               => $request->latitude,
-                'longitude'              => $request->longitude,
+                'latitude' => $request->latitude,
+                'longitude' => $request->longitude,
+                'status' => $request->user_type === 'volunteer' ? 'inactive' : 'active',
             ]);
 
             $referrals->record($request->referral_code, $user);
+
+            if ($user->user_type === 'volunteer') {
+                VolunteerProfile::firstOrCreate(['user_id' => $user->id], ['status' => 'inactive']);
+                $referrals->activateVolunteer($user)->update(['is_active' => false]);
+            }
 
             // Fire the Welcome Email (do not crash registration on fail)
             try {
@@ -144,19 +166,24 @@ class WebAuthController extends Controller
             } catch (\Throwable $mailEx) {
                 \Log::warning('Web welcome email failed to send', [
                     'user_id' => $user->id,
-                    'error'   => $mailEx->getMessage(),
+                    'error' => $mailEx->getMessage(),
                 ]);
             }
 
-            // Log the user in directly after registering
+            if ($user->status !== 'active') {
+                return redirect()->route('login')->with('success', 'Volunteer registration submitted. An administrator must activate your account before you can log in.');
+            }
+
+            // Log active users in directly after registering
             Auth::login($user);
             $request->session()->regenerate();
 
             return redirect()->route('dashboard')->with('success', 'Registration successful! Welcome to Mali Setu.');
 
         } catch (\Exception $e) {
-            \Log::error('Web registration failure: ' . $e->getMessage() . "\n" . $e->getTraceAsString());
-            return back()->withErrors(['error' => 'Failed to register. Please try again. ' . $e->getMessage()])->withInput();
+            \Log::error('Web registration failure: '.$e->getMessage()."\n".$e->getTraceAsString());
+
+            return back()->withErrors(['error' => 'Failed to register. Please try again. '.$e->getMessage()])->withInput();
         }
     }
 
@@ -181,7 +208,7 @@ class WebAuthController extends Controller
 
         if ($user) {
             $otp = random_int(100000, 999999);
-            $user->otp = (string)$otp;
+            $user->otp = (string) $otp;
             $user->otp_expires_at = Carbon::now()->addMinutes(10);
             $user->save();
 
@@ -194,20 +221,20 @@ class WebAuthController extends Controller
 
                 return response()->json([
                     'success' => false,
-                    'message' => 'Failed to send OTP email: ' . $e->getMessage()
+                    'message' => 'Failed to send OTP email: '.$e->getMessage(),
                 ], 500);
             }
         } else {
             // Keep user experience safe but check existence internally
             return response()->json([
                 'success' => false,
-                'message' => 'No user account found with that email address.'
+                'message' => 'No user account found with that email address.',
             ], 404);
         }
 
         return response()->json([
             'success' => true,
-            'message' => 'A 6-digit verification OTP has been sent to your email.'
+            'message' => 'A 6-digit verification OTP has been sent to your email.',
         ]);
     }
 
@@ -218,28 +245,28 @@ class WebAuthController extends Controller
     {
         $request->validate([
             'email' => 'required|email',
-            'otp'   => 'required|digits:6',
+            'otp' => 'required|digits:6',
         ]);
 
         $user = User::where('email', $request->email)->first();
 
-        if (!$user || !$user->otp || $user->otp !== $request->otp) {
+        if (! $user || ! $user->otp || $user->otp !== $request->otp) {
             return response()->json([
                 'success' => false,
-                'message' => 'Invalid OTP code.'
+                'message' => 'Invalid OTP code.',
             ], 400);
         }
 
-        if (!empty($user->otp_expires_at) && Carbon::parse($user->otp_expires_at)->isPast()) {
+        if (! empty($user->otp_expires_at) && Carbon::parse($user->otp_expires_at)->isPast()) {
             return response()->json([
                 'success' => false,
-                'message' => 'This OTP has expired. Please request a new one.'
+                'message' => 'This OTP has expired. Please request a new one.',
             ], 400);
         }
 
         return response()->json([
             'success' => true,
-            'message' => 'OTP verified successfully. You can now reset your password.'
+            'message' => 'OTP verified successfully. You can now reset your password.',
         ]);
     }
 
@@ -249,24 +276,24 @@ class WebAuthController extends Controller
     public function resetPassword(Request $request)
     {
         $request->validate([
-            'email'    => 'required|email',
-            'otp'      => 'required|digits:6',
+            'email' => 'required|email',
+            'otp' => 'required|digits:6',
             'password' => 'required|string|min:8|confirmed',
         ]);
 
         $user = User::where('email', $request->email)->first();
 
-        if (!$user || !$user->otp || $user->otp !== $request->otp) {
+        if (! $user || ! $user->otp || $user->otp !== $request->otp) {
             return response()->json([
                 'success' => false,
-                'message' => 'Invalid or expired session. Please start over.'
+                'message' => 'Invalid or expired session. Please start over.',
             ], 400);
         }
 
-        if (!empty($user->otp_expires_at) && Carbon::parse($user->otp_expires_at)->isPast()) {
+        if (! empty($user->otp_expires_at) && Carbon::parse($user->otp_expires_at)->isPast()) {
             return response()->json([
                 'success' => false,
-                'message' => 'The OTP session has expired. Please start over.'
+                'message' => 'The OTP session has expired. Please start over.',
             ], 400);
         }
 
@@ -277,7 +304,7 @@ class WebAuthController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Password reset successful! You can now log in.'
+            'message' => 'Password reset successful! You can now log in.',
         ]);
     }
 
@@ -299,20 +326,21 @@ class WebAuthController extends Controller
      */
     public function redirectToGoogle()
     {
-        if (!config('services.google.client_id') || !config('services.google.client_secret')) {
+        if (! config('services.google.client_id') || ! config('services.google.client_secret')) {
             // Mock sandbox logic to allow local testing seamlessly
             return redirect()->route('auth.google.callback', ['sandbox' => 'true']);
         }
+
         return Socialite::driver('google')->redirect();
     }
 
     public function handleGoogleCallback(Request $request)
     {
         try {
-            if ($request->has('sandbox') || !config('services.google.client_id')) {
+            if ($request->has('sandbox') || ! config('services.google.client_id')) {
                 $email = 'sandbox.google@malisetu.com';
                 $user = User::where('email', $email)->first();
-                if (!$user) {
+                if (! $user) {
                     // Auto-register sandbox user with user type general
                     $user = User::create([
                         'name' => 'Sandbox Google User',
@@ -325,10 +353,11 @@ class WebAuthController extends Controller
                     $this->sendWelcomeEmail($user);
 
                     return redirect()->route('register')->withErrors([
-                        'email' => 'Account does not exist. Please complete your registration.'
+                        'email' => 'Account does not exist. Please complete your registration.',
                     ]);
                 }
                 Auth::login($user);
+
                 return redirect()->route('dashboard')->with('success', 'Logged in via Google Sandbox!');
             }
 
@@ -336,7 +365,7 @@ class WebAuthController extends Controller
             $email = $googleUser->getEmail();
             $user = User::where('email', $email)->first();
 
-            if (!$user) {
+            if (! $user) {
                 // Auto-register user with user type general
                 $user = User::create([
                     'name' => $googleUser->getName(),
@@ -349,24 +378,25 @@ class WebAuthController extends Controller
                 $this->sendWelcomeEmail($user);
 
                 return redirect()->route('register')->withErrors([
-                    'email' => 'Account does not exist. Please complete your registration.'
+                    'email' => 'Account does not exist. Please complete your registration.',
                 ]);
             }
 
-            if (!$user->google_id) {
+            if (! $user->google_id) {
                 $user->update(['google_id' => $googleUser->getId()]);
             }
 
             if ($user->caste_verification_status === 'pending' || $user->caste_verification_status === 'rejected') {
                 return redirect()->route('login')->withErrors([
-                    'email' => 'Your caste verification status is not approved yet.'
+                    'email' => 'Your caste verification status is not approved yet.',
                 ]);
             }
 
             Auth::login($user);
+
             return redirect()->route('dashboard')->with('success', 'Successfully logged in with Google!');
         } catch (\Exception $e) {
-            return redirect()->route('login')->withErrors(['error' => 'Google Authentication failed: ' . $e->getMessage()]);
+            return redirect()->route('login')->withErrors(['error' => 'Google Authentication failed: '.$e->getMessage()]);
         }
     }
 

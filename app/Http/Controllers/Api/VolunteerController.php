@@ -3,14 +3,14 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\VolunteerOpportunity;
 use App\Models\VolunteerApplication;
+use App\Models\VolunteerOpportunity;
 use App\Models\VolunteerProfile;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
 use App\Services\ReferralService;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
 
 class VolunteerController extends Controller
 {
@@ -23,7 +23,7 @@ class VolunteerController extends Controller
 
         // Apply filters
         if ($request->has('location') && $request->location) {
-            $query->where('location', 'like', '%' . $request->location . '%');
+            $query->where('location', 'like', '%'.$request->location.'%');
         }
 
         if ($request->has('skills') && $request->skills) {
@@ -55,12 +55,12 @@ class VolunteerController extends Controller
         // }
 
         $opportunities = $query->with('applications')
-                              ->orderBy('start_date', 'asc')
-                              ->paginate($request->get('per_page', 15));
+            ->orderBy('start_date', 'asc')
+            ->paginate($request->get('per_page', 15));
 
         return response()->json([
             'success' => true,
-            'data' => $opportunities
+            'data' => $opportunities,
         ]);
     }
 
@@ -71,16 +71,16 @@ class VolunteerController extends Controller
     {
         $opportunity = VolunteerOpportunity::with(['applications.volunteerProfile'])->find($id);
 
-        if (!$opportunity) {
+        if (! $opportunity) {
             return response()->json([
                 'success' => false,
-                'message' => 'Volunteer opportunity not found'
+                'message' => 'Volunteer opportunity not found',
             ], 404);
         }
 
         return response()->json([
             'success' => true,
-            'data' => $opportunity
+            'data' => $opportunity,
         ]);
     }
 
@@ -107,11 +107,11 @@ class VolunteerController extends Controller
 
         if ($validator->fails()) {
             $errors = $validator->errors();
-        
+
             return response()->json([
                 'success' => false,
                 'message' => $errors->first(), // 👈 get first error message
-                'errors' => $errors
+                'errors' => $errors,
             ], 422);
         }
 
@@ -120,7 +120,7 @@ class VolunteerController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Volunteer opportunity created successfully',
-            'data' => $opportunity
+            'data' => $opportunity,
         ], 201);
     }
 
@@ -131,10 +131,10 @@ class VolunteerController extends Controller
     {
         $opportunity = VolunteerOpportunity::find($id);
 
-        if (!$opportunity) {
+        if (! $opportunity) {
             return response()->json([
                 'success' => false,
-                'message' => 'Volunteer opportunity not found'
+                'message' => 'Volunteer opportunity not found',
             ], 404);
         }
 
@@ -157,11 +157,11 @@ class VolunteerController extends Controller
 
         if ($validator->fails()) {
             $errors = $validator->errors();
-        
+
             return response()->json([
                 'success' => false,
                 'message' => $errors->first(), // 👈 get first error message
-                'errors' => $errors
+                'errors' => $errors,
             ], 422);
         }
 
@@ -170,7 +170,7 @@ class VolunteerController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Volunteer opportunity updated successfully',
-            'data' => $opportunity
+            'data' => $opportunity,
         ]);
     }
 
@@ -181,10 +181,10 @@ class VolunteerController extends Controller
     {
         $opportunity = VolunteerOpportunity::find($id);
 
-        if (!$opportunity) {
+        if (! $opportunity) {
             return response()->json([
                 'success' => false,
-                'message' => 'Volunteer opportunity not found'
+                'message' => 'Volunteer opportunity not found',
             ], 404);
         }
 
@@ -192,7 +192,7 @@ class VolunteerController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Volunteer opportunity deleted successfully'
+            'message' => 'Volunteer opportunity deleted successfully',
         ]);
     }
 
@@ -208,32 +208,39 @@ class VolunteerController extends Controller
 
         if ($validator->fails()) {
             $errors = $validator->errors();
-        
+
             return response()->json([
                 'success' => false,
                 'message' => $errors->first(), // 👈 get first error message
-                'errors' => $errors
+                'errors' => $errors,
             ], 422);
         }
 
         $user = Auth::user();
-        
+
         // Check if user has a volunteer profile
         $volunteerProfile = $user->volunteer;
-        if (!$volunteerProfile) {
+        if (! $volunteerProfile) {
             return response()->json([
                 'success' => false,
-                'message' => 'You need to create a volunteer profile first'
+                'message' => 'You need to create a volunteer profile first',
             ], 400);
         }
 
-        $opportunity = VolunteerOpportunity::find($request->volunteer_opportunity_id);
-        
-        // Check if opportunity is accepting applications
-        if (!$opportunity->isAcceptingApplications()) {
+        if ($volunteerProfile->status !== 'active') {
             return response()->json([
                 'success' => false,
-                'message' => 'This opportunity is not accepting applications'
+                'message' => 'Your volunteer profile must be activated by an administrator before you can apply.',
+            ], 403);
+        }
+
+        $opportunity = VolunteerOpportunity::find($request->volunteer_opportunity_id);
+
+        // Check if opportunity is accepting applications
+        if (! $opportunity->isAcceptingApplications()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'This opportunity is not accepting applications',
             ], 400);
         }
 
@@ -245,7 +252,7 @@ class VolunteerController extends Controller
         if ($existingApplication) {
             return response()->json([
                 'success' => false,
-                'message' => 'You have already applied for this opportunity'
+                'message' => 'You have already applied for this opportunity',
             ], 400);
         }
 
@@ -259,7 +266,7 @@ class VolunteerController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Application submitted successfully',
-            'data' => $application->load(['volunteerOpportunity', 'volunteerProfile'])
+            'data' => $application->load(['volunteerOpportunity', 'volunteerProfile']),
         ], 201);
     }
 
@@ -271,10 +278,10 @@ class VolunteerController extends Controller
         $user = Auth::user();
         $volunteerProfile = $user->volunteer;
 
-        if (!$volunteerProfile) {
+        if (! $volunteerProfile) {
             return response()->json([
                 'success' => false,
-                'message' => 'You need to create a volunteer profile first'
+                'message' => 'You need to create a volunteer profile first',
             ], 400);
         }
 
@@ -286,11 +293,11 @@ class VolunteerController extends Controller
         }
 
         $applications = $query->orderBy('applied_at', 'desc')
-                             ->paginate($request->get('per_page', 15));
+            ->paginate($request->get('per_page', 15));
 
         return response()->json([
             'success' => true,
-            'data' => $applications
+            'data' => $applications,
         ]);
     }
 
@@ -302,10 +309,10 @@ class VolunteerController extends Controller
         $user = Auth::user();
         $volunteerProfile = $user->volunteer;
 
-        if (!$volunteerProfile) {
+        if (! $volunteerProfile) {
             return response()->json([
                 'success' => false,
-                'message' => 'Volunteer profile not found'
+                'message' => 'Volunteer profile not found',
             ], 400);
         }
 
@@ -313,17 +320,17 @@ class VolunteerController extends Controller
             ->where('volunteer_profile_id', $volunteerProfile->id)
             ->first();
 
-        if (!$application) {
+        if (! $application) {
             return response()->json([
                 'success' => false,
-                'message' => 'Application not found'
+                'message' => 'Application not found',
             ], 404);
         }
 
         if ($application->status === 'withdrawn') {
             return response()->json([
                 'success' => false,
-                'message' => 'Application is already withdrawn'
+                'message' => 'Application is already withdrawn',
             ], 400);
         }
 
@@ -332,7 +339,7 @@ class VolunteerController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Application withdrawn successfully',
-            'data' => $application
+            'data' => $application,
         ]);
     }
 
@@ -344,10 +351,10 @@ class VolunteerController extends Controller
         $user = Auth::user();
         $volunteerProfile = $user->volunteer;
 
-        if (!$volunteerProfile) {
+        if (! $volunteerProfile) {
             return response()->json([
                 'success' => false,
-                'message' => 'You need to create a volunteer profile first'
+                'message' => 'You need to create a volunteer profile first',
             ], 400);
         }
 
@@ -357,15 +364,15 @@ class VolunteerController extends Controller
 
         // Match by location if volunteer has location
         if ($volunteerProfile->location) {
-            $query->where('location', 'like', '%' . $volunteerProfile->location . '%');
+            $query->where('location', 'like', '%'.$volunteerProfile->location.'%');
         }
 
         // Match by skills if volunteer has skills
         if ($volunteerProfile->skills) {
-            $volunteerSkills = is_array($volunteerProfile->skills) 
-                ? $volunteerProfile->skills 
+            $volunteerSkills = is_array($volunteerProfile->skills)
+                ? $volunteerProfile->skills
                 : json_decode($volunteerProfile->skills, true);
-            
+
             if ($volunteerSkills) {
                 $query->where(function ($q) use ($volunteerSkills) {
                     foreach ($volunteerSkills as $skill) {
@@ -380,16 +387,16 @@ class VolunteerController extends Controller
             ->pluck('volunteer_opportunity_id')
             ->toArray();
 
-        if (!empty($appliedOpportunityIds)) {
+        if (! empty($appliedOpportunityIds)) {
             $query->whereNotIn('id', $appliedOpportunityIds);
         }
 
         $opportunities = $query->orderBy('start_date', 'asc')
-                              ->paginate($request->get('per_page', 15));
+            ->paginate($request->get('per_page', 15));
 
         return response()->json([
             'success' => true,
-            'data' => $opportunities
+            'data' => $opportunities,
         ]);
     }
 
@@ -401,90 +408,89 @@ class VolunteerController extends Controller
         $user = Auth::user();
         $volunteerProfile = $user->volunteer;
 
-        if (!$volunteerProfile) {
+        if (! $volunteerProfile) {
             return response()->json([
                 'success' => false,
-                'message' => 'Volunteer profile not found'
+                'message' => 'Volunteer profile not found',
             ], 404);
         }
 
         return response()->json([
             'success' => true,
-            'data' => $volunteerProfile
+            'data' => $volunteerProfile,
         ]);
     }
 
     /**
      * Create or update volunteer profile
      */
-
     public function updateVolunteerProfile(Request $request, ReferralService $referrals)
     {
         $validator = Validator::make($request->all(), [
-            'skills'       => 'nullable|array',     // coming as array from UI
-            'experience'   => 'nullable|string',
+            'skills' => 'nullable|array',     // coming as array from UI
+            'experience' => 'nullable|string',
             'availability' => 'nullable|string',
-            'location'     => 'nullable|string|max:255',
-            'bio'          => 'nullable|string|max:1000',
-            'interests'    => 'nullable|array',     // will be JSON-encoded by cast
-            'status'       => 'nullable|in:active,inactive,pending',
+            'location' => 'nullable|string|max:255',
+            'bio' => 'nullable|string|max:1000',
+            'interests' => 'nullable|array',     // will be JSON-encoded by cast
         ]);
-    
+
         if ($validator->fails()) {
             return response()->json([
                 'success' => false,
                 'message' => 'Validation failed',
-                'errors'  => $validator->errors()
+                'errors' => $validator->errors(),
             ], 422);
         }
-    
+
         $user = Auth::user();
-        if (!$user) {
+        if (! $user) {
             return response()->json([
                 'success' => false,
                 'message' => 'Unauthenticated.',
             ], 401);
         }
-    
+
         $data = $validator->validated();
-    
+
         // Convert skills array -> CSV string because DB column is varchar(255)
         if (array_key_exists('skills', $data)) {
             if (is_array($data['skills'])) {
                 // Trim values and implode; keep within 255 if needed
-                $csv = implode(',', array_filter(array_map('trim', $data['skills']), fn($v) => $v !== ''));
+                $csv = implode(',', array_filter(array_map('trim', $data['skills']), fn ($v) => $v !== ''));
                 // Optional: enforce length
                 $data['skills'] = mb_substr($csv, 0, 255);
             } elseif ($data['skills'] === null) {
                 $data['skills'] = null;
             }
         }
-    
+
         // interests stays as array; your model casts it to array and will JSON encode to longtext
         // If frontend sometimes sends string, you can normalize:
         if (array_key_exists('interests', $data) && is_string($data['interests'])) {
             $decoded = json_decode($data['interests'], true);
             $data['interests'] = is_array($decoded) ? $decoded : [];
         }
-    
+
         $volunteerProfile = $user->volunteer;
-    
+
         if ($volunteerProfile) {
+            unset($data['status']);
             $volunteerProfile->update($data);
             $message = 'Volunteer profile updated successfully';
         } else {
             $volunteerProfile = VolunteerProfile::create(array_merge(
                 $data,
-                ['user_id' => $user->id, 'status' => $data['status'] ?? 'pending']
+                ['user_id' => $user->id, 'status' => 'inactive']
             ));
-            $referrals->activateVolunteer($user);
-            $message = 'Volunteer profile created successfully';
+            $referrals->activateVolunteer($user)->update(['is_active' => false]);
+            $message = 'Volunteer profile created and is awaiting administrator activation';
         }
-    
+
         return response()->json([
             'success' => true,
             'message' => $message,
-            'data'    => $volunteerProfile->fresh()
+            'data' => $volunteerProfile->fresh(),
         ]);
     }
 }
