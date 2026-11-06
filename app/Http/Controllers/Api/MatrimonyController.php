@@ -875,6 +875,11 @@ class MatrimonyController extends Controller
         $profile = MatrimonyProfile::with('user')
             ->where('user_id', $id)
         ->firstOrFail();
+
+        // This field is hidden from normal User serialization because it stores
+        // an uploaded document path. The user-id profile endpoint explicitly
+        // includes it for matrimony profile consumers.
+        $profile->user?->makeVisible('cast_certificate');
     
         $authUserId = $request->user()->id;
 

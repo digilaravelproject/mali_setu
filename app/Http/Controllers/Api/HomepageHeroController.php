@@ -18,7 +18,7 @@ class HomepageHeroController extends Controller
         return response()->json([
             'data' => HomepageHeroResource::collection($heroes)->resolve(),
             'leaderboard' => User::query()
-                ->whereHas('volunteer', fn ($q) => $q->where('status', 'active'))
+                // ->whereHas('volunteer', fn ($q) => $q->where('status', 'active'))
                 ->withCount(['referralsMade as referrals_count' => fn ($q) => $q->where('status', 'active')])
                 ->withSum(['referralsMade as earned_points' => fn ($q) => $q->where('status', 'active')], 'commission_points')
                 ->orderByDesc('referrals_count')

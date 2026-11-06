@@ -231,7 +231,7 @@
     <!-- Sidebar -->
     <div class="sidebar" id="sidebar">
         <div class="sidebar-header">
-            <a href="{{ route('admin.dashboard') }}" class="sidebar-brand">
+            <a href="{{ route(auth()->user()->isSuperAdmin() ? 'admin.dashboard' : \App\Support\AdminPermissionRegistry::firstAccessibleRoute(auth()->user())) }}" class="sidebar-brand">
                 <i class="fas fa-heart me-2"></i>
                 Mali Setu
             </a>
@@ -654,6 +654,7 @@
                 return rule.methods.includes(method.toUpperCase()) && new RegExp(pattern).test(path);
             });
             document.querySelectorAll('a[href]').forEach(link => {
+                if (link.classList.contains('sidebar-brand')) return;
                 if (!link.href || link.getAttribute('href').startsWith('#')) return;
                 const url = new URL(link.href, window.location.origin);
                 if (url.origin === window.location.origin && matches(url.pathname, 'GET')) link.classList.add('d-none');

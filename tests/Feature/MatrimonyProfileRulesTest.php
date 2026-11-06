@@ -36,6 +36,7 @@ class MatrimonyProfileRulesTest extends TestCase
             $table->string('email');
             $table->string('phone')->nullable();
             $table->string('user_type')->default('matrimony');
+            $table->string('cast_certificate')->nullable();
             $table->timestamps();
         });
         Schema::create('matrimony_profiles', function (Blueprint $table) {
@@ -105,6 +106,7 @@ class MatrimonyProfileRulesTest extends TestCase
                 'name' => $name,
                 'email' => "user{$id}@example.test",
                 'user_type' => 'matrimony',
+                'cast_certificate' => $id === 2 ? 'caste-certificates/user-2.pdf' : null,
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
@@ -117,6 +119,17 @@ class MatrimonyProfileRulesTest extends TestCase
                 'updated_at' => now(),
             ]);
         }
+    }
+
+    public function test_profile_user_id_includes_cast_certificate(): void
+    {
+        $this->actingAs(User::findOrFail(1), 'sanctum')
+            ->getJson('/api/matrimony/profile_user_id/2')
+            ->assertOk()
+            ->assertJsonPath(
+                'data.profile.user.cast_certificate',
+                'caste-certificates/user-2.pdf'
+            );
     }
 
     public function test_search_defaults_to_opposite_gender_even_with_other_filters(): void
