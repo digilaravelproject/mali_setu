@@ -3,13 +3,17 @@
 namespace App\Http\Controllers;
 
 use App\Models\Blog;
+use App\Models\BlogCategory;
 use App\Models\BlogLike;
+use App\Services\NotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 
 class BlogController extends Controller
 {
+    public function __construct(private readonly NotificationService $notifications) {}
+
     /**
      * Display a listing of blogs.
      */
@@ -23,7 +27,7 @@ class BlogController extends Controller
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('title', 'like', "%{$search}%")
-                  ->orWhere('description', 'like', "%{$search}%");
+                    ->orWhere('description', 'like', "%{$search}%");
             });
         }
 
@@ -58,10 +62,10 @@ class BlogController extends Controller
     public function create()
     {
         $user = Auth::user();
-        if (!$user->blog_access) {
+        if (! $user->blog_access) {
             return redirect()->route('blogs.index')->with('error', 'You do not have access to write blogs. Please contact an administrator.');
         }
-        $categories = \App\Models\BlogCategory::active()->get();
+        $categories = BlogCategory::active()->get();
 
         return view('blog.create', compact('categories'));
     }
@@ -72,7 +76,7 @@ class BlogController extends Controller
     public function store(Request $request)
     {
         $user = Auth::user();
-        if (!$user->blog_access) {
+        if (! $user->blog_access) {
             return redirect()->route('blogs.index')->with('error', 'Unauthorized action.');
         }
 
@@ -110,7 +114,7 @@ class BlogController extends Controller
                 }
             }
 
-            Blog::create([
+            $blog = Blog::create([
                 'user_id' => $user->id,
                 'title' => $request->title,
                 'blog_type' => $request->blog_type,
@@ -121,9 +125,11 @@ class BlogController extends Controller
                 'is_active' => true,
             ]);
 
+            $this->notifications->notifyBlogPublished($blog);
+
             return redirect()->route('blogs.index')->with('success', 'Blog article published successfully!');
         } catch (\Exception $e) {
-            return back()->withErrors(['error' => 'Failed to publish blog: ' . $e->getMessage()])->withInput();
+            return back()->withErrors(['error' => 'Failed to publish blog: '.$e->getMessage()])->withInput();
         }
     }
 
@@ -179,7 +185,7 @@ class BlogController extends Controller
         if ($blog->user_id !== $user->id) {
             return redirect()->route('blogs.index')->with('error', 'You are not authorized to edit this blog.');
         }
-        $categories = \App\Models\BlogCategory::active()->get();
+        $categories = BlogCategory::active()->get();
 
         return view('blog.edit', compact('blog', 'categories'));
     }
@@ -255,7 +261,7 @@ class BlogController extends Controller
 
             return redirect()->route('blogs.index')->with('success', 'Blog article updated successfully!');
         } catch (\Exception $e) {
-            return back()->withErrors(['error' => 'Failed to update blog: ' . $e->getMessage()])->withInput();
+            return back()->withErrors(['error' => 'Failed to update blog: '.$e->getMessage()])->withInput();
         }
     }
 
@@ -290,7 +296,7 @@ class BlogController extends Controller
 
             return redirect()->route('blogs.index')->with('success', 'Blog article deleted successfully.');
         } catch (\Exception $e) {
-            return redirect()->route('blogs.index')->with('error', 'Failed to delete blog: ' . $e->getMessage());
+            return redirect()->route('blogs.index')->with('error', 'Failed to delete blog: '.$e->getMessage());
         }
     }
 
@@ -322,7 +328,7 @@ class BlogController extends Controller
         return response()->json([
             'success' => true,
             'liked' => $liked,
-            'likes_count' => $likesCount
+            'likes_count' => $likesCount,
         ]);
     }
 
@@ -332,10 +338,10 @@ class BlogController extends Controller
     public function showPublic($id)
     {
         $blog = Blog::with('user')->findOrFail($id);
-        
+
         // Increase the views count dynamically on details view!
         $blog->increment('views_count');
-        
+
         // Refresh model to get updated views_count and include likes count
         $blog = Blog::with('user')->withCount('likes')->findOrFail($id);
 
@@ -422,7 +428,7 @@ class BlogController extends Controller
         return response()->json([
             'success' => true,
             'liked' => $liked,
-            'likes_count' => $likesCount
+            'likes_count' => $likesCount,
         ]);
     }
 }

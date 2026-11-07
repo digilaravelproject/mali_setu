@@ -89,6 +89,12 @@ class Notification extends Model
 
     const TYPE_NEW_MESSAGE = 'new_message';
 
+    const TYPE_BLOG_PUBLISHED = 'blog_published';
+
+    const TYPE_BLOG_COMMENT = 'blog_comment';
+
+    const TYPE_BLOG_REPLY = 'blog_reply';
+
     const TYPE_SUBSCRIPTION_EXPIRY_REMINDER = 'subscription_expiry_reminder';
 
     // Priority levels

@@ -4,11 +4,17 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Blog;
+use App\Models\BlogCategory;
+use App\Models\BlogComment;
+use App\Models\User;
+use App\Services\NotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
 class BlogManagementController extends Controller
 {
+    public function __construct(private readonly NotificationService $notifications) {}
+
     /**
      * Display a listing of blogs.
      */
@@ -17,8 +23,8 @@ class BlogManagementController extends Controller
         $query = Blog::with(['category', 'user']);
 
         if ($request->has('search') && $request->search !== '') {
-            $query->where('title', 'like', '%' . $request->search . '%')
-                  ->orWhere('description', 'like', '%' . $request->search . '%');
+            $query->where('title', 'like', '%'.$request->search.'%')
+                ->orWhere('description', 'like', '%'.$request->search.'%');
         }
 
         if ($request->has('status') && $request->status !== '') {
@@ -41,13 +47,13 @@ class BlogManagementController extends Controller
      */
     public function accessUsers(Request $request)
     {
-        $query = 
-            \App\Models\User::query();
+        $query =
+            User::query();
 
         if ($request->has('search') && $request->search !== '') {
-            $query->where(function($q) use ($request) {
-                $q->where('name', 'like', '%' . $request->search . '%')
-                  ->orWhere('email', 'like', '%' . $request->search . '%');
+            $query->where(function ($q) use ($request) {
+                $q->where('name', 'like', '%'.$request->search.'%')
+                    ->orWhere('email', 'like', '%'.$request->search.'%');
             });
         }
 
@@ -62,13 +68,13 @@ class BlogManagementController extends Controller
     public function toggleUserAccess($id)
     {
         try {
-            $user = \App\Models\User::findOrFail($id);
-            $user->blog_access = !$user->blog_access;
+            $user = User::findOrFail($id);
+            $user->blog_access = ! $user->blog_access;
             $user->save();
 
-            return redirect()->back()->with('success', 'Blog access updated for ' . $user->name);
+            return redirect()->back()->with('success', 'Blog access updated for '.$user->name);
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Failed to update blog access: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Failed to update blog access: '.$e->getMessage());
         }
     }
 
@@ -77,7 +83,8 @@ class BlogManagementController extends Controller
      */
     public function create()
     {
-        $categories = \App\Models\BlogCategory::active()->get();
+        $categories = BlogCategory::active()->get();
+
         return view('admin.blogs.create', compact('categories'));
     }
 
@@ -116,7 +123,7 @@ class BlogManagementController extends Controller
                 }
             }
 
-            Blog::create([
+            $blog = Blog::create([
                 'user_id' => auth()->id(),
                 'title' => $request->title,
                 'blog_type' => $request->blog_type,
@@ -127,19 +134,23 @@ class BlogManagementController extends Controller
                 'is_active' => $request->has('is_active') ? $request->is_active : true,
             ]);
 
+            if ($blog->is_active) {
+                $this->notifications->notifyBlogPublished($blog);
+            }
+
             return redirect()->route('admin.blogs.index')->with('success', 'Blog created successfully!');
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Failed to create blog: ' . $e->getMessage())->withInput();
+            return redirect()->back()->with('error', 'Failed to create blog: '.$e->getMessage())->withInput();
         }
     }
 
     public function edit($id)
     {
-        $blog = Blog::with(['comments' => function($q) {
+        $blog = Blog::with(['comments' => function ($q) {
             $q->whereNull('parent_id')->with(['user', 'replies.user'])->latest();
         }])->findOrFail($id);
-        
-        $categories = \App\Models\BlogCategory::active()->get();
+
+        $categories = BlogCategory::active()->get();
 
         return view('admin.blogs.edit', compact('blog', 'categories'));
     }
@@ -151,6 +162,7 @@ class BlogManagementController extends Controller
     {
         try {
             $blog = Blog::findOrFail($id);
+            $wasActive = $blog->is_active;
 
             $request->validate([
                 'title' => 'required|string|max:255',
@@ -205,9 +217,13 @@ class BlogManagementController extends Controller
             $blog->is_active = $request->has('is_active') ? $request->is_active : false;
             $blog->save();
 
+            if (! $wasActive && $blog->is_active) {
+                $this->notifications->notifyBlogPublished($blog);
+            }
+
             return redirect()->route('admin.blogs.index')->with('success', 'Blog updated successfully!');
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Failed to update blog: ' . $e->getMessage())->withInput();
+            return redirect()->back()->with('error', 'Failed to update blog: '.$e->getMessage())->withInput();
         }
     }
 
@@ -236,7 +252,7 @@ class BlogManagementController extends Controller
 
             return redirect()->route('admin.blogs.index')->with('success', 'Blog deleted successfully!');
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Failed to delete blog: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Failed to delete blog: '.$e->getMessage());
         }
     }
 
@@ -247,12 +263,17 @@ class BlogManagementController extends Controller
     {
         try {
             $blog = Blog::findOrFail($id);
-            $blog->is_active = !$blog->is_active;
+            $wasActive = $blog->is_active;
+            $blog->is_active = ! $blog->is_active;
             $blog->save();
+
+            if (! $wasActive && $blog->is_active) {
+                $this->notifications->notifyBlogPublished($blog);
+            }
 
             return redirect()->back()->with('success', 'Blog status updated successfully!');
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Failed to update status: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Failed to update status: '.$e->getMessage());
         }
     }
 
@@ -262,12 +283,12 @@ class BlogManagementController extends Controller
     public function deleteComment($id)
     {
         try {
-            $comment = \App\Models\BlogComment::findOrFail($id);
+            $comment = BlogComment::findOrFail($id);
             $comment->delete();
 
             return redirect()->back()->with('success', 'Comment deleted successfully!');
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Failed to delete comment: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Failed to delete comment: '.$e->getMessage());
         }
     }
 

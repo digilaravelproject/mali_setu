@@ -11,6 +11,20 @@ use ReflectionClass;
 
 class NotificationPushPayloadTest extends TestCase
 {
+    public function test_blog_actions_have_firebase_push_enabled(): void
+    {
+        $actions = collect(NotificationAction::defaults())->keyBy('key');
+
+        foreach ([
+            Notification::TYPE_BLOG_PUBLISHED,
+            Notification::TYPE_BLOG_COMMENT,
+            Notification::TYPE_BLOG_REPLY,
+        ] as $key) {
+            $this->assertTrue($actions[$key]['push_enabled']);
+            $this->assertSame('blog', $actions[$key]['payload_template']['type']);
+        }
+    }
+
     public function test_admin_payload_is_rendered_and_merged_into_push_data(): void
     {
         $notification = new Notification([

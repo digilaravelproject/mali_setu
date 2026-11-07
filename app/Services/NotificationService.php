@@ -3,6 +3,8 @@
 namespace App\Services;
 
 use App\Mail\NotificationMail;
+use App\Models\Blog;
+use App\Models\BlogComment;
 use App\Models\MatrimonyProfile;
 use App\Models\Notification;
 use App\Models\NotificationAction;
@@ -56,7 +58,9 @@ class NotificationService
             ]);
             $title = $action->render($action->title_template, $templateData);
             $message = $action->render($action->body_template, $templateData);
-            $actionUrl = $action->action_url ?? $actionUrl;
+            $actionUrl = $action->action_url
+                ? $action->render($action->action_url, $templateData)
+                : $actionUrl;
 
             $channels = array_values(array_diff($channels, [Notification::CHANNEL_PUSH]));
             if ($action->push_enabled) {
@@ -333,6 +337,60 @@ class NotificationService
             Notification::PRIORITY_HIGH,
             $user,
             ['in_app', 'email']
+        );
+    }
+
+    public function notifyBlogPublished(Blog $blog): array
+    {
+        $blog->loadMissing('user:id,name');
+        $recipientIds = User::query()
+            ->where('status', 'active')
+            ->where('id', '!=', $blog->user_id)
+            ->pluck('id')
+            ->all();
+
+        return $this->sendBulkNotifications(
+            $recipientIds,
+            Notification::TYPE_BLOG_PUBLISHED,
+            'New Blog: {{blog_title}}',
+            '{{author_name}} published a new blog.',
+            [
+                'blog_id' => $blog->id,
+                'blog_title' => $blog->title,
+                'author_name' => $blog->user?->name ?? 'Mali Setu',
+            ],
+            '/blogs/'.$blog->id,
+            Notification::PRIORITY_MEDIUM,
+            ['in_app'],
+            $blog
+        );
+    }
+
+    public function notifyBlogComment(Blog $blog, BlogComment $comment): array
+    {
+        $comment->loadMissing(['user:id,name', 'parent']);
+        $isReply = (bool) $comment->parent_id;
+        $recipientId = $isReply ? $comment->parent?->user_id : $blog->user_id;
+
+        if (! $recipientId || $recipientId === $comment->user_id) {
+            return [];
+        }
+
+        return $this->sendBulkNotifications(
+            [$recipientId],
+            $isReply ? Notification::TYPE_BLOG_REPLY : Notification::TYPE_BLOG_COMMENT,
+            $isReply ? 'New reply on {{blog_title}}' : 'New comment on {{blog_title}}',
+            $isReply ? '{{commenter_name}} replied to your comment.' : '{{commenter_name}} commented on your blog.',
+            [
+                'blog_id' => $blog->id,
+                'blog_title' => $blog->title,
+                'comment_id' => $comment->id,
+                'commenter_name' => $comment->user?->name ?? 'A member',
+            ],
+            '/blogs/'.$blog->id,
+            Notification::PRIORITY_MEDIUM,
+            ['in_app'],
+            $comment
         );
     }
 

@@ -5,13 +5,16 @@ namespace Tests\Feature;
 use App\Models\MatrimonyProfile;
 use App\Models\Notification;
 use App\Models\User;
+use App\Models\Blog;
 use App\Services\MatrimonyProfileSearchService;
 use App\Services\NotificationService;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class MatrimonyProfileRulesTest extends TestCase
@@ -37,6 +40,18 @@ class MatrimonyProfileRulesTest extends TestCase
             $table->string('phone')->nullable();
             $table->string('user_type')->default('matrimony');
             $table->string('cast_certificate')->nullable();
+            $table->string('caste_verification_status')->default('pending');
+            $table->string('status')->default('active');
+            $table->string('fcm_token')->nullable();
+            $table->timestamps();
+        });
+        Schema::create('caste_certificates', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('user_id')->unique();
+            $table->string('file_path');
+            $table->text('admin_notes')->nullable();
+            $table->unsignedBigInteger('verified_by')->nullable();
+            $table->timestamp('verified_at')->nullable();
             $table->timestamps();
         });
         Schema::create('matrimony_profiles', function (Blueprint $table) {
@@ -92,6 +107,19 @@ class MatrimonyProfileRulesTest extends TestCase
             $table->json('available_variables')->nullable();
             $table->boolean('is_enabled')->default(true);
             $table->boolean('push_enabled')->default(false);
+            $table->json('payload_template')->nullable();
+            $table->timestamps();
+        });
+        Schema::create('blogs', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('user_id');
+            $table->string('title');
+            $table->text('description')->nullable();
+            $table->unsignedBigInteger('blog_type')->nullable();
+            $table->json('tags')->nullable();
+            $table->text('media_path')->nullable();
+            $table->string('media_type')->nullable();
+            $table->boolean('is_active')->default(true);
             $table->timestamps();
         });
 
@@ -130,6 +158,33 @@ class MatrimonyProfileRulesTest extends TestCase
                 'data.profile.user.cast_certificate',
                 'caste-certificates/user-2.pdf'
             );
+    }
+
+    public function test_update_profile_accepts_and_returns_cast_certificate(): void
+    {
+        Storage::fake('public');
+        MatrimonyProfile::findOrFail(1)->update([
+            'personal_details' => ['name' => 'Current Male', 'gender' => 'male', 'photos' => ['old-1.jpg', 'old-2.jpg']],
+        ]);
+        $this->mock(NotificationService::class, function ($mock) {
+            $mock->shouldReceive('createNotification')->once();
+        });
+
+        $response = $this->actingAs(User::findOrFail(1), 'sanctum')
+            ->post('/api/matrimony/profile', [
+                '_method' => 'PUT',
+                'cast_certificate' => UploadedFile::fake()->create('caste.pdf', 100, 'application/pdf'),
+                'personal_details' => ['name' => 'Updated Name', 'gender' => 'male'],
+            ]);
+
+        $response->assertOk()
+            ->assertJsonPath('data.cast_certificate', fn ($path) => str_starts_with($path, 'caste-certificates/'))
+            ->assertJsonPath('data.cast_certificate_url', fn ($url) => str_contains($url, '/storage/caste-certificates/'));
+
+        $user = User::findOrFail(1);
+        Storage::disk('public')->assertExists($user->cast_certificate);
+        $this->assertSame('pending', $user->caste_verification_status);
+        $this->assertSame(['old-1.jpg', 'old-2.jpg'], MatrimonyProfile::findOrFail(1)->personal_details['photos']);
     }
 
     public function test_search_defaults_to_opposite_gender_even_with_other_filters(): void
@@ -282,5 +337,32 @@ class MatrimonyProfileRulesTest extends TestCase
             3,
             Notification::where('type', Notification::TYPE_MATRIMONY_PROFILE_CREATED)->count()
         );
+    }
+
+    public function test_published_blog_creates_push_enabled_notifications_for_other_active_users(): void
+    {
+        $blog = Blog::create([
+            'user_id' => 1,
+            'title' => 'Community Update',
+            'description' => 'News for members',
+            'is_active' => true,
+        ]);
+
+        app(NotificationService::class)->notifyBlogPublished($blog);
+
+        $this->assertDatabaseMissing('notifications', [
+            'user_id' => 1,
+            'type' => Notification::TYPE_BLOG_PUBLISHED,
+        ]);
+        foreach ([2, 3, 4] as $recipientId) {
+            $this->assertDatabaseHas('notifications', [
+                'user_id' => $recipientId,
+                'type' => Notification::TYPE_BLOG_PUBLISHED,
+            ]);
+        }
+        $this->assertDatabaseHas('notification_actions', [
+            'key' => Notification::TYPE_BLOG_PUBLISHED,
+            'push_enabled' => true,
+        ]);
     }
 }

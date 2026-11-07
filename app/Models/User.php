@@ -124,18 +124,27 @@ class User extends Authenticatable
 
     public function isAdminTeamMember(): bool
     {
+        if (! Schema::hasTable('admin_team_members')) {
+            return false;
+        }
+
         return $this->adminTeamMember()->where('is_active', true)->exists();
     }
 
     public function isSuperAdmin(): bool
     {
-        return $this->user_type === 'admin' && ! $this->adminTeamMember()->exists();
+        return $this->user_type === 'admin'
+            && (! Schema::hasTable('admin_team_members') || ! $this->adminTeamMember()->exists());
     }
 
     public function hasAdminPermission(string $permission): bool
     {
         if ($this->isSuperAdmin()) {
             return true;
+        }
+
+        if (! Schema::hasTable('admin_team_members')) {
+            return false;
         }
 
         $member = $this->adminTeamMember;

@@ -4,29 +4,33 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Blog;
-use App\Models\BlogLike;
+use App\Models\BlogCategory;
 use App\Models\BlogComment;
+use App\Models\BlogLike;
+use App\Services\NotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 
 class BlogController extends Controller
 {
+    public function __construct(private readonly NotificationService $notifications) {}
+
     /**
      * List blogs (paginated). Supports optional search and tag filters.
      */
     public function index(Request $request)
     {
         $userId = auth()->id();
-        
+
         $query = Blog::with(['user', 'category'])
-        ->withCount('likes')
-        ->withExists([
-            'likes as is_liked' => function ($q) use ($userId) {
-                $q->where('user_id', $userId);
-            }
-        ])
-        ->orderBy('created_at', 'desc');
+            ->withCount('likes')
+            ->withExists([
+                'likes as is_liked' => function ($q) use ($userId) {
+                    $q->where('user_id', $userId);
+                },
+            ])
+            ->orderBy('created_at', 'desc');
 
         if ($request->filled('search')) {
             $search = $request->search;
@@ -65,22 +69,21 @@ class BlogController extends Controller
     public function show($id)
     {
         $userId = auth()->id(); // logged-in user
-        
+
         $blog = Blog::with([
             'user',
             'category',
             'comments' => function ($q) {
                 $q->whereNull('parent_id')->with(['user', 'replies.user'])->latest();
-            }
+            },
         ])
-        ->withCount('likes')
-        ->withExists([
-            'likes as is_liked' => function ($query) use ($userId) {
-                $query->where('user_id', $userId);
-            }
-        ])
-        ->findOrFail($id);
-
+            ->withCount('likes')
+            ->withExists([
+                'likes as is_liked' => function ($query) use ($userId) {
+                    $query->where('user_id', $userId);
+                },
+            ])
+            ->findOrFail($id);
 
         $related = Blog::where('id', '!=', $blog->id)
             ->when($blog->tags, function ($query) use ($blog) {
@@ -182,7 +185,7 @@ class BlogController extends Controller
                         if (str_starts_with($mime, 'video/')) {
                             $mediaType = 'video';
                         }
-                        $fileName = 'blogs/media/' . uniqid() . '.' . $extension;
+                        $fileName = 'blogs/media/'.uniqid().'.'.$extension;
                         Storage::disk('public')->put($fileName, $decoded);
                         $mediaPaths[] = $fileName;
                     }
@@ -200,6 +203,8 @@ class BlogController extends Controller
             'media_type' => $mediaType,
             'is_active' => true,
         ]);
+
+        $this->notifications->notifyBlogPublished($blog);
 
         return response()->json([
             'success' => true,
@@ -315,7 +320,7 @@ class BlogController extends Controller
                             if (str_starts_with($mime, 'video/')) {
                                 $mediaType = 'video';
                             }
-                            $fileName = 'blogs/media/' . uniqid() . '.' . $extension;
+                            $fileName = 'blogs/media/'.uniqid().'.'.$extension;
                             Storage::disk('public')->put($fileName, $decoded);
                             $mediaPaths[] = $fileName;
                         }
@@ -443,7 +448,8 @@ class BlogController extends Controller
      */
     public function getCategories()
     {
-        $categories = \App\Models\BlogCategory::active()->orderBy('name')->get();
+        $categories = BlogCategory::active()->orderBy('name')->get();
+
         return response()->json([
             'success' => true,
             'data' => $categories,
@@ -501,6 +507,7 @@ class BlogController extends Controller
         ]);
 
         $comment->load('user');
+        $this->notifications->notifyBlogComment($blog, $comment);
 
         return response()->json([
             'success' => true,
