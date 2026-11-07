@@ -7,7 +7,8 @@
     .meet-status{font-size:.8rem;color:#5f6368}.meet-workspace{display:flex;gap:14px;min-height:64vh}
     .meet-stage-wrap{position:relative;flex:1;min-width:0;background:var(--meet-bg);border-radius:18px;overflow:hidden;box-shadow:0 5px 25px rgba(0,0,0,.15)}
     .meet-grid{height:64vh;padding:12px;display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));grid-auto-rows:minmax(220px,1fr);gap:10px;align-content:center}
-    .meet-tile{position:relative;background:#3c4043;border-radius:14px;overflow:hidden;min-height:220px}.meet-tile>div:first-child{width:100%;height:100%}
+    .meet-tile{position:relative;background:#3c4043;border-radius:14px;overflow:hidden;min-height:220px}.meet-player{width:100%;height:100%}
+    .meet-camera-off{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.8rem;background:linear-gradient(145deg,#3c4043,#2d3033);color:#e8eaed;font-weight:600}.meet-camera-off i{width:72px;height:72px;border-radius:50%;display:grid;place-items:center;background:#4b4f52;color:#fff;font-size:1.65rem}.meet-camera-off span{font-size:.9rem;letter-spacing:.01em}
     .meet-tile video{object-fit:cover!important}.meet-name{position:absolute;left:14px;bottom:12px;color:#fff;font-size:.82rem;text-shadow:0 1px 4px #000;z-index:3}
     .meet-mic-state{position:absolute;right:12px;top:12px;width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:rgba(32,33,36,.75);color:#fff;z-index:3}
     .participant-menu{position:absolute;right:12px;bottom:10px;z-index:4}.participant-menu .dropdown-menu{font-size:.85rem}

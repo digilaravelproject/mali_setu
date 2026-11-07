@@ -61,11 +61,19 @@
         if (tile) return tile;
         tile = document.createElement('div'); tile.id = tileId; tile.className = 'meet-tile';
         const player = document.createElement('div'); player.className = 'meet-player'; tile.appendChild(player);
+        const cameraOff = document.createElement('div'); cameraOff.className = 'meet-camera-off'; cameraOff.innerHTML = '<i class="fas fa-video-slash"></i><span>Camera is off</span>'; tile.appendChild(cameraOff);
         const label = document.createElement('span'); label.className = 'meet-name'; label.textContent = local ? `${credentials.display_name} (You)` : displayName(uid); tile.appendChild(label);
         const mic = document.createElement('span'); mic.className = 'meet-mic-state'; mic.innerHTML = '<i class="fas fa-microphone"></i>'; tile.appendChild(mic);
         if (options.isHost && !local && memberId(uid)) tile.appendChild(moderationMenu(memberId(uid)));
         grid.appendChild(tile); waiting.classList.add('d-none'); updateParticipantCount(); resolveName(uid, label);
         return tile;
+    }
+
+    function setCameraState(tile, cameraOn) {
+        if (!tile) return;
+        tile.classList.toggle('camera-off', !cameraOn);
+        tile.querySelector('.meet-player')?.classList.toggle('d-none', !cameraOn);
+        tile.querySelector('.meet-camera-off')?.classList.toggle('d-none', cameraOn);
     }
 
     function moderationMenu(userId) {
@@ -97,17 +105,23 @@
         credentials = await requestJson(options.tokenUrl);
         client = AgoraRTC.createClient({mode:'live', codec:'vp8'});
         await client.setClientRole('host');
+        client.on('user-joined', user => { tileFor(user.uid); updateParticipantCount(); });
         client.on('user-published', async (user, mediaType) => {
             await client.subscribe(user, mediaType);
             const tile = tileFor(user.uid);
-            if (mediaType === 'video') user.videoTrack.play(tile.querySelector('.meet-player'));
+            if (mediaType === 'video') { setCameraState(tile, true); user.videoTrack.play(tile.querySelector('.meet-player')); }
             if (mediaType === 'audio') { user.audioTrack.play(); tile.querySelector('.meet-mic-state').innerHTML = '<i class="fas fa-microphone"></i>'; }
             updateParticipantCount();
         });
         client.on('user-unpublished', (user, mediaType) => {
             const tile = document.getElementById(`remote-${user.uid}`);
             if (mediaType === 'audio' && tile) tile.querySelector('.meet-mic-state').innerHTML = '<i class="fas fa-microphone-slash"></i>';
-            if (mediaType === 'video' && tile) tile.querySelector('.meet-player').innerHTML = '';
+            if (mediaType === 'video' && tile) { tile.querySelector('.meet-player').innerHTML = ''; setCameraState(tile, false); }
+        });
+        client.on('user-info-updated', (uid, message) => {
+            const tile = document.getElementById(`remote-${uid}`);
+            if (message === 'mute-video' || message === 'disable-local-video') setCameraState(tile, false);
+            if (message === 'unmute-video' || message === 'enable-local-video') setCameraState(tile, true);
         });
         client.on('user-left', user => { document.getElementById(`remote-${user.uid}`)?.remove(); updateParticipantCount(); });
         client.on('token-privilege-will-expire', () => renewToken().catch(error => showError(error.message)));
@@ -118,7 +132,7 @@
         await client.join(credentials.app_id, credentials.channel, credentials.token, credentials.uid);
         const localTile = tileFor(credentials.uid, true);
         try { audioTrack = await AgoraRTC.createMicrophoneAudioTrack(); } catch (_) { showToast('Microphone is unavailable. You can still watch the meeting.'); }
-        try { cameraTrack = await AgoraRTC.createCameraVideoTrack(); cameraTrack.play(localTile.querySelector('.meet-player')); } catch (_) { showToast('Camera is unavailable. You can still use audio.'); }
+        try { cameraTrack = await AgoraRTC.createCameraVideoTrack(); setCameraState(localTile, true); cameraTrack.play(localTile.querySelector('.meet-player')); } catch (_) { setCameraState(localTile, false); showToast('Camera is unavailable. You can still use audio.'); }
         const publishable = [audioTrack, cameraTrack].filter(Boolean); if (publishable.length) await client.publish(publishable);
         document.getElementById('micButton').disabled = !audioTrack; document.getElementById('cameraButton').disabled = !cameraTrack; document.getElementById('screenButton').disabled = false;
         setConnected(); updateParticipantCount(); startPolling();
@@ -132,16 +146,17 @@
     async function toggleVideo(force) {
         if (!cameraTrack) return; const next = force ?? !videoMuted; await cameraTrack.setMuted(next); videoMuted = next;
         const button = document.getElementById('cameraButton'); button.classList.toggle('off', next); button.innerHTML = `<i class="fas fa-video${next?'-slash':''}"></i>`;
+        setCameraState(tileFor(credentials.uid, true), !next);
     }
     async function toggleScreen() {
         if (sharingScreen) return stopScreenShare();
         screenTrack = await AgoraRTC.createScreenVideoTrack({}, 'disable');
         screenTrack.on('track-ended', stopScreenShare); if(cameraTrack) await client.unpublish(cameraTrack); await client.publish(screenTrack);
-        screenTrack.play(tileFor(credentials.uid, true).querySelector('.meet-player')); sharingScreen = true; document.getElementById('screenButton').classList.add('off'); showToast('You are presenting your screen.');
+        const localTile = tileFor(credentials.uid, true); setCameraState(localTile, true); screenTrack.play(localTile.querySelector('.meet-player')); sharingScreen = true; document.getElementById('screenButton').classList.add('off'); showToast('You are presenting your screen.');
     }
     async function stopScreenShare() {
         if (!sharingScreen) return; await client.unpublish(screenTrack).catch(()=>{}); screenTrack.stop(); screenTrack.close(); screenTrack = null;
-        if(cameraTrack){await client.publish(cameraTrack);cameraTrack.play(tileFor(credentials.uid, true).querySelector('.meet-player'))} sharingScreen = false; document.getElementById('screenButton').classList.remove('off');
+        if(cameraTrack){const localTile=tileFor(credentials.uid,true);await client.publish(cameraTrack);setCameraState(localTile,!videoMuted);if(!videoMuted)cameraTrack.play(localTile.querySelector('.meet-player'))} sharingScreen = false; document.getElementById('screenButton').classList.remove('off');
     }
 
     function renderComments(comments) {
