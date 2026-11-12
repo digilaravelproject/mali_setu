@@ -168,7 +168,7 @@
                                                         <i class="fas fa-check"></i>
                                                     </button>
                                                 @endif
-                                                @if($business->businessRegistrationPayments->isEmpty())
+                                                @if($business->business_payment_status !== 'paid')
                                                     <button type="button" class="btn btn-sm btn-primary"
                                                             onclick="approveBusinessWithPayment({{ $business->id }}, @js($business->business_name))"
                                                             title="Approve with payment">

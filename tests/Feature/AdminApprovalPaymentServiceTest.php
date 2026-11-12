@@ -6,6 +6,7 @@ use App\Models\Business;
 use App\Models\BusinessPlan;
 use App\Models\MatrimonyPlan;
 use App\Models\MatrimonyProfile;
+use App\Models\Payment;
 use App\Models\Transaction;
 use App\Services\AdminApprovalPaymentService;
 use Carbon\Carbon;
@@ -128,6 +129,15 @@ class AdminApprovalPaymentServiceTest extends TestCase
         $plan = MatrimonyPlan::create([
             'plan_name' => 'Standard', 'duration_years' => 2, 'price' => 1999, 'active' => true,
         ]);
+        Payment::create([
+            'user_id' => 20,
+            'payment_id' => 'pending-matrimony-payment',
+            'payment_type' => 'matrimony_subscription',
+            'amount' => 1999,
+            'currency' => 'INR',
+            'status' => 'pending',
+            'payment_method' => 'other',
+        ]);
 
         app(AdminApprovalPaymentService::class)->approveMatrimony($profile, $plan, 99);
 
@@ -142,6 +152,7 @@ class AdminApprovalPaymentServiceTest extends TestCase
             'status' => 'completed',
             'payment_method' => 'other',
         ]);
+        $this->assertSame(2, Payment::where('user_id', 20)->count());
     }
 
     public function test_admin_can_add_business_payment_and_fully_approve_business(): void

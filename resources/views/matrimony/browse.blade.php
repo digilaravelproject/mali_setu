@@ -308,15 +308,6 @@
                                     <div class="accordion-body">
                                         
                                         <div class="filter-field-wrapper">
-                                            <label class="form-label-bold">Gender</label>
-                                            <select name="gender" class="form-select">
-                                                <option value="">Any</option>
-                                                <option value="male" {{ request('gender') === 'male' ? 'selected' : '' }}>Male</option>
-                                                <option value="female" {{ request('gender') === 'female' ? 'selected' : '' }}>Female</option>
-                                            </select>
-                                        </div>
-
-                                        <div class="filter-field-wrapper">
                                             <label class="form-label-bold col-12">Age Range</label>
                                             <div class="row g-2">
                                                 <div class="col-6">

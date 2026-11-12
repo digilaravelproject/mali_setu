@@ -206,7 +206,7 @@
                                             </button>
                                         </form>
 
-                                        @if($profile->matrimonyPayments->isEmpty())
+                                        @if($profile->matrimony_payment_status !== 'paid')
                                             <button type="button" class="btn btn-primary btn-sm"
                                                     onclick="approveMatrimonyWithPayment({{ $profile->id }}, @js($profile->user->name ?? 'this user'))"
                                                     data-toggle="tooltip" title="Approve with payment">
@@ -301,7 +301,7 @@
 </div>
 @endsection
 
-@section('scripts')
+@push('scripts')
 <script>
 
 function toggleSelectAll() {
@@ -363,4 +363,4 @@ document.addEventListener('DOMContentLoaded', function() {
     $('[data-toggle="tooltip"]').tooltip();
 });
 </script>
-@endsection
+@endpush

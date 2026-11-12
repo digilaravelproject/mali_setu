@@ -532,15 +532,11 @@ class MatrimonyController extends Controller
             ->where('user_id', '!=', $user->id)
             ->with('user');
 
-        app(MatrimonyProfileSearchService::class)->applyDefaultOppositeGender($query, $request, $user);
+        // The public web filter no longer exposes or accepts a gender override.
+        // Results continue to default to the current user's opposite gender.
+        app(MatrimonyProfileSearchService::class)->applyDefaultOppositeGender($query, new Request, $user);
 
         // 1. Basic Details
-        if ($request->filled('gender')) {
-            $query->where(function ($q) use ($request) {
-                $q->where('personal_details->gender', 'like', $request->gender)
-                    ->orWhereRaw('LOWER(JSON_UNQUOTE(JSON_EXTRACT(personal_details, "$.gender"))) = ?', [strtolower($request->gender)]);
-            });
-        }
         if ($request->filled('age_min') || $request->filled('age_max')) {
             $query->whereBetween('age', [$request->age_min ?? 18, $request->age_max ?? 100]);
         }

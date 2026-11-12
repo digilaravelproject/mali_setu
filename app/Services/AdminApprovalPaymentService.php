@@ -17,7 +17,7 @@ class AdminApprovalPaymentService
     {
         return DB::transaction(function () use ($profile, $plan, $adminId) {
             $profile = MatrimonyProfile::query()->lockForUpdate()->findOrFail($profile->id);
-            $this->ensureNoPayment($profile->user_id, 'matrimony_subscription');
+            $this->ensureNoCompletedPayment($profile);
             $this->ensureActivePlan($plan);
 
             $approvedAt = now();
@@ -44,7 +44,7 @@ class AdminApprovalPaymentService
     {
         return DB::transaction(function () use ($business, $plan, $adminId) {
             $business = Business::query()->lockForUpdate()->findOrFail($business->id);
-            $this->ensureNoPayment($business->user_id, 'business_registration');
+            $this->ensureNoCompletedPayment($business);
             $this->ensureActivePlan($plan);
 
             $approvedAt = now();
@@ -68,11 +68,15 @@ class AdminApprovalPaymentService
         });
     }
 
-    private function ensureNoPayment(int $userId, string $paymentType): void
+    private function ensureNoCompletedPayment(MatrimonyProfile|Business $record): void
     {
-        if (Payment::where('user_id', $userId)->where('payment_type', $paymentType)->exists()) {
+        $paymentStatus = $record instanceof MatrimonyProfile
+            ? $record->matrimony_payment_status
+            : $record->business_payment_status;
+
+        if ($paymentStatus === 'paid') {
             throw ValidationException::withMessages([
-                'payment' => 'A payment entry already exists for this user.',
+                'payment' => 'A successful payment already exists for this user.',
             ]);
         }
     }
