@@ -320,6 +320,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::get('/geocode-pincode', [BusinessManagementController::class, 'geocodePincode'])->name('geocode-pincode');
             Route::post('/', [BusinessManagementController::class, 'store'])->name('store');
             Route::post('/{id}/approve', [BusinessManagementController::class, 'approve'])->name('approve');
+            Route::post('/{id}/approve-with-payment', [BusinessManagementController::class, 'approveWithPayment'])->name('approve-with-payment');
             Route::post('/{id}/reject', [BusinessManagementController::class, 'reject'])->name('reject');
             Route::get('/{id}/jobs', [BusinessManagementController::class, 'jobs'])->name('jobs');
             Route::post('/jobs/{jobId}/approve', [BusinessManagementController::class, 'approveJob'])->name('jobs.approve');
@@ -375,6 +376,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::get('/create', [MatrimonyManagementController::class, 'create'])->name('create');
             Route::post('/', [MatrimonyManagementController::class, 'store'])->name('store');
             Route::post('/{id}/approve', [MatrimonyManagementController::class, 'approve'])->name('approve');
+            Route::post('/{id}/approve-with-payment', [MatrimonyManagementController::class, 'approveWithPayment'])->name('approve-with-payment');
             Route::post('/{id}/reject', [MatrimonyManagementController::class, 'reject'])->name('reject');
             Route::get('/{id}/edit', [MatrimonyManagementController::class, 'edit'])->name('edit');
             Route::put('/{id}', [MatrimonyManagementController::class, 'update'])->name('update');

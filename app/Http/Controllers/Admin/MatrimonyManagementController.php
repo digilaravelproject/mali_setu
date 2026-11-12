@@ -8,11 +8,13 @@ use App\Models\ChatConversation;
 use App\Models\ChatMessage;
 use App\Models\ConnectionRequest;
 use App\Models\Education;
+use App\Models\MatrimonyPlan;
 use App\Models\MatrimonyProfile;
 use App\Models\Payment;
 use App\Models\SubCast;
 use App\Models\Transaction;
 use App\Models\User;
+use App\Services\AdminApprovalPaymentService;
 use App\Services\NotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -20,14 +22,17 @@ use Illuminate\Support\Facades\Storage;
 
 class MatrimonyManagementController extends Controller
 {
-    public function __construct(private readonly NotificationService $notifications) {}
+    public function __construct(
+        private readonly NotificationService $notifications,
+        private readonly AdminApprovalPaymentService $adminApprovalPayments
+    ) {}
 
     /**
      * Display all matrimony profiles
      */
     public function index(Request $request)
     {
-        $query = MatrimonyProfile::with(['user', 'matrimonyTransactions']);
+        $query = MatrimonyProfile::with(['user', 'matrimonyTransactions', 'matrimonyPayments']);
 
         // Filter by approval status
         if ($request->has('approval_status') && $request->approval_status !== '') {
@@ -72,7 +77,7 @@ class MatrimonyManagementController extends Controller
      */
     public function moderation(Request $request)
     {
-        $query = MatrimonyProfile::with(['user', 'matrimonyTransactions']);
+        $query = MatrimonyProfile::with(['user', 'matrimonyTransactions', 'matrimonyPayments']);
 
         // Search functionality
         if ($request->filled('search')) {
@@ -91,7 +96,43 @@ class MatrimonyManagementController extends Controller
                 ->whereDate('updated_at', today())->count(),
         ];
 
-        return view('admin.matrimony.moderation', compact('pendingProfiles', 'stats'));
+        $matrimonyPlans = MatrimonyPlan::where('active', true)
+            ->orderBy('duration_years')
+            ->get();
+
+        return view('admin.matrimony.moderation', compact('pendingProfiles', 'stats', 'matrimonyPlans'));
+    }
+
+    /** Approve a profile and record an admin-authorized completed payment. */
+    public function approveWithPayment(Request $request, $profileId)
+    {
+        $validated = $request->validate([
+            'plan_id' => 'required|integer|exists:matrimony_plans,id',
+        ]);
+
+        try {
+            $profile = MatrimonyProfile::findOrFail($profileId);
+            $plan = MatrimonyPlan::findOrFail($validated['plan_id']);
+            $this->adminApprovalPayments->approveMatrimony($profile, $plan, (int) auth()->id());
+
+            try {
+                $this->notifications->notifyMatrimonyApproved($profile->fresh());
+            } catch (\Throwable $notificationError) {
+                Log::error('Matrimony profile approved with payment but its notification failed', [
+                    'profile_id' => $profile->id,
+                    'error' => $notificationError->getMessage(),
+                ]);
+            }
+
+            return redirect()->back()->with('success', 'Payment entry added and profile approved successfully!');
+        } catch (\Throwable $e) {
+            Log::error('Failed to approve matrimony profile with payment', [
+                'profile_id' => $profileId,
+                'error' => $e->getMessage(),
+            ]);
+
+            return redirect()->back()->withErrors(['payment' => $e->getMessage()]);
+        }
     }
 
     /**
@@ -481,6 +522,7 @@ class MatrimonyManagementController extends Controller
             'sentConnectionRequests.receiver',
             'receivedConnectionRequests.sender',
             'matrimonyTransactions',
+            'matrimonyPayments',
         ])->findOrFail($id);
 
         return view('admin.matrimony.show', compact('profile'));

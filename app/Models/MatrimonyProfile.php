@@ -88,6 +88,49 @@ class MatrimonyProfile extends Model
             ->latest();
     }
 
+    /** Payment audit rows for this user's matrimony subscription. */
+    public function matrimonyPayments(): HasMany
+    {
+        return $this->hasMany(Payment::class, 'user_id', 'user_id')
+            ->where('payment_type', 'matrimony_subscription')
+            ->latest();
+    }
+
+    /**
+     * Resolve payment attempts by outcome, not only by creation time.
+     * A completed attempt must continue to win over later pending retries.
+     */
+    public function getMatrimonyPaymentRecordAttribute(): Transaction|Payment|null
+    {
+        $transactions = $this->relationLoaded('matrimonyTransactions')
+            ? $this->matrimonyTransactions
+            : $this->matrimonyTransactions()->get();
+        $payments = $this->relationLoaded('matrimonyPayments')
+            ? $this->matrimonyPayments
+            : $this->matrimonyPayments()->get();
+
+        foreach (['completed', 'pending'] as $status) {
+            $record = $transactions->firstWhere('status', $status)
+                ?? $payments->firstWhere('status', $status);
+
+            if ($record) {
+                return $record;
+            }
+        }
+
+        return $transactions->first() ?? $payments->first();
+    }
+
+    public function getMatrimonyPaymentStatusAttribute(): string
+    {
+        return match ($this->matrimonyPaymentRecord?->status) {
+            'completed' => 'paid',
+            'pending' => 'pending',
+            null => 'unpaid',
+            default => (string) $this->matrimonyPaymentRecord->status,
+        };
+    }
+
     /**
      * Get the candidate's name stored in the matrimony profile.
      */

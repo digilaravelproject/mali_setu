@@ -5,10 +5,12 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Business;
 use App\Models\BusinessCategory;
+use App\Models\BusinessPlan;
 use App\Models\JobPosting;
 use App\Models\Payment;
 use App\Models\Transaction;
 use App\Models\User;
+use App\Services\AdminApprovalPaymentService;
 use App\Services\NotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
@@ -18,14 +20,20 @@ use Illuminate\Validation\ValidationException;
 
 class BusinessManagementController extends Controller
 {
-    public function __construct(private readonly NotificationService $notifications) {}
+    public function __construct(
+        private readonly NotificationService $notifications,
+        private readonly AdminApprovalPaymentService $adminApprovalPayments
+    ) {}
 
     /**
      * Display all businesses
      */
     public function index(Request $request)
     {
-        $query = Business::with(['user', 'category', 'products', 'services'])
+        $query = Business::with([
+            'user', 'category', 'products', 'services',
+            'businessRegistrationTransactions', 'businessRegistrationPayments',
+        ])
             ->withCount([
                 'businessRegistrationTransactions as completed_business_registrations_count' => function ($query) {
                     $query->where('status', 'completed');
@@ -90,7 +98,10 @@ class BusinessManagementController extends Controller
      */
     public function verification(Request $request)
     {
-        $query = Business::with(['user', 'category', 'products', 'services'])
+        $query = Business::with([
+            'user', 'category', 'products', 'services',
+            'businessRegistrationTransactions', 'businessRegistrationPayments',
+        ])
             ->withCount([
                 'businessRegistrationTransactions as completed_business_registrations_count' => function ($query) {
                     $query->where('status', 'completed');
@@ -122,7 +133,12 @@ class BusinessManagementController extends Controller
                 ->whereDate('updated_at', today())->count(),
         ];
 
-        return view('admin.businesses.verification', compact('pendingBusinesses', 'stats'));
+        $businessPlans = BusinessPlan::where('active', true)
+            ->orderBy('company_type')
+            ->orderBy('duration_years')
+            ->get();
+
+        return view('admin.businesses.verification', compact('pendingBusinesses', 'stats', 'businessPlans'));
     }
 
     /**
@@ -133,6 +149,38 @@ class BusinessManagementController extends Controller
         return $this->verification($request);
     }
 
+    /** Approve a business and record an admin-authorized completed payment. */
+    public function approveWithPayment(Request $request, $businessId)
+    {
+        $validated = $request->validate([
+            'plan_id' => 'required|integer|exists:business_plans,id',
+        ]);
+
+        try {
+            $business = Business::findOrFail($businessId);
+            $plan = BusinessPlan::findOrFail($validated['plan_id']);
+            $this->adminApprovalPayments->approveBusiness($business, $plan, (int) auth()->id());
+
+            try {
+                $this->notifications->notifyBusinessVerified($business->fresh());
+            } catch (\Throwable $notificationError) {
+                Log::error('Business approved with payment but its notification failed', [
+                    'business_id' => $business->id,
+                    'error' => $notificationError->getMessage(),
+                ]);
+            }
+
+            return redirect()->back()->with('success', 'Payment entry added and business approved successfully!');
+        } catch (\Throwable $e) {
+            Log::error('Failed to approve business with payment', [
+                'business_id' => $businessId,
+                'error' => $e->getMessage(),
+            ]);
+
+            return redirect()->back()->withErrors(['payment' => $e->getMessage()]);
+        }
+    }
+
     /**
      * Approve business
      */
@@ -141,10 +189,7 @@ class BusinessManagementController extends Controller
         try {
             $business = Business::findOrFail($businessId);
 
-            $paymentCompleted = Transaction::where('user_id', $business->user_id)
-                ->where('purpose', 'business_registration')
-                ->where('status', 'completed')
-                ->exists();
+            $paymentCompleted = $business->business_payment_status === 'paid';
 
             if (! $paymentCompleted) {
                 $message = 'Payment is pending for this business. Approval is not allowed until payment is complete.';

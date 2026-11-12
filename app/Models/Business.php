@@ -4,7 +4,6 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use App\Models\Transaction;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
@@ -115,16 +114,31 @@ class Business extends Model
             ->where('purpose', 'business_registration');
     }
 
+    /** Payment audit rows for this user's business registration. */
+    public function businessRegistrationPayments(): HasMany
+    {
+        return $this->hasMany(Payment::class, 'user_id', 'user_id')
+            ->where('payment_type', 'business_registration')
+            ->latest();
+    }
+
     /**
      * Get a simple payment status for this business.
      */
     public function getBusinessPaymentStatusAttribute(): string
     {
-        if ($this->businessRegistrationTransactions()->where('status', 'completed')->exists()) {
+        $transactions = $this->relationLoaded('businessRegistrationTransactions')
+            ? $this->businessRegistrationTransactions
+            : $this->businessRegistrationTransactions()->get();
+        $payments = $this->relationLoaded('businessRegistrationPayments')
+            ? $this->businessRegistrationPayments
+            : $this->businessRegistrationPayments()->get();
+
+        if ($transactions->contains('status', 'completed') || $payments->contains('status', 'completed')) {
             return 'paid';
         }
 
-        if ($this->businessRegistrationTransactions()->where('status', 'pending')->exists()) {
+        if ($transactions->contains('status', 'pending') || $payments->contains('status', 'pending')) {
             return 'pending';
         }
 
@@ -171,6 +185,7 @@ class Business extends Model
         if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
             return implode(', ', $decoded);
         }
+
         return $value;
     }
 
@@ -188,6 +203,6 @@ class Business extends Model
     public function scopeActiveSubscription($query)
     {
         return $query->where('subscription_status', 'active')
-                    ->where('subscription_expires_at', '>', now());
+            ->where('subscription_expires_at', '>', now());
     }
 }

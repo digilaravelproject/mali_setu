@@ -132,9 +132,9 @@
                                             @endif
                                         </td>
                                         <td>
-                                            @if($business->completed_business_registrations_count > 0)
+                                            @if($business->business_payment_status === 'paid')
                                                 <span class="badge bg-success">Paid</span>
-                                            @elseif($business->pending_business_registrations_count > 0)
+                                            @elseif($business->business_payment_status === 'pending')
                                                 <span class="badge bg-warning">Payment Pending</span>
                                             @else
                                                 <span class="badge bg-secondary">Not Paid</span>
@@ -158,7 +158,7 @@
                                                     <button type="button" class="btn btn-sm btn-success" disabled title="Approved">
                                                         <i class="fas fa-check"></i>
                                                     </button>
-                                                @elseif($business->completed_business_registrations_count > 0)
+                                                @elseif($business->business_payment_status === 'paid')
                                                     <button type="button" class="btn btn-sm btn-success" 
                                                             onclick="approveBusiness({{ $business->id }})" title="Approve">
                                                         <i class="fas fa-check"></i>
@@ -166,6 +166,13 @@
                                                 @else
                                                     <button type="button" class="btn btn-sm btn-secondary" title="Payment pending. Cannot approve." disabled>
                                                         <i class="fas fa-check"></i>
+                                                    </button>
+                                                @endif
+                                                @if($business->businessRegistrationPayments->isEmpty())
+                                                    <button type="button" class="btn btn-sm btn-primary"
+                                                            onclick="approveBusinessWithPayment({{ $business->id }}, @js($business->business_name))"
+                                                            title="Approve with payment">
+                                                        <i class="fas fa-money-check-alt"></i>
                                                     </button>
                                                 @endif
                                                 <button type="button" class="btn btn-sm btn-danger" 
@@ -204,6 +211,37 @@
                     @endif
                 </div>
             </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="approveWithPaymentModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Approve with Payment</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="approveWithPaymentForm" method="POST">
+                @csrf
+                <div class="modal-body">
+                    <p id="approveWithPaymentMessage"></p>
+                    <div class="alert alert-warning mb-3">
+                        This will add a completed payment entry and fully approve the business. The subscription expiry date will be calculated from the selected plan.
+                    </div>
+                    <label for="businessPlanId" class="form-label">Subscription plan</label>
+                    <select id="businessPlanId" name="plan_id" class="form-select" required>
+                        <option value="">Select a plan</option>
+                        @foreach($businessPlans as $plan)
+                            <option value="{{ $plan->id }}">{{ $plan->company_type }} — {{ $plan->duration_years }} year(s) — ₹{{ number_format($plan->price, 2) }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Add Payment &amp; Approve</button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
@@ -274,6 +312,12 @@ function rejectBusiness(businessId) {
     const form = document.getElementById('rejectForm');
     form.action = `/admin/businesses/${businessId}/reject`;
     new bootstrap.Modal(document.getElementById('rejectModal')).show();
+}
+
+function approveBusinessWithPayment(businessId, businessName) {
+    document.getElementById('approveWithPaymentForm').action = `/admin/businesses/${businessId}/approve-with-payment`;
+    document.getElementById('approveWithPaymentMessage').textContent = `Do you want to add a payment entry and fully approve ${businessName}?`;
+    new bootstrap.Modal(document.getElementById('approveWithPaymentModal')).show();
 }
 </script>
 @endpush

@@ -178,17 +178,13 @@
                                     @endif
                                 </td>
                                 <td>
-                                    @php
-                                        $latestTxn = $profile->matrimonyTransactions->first();
-                                    @endphp
-                                    @if($latestTxn)
-                                        @if($latestTxn->status == 'completed')
-                                            <span class="badge bg-success text-white">Paid (₹{{ number_format($latestTxn->amount, 2) }})</span>
-                                        @elseif($latestTxn->status == 'pending')
-                                            <span class="badge bg-warning text-dark">Pending (₹{{ number_format($latestTxn->amount, 2) }})</span>
-                                        @else
-                                            <span class="badge bg-danger text-white">{{ ucfirst($latestTxn->status) }} (₹{{ number_format($latestTxn->amount, 2) }})</span>
-                                        @endif
+                                    @php($paymentRecord = $profile->matrimony_payment_record)
+                                    @if($profile->matrimony_payment_status === 'paid')
+                                        <span class="badge bg-success text-white">Paid (₹{{ number_format($paymentRecord->amount, 2) }})</span>
+                                    @elseif($profile->matrimony_payment_status === 'pending')
+                                        <span class="badge bg-warning text-dark">Pending (₹{{ number_format($paymentRecord->amount, 2) }})</span>
+                                    @elseif($paymentRecord)
+                                        <span class="badge bg-danger text-white">{{ ucfirst($profile->matrimony_payment_status) }} (₹{{ number_format($paymentRecord->amount, 2) }})</span>
                                     @else
                                         <span class="badge bg-secondary text-white">Unpaid</span>
                                     @endif
@@ -209,6 +205,14 @@
                                                 <i class="fas fa-check"></i>
                                             </button>
                                         </form>
+
+                                        @if($profile->matrimonyPayments->isEmpty())
+                                            <button type="button" class="btn btn-primary btn-sm"
+                                                    onclick="approveMatrimonyWithPayment({{ $profile->id }}, @js($profile->user->name ?? 'this user'))"
+                                                    data-toggle="tooltip" title="Approve with payment">
+                                                <i class="fas fa-money-check-alt"></i>
+                                            </button>
+                                        @endif
                                         
                                         <!-- Reject Form -->
                                         <form method="POST" action="{{ route('admin.matrimony.reject', $profile->id) }}" style="display: inline;">
@@ -264,6 +268,37 @@
         </div>
     </div>
 </div>
+
+<div class="modal fade" id="approveWithPaymentModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Approve with Payment</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="approveWithPaymentForm" method="POST">
+                @csrf
+                <div class="modal-body">
+                    <p id="approveWithPaymentMessage"></p>
+                    <div class="alert alert-warning mb-3">
+                        This will add a completed payment entry and fully approve the profile. The expiry date will be calculated from the selected plan.
+                    </div>
+                    <label for="matrimonyPlanId" class="form-label">Subscription plan</label>
+                    <select id="matrimonyPlanId" name="plan_id" class="form-select" required>
+                        <option value="">Select a plan</option>
+                        @foreach($matrimonyPlans as $plan)
+                            <option value="{{ $plan->id }}">{{ $plan->plan_name ?: 'Matrimony plan' }} — {{ $plan->duration_years }} year(s) — ₹{{ number_format($plan->price, 2) }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Add Payment &amp; Approve</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 @endsection
 
 @section('scripts')
@@ -315,6 +350,12 @@ function exportList() {
 function getSelectedProfiles() {
     const checkboxes = document.querySelectorAll('.profile-checkbox:checked');
     return Array.from(checkboxes).map(checkbox => checkbox.value);
+}
+
+function approveMatrimonyWithPayment(profileId, userName) {
+    document.getElementById('approveWithPaymentForm').action = `/admin/matrimony/${profileId}/approve-with-payment`;
+    document.getElementById('approveWithPaymentMessage').textContent = `Do you want to add a payment entry and fully approve ${userName}?`;
+    new bootstrap.Modal(document.getElementById('approveWithPaymentModal')).show();
 }
 
 // Initialize tooltips

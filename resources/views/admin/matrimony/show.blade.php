@@ -256,18 +256,14 @@
                                     </div>
                                     <div class="col-12 mt-2 pt-2 border-top border-light">
                                         <div class="info-label-premium">Payment Status</div>
-                                        @php
-                                            $latestTxn = $profile->matrimonyTransactions->first();
-                                        @endphp
+                                        @php($paymentRecord = $profile->matrimony_payment_record)
                                         <div class="info-value-premium">
-                                            @if($latestTxn)
-                                                @if($latestTxn->status == 'completed')
-                                                    <span class="text-success"><i class="fas fa-check-circle me-1"></i>Paid (₹{{ number_format($latestTxn->amount, 2) }})</span>
-                                                @elseif($latestTxn->status == 'pending')
-                                                    <span class="text-warning"><i class="fas fa-clock me-1"></i>Pending (₹{{ number_format($latestTxn->amount, 2) }})</span>
-                                                @else
-                                                    <span class="text-danger"><i class="fas fa-times-circle me-1"></i>{{ ucfirst($latestTxn->status) }} (₹{{ number_format($latestTxn->amount, 2) }})</span>
-                                                @endif
+                                            @if($profile->matrimony_payment_status === 'paid')
+                                                <span class="text-success"><i class="fas fa-check-circle me-1"></i>Paid (₹{{ number_format($paymentRecord->amount, 2) }})</span>
+                                            @elseif($profile->matrimony_payment_status === 'pending')
+                                                <span class="text-warning"><i class="fas fa-clock me-1"></i>Pending (₹{{ number_format($paymentRecord->amount, 2) }})</span>
+                                            @elseif($paymentRecord)
+                                                <span class="text-danger"><i class="fas fa-times-circle me-1"></i>{{ ucfirst($profile->matrimony_payment_status) }} (₹{{ number_format($paymentRecord->amount, 2) }})</span>
                                             @else
                                                 <span class="text-secondary"><i class="fas fa-minus-circle me-1"></i>Unpaid</span>
                                             @endif

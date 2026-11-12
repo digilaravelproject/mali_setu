@@ -164,17 +164,12 @@
                                         @endif
                                     </td>
                                     <td>
-                                        @php
-                                            $latestTxn = $profile->matrimonyTransactions->first();
-                                        @endphp
-                                        @if($latestTxn)
-                                            @if($latestTxn->status == 'completed')
-                                                <span class="badge bg-success">Paid</span>
-                                            @elseif($latestTxn->status == 'pending')
-                                                <span class="badge bg-warning">Pending</span>
-                                            @else
-                                                <span class="badge bg-danger">{{ ucfirst($latestTxn->status) }}</span>
-                                            @endif
+                                        @if($profile->matrimony_payment_status === 'paid')
+                                            <span class="badge bg-success">Paid</span>
+                                        @elseif($profile->matrimony_payment_status === 'pending')
+                                            <span class="badge bg-warning">Pending</span>
+                                        @elseif($profile->matrimony_payment_status !== 'unpaid')
+                                            <span class="badge bg-danger">{{ ucfirst($profile->matrimony_payment_status) }}</span>
                                         @else
                                             <span class="badge bg-secondary">Unpaid</span>
                                         @endif

@@ -142,9 +142,9 @@
                                         @endif
                                     </td>
                                     <td>
-                                        @if($business->completed_business_registrations_count > 0)
+                                        @if($business->business_payment_status === 'paid')
                                             <span class="badge bg-success">Paid</span>
-                                        @elseif($business->pending_business_registrations_count > 0)
+                                        @elseif($business->business_payment_status === 'pending')
                                             <span class="badge bg-warning">Payment Pending</span>
                                         @else
                                             <span class="badge bg-secondary">Not Paid</span>
@@ -168,7 +168,7 @@
                                                 </a>
                                             @endif
                                             @if($business->verification_status == 'pending')
-                                                @if($business->completed_business_registrations_count > 0)
+                                                @if($business->business_payment_status === 'paid')
                                                     <!-- Approve Business Form -->
                                                     <form action="{{ route('admin.businesses.approve', $business->id) }}" method="POST" class="d-inline">
                                                         @csrf
