@@ -8,7 +8,7 @@ class NotificationAction extends Model
 {
     protected $fillable = [
         'key', 'name', 'description', 'title_template', 'body_template',
-        'action_url', 'available_variables', 'is_enabled', 'push_enabled',
+        'action_url', 'external_url', 'available_variables', 'is_enabled', 'push_enabled',
         'payload_template',
     ];
 

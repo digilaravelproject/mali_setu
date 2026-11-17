@@ -478,7 +478,8 @@
                 <div class="collapse {{ request()->routeIs('admin.settings*') || request()->routeIs('admin.support-numbers.*') || request()->routeIs('admin.notifications.*') || request()->routeIs('admin.app-versions.*') ? 'show' : '' }}" id="settingsMenu">
                     <div class="nav-item {{ auth()->user()->hasAdminPermission('settings.general.view') ? '' : 'd-none' }}" style="margin-left:.6rem"><a href="{{ route('admin.settings') }}" class="nav-link {{ request()->routeIs('admin.settings*') ? 'active' : '' }}"><i class="fas fa-sliders"></i> Other Settings</a></div>
                     <div class="nav-item {{ auth()->user()->hasAdminPermission('settings.support.view') ? '' : 'd-none' }}" style="margin-left:.6rem"><a href="{{ route('admin.support-numbers.index') }}" class="nav-link {{ request()->routeIs('admin.support-numbers.*') ? 'active' : '' }}"><i class="fas fa-headset"></i> Support Number</a></div>
-                    <div class="nav-item {{ auth()->user()->hasAdminPermission('settings.notifications.list') ? '' : 'd-none' }}" style="margin-left:.6rem"><a href="{{ route('admin.notifications.index') }}" class="nav-link {{ request()->routeIs('admin.notifications.*') ? 'active' : '' }}"><i class="fas fa-bell"></i> Push Notifications</a></div>
+                    <div class="nav-item {{ auth()->user()->hasAdminPermission('settings.notifications.list') ? '' : 'd-none' }}" style="margin-left:.6rem"><a href="{{ route('admin.notifications.index') }}" class="nav-link {{ request()->routeIs('admin.notifications.*') && !request()->routeIs('admin.notifications.logs.*') ? 'active' : '' }}"><i class="fas fa-bell"></i> Push Notifications</a></div>
+                    <div class="nav-item {{ auth()->user()->hasAdminPermission('settings.notifications.list') ? '' : 'd-none' }}" style="margin-left:1.2rem"><a href="{{ route('admin.notifications.logs.index') }}" class="nav-link {{ request()->routeIs('admin.notifications.logs.*') ? 'active' : '' }}"><i class="fas fa-list-check"></i> Notification Logs</a></div>
                     <div class="nav-item {{ auth()->user()->hasAdminPermission('settings.app_version.view') ? '' : 'd-none' }}" style="margin-left:.6rem"><a href="{{ route('admin.app-versions.index') }}" class="nav-link {{ request()->routeIs('admin.app-versions.*') ? 'active' : '' }}"><i class="fas fa-mobile-screen-button"></i> App Version</a></div>
                 </div>
             </div>
@@ -670,6 +671,110 @@
         });
     </script>
     @endunless
+    <script>
+        // Add consistent Excel/PDF exports to every admin data listing.
+        document.addEventListener('DOMContentLoaded', function () {
+            const csrf = document.querySelector('meta[name="csrf-token"]')?.content;
+            const cleanText = value => (value || '').replace(/\s+/g, ' ').trim();
+            const cellText = cell => {
+                const copy = cell.cloneNode(true);
+                copy.querySelectorAll('input, select, textarea').forEach(control => {
+                    if (control.type === 'hidden') {
+                        control.remove();
+                        return;
+                    }
+                    let value = control.tagName === 'SELECT'
+                        ? control.options[control.selectedIndex]?.text
+                        : control.value;
+                    control.replaceWith(document.createTextNode(value || ''));
+                });
+                copy.querySelectorAll('button, .btn, script, style').forEach(element => element.remove());
+                copy.querySelectorAll('form').forEach(form => form.replaceWith(...form.childNodes));
+                return cleanText(copy.innerText || copy.textContent);
+            };
+            const download = async (button, url, payloadFactory, extension) => {
+                const original = button.innerHTML;
+                button.disabled = true;
+                button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Exporting';
+                try {
+                    const payload = await payloadFactory();
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf, 'Accept': 'application/octet-stream'},
+                        body: JSON.stringify(payload),
+                    });
+                    if (!response.ok) throw new Error('Export failed with status ' + response.status);
+                    const blob = await response.blob();
+                    const disposition = response.headers.get('Content-Disposition') || '';
+                    const match = disposition.match(/filename\*?=(?:UTF-8''|\")?([^\";]+)/i);
+                    const filename = match ? decodeURIComponent(match[1].replace(/\"/g, '')) : `admin-export.${extension}`;
+                    const link = document.createElement('a');
+                    link.href = URL.createObjectURL(blob);
+                    link.download = filename;
+                    document.body.appendChild(link);
+                    link.click();
+                    link.remove();
+                    URL.revokeObjectURL(link.href);
+                } catch (error) {
+                    window.alert('Unable to export this listing. ' + error.message);
+                } finally {
+                    button.disabled = false;
+                    button.innerHTML = original;
+                }
+            };
+
+            document.querySelectorAll('.content-area table:not([data-no-export])').forEach((table, index) => {
+                const headerCells = [...table.querySelectorAll('thead tr:last-child th')];
+                const bodyRows = [...table.querySelectorAll('tbody tr')];
+                if (headerCells.length < 2 || !bodyRows.length) return;
+                if (!bodyRows.some(row => row.cells.length >= headerCells.length)) return;
+                const included = headerCells.map((cell, column) => ({cell, column}))
+                    .filter(({cell}) => !/^(action|actions)$/i.test(cleanText(cell.innerText || cell.textContent)));
+                if (!included.length) return;
+
+                const rowsFrom = sourceTable => [...sourceTable.querySelectorAll('tbody tr')]
+                    .filter(row => row.cells.length >= headerCells.length)
+                    .map(row => included.map(({column}) => cellText(row.cells[column])));
+                const payload = async () => {
+                    let rows = rowsFrom(table);
+                    const hasPagination = Boolean(document.querySelector('.pagination'));
+                    if (hasPagination) {
+                        rows = [];
+                        const firstPage = new URL(window.location.href);
+                        firstPage.searchParams.set('page', '1');
+                        let nextUrl = firstPage.href;
+                        const visited = new Set();
+                        while (nextUrl && !visited.has(nextUrl) && rows.length < 10000) {
+                            visited.add(nextUrl);
+                            const response = await fetch(nextUrl, {headers: {'Accept': 'text/html'}});
+                            if (!response.ok) throw new Error('Unable to read all listing pages');
+                            const page = new DOMParser().parseFromString(await response.text(), 'text/html');
+                            const pageTable = page.querySelectorAll('.content-area table:not([data-no-export])')[index];
+                            if (!pageTable) break;
+                            rows.push(...rowsFrom(pageTable));
+                            const next = page.querySelector('.pagination a[rel="next"]');
+                            const nextHref = next?.getAttribute('href');
+                            nextUrl = nextHref ? new URL(nextHref, nextUrl).href : null;
+                        }
+                        rows = rows.slice(0, 10000);
+                    }
+                    return {
+                        title: cleanText(document.querySelector('.content-area h3')?.innerText || document.querySelector('h4')?.innerText || document.title),
+                        headings: included.map(({cell}) => cleanText(cell.innerText || cell.textContent) || 'Column'),
+                        rows,
+                    };
+                };
+                const toolbar = document.createElement('div');
+                toolbar.className = 'd-flex justify-content-end gap-2 mb-2 admin-table-export';
+                toolbar.innerHTML = '<button type="button" class="btn btn-sm btn-outline-success"><i class="fas fa-file-excel me-1"></i>Export Excel</button><button type="button" class="btn btn-sm btn-outline-danger"><i class="fas fa-file-pdf me-1"></i>Export PDF</button>';
+                const anchor = table.closest('.table-responsive') || table;
+                anchor.parentNode.insertBefore(toolbar, anchor);
+                const [excelButton, pdfButton] = toolbar.querySelectorAll('button');
+                excelButton.addEventListener('click', () => download(excelButton, @json(route('admin.table-export.excel')), payload, 'xlsx'));
+                pdfButton.addEventListener('click', () => download(pdfButton, @json(route('admin.table-export.pdf')), payload, 'pdf'));
+            });
+        });
+    </script>
     @stack('scripts')
 </body>
 </html>

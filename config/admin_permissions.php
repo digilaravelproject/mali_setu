@@ -244,7 +244,7 @@ return [
                     ['key' => 'settings.support.update', 'label' => 'Update support numbers', 'description' => 'Change support contact numbers.', 'level' => 'action', 'routes' => ['admin.support-numbers.update']],
                 ],
                 'Push Notifications' => [
-                    ['key' => 'settings.notifications.list', 'label' => 'List notifications', 'description' => 'View notification actions.', 'level' => 'view', 'routes' => ['admin.notifications.index']],
+                    ['key' => 'settings.notifications.list', 'label' => 'List notifications', 'description' => 'View notification actions and delivery logs.', 'level' => 'view', 'routes' => ['admin.notifications.index', 'admin.notifications.logs.*']],
                     ['key' => 'settings.notifications.create', 'label' => 'Add notification', 'description' => 'Create a notification action.', 'level' => 'action', 'routes' => ['admin.notifications.create', 'admin.notifications.store']],
                     ['key' => 'settings.notifications.edit', 'label' => 'Edit notification', 'description' => 'Update actions and payloads.', 'level' => 'action', 'routes' => ['admin.notifications.edit', 'admin.notifications.update', 'admin.notifications.payload.*']],
                     ['key' => 'settings.notifications.send', 'label' => 'Send notification', 'description' => 'Send push or Firebase notifications.', 'level' => 'action', 'routes' => ['admin.notifications.send-form', 'admin.notifications.send', 'admin.notifications.firebase.update']],

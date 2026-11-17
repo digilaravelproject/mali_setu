@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\AdminAuthController;
 use App\Http\Controllers\Admin\AdminDashboardController;
+use App\Http\Controllers\Admin\AdminTableExportController;
 use App\Http\Controllers\Admin\AppVersionController;
 use App\Http\Controllers\Admin\BlogCategoryManagementController;
 use App\Http\Controllers\Admin\BlogManagementController;
@@ -533,6 +534,8 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::put('support-numbers/{slot}', [SupportNumberController::class, 'update'])->name('support-numbers.update');
         Route::prefix('notifications')->name('notifications.')->group(function () {
             Route::get('/', [NotificationManagementController::class, 'index'])->name('index');
+            Route::get('/logs', [NotificationManagementController::class, 'logs'])->name('logs.index');
+            Route::get('/logs/{notification}', [NotificationManagementController::class, 'showLog'])->name('logs.show');
             Route::get('/create', [NotificationManagementController::class, 'create'])->name('create');
             Route::post('/', [NotificationManagementController::class, 'store'])->name('store');
             Route::get('/send/{notificationAction?}', [NotificationManagementController::class, 'sendForm'])->name('send-form');
@@ -545,6 +548,8 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::put('/{notificationAction}', [NotificationManagementController::class, 'update'])->name('update');
             Route::delete('/{notificationAction}', [NotificationManagementController::class, 'destroy'])->name('destroy');
         });
+        Route::post('table-export/excel', [AdminTableExportController::class, 'excel'])->name('table-export.excel');
+        Route::post('table-export/pdf', [AdminTableExportController::class, 'pdf'])->name('table-export.pdf');
         Route::get('app-versions', [AppVersionController::class, 'index'])->name('app-versions.index');
         Route::put('app-versions/{appVersion}', [AppVersionController::class, 'update'])->name('app-versions.update');
         Route::get('reports', [AdminDashboardController::class, 'reports'])->name('reports');

@@ -5,7 +5,8 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration {
+return new class extends Migration
+{
     public function up(): void
     {
         if (! Schema::hasColumn('users', 'referred_by_user_id')) {
@@ -30,7 +31,7 @@ return new class extends Migration {
         Schema::create('volunteer_referral_profiles', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->unique()->constrained()->cascadeOnDelete();
-            $table->unsignedTinyInteger('commission_points')->default(2);
+            $table->unsignedBigInteger('commission_points')->default(2);
             $table->foreignId('district_id')->nullable()->constrained()->nullOnDelete();
             $table->foreignId('taluka_id')->nullable()->constrained()->nullOnDelete();
             $table->foreignId('locality_id')->nullable()->constrained('localities')->nullOnDelete();
@@ -43,7 +44,7 @@ return new class extends Migration {
             $table->foreignId('referrer_user_id')->constrained('users')->cascadeOnDelete();
             $table->foreignId('referred_user_id')->unique()->constrained('users')->cascadeOnDelete();
             $table->string('referral_code_used', 50);
-            $table->unsignedTinyInteger('commission_points')->default(0);
+            $table->unsignedBigInteger('commission_points')->default(0);
             $table->enum('status', ['active', 'inactive'])->default('active');
             $table->timestamps();
             $table->index(['referrer_user_id', 'status']);

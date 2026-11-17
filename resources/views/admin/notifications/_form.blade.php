@@ -31,8 +31,25 @@
             @error('body_template')<div class="invalid-feedback">{{ $message }}</div>@enderror
         </div>
         <div class="form-group">
-            <label for="action_url">Mobile deep link / action URL</label>
-            <input class="form-control" id="action_url" name="action_url" value="{{ old('action_url', $action->action_url) }}" placeholder="/dashboard/matrimony">
+            <label for="action_url">Mobile API endpoint / deep link</label>
+            @php($selectedActionUrl = old('action_url', $action->action_url))
+            <select class="form-select @error('action_url') is-invalid @enderror" id="action_url" name="action_url">
+                <option value="">No in-app action</option>
+                @if($selectedActionUrl && !collect($apiEndpoints)->pluck('uri')->contains($selectedActionUrl))
+                    <option value="{{ $selectedActionUrl }}" selected>{{ $selectedActionUrl }} (saved custom deep link)</option>
+                @endif
+                @foreach($apiEndpoints as $endpoint)
+                    <option value="{{ $endpoint['uri'] }}" @selected($selectedActionUrl === $endpoint['uri'])>{{ $endpoint['methods'] }} — {{ $endpoint['uri'] }}</option>
+                @endforeach
+            </select>
+            <small class="form-text text-muted">All registered mobile API endpoints are listed. Parameters such as <code>{id}</code> may use template variables.</small>
+            @error('action_url')<div class="invalid-feedback">{{ $message }}</div>@enderror
+        </div>
+        <div class="form-group">
+            <label for="external_url">External URL</label>
+            <input type="url" class="form-control @error('external_url') is-invalid @enderror" id="external_url" name="external_url" value="{{ old('external_url', $action->external_url) }}" placeholder="https://www.youtube.com/watch?v=...">
+            <small class="form-text text-muted">Optional website or social link, such as YouTube or Facebook. It is sent separately as <code>external_url</code>.</small>
+            @error('external_url')<div class="invalid-feedback">{{ $message }}</div>@enderror
         </div>
         <div class="form-group">
             <label for="available_variables_text">Template variables</label>

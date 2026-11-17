@@ -16,6 +16,7 @@ class Notification extends Model
         'message',
         'data',
         'action_url',
+        'external_url',
         'priority',
         'channel',
         'is_read',
@@ -24,6 +25,8 @@ class Notification extends Model
         'email_sent_at',
         'push_sent',
         'push_sent_at',
+        'push_attempted_at',
+        'push_error',
         'related_type',
         'related_id',
     ];
@@ -36,12 +39,14 @@ class Notification extends Model
         'read_at' => 'datetime',
         'email_sent_at' => 'datetime',
         'push_sent_at' => 'datetime',
+        'push_attempted_at' => 'datetime',
     ];
 
     protected $dates = [
         'read_at',
         'email_sent_at',
         'push_sent_at',
+        'push_attempted_at',
     ];
 
     // Notification types constants
@@ -212,6 +217,17 @@ class Notification extends Model
         $this->update([
             'push_sent' => true,
             'push_sent_at' => Carbon::now(),
+            'push_attempted_at' => Carbon::now(),
+            'push_error' => null,
+        ]);
+    }
+
+    public function markPushFailed(string $reason): void
+    {
+        $this->update([
+            'push_sent' => false,
+            'push_attempted_at' => Carbon::now(),
+            'push_error' => (string) str($reason)->limit(2000),
         ]);
     }
 
@@ -306,7 +322,7 @@ class Notification extends Model
     /**
      * Create a new notification
      */
-    public static function createNotification($userId, $type, $title, $message, $data = [], $actionUrl = null, $priority = self::PRIORITY_MEDIUM, $relatedModel = null)
+    public static function createNotification($userId, $type, $title, $message, $data = [], $actionUrl = null, $priority = self::PRIORITY_MEDIUM, $relatedModel = null, $externalUrl = null)
     {
         $notification = self::create([
             'user_id' => $userId,
@@ -315,6 +331,7 @@ class Notification extends Model
             'message' => $message,
             'data' => $data,
             'action_url' => $actionUrl,
+            'external_url' => $externalUrl,
             'priority' => $priority,
             'related_type' => $relatedModel ? get_class($relatedModel) : null,
             'related_id' => $relatedModel ? $relatedModel->id : null,

@@ -61,6 +61,9 @@ class NotificationService
             $actionUrl = $action->action_url
                 ? $action->render($action->action_url, $templateData)
                 : $actionUrl;
+            $externalUrl = $action->external_url
+                ? $action->render($action->external_url, $templateData)
+                : null;
 
             $channels = array_values(array_diff($channels, [Notification::CHANNEL_PUSH]));
             if ($action->push_enabled) {
@@ -76,7 +79,8 @@ class NotificationService
                 $data,
                 $actionUrl,
                 $priority,
-                $relatedModel
+                $relatedModel,
+                $externalUrl
             );
 
             // Send through requested channels
@@ -167,6 +171,7 @@ class NotificationService
         $user = $notification->user;
 
         if (! $user?->fcm_token) {
+            $notification->markPushFailed('User does not have an FCM device token.');
             Log::info('Push notification skipped because the user has no FCM token', [
                 'notification_id' => $notification->id,
                 'user_id' => $notification->user_id,
@@ -175,19 +180,24 @@ class NotificationService
             return;
         }
 
-        $action = NotificationAction::query()->where('key', $notification->type)->first();
-        $this->firebase->send(
-            $user->fcm_token,
-            $notification->title,
-            $notification->message,
-            $this->pushData($notification, $user, $action),
-        );
+        try {
+            $action = NotificationAction::query()->where('key', $notification->type)->first();
+            $this->firebase->send(
+                $user->fcm_token,
+                $notification->title,
+                $notification->message,
+                $this->pushData($notification, $user, $action),
+            );
 
-        $notification->markPushSent();
-        Log::info('Firebase push notification sent', [
-            'notification_id' => $notification->id,
-            'user_id' => $user->id,
-        ]);
+            $notification->markPushSent();
+            Log::info('Firebase push notification sent', [
+                'notification_id' => $notification->id,
+                'user_id' => $user->id,
+            ]);
+        } catch (\Throwable $e) {
+            $notification->markPushFailed($e->getMessage());
+            throw $e;
+        }
     }
 
     private function pushData(Notification $notification, User $user, ?NotificationAction $action): array
@@ -198,6 +208,7 @@ class NotificationService
                 'notification_id' => $notification->id,
                 'action_key' => $notification->type,
                 'action_url' => $notification->action_url ?? '',
+                'external_url' => $notification->external_url ?? '',
             ],
         );
 
@@ -213,6 +224,7 @@ class NotificationService
                 'notification_id' => $notification->id,
                 'action_key' => $notification->type,
                 'action_url' => $notification->action_url ?? '',
+                'external_url' => $notification->external_url ?? '',
                 'notification_title' => $notification->title,
                 'notification_message' => $notification->message,
             ],

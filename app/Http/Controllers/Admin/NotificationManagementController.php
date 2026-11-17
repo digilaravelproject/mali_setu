@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Notification;
 use App\Models\NotificationAction;
 use App\Models\SystemSetting;
 use App\Models\User;
@@ -10,6 +11,7 @@ use App\Services\FirebaseCredentialService;
 use App\Services\NotificationService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
@@ -34,7 +36,10 @@ class NotificationManagementController extends Controller
 
     public function create(): View
     {
-        return view('admin.notifications.create', ['action' => new NotificationAction]);
+        return view('admin.notifications.create', [
+            'action' => new NotificationAction,
+            'apiEndpoints' => $this->apiEndpoints(),
+        ]);
     }
 
     public function store(Request $request): RedirectResponse
@@ -46,7 +51,49 @@ class NotificationManagementController extends Controller
 
     public function edit(NotificationAction $notificationAction): View
     {
-        return view('admin.notifications.edit', ['action' => $notificationAction]);
+        return view('admin.notifications.edit', [
+            'action' => $notificationAction,
+            'apiEndpoints' => $this->apiEndpoints(),
+        ]);
+    }
+
+    public function logs(Request $request): View
+    {
+        $query = Notification::query()->with('user:id,name,email,phone')->latest();
+
+        if ($request->filled('status')) {
+            match ($request->string('status')->toString()) {
+                'sent' => $query->where('push_sent', true),
+                'failed' => $query->whereNotNull('push_attempted_at')->where('push_sent', false),
+                'not_attempted' => $query->whereNull('push_attempted_at'),
+                default => null,
+            };
+        }
+        if ($request->filled('type')) {
+            $query->where('type', $request->string('type'));
+        }
+        if ($request->filled('search')) {
+            $search = '%'.$request->string('search')->trim().'%';
+            $query->where(function ($builder) use ($search) {
+                $builder->where('title', 'like', $search)
+                    ->orWhere('message', 'like', $search)
+                    ->orWhereHas('user', fn ($user) => $user->where('name', 'like', $search)
+                        ->orWhere('email', 'like', $search)
+                        ->orWhere('phone', 'like', $search));
+            });
+        }
+
+        return view('admin.notifications.logs.index', [
+            'notifications' => $query->paginate(25)->withQueryString(),
+            'types' => Notification::query()->select('type')->distinct()->orderBy('type')->pluck('type'),
+        ]);
+    }
+
+    public function showLog(Notification $notification): View
+    {
+        return view('admin.notifications.logs.show', [
+            'notification' => $notification->load('user:id,name,email,phone'),
+        ]);
     }
 
     public function update(Request $request, NotificationAction $notificationAction): RedirectResponse
@@ -164,6 +211,7 @@ class NotificationManagementController extends Controller
             'title_template' => ['required', 'string', 'max:255'],
             'body_template' => ['required', 'string', 'max:2000'],
             'action_url' => ['nullable', 'string', 'max:255'],
+            'external_url' => ['nullable', 'url:http,https', 'max:2048'],
             'available_variables_text' => ['nullable', 'string', 'max:1000'],
         ]);
 
@@ -174,5 +222,19 @@ class NotificationManagementController extends Controller
         unset($validated['available_variables_text']);
 
         return $validated;
+    }
+
+    private function apiEndpoints(): array
+    {
+        return collect(Route::getRoutes())
+            ->filter(fn ($route) => str_starts_with($route->uri(), 'api/'))
+            ->map(fn ($route) => [
+                'uri' => '/'.$route->uri(),
+                'methods' => implode('|', array_values(array_diff($route->methods(), ['HEAD']))),
+            ])
+            ->unique(fn ($endpoint) => $endpoint['methods'].' '.$endpoint['uri'])
+            ->sortBy('uri')
+            ->values()
+            ->all();
     }
 }

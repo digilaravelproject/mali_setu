@@ -92,7 +92,7 @@ class VolunteerManagementController extends Controller
         $data = $request->validate([
             'name' => 'required|string|max:255', 'email' => 'required|email|unique:users,email',
             'phone' => 'required|string|max:20|unique:users,phone', 'password' => 'required|string|min:8|confirmed',
-            'status' => 'required|in:active,inactive', 'commission_points' => 'required|integer|min:0|max:100',
+            'status' => 'required|in:active,inactive', 'commission_points' => 'required|integer|min:0',
             'skills' => 'nullable|string|max:255', 'availability' => 'nullable|string|max:255',
         ]);
 
@@ -139,7 +139,7 @@ class VolunteerManagementController extends Controller
 
     public function updateCommission(Request $request, User $user, ReferralService $referrals)
     {
-        $data = $request->validate(['commission_points' => 'required|integer|min:0|max:100']);
+        $data = $request->validate(['commission_points' => 'required|integer|min:0']);
         $referrals->activateVolunteer($user)->update($data);
 
         return back()->with('success', 'Commission points updated.');
