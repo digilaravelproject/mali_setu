@@ -526,12 +526,13 @@ class BusinessController extends Controller
             app(CCAvenuePaymentService::class)->createPendingPayment($transaction);
 
             // Prepare CCAvenue parameters
+            $callbackUrl = $ccavenue->getCallbackUrl($request);
             $params = [
                 'order_id' => $orderId,
                 'amount' => number_format($amount, 2, '.', ''),
                 'currency' => 'INR',
-                'redirect_url' => route('ccavenue.callback'),
-                'cancel_url' => route('ccavenue.callback'),
+                'redirect_url' => $callbackUrl,
+                'cancel_url' => $callbackUrl,
                 'language' => 'EN',
                 'billing_name' => $request->user()->name ?? '',
                 'billing_email' => $request->user()->email ?? '',
@@ -630,6 +631,37 @@ class BusinessController extends Controller
     }
 
     /**
+     * Update a product owned by the authenticated business owner.
+     */
+    public function updateProduct(Request $request, $id)
+    {
+        $product = Product::whereKey($id)
+            ->whereHas('business', fn ($query) => $query->where('user_id', Auth::id()))
+            ->firstOrFail();
+
+        $validated = $request->validateWithBag('productEdit', [
+            'name' => 'required|string|max:255',
+            'description' => 'required|string',
+            'cost' => 'required|numeric|min:0',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
+        ]);
+
+        $oldImagePath = $product->image_path;
+        if ($request->hasFile('image')) {
+            $validated['image_path'] = $request->file('image')->store('products', 'public');
+        }
+        unset($validated['image']);
+        $product->update($validated);
+
+        if (isset($validated['image_path']) && $oldImagePath && Storage::disk('public')->exists($oldImagePath)) {
+            Storage::disk('public')->delete($oldImagePath);
+        }
+
+        return redirect()->route('dashboard.business.index', ['business_id' => $product->business_id])
+            ->with('success', 'Product updated successfully!');
+    }
+
+    /**
      * Add Business Service
      */
     public function addService(Request $request)
@@ -688,6 +720,37 @@ class BusinessController extends Controller
         $service->delete();
 
         return redirect()->route('dashboard.business.index')->with('success', 'Service deleted successfully!');
+    }
+
+    /**
+     * Update a service owned by the authenticated business owner.
+     */
+    public function updateService(Request $request, $id)
+    {
+        $service = Service::whereKey($id)
+            ->whereHas('business', fn ($query) => $query->where('user_id', Auth::id()))
+            ->firstOrFail();
+
+        $validated = $request->validateWithBag('serviceEdit', [
+            'name' => 'required|string|max:255',
+            'description' => 'required|string',
+            'cost' => 'required|numeric|min:0',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
+        ]);
+
+        $oldImagePath = $service->image_path;
+        if ($request->hasFile('image')) {
+            $validated['image_path'] = $request->file('image')->store('services', 'public');
+        }
+        unset($validated['image']);
+        $service->update($validated);
+
+        if (isset($validated['image_path']) && $oldImagePath && Storage::disk('public')->exists($oldImagePath)) {
+            Storage::disk('public')->delete($oldImagePath);
+        }
+
+        return redirect()->route('dashboard.business.index', ['business_id' => $service->business_id])
+            ->with('success', 'Service updated successfully!');
     }
 
     /**

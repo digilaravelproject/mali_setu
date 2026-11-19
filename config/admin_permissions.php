@@ -123,7 +123,7 @@ return [
                 ],
                 'Business Verification' => [
                     ['key' => 'businesses.verification.list', 'label' => 'View verification', 'description' => 'See pending business verification.', 'level' => 'view', 'routes' => ['admin.businesses.pending', 'admin.businesses.verification']],
-                    ['key' => 'businesses.verification.manage', 'label' => 'Approve / reject', 'description' => 'Approve or reject businesses.', 'level' => 'action', 'routes' => ['admin.businesses.approve', 'admin.businesses.reject']],
+                    ['key' => 'businesses.verification.manage', 'label' => 'Approve / reject', 'description' => 'Approve or reject businesses.', 'level' => 'action', 'routes' => ['admin.businesses.approve', 'admin.businesses.approve-with-payment', 'admin.businesses.reject']],
                 ],
                 'Business Jobs' => [
                     ['key' => 'businesses.jobs.list', 'label' => 'View business jobs', 'description' => 'See jobs for a business.', 'level' => 'view', 'routes' => ['admin.businesses.jobs']],
@@ -178,7 +178,7 @@ return [
                     ['key' => 'matrimony.profiles.list', 'label' => 'List profiles', 'description' => 'View and search matrimony profiles.', 'level' => 'view', 'routes' => ['admin.matrimony.index', 'admin.matrimony.show']],
                     ['key' => 'matrimony.profiles.create', 'label' => 'Add profile', 'description' => 'Create a matrimony profile.', 'level' => 'action', 'routes' => ['admin.matrimony.create', 'admin.matrimony.store']],
                     ['key' => 'matrimony.profiles.edit', 'label' => 'Edit profile', 'description' => 'Update a matrimony profile.', 'level' => 'action', 'routes' => ['admin.matrimony.edit', 'admin.matrimony.update']],
-                    ['key' => 'matrimony.profiles.moderate', 'label' => 'Approve / reject', 'description' => 'Moderate matrimony profiles.', 'level' => 'action', 'routes' => ['admin.matrimony.moderation', 'admin.matrimony.approve', 'admin.matrimony.reject']],
+                    ['key' => 'matrimony.profiles.moderate', 'label' => 'Approve / reject', 'description' => 'Moderate matrimony profiles.', 'level' => 'action', 'routes' => ['admin.matrimony.moderation', 'admin.matrimony.approve', 'admin.matrimony.approve-with-payment', 'admin.matrimony.reject']],
                     ['key' => 'matrimony.profiles.status', 'label' => 'Activate / suspend', 'description' => 'Change profile account availability.', 'level' => 'action', 'routes' => ['admin.matrimony.activate', 'admin.matrimony.suspend']],
                     ['key' => 'matrimony.profiles.delete', 'label' => 'Delete profile', 'description' => 'Remove a matrimony profile.', 'level' => 'action', 'routes' => ['admin.matrimony.destroy']],
                 ],

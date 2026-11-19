@@ -184,15 +184,26 @@
                                                 <i class="fas fa-edit"></i>
                                             </a>
                                             @if($profile->approval_status == 'pending')
-                                                <!-- Approve Form -->
-                                                <form method="POST" action="{{ route('admin.matrimony.approve', $profile->id) }}" style="display: inline;">
-                                                    @csrf
-                                                    <button type="submit" class="btn btn-sm btn-success" 
-                                                            onclick="return confirm('Are you sure you want to approve this matrimony profile?')">
+                                                @if($profile->matrimony_payment_status === 'paid')
+                                                    <form method="POST" action="{{ route('admin.matrimony.approve', $profile->id) }}" style="display: inline;">
+                                                        @csrf
+                                                        <button type="submit" class="btn btn-sm btn-success"
+                                                                title="Approve"
+                                                                onclick="return confirm('Are you sure you want to approve this matrimony profile?')">
+                                                            <i class="fas fa-check"></i>
+                                                        </button>
+                                                    </form>
+                                                @else
+                                                    <button type="button" class="btn btn-sm btn-secondary" title="Payment pending. Cannot approve." disabled>
                                                         <i class="fas fa-check"></i>
                                                     </button>
-                                                </form>
-                                                
+                                                    <button type="button" class="btn btn-sm btn-primary"
+                                                            onclick="approveMatrimonyWithPayment({{ $profile->id }}, @js($profile->user->name ?? 'this user'))"
+                                                            title="Approve with payment">
+                                                        <i class="fas fa-money-check-alt"></i>
+                                                    </button>
+                                                @endif
+
                                                 <!-- Reject Form -->
                                                 <form method="POST" action="{{ route('admin.matrimony.reject', $profile->id) }}" style="display: inline;">
                                                     @csrf
@@ -283,5 +294,46 @@
     </div>
 </div>
 
+<div class="modal fade" id="approveWithPaymentModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Approve with Payment</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="approveWithPaymentForm" method="POST">
+                @csrf
+                <div class="modal-body">
+                    <p id="approveWithPaymentMessage"></p>
+                    <div class="alert alert-warning mb-3">
+                        This will add a completed payment entry and fully approve the profile. The expiry date is calculated from the selected plan.
+                    </div>
+                    <label for="matrimonyPlanId" class="form-label">Subscription plan</label>
+                    <select id="matrimonyPlanId" name="plan_id" class="form-select" required>
+                        <option value="">Select a plan</option>
+                        @foreach($matrimonyPlans as $plan)
+                            <option value="{{ $plan->id }}">{{ $plan->plan_name ?: 'Matrimony plan' }} — {{ $plan->duration_years }} year(s) — ₹{{ number_format($plan->price, 2) }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Add Payment &amp; Approve</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 
 @endsection
+
+@push('scripts')
+<script>
+function approveMatrimonyWithPayment(profileId, userName) {
+    document.getElementById('approveWithPaymentForm').action = `/admin/matrimony/${profileId}/approve-with-payment`;
+    document.getElementById('approveWithPaymentMessage').textContent = `Do you want to add a payment entry and fully approve ${userName}?`;
+    bootstrap.Modal.getOrCreateInstance(document.getElementById('approveWithPaymentModal')).show();
+}
+</script>
+@endpush

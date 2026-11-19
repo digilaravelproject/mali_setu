@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Business;
 use App\Models\Product;
+use App\Models\Service;
 use App\Models\User;
 use App\Services\NotificationService;
 use Illuminate\Database\Schema\Blueprint;
@@ -85,5 +86,40 @@ class BusinessCatalogApiTest extends TestCase
         foreach ($paths as $path) {
             Storage::disk('public')->assertMissing($path);
         }
+    }
+
+    public function test_owner_can_update_product_and_service_from_business_console(): void
+    {
+        Storage::disk('public')->put('products/old.jpg', 'old product');
+        Storage::disk('public')->put('services/old.jpg', 'old service');
+        $product = Product::create([
+            'business_id' => $this->business->id,
+            'name' => 'Old Product', 'description' => 'Old description', 'cost' => 10,
+            'image_path' => 'products/old.jpg',
+        ]);
+        $service = Service::create([
+            'business_id' => $this->business->id,
+            'name' => 'Old Service', 'description' => 'Old description', 'cost' => 20,
+            'image_path' => 'services/old.jpg',
+        ]);
+
+        $this->put('/dashboard/business/products/'.$product->id, [
+            'product_id' => $product->id,
+            'name' => 'Updated Product', 'description' => 'Updated product description', 'cost' => 99,
+            'image' => UploadedFile::fake()->image('new-product.jpg'),
+        ])->assertRedirect('/dashboard/business?business_id='.$this->business->id);
+
+        $this->put('/dashboard/business/services/'.$service->id, [
+            'service_id' => $service->id,
+            'name' => 'Updated Service', 'description' => 'Updated service description', 'cost' => 199,
+            'image' => UploadedFile::fake()->image('new-service.jpg'),
+        ])->assertRedirect('/dashboard/business?business_id='.$this->business->id);
+
+        $this->assertSame('Updated Product', $product->fresh()->name);
+        $this->assertSame('Updated Service', $service->fresh()->name);
+        Storage::disk('public')->assertMissing('products/old.jpg');
+        Storage::disk('public')->assertMissing('services/old.jpg');
+        Storage::disk('public')->assertExists($product->fresh()->image_path);
+        Storage::disk('public')->assertExists($service->fresh()->image_path);
     }
 }

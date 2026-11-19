@@ -58,6 +58,9 @@ class MatrimonyManagementController extends Controller
         }
 
         $profiles = $query->latest()->paginate(20)->withQueryString();
+        $matrimonyPlans = MatrimonyPlan::where('active', true)
+            ->orderBy('duration_years')
+            ->get();
 
         $stats = [
             'total' => MatrimonyProfile::count(),
@@ -69,7 +72,7 @@ class MatrimonyManagementController extends Controller
             'total_connections' => ConnectionRequest::count(),
         ];
 
-        return view('admin.matrimony.index', compact('profiles', 'stats'));
+        return view('admin.matrimony.index', compact('profiles', 'stats', 'matrimonyPlans'));
     }
 
     /**

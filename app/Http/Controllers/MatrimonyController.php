@@ -964,12 +964,13 @@ class MatrimonyController extends Controller
             app(CCAvenuePaymentService::class)->createPendingPayment($transaction);
 
             // Prepare CCAvenue parameters
+            $callbackUrl = $ccavenue->getCallbackUrl($request);
             $params = [
                 'order_id' => $orderId,
                 'amount' => number_format($plan->price, 2, '.', ''),
                 'currency' => 'INR',
-                'redirect_url' => route('ccavenue.callback'),
-                'cancel_url' => route('ccavenue.callback'),
+                'redirect_url' => $callbackUrl,
+                'cancel_url' => $callbackUrl,
                 'language' => 'EN',
                 'billing_name' => Auth::user()->name ?? '',
                 'billing_email' => Auth::user()->email ?? '',

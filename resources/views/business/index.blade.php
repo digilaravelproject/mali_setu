@@ -359,11 +359,23 @@
                                                         <td><span class="text-primary fw-bold">₹{{ $prod->cost ?? '0.00' }}</span></td>
                                                         <td><span class="text-secondary small">{{ Str::limit($prod->description, 50) }}</span></td>
                                                         <td>
-                                                            <form action="{{ route('dashboard.business.products.delete', $prod->id) }}" method="POST">
-                                                                @csrf
-                                                                @method('DELETE')
-                                                                <button type="submit" class="btn btn-outline-danger btn-sm rounded-3"><i class="fa-solid fa-trash-can"></i></button>
-                                                            </form>
+                                                            <div class="d-flex gap-2">
+                                                                <button type="button" class="btn btn-outline-primary btn-sm rounded-3"
+                                                                        data-bs-toggle="modal" data-bs-target="#editProductModal"
+                                                                        data-product-id="{{ $prod->id }}"
+                                                                        data-edit-url="{{ route('dashboard.business.products.update', $prod->id) }}"
+                                                                        data-name="{{ $prod->name }}" data-cost="{{ $prod->cost }}"
+                                                                        data-description="{{ $prod->description }}"
+                                                                        data-image-url="{{ $prod->image_path ? asset('storage/'.$prod->image_path) : '' }}"
+                                                                        title="Edit product">
+                                                                    <i class="fa-solid fa-pen-to-square"></i>
+                                                                </button>
+                                                                <form action="{{ route('dashboard.business.products.delete', $prod->id) }}" method="POST">
+                                                                    @csrf
+                                                                    @method('DELETE')
+                                                                    <button type="submit" class="btn btn-outline-danger btn-sm rounded-3" title="Delete product"><i class="fa-solid fa-trash-can"></i></button>
+                                                                </form>
+                                                            </div>
                                                         </td>
                                                     </tr>
                                                 @endforeach
@@ -410,11 +422,23 @@
                                                         <td><span class="text-primary fw-bold">₹{{ $serv->cost ?? '0.00' }}</span></td>
                                                         <td><span class="text-secondary small">{{ Str::limit($serv->description, 50) }}</span></td>
                                                         <td>
-                                                            <form action="{{ route('dashboard.business.services.delete', $serv->id) }}" method="POST">
-                                                                @csrf
-                                                                @method('DELETE')
-                                                                <button type="submit" class="btn btn-outline-danger btn-sm rounded-3"><i class="fa-solid fa-trash-can"></i></button>
-                                                            </form>
+                                                            <div class="d-flex gap-2">
+                                                                <button type="button" class="btn btn-outline-primary btn-sm rounded-3"
+                                                                        data-bs-toggle="modal" data-bs-target="#editServiceModal"
+                                                                        data-service-id="{{ $serv->id }}"
+                                                                        data-edit-url="{{ route('dashboard.business.services.update', $serv->id) }}"
+                                                                        data-name="{{ $serv->name }}" data-cost="{{ $serv->cost }}"
+                                                                        data-description="{{ $serv->description }}"
+                                                                        data-image-url="{{ $serv->image_path ? asset('storage/'.$serv->image_path) : '' }}"
+                                                                        title="Edit service">
+                                                                    <i class="fa-solid fa-pen-to-square"></i>
+                                                                </button>
+                                                                <form action="{{ route('dashboard.business.services.delete', $serv->id) }}" method="POST">
+                                                                    @csrf
+                                                                    @method('DELETE')
+                                                                    <button type="submit" class="btn btn-outline-danger btn-sm rounded-3" title="Delete service"><i class="fa-solid fa-trash-can"></i></button>
+                                                                </form>
+                                                            </div>
                                                         </td>
                                                     </tr>
                                                 @endforeach
@@ -690,6 +714,51 @@
     </div>
 </div>
 
+<!-- Modal: Edit Product -->
+<div class="modal fade" id="editProductModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0 shadow-lg p-3">
+            <div class="modal-header border-0">
+                <h5 class="fw-bold mb-0">Edit Product</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="editProductForm" method="POST" enctype="multipart/form-data">
+                @csrf
+                @method('PUT')
+                <input type="hidden" name="product_id" id="editProductId">
+                <div class="modal-body">
+                    @if($errors->productEdit->any())
+                        <div class="alert alert-danger py-2">
+                            {{ $errors->productEdit->first() }}
+                        </div>
+                    @endif
+                    <div class="mb-3 text-start">
+                        <label class="form-label fw-semibold small">Product Name *</label>
+                        <input type="text" name="name" id="editProductName" class="form-control" required maxlength="255">
+                    </div>
+                    <div class="mb-3 text-start">
+                        <label class="form-label fw-semibold small">Cost (in INR) *</label>
+                        <input type="number" name="cost" id="editProductCost" class="form-control" min="0" step="0.01" required>
+                    </div>
+                    <div class="mb-3 text-start">
+                        <label class="form-label fw-semibold small">Description *</label>
+                        <textarea name="description" id="editProductDescription" class="form-control" rows="3" required></textarea>
+                    </div>
+                    <div class="mb-3 text-start">
+                        <label class="form-label fw-semibold small">Replace Product Image</label>
+                        <input type="file" name="image" class="form-control" accept="image/*">
+                        <img id="editProductPreview" class="rounded shadow-sm mt-2 d-none" alt="Current product image" style="width:80px;height:80px;object-fit:cover;">
+                    </div>
+                </div>
+                <div class="modal-footer border-0">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Update Product</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 <!-- Modal: Add Service -->
 <div class="modal fade" id="addServiceModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
@@ -736,6 +805,51 @@
                 <div class="modal-footer border-0">
                     <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
                     <button type="submit" class="btn btn-primary">Save Service</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Edit Service -->
+<div class="modal fade" id="editServiceModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0 shadow-lg p-3">
+            <div class="modal-header border-0">
+                <h5 class="fw-bold mb-0">Edit Service</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="editServiceForm" method="POST" enctype="multipart/form-data">
+                @csrf
+                @method('PUT')
+                <input type="hidden" name="service_id" id="editServiceId">
+                <div class="modal-body">
+                    @if($errors->serviceEdit->any())
+                        <div class="alert alert-danger py-2">
+                            {{ $errors->serviceEdit->first() }}
+                        </div>
+                    @endif
+                    <div class="mb-3 text-start">
+                        <label class="form-label fw-semibold small">Service Name *</label>
+                        <input type="text" name="name" id="editServiceName" class="form-control" required maxlength="255">
+                    </div>
+                    <div class="mb-3 text-start">
+                        <label class="form-label fw-semibold small">Service Charge / Cost *</label>
+                        <input type="number" name="cost" id="editServiceCost" class="form-control" min="0" step="0.01" required>
+                    </div>
+                    <div class="mb-3 text-start">
+                        <label class="form-label fw-semibold small">Description *</label>
+                        <textarea name="description" id="editServiceDescription" class="form-control" rows="3" required></textarea>
+                    </div>
+                    <div class="mb-3 text-start">
+                        <label class="form-label fw-semibold small">Replace Service Image</label>
+                        <input type="file" name="image" class="form-control" accept="image/*">
+                        <img id="editServicePreview" class="rounded shadow-sm mt-2 d-none" alt="Current service image" style="width:80px;height:80px;object-fit:cover;">
+                    </div>
+                </div>
+                <div class="modal-footer border-0">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Update Service</button>
                 </div>
             </form>
         </div>
@@ -1257,6 +1371,38 @@
     }
 
     document.addEventListener('DOMContentLoaded', () => {
+        const editProductModal = document.getElementById('editProductModal');
+        if (editProductModal) {
+            editProductModal.addEventListener('show.bs.modal', event => {
+                const button = event.relatedTarget;
+                if (!button) return;
+                document.getElementById('editProductForm').action = button.dataset.editUrl;
+                document.getElementById('editProductId').value = button.dataset.productId;
+                document.getElementById('editProductName').value = button.dataset.name;
+                document.getElementById('editProductCost').value = button.dataset.cost;
+                document.getElementById('editProductDescription').value = button.dataset.description;
+                const preview = document.getElementById('editProductPreview');
+                preview.src = button.dataset.imageUrl || '';
+                preview.classList.toggle('d-none', !button.dataset.imageUrl);
+            });
+        }
+
+        const editServiceModal = document.getElementById('editServiceModal');
+        if (editServiceModal) {
+            editServiceModal.addEventListener('show.bs.modal', event => {
+                const button = event.relatedTarget;
+                if (!button) return;
+                document.getElementById('editServiceForm').action = button.dataset.editUrl;
+                document.getElementById('editServiceId').value = button.dataset.serviceId;
+                document.getElementById('editServiceName').value = button.dataset.name;
+                document.getElementById('editServiceCost').value = button.dataset.cost;
+                document.getElementById('editServiceDescription').value = button.dataset.description;
+                const preview = document.getElementById('editServicePreview');
+                preview.src = button.dataset.imageUrl || '';
+                preview.classList.toggle('d-none', !button.dataset.imageUrl);
+            });
+        }
+
         @if(request()->filled('business_id') && $user->is_business)
             toggleBusinessSection('console');
         @else
@@ -1286,6 +1432,26 @@
             }
             var serviceModal = new bootstrap.Modal(document.getElementById('addServiceModal'));
             serviceModal.show();
+        @endif
+
+        @if($errors->productEdit->any() && old('product_id'))
+            const productEditTrigger = document.querySelector('[data-product-id="{{ (int) old('product_id') }}"]');
+            if (productEditTrigger) {
+                bootstrap.Modal.getOrCreateInstance(editProductModal).show(productEditTrigger);
+                document.getElementById('editProductName').value = @js(old('name'));
+                document.getElementById('editProductCost').value = @js(old('cost'));
+                document.getElementById('editProductDescription').value = @js(old('description'));
+            }
+        @endif
+
+        @if($errors->serviceEdit->any() && old('service_id'))
+            const serviceEditTrigger = document.querySelector('[data-service-id="{{ (int) old('service_id') }}"]');
+            if (serviceEditTrigger) {
+                bootstrap.Modal.getOrCreateInstance(editServiceModal).show(serviceEditTrigger);
+                document.getElementById('editServiceName').value = @js(old('name'));
+                document.getElementById('editServiceCost').value = @js(old('cost'));
+                document.getElementById('editServiceDescription').value = @js(old('description'));
+            }
         @endif
 
         @if($errors->job->any())

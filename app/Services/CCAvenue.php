@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use RuntimeException;
 
@@ -29,11 +30,19 @@ class CCAvenue
      */
     public function getPaymentUrl()
     {
-        // return $this->sandbox
-        //     ? 'https://test.ccavenue.com/transaction/transaction.do?command=initiateTransaction'
-        //     : 'https://secure.ccavenue.com/transaction/transaction.do?command=initiateTransaction';
+        return $this->sandbox
+            ? 'https://test.ccavenue.com/transaction/transaction.do?command=initiateTransaction'
+            : 'https://secure.ccavenue.com/transaction/transaction.do?command=initiateTransaction';
+    }
 
-        return 'https://secure.ccavenue.com/transaction/transaction.do?command=initiateTransaction';
+    /**
+     * Build the return URL from the current checkout host. This prevents a
+     * stale APP_URL (for example localhost) from being sent to CCAvenue.
+     */
+    public function getCallbackUrl(Request $request): string
+    {
+        return rtrim($request->getSchemeAndHttpHost(), '/')
+            .route('ccavenue.callback', [], false);
     }
 
     /**
