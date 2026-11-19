@@ -113,8 +113,14 @@ class BusinessController extends Controller
     public function create()
     {
         $categories = BusinessCategory::where('is_active', true)->orderBy('sort_order', 'asc')->orderBy('id', 'asc')->get();
+        $businessTypes = BusinessPlan::where('active', true)
+            ->orderBy('company_type')
+            ->pluck('company_type')
+            ->filter()
+            ->unique(fn (string $companyType) => BusinessPlan::normalizeCompanyType($companyType))
+            ->values();
 
-        return view('business.create', compact('categories'));
+        return view('business.create', compact('categories', 'businessTypes'));
     }
 
     /**
@@ -236,9 +242,9 @@ class BusinessController extends Controller
 
         // Filter plans by business type if business exists
         if ($business && $business->business_type) {
-            $businessType = trim(str_replace(' ', '', $business->business_type));
+            $businessType = BusinessPlan::normalizeCompanyType($business->business_type);
             $plans = $plans->filter(function ($p) use ($businessType) {
-                $planType = trim(str_replace(' ', '', $p->company_type ?? ''));
+                $planType = BusinessPlan::normalizeCompanyType($p->company_type);
 
                 return $planType === $businessType;
             });

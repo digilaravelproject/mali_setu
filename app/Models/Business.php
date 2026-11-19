@@ -39,6 +39,7 @@ class Business extends Model
         'status',
         'opening_time',
         'closing_time',
+        'is_24_7',
         'photo',
         'latitude',
         'longitude',
@@ -47,6 +48,7 @@ class Business extends Model
     protected $casts = [
         'subscription_expires_at' => 'datetime',
         'verified_at' => 'datetime',
+        'is_24_7' => 'boolean',
     ];
 
     /**

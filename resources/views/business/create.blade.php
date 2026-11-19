@@ -59,9 +59,10 @@
                             <div class="col-md-6 mb-3">
                                 <label class="form-label fw-semibold text-secondary small">Business Type <span class="text-danger">*</span></label>
                                 <select id="business_type_select" name="business_type" class="form-select @error('business_type') is-invalid @enderror" required>
-                                    <option value="Proprietary /Partnership - LLP" {{ old('business_type') === 'Proprietary /Partnership - LLP' ? 'selected' : '' }}>Proprietary /Partnership - LLP</option>
-                                    <option value="Private Ltd" {{ old('business_type') === 'Private Ltd' ? 'selected' : '' }}>Private Ltd</option>
-                                    <option value="Public Ltd" {{ old('business_type') === 'Public Ltd' ? 'selected' : '' }}>Public Ltd</option>
+                                    <option value="" disabled {{ old('business_type') ? '' : 'selected' }}>Select business type...</option>
+                                    @foreach($businessTypes as $businessType)
+                                        <option value="{{ $businessType }}" {{ old('business_type') === $businessType ? 'selected' : '' }}>{{ $businessType }}</option>
+                                    @endforeach
                                 </select>
                                 @error('business_type')
                                     <div class="text-danger small mt-1">{{ $message }}</div>

@@ -29,6 +29,15 @@ class BusinessController extends Controller
     public function register(Request $request)
     {
         $user = $request->user();
+
+        // Multipart clients send booleans as strings; normalize true/false
+        // while leaving invalid values untouched for the validator.
+        if ($request->has('is_24_7')) {
+            $is24Hours = filter_var($request->input('is_24_7'), FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
+            if ($is24Hours !== null) {
+                $request->merge(['is_24_7' => $is24Hours]);
+            }
+        }
         
         // if (Business::where('user_id', $request->user()->id)->exists()) {
         //     return response()->json([
@@ -61,6 +70,7 @@ class BusinessController extends Controller
             'photos.*' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:5120',
             'opening_time' => 'nullable|date_format:H:i',
             'closing_time' => 'nullable|date_format:H:i',
+            'is_24_7' => 'sometimes|boolean',
             'latitude' => 'nullable|numeric|between:-90,90',
             'longitude' => 'nullable|numeric|between:-180,180',
         ]);
@@ -111,8 +121,9 @@ class BusinessController extends Controller
             'pincode' => $request->pincode,
     
             'website' => $request->website,
-            'opening_time' => $request->opening_time,
-            'closing_time' => $request->closing_time,
+            'opening_time' => $request->boolean('is_24_7') ? null : $request->opening_time,
+            'closing_time' => $request->boolean('is_24_7') ? null : $request->closing_time,
+            'is_24_7' => $request->boolean('is_24_7'),
             'latitude' => $request->latitude,
             'longitude' => $request->longitude,
             'verification_status' => 'pending',

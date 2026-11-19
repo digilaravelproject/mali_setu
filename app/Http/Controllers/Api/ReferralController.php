@@ -48,7 +48,7 @@ class ReferralController extends Controller
             'per_page' => ['nullable', 'integer', 'min:1', 'max:100'],
         ]);
 
-        $query = $user->referralsMade()->with('referredUser:id,name,email,phone,user_type,status,photo,district,city,village,created_at');
+        $query = $user->referralsMade()->with('referredUser');
         if (! empty($validated['status'])) {
             $query->where('status', $validated['status']);
         }
@@ -181,21 +181,18 @@ class ReferralController extends Controller
 
         return [
             'id' => $referral->id,
+            'referrer_user_id' => $referral->referrer_user_id,
+            'referred_user_id' => $referral->referred_user_id,
             'referral_code_used' => $referral->referral_code_used,
             'commission_points' => $referral->commission_points,
             'status' => $referral->status,
             'referred_at' => $referral->created_at?->toISOString(),
-            'user' => $member ? [
-                'id' => $member->id,
-                'name' => $member->name,
-                'email' => $member->email,
-                'phone' => $member->phone,
-                'user_type' => $member->user_type,
-                'status' => $member->status,
+            'updated_at' => $referral->updated_at?->toISOString(),
+            'user' => $member ? array_merge($member->toArray(), [
                 'photo_url' => $member->photo ? asset('storage/'.$member->photo) : asset('default-avatar.png'),
                 'location' => collect([$member->district, $member->city ?: $member->village])->filter()->implode(', '),
                 'registered_at' => $member->created_at?->toISOString(),
-            ] : null,
+            ]) : null,
         ];
     }
 

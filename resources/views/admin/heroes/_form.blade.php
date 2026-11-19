@@ -6,6 +6,23 @@
 </div>
 
 <div class="mb-3">
+    <label class="form-label">Banner Link</label>
+    <input type="text" name="url" class="form-control" list="banner-link-options"
+           value="{{ old('url', $hero->url ?? '') }}" maxlength="512"
+           placeholder="Select an internal link or enter https://example.com">
+    <datalist id="banner-link-options">
+        <option value="/dashboard">Dashboard</option>
+        <option value="/webinars">Webinars</option>
+        <option value="/business">Business</option>
+        <option value="/matrimony">Matrimony</option>
+        <option value="/blogs">Blog Portal</option>
+        <option value="/jobs">Jobs</option>
+    </datalist>
+    <div class="form-text text-muted mt-1">Choose a suggested app link or type any external URL. Leave blank for a non-clickable banner.</div>
+    @error('url') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
+</div>
+
+<div class="mb-3">
     <label class="form-label">Mobile Hero Image <span class="text-danger">*</span></label>
     <input type="file" name="mobile_image" class="form-control" accept="image/*" {{ isset($hero) ? '' : 'required' }}>
     <div class="form-text text-muted mt-1">Required dimensions: 300x168 px. Max size: 3 MB. Supported formats: JPG, JPEG, PNG, WEBP.</div>

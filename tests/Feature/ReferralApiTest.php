@@ -189,7 +189,13 @@ class ReferralApiTest extends TestCase
             ->assertJsonPath('data.active_referrals', 1);
         $this->getJson('/api/referrals/MSUOWNER/referred-users')->assertOk()
             ->assertJsonPath('data.0.user.name', 'Referred User')
-            ->assertJsonPath('data.0.commission_points', 4);
+            ->assertJsonPath('data.0.user.email', 'child@example.com')
+            ->assertJsonPath('data.0.user.reffral_code', 'MSUCHILD')
+            ->assertJsonPath('data.0.referrer_user_id', $ownerId)
+            ->assertJsonPath('data.0.referred_user_id', $childId)
+            ->assertJsonPath('data.0.referral_code_used', 'MSUOWNER')
+            ->assertJsonPath('data.0.commission_points', 4)
+            ->assertJsonPath('data.0.status', 'active');
 
         Sanctum::actingAs(User::findOrFail($otherId));
         $this->getJson('/api/referrals/MSUOWNER/history')->assertForbidden();

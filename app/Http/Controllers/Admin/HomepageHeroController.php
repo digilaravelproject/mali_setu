@@ -33,6 +33,7 @@ class HomepageHeroController extends Controller
             'title' => $request->title,
             'image_path' => $path,
             'web_image_path' => $webPath,
+            'url' => $request->input('url'),
         ]);
 
         return redirect()
@@ -52,7 +53,10 @@ class HomepageHeroController extends Controller
 
     public function update(UpdateHomepageHeroRequest $request, HomepageHero $hero)
     {
-        $data = ['title' => $request->title];
+        $data = [
+            'title' => $request->title,
+            'url' => $request->input('url'),
+        ];
 
         if ($request->hasFile('mobile_image')) {
             // delete old image

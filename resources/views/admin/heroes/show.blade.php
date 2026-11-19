@@ -7,6 +7,13 @@
     <div class="card mt-3">
         <div class="card-body">
             <h4 class="card-title mb-4">{{ $hero->title }}</h4>
+            <div class="mb-3"><strong>Banner Link:</strong>
+                @if($hero->url)
+                    <a href="{{ $hero->url }}" target="_blank" rel="noopener noreferrer">{{ $hero->url }}</a>
+                @else
+                    <span class="text-muted">None</span>
+                @endif
+            </div>
             <div class="row">
                 <div class="col-md-6 mb-3">
                     <h5 class="fw-bold mb-2">Mobile Hero Image</h5>
