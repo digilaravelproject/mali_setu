@@ -174,10 +174,14 @@ class ReferralApiTest extends TestCase
     {
         $ownerId = DB::table('users')->insertGetId($this->userRow('Owner Volunteer', 'owner@example.com', '1111111111', 'volunteer', 'MSUOWNER'));
         $childId = DB::table('users')->insertGetId($this->userRow('Referred User', 'child@example.com', '2222222222', 'general', 'MSUCHILD'));
+        $grandchildId = DB::table('users')->insertGetId($this->userRow('Grandchild User', 'grandchild@example.com', '2222222223', 'general', 'MSUGRAND'));
+        $greatGrandchildId = DB::table('users')->insertGetId($this->userRow('Great Grandchild User', 'great-grandchild@example.com', '2222222224', 'business', 'MSUGREAT'));
         $otherId = DB::table('users')->insertGetId($this->userRow('Other User', 'other@example.com', '3333333333', 'general', 'MSUOTHER'));
         DB::table('volunteer_profiles')->insert(['user_id' => $ownerId, 'status' => 'active', 'created_at' => now(), 'updated_at' => now()]);
         DB::table('volunteer_referral_profiles')->insert(['user_id' => $ownerId, 'commission_points' => 4, 'is_active' => true, 'created_at' => now(), 'updated_at' => now()]);
         DB::table('referrals')->insert(['referrer_user_id' => $ownerId, 'referred_user_id' => $childId, 'referral_code_used' => 'MSUOWNER', 'commission_points' => 4, 'status' => 'active', 'created_at' => now(), 'updated_at' => now()]);
+        DB::table('referrals')->insert(['referrer_user_id' => $childId, 'referred_user_id' => $grandchildId, 'referral_code_used' => 'MSUCHILD', 'commission_points' => 2, 'status' => 'active', 'created_at' => now()->addSecond(), 'updated_at' => now()]);
+        DB::table('referrals')->insert(['referrer_user_id' => $grandchildId, 'referred_user_id' => $greatGrandchildId, 'referral_code_used' => 'MSUGRAND', 'commission_points' => 2, 'status' => 'active', 'created_at' => now()->addSeconds(2), 'updated_at' => now()]);
 
         $this->getJson('/api/referrals/MSUOWNER/volunteer')->assertOk()
             ->assertJsonPath('data.referral_code', 'MSUOWNER')
@@ -188,6 +192,8 @@ class ReferralApiTest extends TestCase
             ->assertJsonPath('data.total_earned_points', 4)
             ->assertJsonPath('data.active_referrals', 1);
         $this->getJson('/api/referrals/MSUOWNER/referred-users')->assertOk()
+            ->assertJsonCount(3, 'data')
+            ->assertJsonPath('root.referral_code', 'MSUOWNER')
             ->assertJsonPath('data.0.user.name', 'Referred User')
             ->assertJsonPath('data.0.user.email', 'child@example.com')
             ->assertJsonPath('data.0.user.reffral_code', 'MSUCHILD')
@@ -195,7 +201,24 @@ class ReferralApiTest extends TestCase
             ->assertJsonPath('data.0.referred_user_id', $childId)
             ->assertJsonPath('data.0.referral_code_used', 'MSUOWNER')
             ->assertJsonPath('data.0.commission_points', 4)
-            ->assertJsonPath('data.0.status', 'active');
+            ->assertJsonPath('data.0.status', 'active')
+            ->assertJsonPath('data.0.level', 1)
+            ->assertJsonPath('data.1.user.name', 'Grandchild User')
+            ->assertJsonPath('data.1.level', 2)
+            ->assertJsonPath('data.2.user.name', 'Great Grandchild User')
+            ->assertJsonPath('data.2.level', 3)
+            ->assertJsonPath('data.2.chain.0.referral_code', 'MSUOWNER')
+            ->assertJsonPath('data.2.chain.3.referral_code', 'MSUGREAT')
+            ->assertJsonPath('meta.max_depth', 3);
+
+        Sanctum::actingAs(User::findOrFail($childId));
+        $this->getJson('/api/referrals/MSUCHILD/referred-users')->assertOk()
+            ->assertJsonCount(2, 'data')
+            ->assertJsonPath('root.referral_code', 'MSUCHILD')
+            ->assertJsonPath('data.0.user.name', 'Grandchild User')
+            ->assertJsonPath('data.0.level', 1)
+            ->assertJsonPath('data.1.user.name', 'Great Grandchild User')
+            ->assertJsonPath('data.1.level', 2);
 
         Sanctum::actingAs(User::findOrFail($otherId));
         $this->getJson('/api/referrals/MSUOWNER/history')->assertForbidden();

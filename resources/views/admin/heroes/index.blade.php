@@ -20,7 +20,7 @@
                         <th>Mobile Preview</th>
                         <th>Desktop Preview</th>
                         <th>Title</th>
-                        <th>Link</th>
+                        <th>Destination</th>
                         <th>Created</th>
                         <th class="text-end">Actions</th>
                     </tr>
@@ -41,10 +41,15 @@
                             </td>
                             <td>{{ $hero->title }}</td>
                             <td>
+                                <div><strong>{{ $hero->functionality_name ?: 'No functionality' }}</strong></div>
+                                @if($hero->event_name)
+                                    <div class="small text-muted">{{ $hero->event_name }}</div>
+                                @endif
                                 @if($hero->url)
-                                    <a href="{{ $hero->url }}" target="_blank" rel="noopener noreferrer" class="text-break">{{ $hero->url }}</a>
-                                @else
-                                    <span class="text-muted">None</span>
+                                    <div><a href="{{ $hero->url }}" target="_blank" rel="noopener noreferrer" class="small text-break">{{ $hero->url }}</a></div>
+                                @endif
+                                @if($hero->external_url)
+                                    <div><a href="{{ $hero->external_url }}" target="_blank" rel="noopener noreferrer" class="small text-break">{{ $hero->external_url }}</a></div>
                                 @endif
                             </td>
                             <td>{{ $hero->created_at->format('d M Y') }}</td>

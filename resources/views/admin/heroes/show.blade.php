@@ -7,9 +7,18 @@
     <div class="card mt-3">
         <div class="card-body">
             <h4 class="card-title mb-4">{{ $hero->title }}</h4>
-            <div class="mb-3"><strong>Banner Link:</strong>
+            <div class="mb-2"><strong>Functionality:</strong> {{ $hero->functionality_name ?: 'None' }}</div>
+            <div class="mb-2"><strong>Event:</strong> {{ $hero->event_name ?: 'None' }}</div>
+            <div class="mb-2"><strong>Internal URL:</strong>
                 @if($hero->url)
                     <a href="{{ $hero->url }}" target="_blank" rel="noopener noreferrer">{{ $hero->url }}</a>
+                @else
+                    <span class="text-muted">None</span>
+                @endif
+            </div>
+            <div class="mb-3"><strong>External URL:</strong>
+                @if($hero->external_url)
+                    <a href="{{ $hero->external_url }}" target="_blank" rel="noopener noreferrer">{{ $hero->external_url }}</a>
                 @else
                     <span class="text-muted">None</span>
                 @endif

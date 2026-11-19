@@ -9,6 +9,7 @@ use App\Models\User;
 use App\Services\ReferralService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 
@@ -46,22 +47,44 @@ class ReferralController extends Controller
             'user_type' => ['nullable', 'in:general,business,matrimony,volunteer'],
             'status' => ['nullable', 'in:active,inactive'],
             'per_page' => ['nullable', 'integer', 'min:1', 'max:100'],
+            'page' => ['nullable', 'integer', 'min:1'],
         ]);
 
-        $query = $user->referralsMade()->with('referredUser');
-        if (! empty($validated['status'])) {
-            $query->where('status', $validated['status']);
-        }
-        if (! empty($validated['user_type'])) {
-            $query->whereHas('referredUser', fn ($q) => $q->where('user_type', $validated['user_type']));
-        }
+        $chain = $this->descendantReferralChain($user)
+            ->filter(function (array $node) use ($validated) {
+                $referral = $node['referral'];
+                $member = $referral->referredUser;
 
-        $page = $query->latest()->paginate($validated['per_page'] ?? 20);
+                return (empty($validated['status']) || $referral->status === $validated['status'])
+                    && (empty($validated['user_type']) || $member?->user_type === $validated['user_type']);
+            })
+            ->values();
+
+        $perPage = $validated['per_page'] ?? 20;
+        $currentPage = $validated['page'] ?? LengthAwarePaginator::resolveCurrentPage();
+        $page = new LengthAwarePaginator(
+            $chain->forPage($currentPage, $perPage)->values(),
+            $chain->count(),
+            $perPage,
+            $currentPage,
+            ['path' => $request->url(), 'query' => $request->query()]
+        );
 
         return response()->json([
             'success' => true,
-            'data' => collect($page->items())->map(fn (Referral $referral) => $this->referralData($referral))->values(),
-            'meta' => $this->paginationMeta($page),
+            'root' => [
+                'user_id' => $user->id,
+                'name' => $user->name,
+                'referral_code' => $user->reffral_code,
+            ],
+            'data' => collect($page->items())->map(fn (array $node) => $this->referralData(
+                $node['referral'],
+                $node['level'],
+                $node['chain']
+            ))->values(),
+            'meta' => array_merge($this->paginationMeta($page), [
+                'max_depth' => $chain->max('level') ?? 0,
+            ]),
         ]);
     }
 
@@ -175,7 +198,7 @@ class ReferralController extends Controller
         return $owner;
     }
 
-    private function referralData(Referral $referral): array
+    private function referralData(Referral $referral, ?int $level = null, array $chain = []): array
     {
         $member = $referral->referredUser;
 
@@ -183,6 +206,9 @@ class ReferralController extends Controller
             'id' => $referral->id,
             'referrer_user_id' => $referral->referrer_user_id,
             'referred_user_id' => $referral->referred_user_id,
+            'parent_user_id' => $referral->referrer_user_id,
+            'level' => $level,
+            'chain' => $chain,
             'referral_code_used' => $referral->referral_code_used,
             'commission_points' => $referral->commission_points,
             'status' => $referral->status,
@@ -194,6 +220,57 @@ class ReferralController extends Controller
                 'registered_at' => $member->created_at?->toISOString(),
             ]) : null,
         ];
+    }
+
+    /**
+     * Return every descendant in breadth-first order. A visited set protects
+     * legacy data from loops while each node retains its full root-to-user path.
+     */
+    private function descendantReferralChain(User $root)
+    {
+        $rootNode = [
+            'user_id' => $root->id,
+            'name' => $root->name,
+            'referral_code' => $root->reffral_code,
+        ];
+        $frontier = [$root->id => [$rootNode]];
+        $visited = [$root->id => true];
+        $result = collect();
+
+        while ($frontier !== []) {
+            $referrals = Referral::with('referredUser')
+                ->whereIn('referrer_user_id', array_keys($frontier))
+                ->orderBy('created_at')
+                ->orderBy('id')
+                ->get();
+            $nextFrontier = [];
+
+            foreach ($referrals as $referral) {
+                $member = $referral->referredUser;
+                if (! $member || isset($visited[$member->id])) {
+                    continue;
+                }
+
+                $visited[$member->id] = true;
+                $path = $frontier[$referral->referrer_user_id] ?? [$rootNode];
+                $path[] = [
+                    'user_id' => $member->id,
+                    'name' => $member->name,
+                    'referral_code' => $member->reffral_code,
+                ];
+                $level = count($path) - 1;
+                $result->push([
+                    'referral' => $referral,
+                    'level' => $level,
+                    'chain' => $path,
+                ]);
+                $nextFrontier[$member->id] = $path;
+            }
+
+            $frontier = $nextFrontier;
+        }
+
+        return $result;
     }
 
     private function paginationMeta($page): array

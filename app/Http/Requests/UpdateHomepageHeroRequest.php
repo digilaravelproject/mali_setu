@@ -24,6 +24,8 @@ class UpdateHomepageHeroRequest extends FormRequest
     {
         return [
             'title' => ['required','string','max:255'],
+            'functionality_name' => ['nullable', 'string', 'max:120'],
+            'event_name' => ['nullable', 'string', 'max:120'],
             'mobile_image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:3072',
             'web_image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:5120',
             'url' => ['nullable', 'string', 'max:512', function (string $attribute, mixed $value, Closure $fail) {
@@ -31,15 +33,12 @@ class UpdateHomepageHeroRequest extends FormRequest
                     return;
                 }
 
-                $scheme = parse_url($value, PHP_URL_SCHEME);
                 $isInternalPath = preg_match('#^/(?!/)#', $value) === 1;
-                $isWebUrl = filter_var($value, FILTER_VALIDATE_URL) !== false
-                    && in_array(mb_strtolower((string) $scheme), ['http', 'https'], true);
-
-                if (! $isInternalPath && ! $isWebUrl) {
-                    $fail('The banner link must be an internal path beginning with / or a complete HTTP/HTTPS URL.');
+                if (! $isInternalPath) {
+                    $fail('The internal URL must begin with /.');
                 }
             }],
+            'external_url' => ['nullable', 'url:http,https', 'max:512'],
         ];
     }
 }

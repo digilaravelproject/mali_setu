@@ -8,8 +8,11 @@ class HomepageHero extends Model
 {
     protected $fillable = [
         'title',
+        'functionality_name',
+        'event_name',
         'image_path',
         'web_image_path',
-        'url'
+        'url',
+        'external_url',
     ];
 }
