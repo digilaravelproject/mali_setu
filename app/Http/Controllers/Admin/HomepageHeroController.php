@@ -126,14 +126,14 @@ class HomepageHeroController extends Controller
     private function bannerFunctionalities(): array
     {
         return [
-            'Dashboard' => [
-                'base_url' => '/dashboard',
-                'events' => [
-                    'Dashboard Home' => [
-                        ['label' => 'Dashboard Home', 'url' => '/dashboard'],
-                    ],
-                ],
-            ],
+            // 'Dashboard' => [
+            //     'base_url' => '/dashboard',
+            //     'events' => [
+            //         'Dashboard Home' => [
+            //             ['label' => 'Dashboard Home', 'url' => '/dashboard'],
+            //         ],
+            //     ],
+            // ],
             'Business' => [
                 'base_url' => '/api/business',
                 'events' => [
@@ -154,66 +154,66 @@ class HomepageHeroController extends Controller
                         ])->values()->all(),
                 ],
             ],
-            'Matrimony' => [
-                'base_url' => '/api/matrimony',
-                'events' => [
-                    'Matrimony Profile' => MatrimonyProfile::query()->with('user:id,name')->orderBy('id')->get()
-                        ->map(fn (MatrimonyProfile $profile) => [
-                            'label' => $profile->candidate_name ?: $profile->user?->name ?: 'Profile #'.$profile->id,
-                            'url' => '/api/matrimony/profile/'.$profile->id,
-                        ])->values()->all(),
-                ],
-            ],
-            'Webinars' => [
-                'base_url' => '/api/webinars',
-                'events' => [
-                    'Webinar Detail' => Webinar::query()->orderBy('title')->get(['id', 'title'])
-                        ->map(fn (Webinar $webinar) => [
-                            'label' => $webinar->title,
-                            'url' => '/api/webinars/'.$webinar->id,
-                        ])->values()->all(),
-                ],
-            ],
-            'Blog Portal' => [
-                'base_url' => '/api/blogs',
-                'events' => [
-                    'Blog Detail' => Blog::query()->orderBy('title')->get(['id', 'title'])
-                        ->map(fn (Blog $blog) => [
-                            'label' => $blog->title,
-                            'url' => '/api/blogs/'.$blog->id,
-                        ])->values()->all(),
-                ],
-            ],
-            'Jobs' => [
-                'base_url' => '/api/jobs',
-                'events' => [
-                    'Job Detail' => JobPosting::query()->orderBy('title')->get(['id', 'title'])
-                        ->map(fn (JobPosting $job) => [
-                            'label' => $job->title,
-                            'url' => '/api/jobs/'.$job->id,
-                        ])->values()->all(),
-                ],
-            ],
-            'Volunteers' => [
-                'base_url' => '/api/volunteer/opportunities',
-                'events' => [
-                    'Volunteer Opportunity' => VolunteerOpportunity::query()->orderBy('title')->get(['id', 'title'])
-                        ->map(fn (VolunteerOpportunity $opportunity) => [
-                            'label' => $opportunity->title,
-                            'url' => '/api/volunteer/opportunity/'.$opportunity->id,
-                        ])->values()->all(),
-                ],
-            ],
-            'Donations' => [
-                'base_url' => '/api/donation/causes',
-                'events' => [
-                    'Donation Cause' => DonationCause::query()->orderBy('title')->get(['id', 'title'])
-                        ->map(fn (DonationCause $cause) => [
-                            'label' => $cause->title,
-                            'url' => '/api/donation/cause/'.$cause->id,
-                        ])->values()->all(),
-                ],
-            ],
+            // 'Matrimony' => [
+            //     'base_url' => '/api/matrimony',
+            //     'events' => [
+            //         'Matrimony Profile' => MatrimonyProfile::query()->with('user:id,name')->orderBy('id')->get()
+            //             ->map(fn (MatrimonyProfile $profile) => [
+            //                 'label' => $profile->candidate_name ?: $profile->user?->name ?: 'Profile #'.$profile->id,
+            //                 'url' => '/api/matrimony/profile/'.$profile->id,
+            //             ])->values()->all(),
+            //     ],
+            // ],
+            // 'Webinars' => [
+            //     'base_url' => '/api/webinars',
+            //     'events' => [
+            //         'Webinar Detail' => Webinar::query()->orderBy('title')->get(['id', 'title'])
+            //             ->map(fn (Webinar $webinar) => [
+            //                 'label' => $webinar->title,
+            //                 'url' => '/api/webinars/'.$webinar->id,
+            //             ])->values()->all(),
+            //     ],
+            // ],
+            // 'Blog Portal' => [
+            //     'base_url' => '/api/blogs',
+            //     'events' => [
+            //         'Blog Detail' => Blog::query()->orderBy('title')->get(['id', 'title'])
+            //             ->map(fn (Blog $blog) => [
+            //                 'label' => $blog->title,
+            //                 'url' => '/api/blogs/'.$blog->id,
+            //             ])->values()->all(),
+            //     ],
+            // ],
+            // 'Jobs' => [
+            //     'base_url' => '/api/jobs',
+            //     'events' => [
+            //         'Job Detail' => JobPosting::query()->orderBy('title')->get(['id', 'title'])
+            //             ->map(fn (JobPosting $job) => [
+            //                 'label' => $job->title,
+            //                 'url' => '/api/jobs/'.$job->id,
+            //             ])->values()->all(),
+            //     ],
+            // ],
+            // 'Volunteers' => [
+            //     'base_url' => '/api/volunteer/opportunities',
+            //     'events' => [
+            //         'Volunteer Opportunity' => VolunteerOpportunity::query()->orderBy('title')->get(['id', 'title'])
+            //             ->map(fn (VolunteerOpportunity $opportunity) => [
+            //                 'label' => $opportunity->title,
+            //                 'url' => '/api/volunteer/opportunity/'.$opportunity->id,
+            //             ])->values()->all(),
+            //     ],
+            // ],
+            // 'Donations' => [
+            //     'base_url' => '/api/donation/causes',
+            //     'events' => [
+            //         'Donation Cause' => DonationCause::query()->orderBy('title')->get(['id', 'title'])
+            //             ->map(fn (DonationCause $cause) => [
+            //                 'label' => $cause->title,
+            //                 'url' => '/api/donation/cause/'.$cause->id,
+            //             ])->values()->all(),
+            //     ],
+            // ],
         ];
     }
 }

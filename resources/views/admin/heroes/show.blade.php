@@ -16,13 +16,13 @@
                     <span class="text-muted">None</span>
                 @endif
             </div>
-            <div class="mb-3"><strong>External URL:</strong>
+            <?php /* <div class="mb-3"><strong>External URL:</strong>
                 @if($hero->external_url)
                     <a href="{{ $hero->external_url }}" target="_blank" rel="noopener noreferrer">{{ $hero->external_url }}</a>
                 @else
                     <span class="text-muted">None</span>
                 @endif
-            </div>
+            </div> */?>
             <div class="row">
                 <div class="col-md-6 mb-3">
                     <h5 class="fw-bold mb-2">Mobile Hero Image</h5>

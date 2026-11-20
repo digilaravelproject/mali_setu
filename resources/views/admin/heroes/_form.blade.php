@@ -46,14 +46,14 @@
     @error('url') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
 </div>
 
-<div class="mb-3">
+<?php /*<div class="mb-3">
     <label class="form-label">External URL</label>
     <input type="url" name="external_url" class="form-control"
            value="{{ old('external_url', $hero->external_url ?? '') }}" maxlength="512"
            placeholder="https://another-domain.com/page">
     <div class="form-text text-muted mt-1">Optional link to another domain. Enter the complete HTTP/HTTPS URL.</div>
     @error('external_url') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
-</div>
+</div> */?>
 
 <div class="mb-3">
     <label class="form-label">Mobile Hero Image <span class="text-danger">*</span></label>
