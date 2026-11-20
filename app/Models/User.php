@@ -4,13 +4,13 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use App\Support\AdminPermissionRegistry;
+use App\Services\ReferralCodeService;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Schema;
-use Illuminate\Support\Str;
 use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
@@ -26,6 +26,7 @@ class User extends Authenticatable
     protected $fillable = [
         'google_id',
         'name',
+        'first_name',
         'email',
         'photo',
         'password',
@@ -54,6 +55,7 @@ class User extends Authenticatable
         'city',
         'sector',
         'district',
+        'taluka',
         'village',
         'destination',
         'latitude',
@@ -98,11 +100,7 @@ class User extends Authenticatable
                 return;
             }
 
-            do {
-                $code = 'MSU'.strtoupper(Str::random(7));
-            } while (static::where('reffral_code', $code)->exists());
-
-            $user->reffral_code = $code;
+            $user->reffral_code = app(ReferralCodeService::class)->generate($user);
         });
 
         static::saved(function ($user) {

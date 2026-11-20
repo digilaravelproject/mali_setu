@@ -223,6 +223,37 @@
                 margin-left: 0;
             }
         }
+        .location-sync-loader {
+            position: fixed;
+            inset: 0;
+            z-index: 9999;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+            background: rgba(20, 10, 16, .58);
+            backdrop-filter: blur(4px);
+        }
+        .location-sync-loader.is-visible { display: flex; }
+        .location-sync-loader-card {
+            min-width: 260px;
+            padding: 2rem 2.4rem;
+            border-radius: 22px;
+            color: #1f2937;
+            text-align: center;
+            background: #fff;
+            box-shadow: 0 24px 70px rgba(0, 0, 0, .28);
+        }
+        .location-sync-spinner {
+            width: 58px;
+            height: 58px;
+            margin: 0 auto 1rem;
+            border: 6px solid #f4dce9;
+            border-top-color: var(--primary-color);
+            border-radius: 50%;
+            animation: location-sync-spin .8s linear infinite;
+        }
+        @keyframes location-sync-spin { to { transform: rotate(360deg); } }
     </style>
     
     @stack('styles')
@@ -557,6 +588,14 @@
             @yield('content')
         </div>
     </div>
+
+    <div id="locationSyncLoader" class="location-sync-loader" role="status" aria-live="polite" aria-hidden="true">
+        <div class="location-sync-loader-card">
+            <div class="location-sync-spinner" aria-hidden="true"></div>
+            <div class="fw-bold fs-5">Synchronizing locations</div>
+            <div class="small text-muted mt-2">Please keep this page open. This may take a few minutes.</div>
+        </div>
+    </div>
     
     <!-- jQuery (required for legacy code) -->
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
@@ -567,6 +606,19 @@
         // Sidebar toggle for mobile
         document.getElementById('sidebarToggle')?.addEventListener('click', function() {
             document.getElementById('sidebar').classList.toggle('show');
+        });
+
+        const locationSyncLoader = document.getElementById('locationSyncLoader');
+        document.querySelectorAll('form[action*="/admin/locations/sync"]').forEach(form => {
+            form.addEventListener('submit', () => {
+                locationSyncLoader?.classList.add('is-visible');
+                locationSyncLoader?.setAttribute('aria-hidden', 'false');
+                form.querySelectorAll('button[type="submit"], button:not([type])').forEach(button => button.disabled = true);
+            });
+        });
+        window.addEventListener('pageshow', () => {
+            locationSyncLoader?.classList.remove('is-visible');
+            locationSyncLoader?.setAttribute('aria-hidden', 'true');
         });
         
         // Auto-hide alerts

@@ -129,6 +129,7 @@ class WebAuthController extends Controller
 
             $user = User::create([
                 'name' => $name,
+                'first_name' => $request->first_name,
                 'email' => $request->email,
                 'phone' => $request->phone,
                 'dob' => $request->dob,

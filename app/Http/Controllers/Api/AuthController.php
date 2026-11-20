@@ -9,6 +9,7 @@ use App\Models\Transaction;
 use App\Models\User;
 use App\Models\VolunteerProfile;
 use App\Services\ReferralService;
+use App\Services\ReferralCodeService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -28,6 +29,7 @@ class AuthController extends Controller
         try {
             $validator = Validator::make($request->all(), [
                 'name' => 'required|string|max:255',
+                'first_name' => 'nullable|string|max:100',
                 'email' => 'required|string|email|max:255|unique:users',
                 'age' => 'nullable|integer|min:18|max:100', // optional, must be 18-100 if provided
                 'phone' => 'required|string|max:15|unique:users',
@@ -49,6 +51,7 @@ class AuthController extends Controller
                 'city' => 'nullable|string|max:100',
                 'sector' => 'nullable|string|max:100',
                 'district' => 'nullable|string|max:100',
+                'taluka' => 'nullable|string|max:100',
                 'village' => 'nullable|string|max:100',
                 'destination' => 'nullable|string|max:255',
                 'latitude' => 'nullable|numeric|between:-90,90',
@@ -84,6 +87,7 @@ class AuthController extends Controller
 
             $user = User::create([
                 'name' => $request->name,
+                'first_name' => $request->first_name,
                 'email' => $request->email,
                 'phone' => $request->phone,
                 'password' => Hash::make($request->password),
@@ -102,6 +106,7 @@ class AuthController extends Controller
                 'city' => $request->city,
                 'sector' => $request->sector,
                 'district' => $request->district,
+                'taluka' => $request->taluka,
                 'village' => $request->village,
                 'destination' => $request->destination,
                 'latitude' => $request->latitude,
@@ -311,7 +316,7 @@ class AuthController extends Controller
     /**
      * Update user profile
      */
-    public function updateProfile(Request $request)
+    public function updateProfile(Request $request, ReferralCodeService $codes)
     {
         $user = $request->user();
 
@@ -336,6 +341,7 @@ class AuthController extends Controller
             'city' => 'nullable|string|max:100',
             'sector' => 'nullable|string|max:100',
             'district' => 'nullable|string|max:100',
+            'taluka' => 'nullable|string|max:100',
             'village' => 'nullable|string|max:100',
             'destination' => 'nullable|string|max:255',
             'latitude' => 'nullable|numeric|between:-90,90',
@@ -376,7 +382,7 @@ class AuthController extends Controller
             'respected_person_mobile_number', 'occupation',
             'company_name', 'dept_name', 'dob', 'designation',
             'address', 'nearby_location', 'pincode', 'road_number',
-            'state', 'country', 'city', 'sector', 'district', 'village', 'destination',
+            'state', 'country', 'city', 'sector', 'district', 'taluka', 'village', 'destination',
             'latitude', 'longitude',
         ]);
 
@@ -388,7 +394,9 @@ class AuthController extends Controller
             $data['photo'] = implode(',', $photoPaths);
         }
 
+        $data['first_name'] = $codes->extractFirstName($data['name']);
         $user->update($data);
+        $codes->refresh($user->fresh());
 
         return response()->json([
             'success' => true,

@@ -159,6 +159,9 @@ class VolunteerManagementController extends Controller
             abort_unless(! empty($data['taluka_id']) && Locality::whereKey($data['locality_id'])->where('taluka_id', $data['taluka_id'])->exists(), 422, 'City/village does not belong to the taluka.');
         }
         $referrals->activateVolunteer($user)->update($data);
+        $talukaName = ! empty($data['taluka_id']) ? Taluka::whereKey($data['taluka_id'])->value('name') : null;
+        $user->forceFill(['taluka' => $talukaName])->saveQuietly();
+        $referrals->refreshCode($user->fresh(), $talukaName);
 
         return back()->with('success', 'Volunteer location allocated.');
     }

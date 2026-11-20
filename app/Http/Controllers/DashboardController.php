@@ -11,6 +11,7 @@ use App\Models\JobPosting;
 use App\Models\Page;
 use App\Models\Transaction;
 use App\Models\User;
+use App\Services\ReferralCodeService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -188,7 +189,7 @@ class DashboardController extends Controller
     /**
      * Handle Profile Update Request
      */
-    public function updateProfile(Request $request)
+    public function updateProfile(Request $request, ReferralCodeService $codes)
     {
         $user = Auth::user();
 
@@ -211,6 +212,7 @@ class DashboardController extends Controller
             'city' => 'nullable|string|max:100',
             'sector' => 'nullable|string|max:100',
             'district' => 'nullable|string|max:100',
+            'taluka' => 'nullable|string|max:100',
             'village' => 'nullable|string|max:100',
             'destination' => 'nullable|string|max:255',
             'photo' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
@@ -223,7 +225,7 @@ class DashboardController extends Controller
         $data = $request->only([
             'name', 'email', 'phone', 'age', 'occupation', 'company_name',
             'dept_name', 'dob', 'designation', 'address', 'nearby_location',
-            'pincode', 'road_number', 'state', 'country', 'city', 'sector', 'district',
+            'pincode', 'road_number', 'state', 'country', 'city', 'sector', 'district', 'taluka',
             'village', 'destination', 'latitude', 'longitude',
             'respected_person_name', 'respected_person_mobile_number',
         ]);
@@ -253,7 +255,9 @@ class DashboardController extends Controller
             $data['photo'] = $fileName;
         }
 
+        $data['first_name'] = $codes->extractFirstName($data['name']);
         $user->update($data);
+        $codes->refresh($user->fresh());
 
         return redirect()->route('dashboard')->with('success', 'Profile updated successfully!');
     }

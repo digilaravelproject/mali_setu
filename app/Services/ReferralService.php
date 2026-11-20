@@ -6,26 +6,25 @@ use App\Models\Referral;
 use App\Models\User;
 use App\Models\VolunteerReferralProfile;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
-use Illuminate\Support\Str;
 
 class ReferralService
 {
-    public function generateUniqueCode(): string
+    public function __construct(private readonly ReferralCodeService $codes)
     {
-        do {
-            $code = 'MSU'.strtoupper(Str::random(7));
-        } while (User::where('reffral_code', $code)->exists());
-
-        return $code;
     }
 
     public function ensureCode(User $user): string
     {
         if (! $user->reffral_code) {
-            $user->forceFill(['reffral_code' => $this->generateUniqueCode()])->saveQuietly();
+            return $this->codes->refresh($user);
         }
 
         return $user->reffral_code;
+    }
+
+    public function refreshCode(User $user, ?string $talukaOverride = null): string
+    {
+        return $this->codes->refresh($user, $talukaOverride);
     }
 
     public function record(?string $submittedCode, User $referredUser): ?Referral

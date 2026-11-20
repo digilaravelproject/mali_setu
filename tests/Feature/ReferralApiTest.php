@@ -26,6 +26,7 @@ class ReferralApiTest extends TestCase
         Schema::create('users', function (Blueprint $table) {
             $table->id();
             $table->string('name');
+            $table->string('first_name')->nullable();
             $table->string('email')->unique();
             $table->string('phone')->unique();
             $table->string('password');
@@ -47,6 +48,7 @@ class ReferralApiTest extends TestCase
             $table->string('road_number')->nullable();
             $table->string('state')->nullable();
             $table->string('district')->nullable();
+            $table->string('taluka')->nullable();
             $table->string('city')->nullable();
             $table->string('village')->nullable();
             $table->string('sector')->nullable();
@@ -168,6 +170,26 @@ class ReferralApiTest extends TestCase
 
         $this->assertDatabaseHas('volunteer_profiles', ['status' => 'inactive']);
         $this->assertDatabaseHas('volunteer_referral_profiles', ['is_active' => false]);
+    }
+
+    public function test_registration_builds_referral_code_from_first_name_taluka_and_birth_date(): void
+    {
+        Mail::fake();
+
+        $this->postJson('/api/auth/register', [
+            'name' => 'Sunny Patil',
+            'first_name' => 'Sunny',
+            'taluka' => 'Mumbai',
+            'dob' => '05/07/1987',
+            'email' => 'sunny@example.com',
+            'phone' => '9876543211',
+            'password' => 'Password@123',
+            'password_confirmation' => 'Password@123',
+            'user_type' => 'general',
+            'term_condition' => true,
+        ])->assertCreated()->assertJsonPath('data.referral_code', 'sunnymumbai0507');
+
+        $this->assertDatabaseHas('users', ['email' => 'sunny@example.com', 'reffral_code' => 'sunnymumbai0507']);
     }
 
     public function test_referral_endpoints_return_points_and_enforce_code_ownership(): void
