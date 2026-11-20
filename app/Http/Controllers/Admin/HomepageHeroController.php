@@ -142,16 +142,16 @@ class HomepageHeroController extends Controller
                             'label' => $business->business_name,
                             'url' => '/api/business/'.$business->id,
                         ])->values()->all(),
-                    'Product' => Product::query()->orderBy('name')->get(['id', 'name'])
-                        ->map(fn (Product $product) => [
-                            'label' => $product->name,
-                            'url' => '/api/business/products/'.$product->id,
-                        ])->values()->all(),
-                    'Service' => Service::query()->orderBy('name')->get(['id', 'name'])
-                        ->map(fn (Service $service) => [
-                            'label' => $service->name,
-                            'url' => '/api/business/services/'.$service->id,
-                        ])->values()->all(),
+                    // 'Product' => Product::query()->orderBy('name')->get(['id', 'name'])
+                    //     ->map(fn (Product $product) => [
+                    //         'label' => $product->name,
+                    //         'url' => '/api/business/products/'.$product->id,
+                    //     ])->values()->all(),
+                    // 'Service' => Service::query()->orderBy('name')->get(['id', 'name'])
+                    //     ->map(fn (Service $service) => [
+                    //         'label' => $service->name,
+                    //         'url' => '/api/business/services/'.$service->id,
+                    //     ])->values()->all(),
                 ],
             ],
             // 'Matrimony' => [
