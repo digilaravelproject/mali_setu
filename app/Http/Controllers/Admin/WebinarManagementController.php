@@ -72,7 +72,7 @@ class WebinarManagementController extends Controller
         $data['category'] = $data['categories'][0];
         $data['require_registration'] = $request->boolean('require_registration');
         $data['allow_qa'] = $request->boolean('allow_qa');
-        $data['allow_recording'] = $request->boolean('allow_recording');
+        $data['allow_recording'] = false;
         $data['plan_ids'] = $data['access_type'] === 'specific_plans' ? ($data['plan_ids'] ?? []) : null;
         $data['starts_at'] = Carbon::createFromFormat('Y-m-d H:i', $data['webinar_date'].' '.$data['webinar_time'], config('app.webinar_timezone'));
         unset($data['webinar_date'], $data['webinar_time']);
@@ -90,7 +90,7 @@ class WebinarManagementController extends Controller
         $data['category'] = $data['categories'][0];
         $data['require_registration'] = $request->boolean('require_registration');
         $data['allow_qa'] = $request->boolean('allow_qa');
-        $data['allow_recording'] = $request->boolean('allow_recording');
+        $data['allow_recording'] = false;
         $data['plan_ids'] = $data['access_type'] === 'specific_plans' ? ($data['plan_ids'] ?? []) : null;
         $data['starts_at'] = Carbon::createFromFormat('Y-m-d H:i', $data['webinar_date'].' '.$data['webinar_time'], config('app.webinar_timezone'));
         unset($data['webinar_date'], $data['webinar_time']);
@@ -188,7 +188,6 @@ class WebinarManagementController extends Controller
             'audience' => 'required|in:all,subscribers',
             'require_registration' => 'sometimes|boolean',
             'allow_qa' => 'sometimes|boolean',
-            'allow_recording' => 'sometimes|boolean',
             'access_type' => 'required|in:free,specific_plans',
             'plan_ids' => 'nullable|required_if:access_type,specific_plans|array|min:1',
             'plan_ids.*' => 'string|max:50',

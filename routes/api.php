@@ -151,6 +151,10 @@ Route::prefix('jobs')->group(function () {
 
 // Public location routes
 Route::prefix('location')->group(function () {
+    Route::get('states', [LocationController::class, 'states']);
+    Route::get('districts', [LocationController::class, 'districts']);
+    Route::get('talukas', [LocationController::class, 'talukas']);
+    Route::get('cities', [LocationController::class, 'cities']);
     Route::get('by-pincode', [LocationController::class, 'getLocationByPinCode']);
 });
 

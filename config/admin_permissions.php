@@ -23,10 +23,8 @@ return [
             ]],
             'locations' => ['label' => 'Locations', 'icon' => 'location-dot', 'sections' => [
                 'Location Hierarchy' => [
-                    ['key' => 'locations.list', 'label' => 'View locations', 'description' => 'View districts, talukas, cities and villages.', 'level' => 'view', 'routes' => ['admin.locations.index', 'admin.locations.districts.index', 'admin.locations.talukas.index', 'admin.locations.localities.index']],
-                    ['key' => 'locations.create', 'label' => 'Add locations', 'description' => 'Add districts, talukas, cities and villages.', 'level' => 'action', 'routes' => ['admin.locations.districts.store', 'admin.locations.talukas.store', 'admin.locations.localities.store']],
-                    ['key' => 'locations.edit', 'label' => 'Edit locations', 'description' => 'Update districts, talukas, cities and villages.', 'level' => 'action', 'routes' => ['admin.locations.districts.update', 'admin.locations.talukas.update', 'admin.locations.localities.update']],
-                    ['key' => 'locations.delete', 'label' => 'Delete locations', 'description' => 'Delete locations and their dependent children.', 'level' => 'action', 'routes' => ['admin.locations.districts.destroy', 'admin.locations.talukas.destroy', 'admin.locations.localities.destroy']],
+                    ['key' => 'locations.list', 'label' => 'View locations', 'description' => 'View states, districts, talukas, cities and villages.', 'level' => 'view', 'routes' => ['admin.locations.index', 'admin.locations.states.index', 'admin.locations.districts.index', 'admin.locations.talukas.index', 'admin.locations.localities.index']],
+                    ['key' => 'locations.sync', 'label' => 'Sync locations', 'description' => 'Insert and update location masters from the configured LGD API.', 'level' => 'action', 'routes' => ['admin.locations.sync']],
                 ],
             ]],
         ],

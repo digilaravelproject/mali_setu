@@ -2,34 +2,12 @@
 @section('title','Talukas')
 @section('page-title','Location - Talukas')
 @section('content')
-<div class="d-flex justify-content-between align-items-center mb-3"><div><h3 class="fw-bold mb-1">Talukas</h3><p class="text-muted mb-0">Add and manage talukas under a district.</p></div><span class="badge text-bg-light border fs-6">{{ $talukas->total() }}</span></div>
-@if($errors->any())<div class="alert alert-danger">{{ $errors->first() }}</div>@endif
-<div class="card mb-4"><div class="card-body"><form method="POST" action="{{ route('admin.locations.talukas.store') }}" class="row g-2 align-items-end">@csrf<div class="col-md-5"><label class="form-label">District</label><select name="district_id" class="form-select" required><option value="">Select district</option>@foreach($districts as $district)<option value="{{ $district->id }}" @selected(old('district_id')==$district->id)>{{ $district->name }}</option>@endforeach</select></div><div class="col-md-3"><label class="form-label">Taluka name</label><input name="name" value="{{ old('name') }}" class="form-control" required></div><div class="col-md-2"><label class="form-check"><input class="form-check-input" name="is_active" type="checkbox" value="1" checked> Active</label></div><div class="col-md-2"><button class="btn btn-primary w-100"><i class="fas fa-plus me-1"></i>Add</button></div></form></div></div>
-<div class="card mb-4"><div class="card-body"><form method="GET" class="row g-2 align-items-end"><div class="col-md-4"><label class="form-label">Search taluka</label><input name="search" value="{{ request('search') }}" class="form-control" placeholder="Taluka name"></div><div class="col-md-3"><label class="form-label">District</label><select name="district_id" class="form-select"><option value="">All districts</option>@foreach($districts as $district)<option value="{{ $district->id }}" @selected((string)request('district_id')===(string)$district->id)>{{ $district->name }}</option>@endforeach</select></div><div class="col-md-3"><label class="form-label">Status</label><select name="status" class="form-select"><option value="">All statuses</option><option value="active" @selected(request('status')==='active')>Active</option><option value="inactive" @selected(request('status')==='inactive')>Inactive</option></select></div><div class="col-md-2 d-flex gap-2"><button class="btn btn-primary flex-grow-1"><i class="fas fa-filter me-1"></i>Filter</button><a href="{{ route('admin.locations.talukas.index') }}" class="btn btn-outline-secondary" title="Clear filters"><i class="fas fa-times"></i></a></div></form></div></div>
-<div class="card">
-    <div class="table-responsive">
-        <table class="table table-hover align-middle mb-0">
-            <thead><tr><th style="width:70px">#</th><th>District</th><th>Taluka</th><th style="width:150px">Cities / Villages</th><th style="width:140px">Status</th><th class="text-end" style="width:140px">Actions</th></tr></thead>
-            <tbody>
-                @forelse($talukas as $taluka)
-                    @php($formId = 'taluka-update-'.$taluka->id)
-                    <tr>
-                        <td>{{ $talukas->firstItem()+$loop->index }}</td>
-                        <td>
-                            <form id="{{ $formId }}" method="POST" action="{{ route('admin.locations.talukas.update',$taluka) }}">@csrf @method('PUT')</form>
-                            <select form="{{ $formId }}" name="district_id" class="form-select" required>@foreach($districts as $district)<option value="{{ $district->id }}" @selected($district->id===$taluka->district_id)>{{ $district->name }}</option>@endforeach</select>
-                        </td>
-                        <td><input form="{{ $formId }}" name="name" value="{{ $taluka->name }}" class="form-control bg-white" required readonly onclick="this.readOnly=false;this.select()" title="Click the name to edit"></td>
-                        <td><span class="badge text-bg-light border fs-6">{{ $taluka->localities_count }}</span></td>
-                        <td><label class="form-check mb-0"><input form="{{ $formId }}" class="form-check-input" name="is_active" type="checkbox" value="1" @checked($taluka->is_active)> Active</label></td>
-                        <td class="text-end"><div class="d-inline-flex gap-2"><button form="{{ $formId }}" class="btn btn-sm btn-outline-primary" title="Save"><i class="fas fa-save"></i></button><form method="POST" action="{{ route('admin.locations.talukas.destroy',$taluka) }}" onsubmit="return confirm('Delete this taluka and all its cities/villages?')">@csrf @method('DELETE')<button class="btn btn-sm btn-outline-danger" title="Delete"><i class="fas fa-trash"></i></button></form></div></td>
-                    </tr>
-                @empty
-                    <tr><td colspan="6" class="text-center text-muted py-5">No talukas found.</td></tr>
-                @endforelse
-            </tbody>
-        </table>
-    </div>
-</div>
-<div class="mt-3">{{ $talukas->links() }}</div>
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-3"><div><h3 class="fw-bold mb-1">Talukas</h3><p class="text-muted mb-0">Read-only sub-district/taluka master from LGD data.</p></div><form method="POST" action="{{ route('admin.locations.sync') }}">@csrf<input type="hidden" name="level" value="talukas"><button class="btn btn-primary"><i class="fas fa-rotate me-1"></i> Sync Talukas</button></form></div>
+@if(session('error'))<div class="alert alert-danger">{{ session('error') }}</div>@endif
+<div class="card mb-4"><div class="card-body"><form method="GET" class="row g-2 align-items-end"><div class="col-lg-3"><label>Search</label><input name="search" value="{{ request('search') }}" class="form-control"></div><div class="col-lg-3"><label>State</label><select name="state_id" id="filterState" class="form-select"><option value="">All states</option>@foreach($states as $state)<option value="{{ $state->id }}" @selected(request('state_id')==$state->id)>{{ $state->name }}</option>@endforeach</select></div><div class="col-lg-3"><label>District</label><select name="district_id" id="filterDistrict" class="form-select"><option value="">All districts</option>@foreach($districts as $district)<option value="{{ $district->id }}" data-state="{{ $district->state_id }}" @selected(request('district_id')==$district->id)>{{ $district->name }}</option>@endforeach</select></div><div class="col-lg-1"><label>Status</label><select name="status" class="form-select"><option value="">All</option><option value="active" @selected(request('status')==='active')>Active</option><option value="inactive" @selected(request('status')==='inactive')>Inactive</option></select></div><div class="col-lg-2 d-flex gap-2"><button class="btn btn-primary flex-grow-1">Filter</button><a href="{{ route('admin.locations.talukas.index') }}" class="btn btn-outline-secondary"><i class="fas fa-times"></i></a></div></form></div></div>
+<div class="card"><div class="table-responsive"><table class="table table-hover align-middle mb-0"><thead><tr><th>#</th><th>State</th><th>State key</th><th>District</th><th>Taluka</th><th>Taluka key</th><th>Cities</th><th>Status</th></tr></thead><tbody>
+@forelse($talukas as $taluka)<tr><td>{{ $talukas->firstItem()+$loop->index }}</td><td>{{ $taluka->district?->state?->name ?? '—' }}</td><td><code>{{ $taluka->district?->state?->external_code ?? '—' }}</code></td><td>{{ $taluka->district?->name ?? '—' }}</td><td class="fw-semibold">{{ $taluka->name }}</td><td><code>{{ $taluka->external_code ?? 'Legacy' }}</code></td><td>{{ $taluka->localities_count }}</td><td><span class="badge {{ $taluka->is_active?'text-bg-success':'text-bg-secondary' }}">{{ $taluka->is_active?'Active':'Inactive' }}</span></td></tr>
+@empty<tr><td colspan="8" class="text-center text-muted py-5">No talukas found.</td></tr>@endforelse
+</tbody></table></div></div><div class="mt-3">{{ $talukas->links() }}</div>
 @endsection
+@push('scripts')<script>document.addEventListener('DOMContentLoaded',()=>{const s=document.getElementById('filterState'),d=document.getElementById('filterDistrict');const f=()=>{[...d.options].forEach((o,i)=>{if(i)o.hidden=!!s.value&&o.dataset.state!==s.value});if(d.selectedOptions[0]?.hidden)d.value=''};s.addEventListener('change',f);f()});</script>@endpush

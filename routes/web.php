@@ -252,18 +252,11 @@ Route::prefix('admin')->name('admin.')->group(function () {
 
         Route::prefix('locations')->name('locations.')->group(function () {
             Route::get('/', [LocationManagementController::class, 'index'])->name('index');
+            Route::get('/states', [LocationManagementController::class, 'states'])->name('states.index');
             Route::get('/districts', [LocationManagementController::class, 'districts'])->name('districts.index');
             Route::get('/talukas', [LocationManagementController::class, 'talukas'])->name('talukas.index');
             Route::get('/city-villages', [LocationManagementController::class, 'localities'])->name('localities.index');
-            Route::post('/districts', [LocationManagementController::class, 'storeDistrict'])->name('districts.store');
-            Route::put('/districts/{district}', [LocationManagementController::class, 'updateDistrict'])->name('districts.update');
-            Route::delete('/districts/{district}', [LocationManagementController::class, 'destroyDistrict'])->name('districts.destroy');
-            Route::post('/talukas', [LocationManagementController::class, 'storeTaluka'])->name('talukas.store');
-            Route::put('/talukas/{taluka}', [LocationManagementController::class, 'updateTaluka'])->name('talukas.update');
-            Route::delete('/talukas/{taluka}', [LocationManagementController::class, 'destroyTaluka'])->name('talukas.destroy');
-            Route::post('/localities', [LocationManagementController::class, 'storeLocality'])->name('localities.store');
-            Route::put('/localities/{locality}', [LocationManagementController::class, 'updateLocality'])->name('localities.update');
-            Route::delete('/localities/{locality}', [LocationManagementController::class, 'destroyLocality'])->name('localities.destroy');
+            Route::post('/sync', [LocationManagementController::class, 'sync'])->name('sync');
         });
 
         Route::prefix('webinars')->name('webinars.')->group(function () {

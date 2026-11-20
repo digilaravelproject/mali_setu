@@ -66,6 +66,12 @@ return [
         'web_api_key' => env('FIREBASE_WEB_API_KEY'),
     ],
 
+    'location_sync' => [
+        'base_url' => env('LOCATION_API_BASE_URL', 'https://lgd-json-api.vercel.app/api'),
+        'api_key' => env('LOCATION_API_KEY'),
+        'timeout' => env('LOCATION_API_TIMEOUT', 30),
+    ],
+
     'facebook' => [
         'client_id'     => env('FACEBOOK_CLIENT_ID'),
         'client_secret' => env('FACEBOOK_CLIENT_SECRET'),

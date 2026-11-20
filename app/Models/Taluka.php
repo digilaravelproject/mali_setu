@@ -8,8 +8,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Taluka extends Model
 {
-    protected $fillable = ['district_id', 'name', 'is_active'];
-    protected $casts = ['is_active' => 'boolean'];
+    protected $fillable = ['district_id', 'external_code', 'name', 'is_active', 'synced_at'];
+    protected $casts = ['is_active' => 'boolean', 'synced_at' => 'datetime'];
 
     public function district(): BelongsTo
     {

@@ -226,6 +226,49 @@
         transform: translateX(4px);
     }
 
+    .leaderboard-shell {
+        position: relative;
+        overflow: hidden;
+        border: 0 !important;
+        background: linear-gradient(135deg, #fff9ed 0%, #fff 46%, #fff4f9 100%);
+        box-shadow: 0 18px 50px rgba(92, 24, 62, .10);
+    }
+    .leaderboard-shell::before {
+        content: '';
+        position: absolute;
+        width: 240px;
+        height: 240px;
+        right: -95px;
+        top: -120px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(255, 193, 7, .22), transparent 68%);
+        pointer-events: none;
+    }
+    .leader-card {
+        --rank-color: #aa1262;
+        --rank-soft: #fff0f7;
+        position: relative;
+        min-height: 132px;
+        overflow: hidden;
+        border: 1px solid rgba(132, 20, 79, .10);
+        border-radius: 20px;
+        padding: 1.15rem;
+        background: rgba(255,255,255,.91);
+        box-shadow: 0 10px 28px rgba(34, 23, 29, .07);
+        transition: transform .25s ease, box-shadow .25s ease;
+    }
+    .leader-card:hover { transform: translateY(-5px); box-shadow: 0 16px 35px rgba(132,20,79,.13); }
+    .leader-card.rank-1 { --rank-color:#d89b00; --rank-soft:#fff7d9; border-color:rgba(216,155,0,.25); }
+    .leader-card.rank-2 { --rank-color:#718096; --rank-soft:#edf2f7; }
+    .leader-card.rank-3 { --rank-color:#b66a38; --rank-soft:#fff0e6; }
+    .leader-rank {
+        width: 48px; height: 48px; border-radius: 15px; display:grid; place-items:center;
+        flex: 0 0 auto; color:var(--rank-color); background:var(--rank-soft); font-weight:900;
+        box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--rank-color) 22%, transparent);
+    }
+    .leader-avatar { width:58px; height:58px; object-fit:cover; border:3px solid #fff; box-shadow:0 5px 16px rgba(0,0,0,.13); }
+    .leader-score { display:inline-flex; align-items:center; gap:.35rem; padding:.28rem .65rem; border-radius:999px; color:var(--rank-color); background:var(--rank-soft); font-size:.75rem; font-weight:800; }
+
     @media (max-width: 576px) {
         .quick-access-card {
             padding: 15px !important;
@@ -386,11 +429,11 @@
                 </div>
             @endif
 
-            <div class="glass-card mb-4 text-start">
-                <div class="d-flex justify-content-between align-items-center mb-3"><div><h5 class="fw-bold mb-1"><i class="fa-solid fa-trophy text-warning me-2"></i>Leaderboard</h5><p class="small text-muted mb-0">Top volunteers by successful referrals</p></div>@if($user->volunteer)<a href="{{ route('referrals.index') }}" class="btn btn-sm btn-outline-primary">Check Referrals</a>@endif</div>
+            <div class="glass-card leaderboard-shell mb-4 text-start">
+                <div class="position-relative d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4"><div class="d-flex align-items-center gap-3"><div class="rounded-4 d-grid text-warning" style="width:52px;height:52px;place-items:center;background:#fff4ce;font-size:1.35rem"><i class="fa-solid fa-trophy"></i></div><div><h5 class="fw-extrabold mb-1">Community Champions</h5><p class="small text-muted mb-0">Top volunteers making an impact through successful referrals</p></div></div>@if($user->volunteer)<a href="{{ route('referrals.index') }}" class="btn btn-sm btn-primary rounded-pill px-3">My referrals <i class="fa-solid fa-arrow-right ms-1"></i></a>@endif</div>
                 <div class="row g-3">
                     @forelse($leaderboard as $leader)
-                    <div class="col-md-4"><div class="border rounded-4 p-3 h-100 d-flex align-items-center gap-3"><div class="rounded-circle bg-warning bg-opacity-10 text-warning fw-bold d-grid" style="width:46px;height:46px;place-items:center">#{{ $loop->iteration }}</div><img src="{{ $leader->photo ? asset('storage/'.$leader->photo) : asset('default-avatar.png') }}" alt="{{ $leader->name }}" class="rounded-circle" style="width:48px;height:48px;object-fit:cover"><div><div class="fw-bold">{{ $leader->name }}</div><div class="small text-muted">{{ $leader->referrals_count }} referrals</div></div></div></div>
+                    <div class="col-md-4"><div class="leader-card rank-{{ $loop->iteration }} h-100"><div class="d-flex align-items-center gap-3"><div class="leader-rank">@if($loop->first)<i class="fa-solid fa-crown"></i>@else #{{ $loop->iteration }} @endif</div><img src="{{ $leader->photo ? asset('storage/'.$leader->photo) : asset('default-avatar.png') }}" alt="{{ $leader->name }}" class="leader-avatar rounded-circle"><div class="min-w-0"><div class="fw-bold text-dark text-truncate mb-2">{{ $leader->name }}</div><span class="leader-score"><i class="fa-solid fa-user-plus"></i>{{ $leader->referrals_count }} successful {{ Str::plural('referral', $leader->referrals_count) }}</span></div></div></div></div>
                     @empty<div class="col-12 text-center text-muted py-3">No referral activity yet.</div>@endforelse
                 </div>
             </div>
@@ -746,6 +789,18 @@
                         <div class="col-md-3 mb-4">
                             <label class="form-label">Age</label>
                             <input type="number" name="age" value="{{ old('age', $user->age) }}" class="form-control" min="18" max="100" readonly>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-4">
+                            <label class="form-label">Referral Code</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light text-primary"><i class="fa-solid fa-lock"></i></span>
+                                <input type="text" value="{{ $user->reffral_code ?: 'Pending assignment' }}" class="form-control bg-light fw-semibold text-uppercase" readonly aria-readonly="true">
+                                @if($user->reffral_code)<button class="btn btn-outline-primary" type="button" onclick="navigator.clipboard.writeText(@js($user->reffral_code))" title="Copy referral code"><i class="fa-regular fa-copy"></i></button>@endif
+                            </div>
+                            <small class="text-muted">Your unique referral code is generated by the system and cannot be edited.</small>
                         </div>
                     </div>
 

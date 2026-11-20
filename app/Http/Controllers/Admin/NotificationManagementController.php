@@ -228,10 +228,23 @@ class NotificationManagementController extends Controller
     {
         return collect(Route::getRoutes())
             ->filter(fn ($route) => str_starts_with($route->uri(), 'api/'))
-            ->map(fn ($route) => [
-                'uri' => '/'.$route->uri(),
-                'methods' => implode('|', array_values(array_diff($route->methods(), ['HEAD']))),
-            ])
+            ->map(function ($route) {
+                $action = $route->getActionName();
+                if ($route->getName()) {
+                    $event = $route->getName();
+                } elseif ($action === 'Closure') {
+                    $event = 'Custom endpoint';
+                } else {
+                    [$controller, $method] = array_pad(explode('@', $action, 2), 2, '');
+                    $event = preg_replace('/Controller$/', '', class_basename($controller)).($method ? ' › '.$method : '');
+                }
+
+                return [
+                    'uri' => '/'.$route->uri(),
+                    'methods' => implode('|', array_values(array_diff($route->methods(), ['HEAD']))),
+                    'event' => $event,
+                ];
+            })
             ->unique(fn ($endpoint) => $endpoint['methods'].' '.$endpoint['uri'])
             ->sortBy('uri')
             ->values()

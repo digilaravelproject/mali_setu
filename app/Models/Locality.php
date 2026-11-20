@@ -7,8 +7,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Locality extends Model
 {
-    protected $fillable = ['taluka_id', 'name', 'type', 'is_active'];
-    protected $casts = ['is_active' => 'boolean'];
+    protected $fillable = ['taluka_id', 'external_code', 'name', 'type', 'is_active', 'synced_at'];
+    protected $casts = ['is_active' => 'boolean', 'synced_at' => 'datetime'];
 
     public function taluka(): BelongsTo
     {

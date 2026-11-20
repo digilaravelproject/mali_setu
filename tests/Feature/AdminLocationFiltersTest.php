@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Http\Controllers\Admin\LocationManagementController;
 use App\Models\District;
 use App\Models\Locality;
+use App\Models\State;
 use App\Models\Taluka;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Http\Request;
@@ -28,30 +29,46 @@ class AdminLocationFiltersTest extends TestCase
         DB::purge('location_testing');
         DB::setDefaultConnection('location_testing');
 
-        Schema::create('districts', function (Blueprint $table) {
+        Schema::create('states', function (Blueprint $table) {
             $table->id();
+            $table->string('external_code')->unique();
             $table->string('name');
             $table->boolean('is_active')->default(true);
+            $table->timestamp('synced_at')->nullable();
+            $table->timestamps();
+        });
+        Schema::create('districts', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('state_id')->constrained()->cascadeOnDelete();
+            $table->string('external_code')->nullable();
+            $table->string('name');
+            $table->boolean('is_active')->default(true);
+            $table->timestamp('synced_at')->nullable();
             $table->timestamps();
         });
         Schema::create('talukas', function (Blueprint $table) {
             $table->id();
             $table->foreignId('district_id')->constrained()->cascadeOnDelete();
+            $table->string('external_code')->nullable();
             $table->string('name');
             $table->boolean('is_active')->default(true);
+            $table->timestamp('synced_at')->nullable();
             $table->timestamps();
         });
         Schema::create('localities', function (Blueprint $table) {
             $table->id();
             $table->foreignId('taluka_id')->constrained()->cascadeOnDelete();
+            $table->string('external_code')->nullable();
             $table->string('name');
             $table->string('type');
             $table->boolean('is_active')->default(true);
+            $table->timestamp('synced_at')->nullable();
             $table->timestamps();
         });
 
-        $pune = District::create(['name' => 'Pune', 'is_active' => true]);
-        $satara = District::create(['name' => 'Satara', 'is_active' => false]);
+        $maharashtra = State::create(['external_code' => '27', 'name' => 'Maharashtra', 'is_active' => true]);
+        $pune = District::create(['state_id' => $maharashtra->id, 'name' => 'Pune', 'is_active' => true]);
+        $satara = District::create(['state_id' => $maharashtra->id, 'name' => 'Satara', 'is_active' => false]);
         $haveli = Taluka::create(['district_id' => $pune->id, 'name' => 'Haveli', 'is_active' => true]);
         $karad = Taluka::create(['district_id' => $satara->id, 'name' => 'Karad', 'is_active' => false]);
         Locality::create(['taluka_id' => $haveli->id, 'name' => 'Wagholi', 'type' => 'village', 'is_active' => true]);

@@ -39,10 +39,10 @@
                     <option value="{{ $selectedActionUrl }}" selected>{{ $selectedActionUrl }} (saved custom deep link)</option>
                 @endif
                 @foreach($apiEndpoints as $endpoint)
-                    <option value="{{ $endpoint['uri'] }}" @selected($selectedActionUrl === $endpoint['uri'])>{{ $endpoint['methods'] }} — {{ $endpoint['uri'] }}</option>
+                    <option value="{{ $endpoint['uri'] }}" @selected($selectedActionUrl === $endpoint['uri'])>{{ $endpoint['event'] }} — {{ $endpoint['methods'] }} — {{ $endpoint['uri'] }}</option>
                 @endforeach
             </select>
-            <small class="form-text text-muted">All registered mobile API endpoints are listed. Parameters such as <code>{id}</code> may use template variables.</small>
+            <small class="form-text text-muted">Each option shows the functionality/event name, HTTP method and mobile API endpoint. Parameters such as <code>{id}</code> may use template variables.</small>
             @error('action_url')<div class="invalid-feedback">{{ $message }}</div>@enderror
         </div>
         <div class="form-group">
