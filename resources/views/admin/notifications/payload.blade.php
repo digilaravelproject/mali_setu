@@ -30,7 +30,7 @@
             <div class="card shadow-sm payload-card">
                 <div class="card-header bg-white p-4">
                     <strong class="d-block">Payload JSON</strong>
-                    <small class="text-muted">Enter a JSON object. These keys are added to the push data and override event data with the same names.</small>
+                    <small class="text-muted">Enter a JSON object. Add an HTTPS <code>image_url</code> to show a rich image in foreground, background and terminated-state pushes.</small>
                 </div>
                 <div class="card-body p-4">
                     <form method="POST" action="{{ route('admin.notifications.payload.update', $action) }}">
@@ -65,9 +65,10 @@
   "type": "{{ $action->key }}",
   "action": "details",
   "id": "@{{business_id}}",
-  "screen": "business_details"
+  "screen": "business_details",
+  "image_url": "https://example.com/notification-image.jpg"
 }</pre>
-                    <small class="d-block text-muted mt-3">Firebase requires data values to be strings; arrays and objects are automatically JSON-encoded during delivery.</small>
+                    <small class="d-block text-muted mt-3">A full FCM HTTP v1 object is also accepted as a reference. Its token is ignored; Mali Setu always targets the selected user's current token.</small>
                 </div>
             </div>
         </div>

@@ -38,18 +38,7 @@ class FirebaseMessagingService
             $accessToken = $this->accessToken($credentials);
             $url = "https://fcm.googleapis.com/v1/projects/{$credentials['project_id']}/messages:send";
             $data = $this->canonicalData($data);
-            $payload = [
-                'message' => [
-                    'token' => $deviceToken,
-                    'notification' => ['title' => $title, 'body' => $body],
-                    'data' => $this->stringifyData($data),
-                    'android' => [
-                        'priority' => 'high',
-                        'notification' => ['click_action' => $data['click_action']],
-                    ],
-                    'apns' => ['payload' => ['aps' => ['sound' => 'default']]],
-                ],
-            ];
+            $payload = ['message' => $this->messagePayload($deviceToken, $title, $body, $data)];
 
             Log::info('Firebase push send started', [
                 'project_id' => $credentials['project_id'],
@@ -134,16 +123,108 @@ class FirebaseMessagingService
 
     private function canonicalData(array $data): array
     {
+        $imageUrl = $this->imageUrl($data);
+        $nestedData = data_get($data, 'message.data');
+        if (is_array($nestedData)) {
+            $data = array_merge($nestedData, $data);
+        }
+
+        // A full HTTP v1 example may be pasted into the admin payload editor.
+        // Treat its platform sections as configuration hints, never as client
+        // data, and never allow a pasted token to replace/expose the recipient.
+        unset($data['message'], $data['notification'], $data['android'], $data['apns'], $data['token']);
+
         $entityId = $data['id'] ?? $data['lead_id'] ?? $data['business_id']
             ?? $data['product_id'] ?? $data['service_id'] ?? $data['profile_id']
             ?? $data['notification_id'] ?? '';
 
-        return array_merge($data, [
+        $canonical = array_merge($data, [
             'type' => (string) ($data['type'] ?? $data['action_key'] ?? 'notification'),
             'action' => (string) ($data['action'] ?? 'details'),
             'id' => (string) $entityId,
             'click_action' => (string) ($data['click_action'] ?? 'FLUTTER_NOTIFICATION_CLICK'),
         ]);
+
+        if ($imageUrl) {
+            // Flutter reads these in the foreground; native FCM configuration
+            // below uses the same URL in background and terminated states.
+            $canonical['image'] = $imageUrl;
+            $canonical['image_url'] = $imageUrl;
+        }
+
+        return $canonical;
+    }
+
+    private function messagePayload(string $deviceToken, string $title, string $body, array $data): array
+    {
+        $imageUrl = $this->imageUrl($data);
+        $channelId = app()->bound('config')
+            ? (string) config('services.firebase.notification_channel', 'fcm_push_channel')
+            : 'fcm_push_channel';
+        $notification = ['title' => $title, 'body' => $body];
+        $androidNotification = [
+            'channel_id' => $channelId,
+            'sound' => 'default',
+            'click_action' => (string) $data['click_action'],
+        ];
+        $apns = [
+            'headers' => [
+                'apns-priority' => '10',
+                'apns-push-type' => 'alert',
+            ],
+            'payload' => [
+                'aps' => [
+                    'sound' => 'default',
+                    'badge' => 1,
+                ],
+            ],
+        ];
+
+        if ($imageUrl) {
+            $notification['image'] = $imageUrl;
+            $androidNotification['image'] = $imageUrl;
+            $apns['payload']['aps']['mutable-content'] = 1;
+            $apns['fcm_options'] = ['image' => $imageUrl];
+        }
+
+        return [
+            'token' => $deviceToken,
+            'notification' => $notification,
+            'data' => $this->stringifyData($data),
+            'android' => [
+                'priority' => 'HIGH',
+                'notification' => $androidNotification,
+            ],
+            'apns' => $apns,
+        ];
+    }
+
+    private function imageUrl(array $data): ?string
+    {
+        $candidates = [
+            $data['image_url'] ?? null,
+            $data['image'] ?? null,
+            $data['notification_image'] ?? null,
+            data_get($data, 'notification.image'),
+            data_get($data, 'android.notification.image'),
+            data_get($data, 'apns.fcm_options.image'),
+            data_get($data, 'message.notification.image'),
+            data_get($data, 'message.android.notification.image'),
+            data_get($data, 'message.apns.fcm_options.image'),
+        ];
+
+        foreach ($candidates as $candidate) {
+            if (! is_string($candidate)) {
+                continue;
+            }
+            $candidate = trim($candidate);
+            if (filter_var($candidate, FILTER_VALIDATE_URL)
+                && strtolower((string) parse_url($candidate, PHP_URL_SCHEME)) === 'https') {
+                return $candidate;
+            }
+        }
+
+        return null;
     }
 
     private function http(): PendingRequest

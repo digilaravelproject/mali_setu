@@ -64,6 +64,7 @@ return [
 
     'firebase' => [
         'web_api_key' => env('FIREBASE_WEB_API_KEY'),
+        'notification_channel' => env('FIREBASE_NOTIFICATION_CHANNEL', 'fcm_push_channel'),
     ],
 
     'location_sync' => [
