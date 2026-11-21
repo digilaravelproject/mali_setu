@@ -9,9 +9,7 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class ReferralService
 {
-    public function __construct(private readonly ReferralCodeService $codes)
-    {
-    }
+    public function __construct(private readonly ReferralCodeService $codes) {}
 
     public function ensureCode(User $user): string
     {
@@ -47,7 +45,7 @@ class ReferralService
             [
                 'referrer_user_id' => $referrer->id,
                 'referral_code_used' => $submittedCode,
-                'commission_points' => $profile?->commission_points ?? 0,
+                'commission_points' => $profile?->commissionForRole($referredUser->user_type) ?? 0,
                 'status' => $profile && ! $profile->is_active ? 'inactive' : 'active',
             ]
         );

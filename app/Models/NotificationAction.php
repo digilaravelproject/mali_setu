@@ -8,7 +8,7 @@ class NotificationAction extends Model
 {
     protected $fillable = [
         'key', 'name', 'description', 'title_template', 'body_template',
-        'action_url', 'external_url', 'available_variables', 'is_enabled', 'push_enabled',
+        'action_url', 'external_url', 'image_path', 'available_variables', 'is_enabled', 'push_enabled',
         'payload_template',
     ];
 
@@ -70,6 +70,15 @@ class NotificationAction extends Model
     public function isSystemAction(): bool
     {
         return in_array($this->key, array_column(static::defaults(), 'key'), true);
+    }
+
+    public function getImageUrlAttribute(): ?string
+    {
+        if (! $this->image_path) {
+            return null;
+        }
+
+        return secure_asset('storage/'.ltrim($this->image_path, '/'));
     }
 
     public function render(string $template, array $data): string

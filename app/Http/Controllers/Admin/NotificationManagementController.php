@@ -12,6 +12,8 @@ use App\Services\NotificationService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
@@ -139,6 +141,9 @@ class NotificationManagementController extends Controller
             return back()->with('error', 'Built-in actions cannot be deleted. Disable the action instead.');
         }
 
+        if ($notificationAction->image_path) {
+            Storage::disk('public')->delete($notificationAction->image_path);
+        }
         $notificationAction->delete();
 
         return redirect()->route('admin.notifications.index')->with('success', 'Notification action deleted.');
@@ -205,21 +210,36 @@ class NotificationManagementController extends Controller
     private function validatedAction(Request $request, ?NotificationAction $action = null): array
     {
         $validated = $request->validate([
-            'key' => ['required', 'string', 'max:100', 'regex:/^[a-z0-9_]+$/', 'unique:notification_actions,key,'.($action?->id ?? 'NULL')],
-            'name' => ['required', 'string', 'max:255'],
-            'description' => ['nullable', 'string', 'max:1000'],
             'title_template' => ['required', 'string', 'max:255'],
             'body_template' => ['required', 'string', 'max:2000'],
             'action_url' => ['nullable', 'string', 'max:255'],
             'external_url' => ['nullable', 'url:http,https', 'max:2048'],
             'available_variables_text' => ['nullable', 'string', 'max:1000'],
+            'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,gif,webp', 'max:5120'],
+            'remove_image' => ['nullable', 'boolean'],
         ]);
+
+        $validated['key'] = $action?->key ?? 'custom_notification_'.Str::lower(Str::random(12));
+        $validated['name'] = $action?->name ?? $validated['title_template'];
+        $validated['description'] = $action?->description;
 
         $validated['available_variables'] = collect(explode(',', $validated['available_variables_text'] ?? ''))
             ->map(fn ($item) => trim($item))->filter()->values()->all();
         $validated['is_enabled'] = $request->boolean('is_enabled');
         $validated['push_enabled'] = $request->boolean('push_enabled');
-        unset($validated['available_variables_text']);
+
+        $oldImage = $action?->image_path;
+        if ($request->boolean('remove_image') || $request->hasFile('image')) {
+            if ($oldImage) {
+                Storage::disk('public')->delete($oldImage);
+            }
+            $validated['image_path'] = null;
+        }
+        if ($request->hasFile('image')) {
+            $validated['image_path'] = $request->file('image')->store('notifications/images', 'public');
+        }
+
+        unset($validated['available_variables_text'], $validated['image'], $validated['remove_image']);
 
         return $validated;
     }

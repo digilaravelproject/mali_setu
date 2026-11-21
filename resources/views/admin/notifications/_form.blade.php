@@ -6,21 +6,6 @@
 <div class="row">
     <div class="col-lg-7">
         <div class="form-group">
-            <label for="name">Action name</label>
-            <input class="form-control @error('name') is-invalid @enderror" id="name" name="name" value="{{ old('name', $action->name) }}" required>
-            @error('name')<div class="invalid-feedback">{{ $message }}</div>@enderror
-        </div>
-        <div class="form-group">
-            <label for="key">Action key</label>
-            <input class="form-control @error('key') is-invalid @enderror" id="key" name="key" value="{{ old('key', $action->key) }}" pattern="[a-z0-9_]+" {{ $action->exists ? 'readonly' : '' }} required>
-            <small class="form-text text-muted">Lowercase letters, numbers and underscores. App code can trigger this key.</small>
-            @error('key')<div class="invalid-feedback">{{ $message }}</div>@enderror
-        </div>
-        <div class="form-group">
-            <label for="description">Admin description</label>
-            <textarea class="form-control" id="description" name="description" rows="2">{{ old('description', $action->description) }}</textarea>
-        </div>
-        <div class="form-group">
             <label for="title_template">Notification title</label>
             <input class="form-control @error('title_template') is-invalid @enderror" id="title_template" name="title_template" maxlength="255" value="{{ old('title_template', $action->title_template) }}" required>
             @error('title_template')<div class="invalid-feedback">{{ $message }}</div>@enderror
@@ -50,6 +35,17 @@
             <input type="url" class="form-control @error('external_url') is-invalid @enderror" id="external_url" name="external_url" value="{{ old('external_url', $action->external_url) }}" placeholder="https://www.youtube.com/watch?v=...">
             <small class="form-text text-muted">Optional website or social link, such as YouTube or Facebook. It is sent separately as <code>external_url</code>.</small>
             @error('external_url')<div class="invalid-feedback">{{ $message }}</div>@enderror
+        </div>
+        <div class="form-group">
+            <label for="notificationImage">Notification image <span class="text-muted">(optional)</span></label>
+            <input type="file" class="form-control @error('image') is-invalid @enderror" id="notificationImage" name="image" accept="image/jpeg,image/png,image/gif,image/webp">
+            <small class="form-text text-muted">JPG, PNG, GIF or WebP, up to 5 MB. The push is sent without an image when none is selected.</small>
+            @error('image')<div class="invalid-feedback">{{ $message }}</div>@enderror
+            <input type="hidden" name="remove_image" id="removeNotificationImage" value="0">
+            <div id="notificationImagePreview" class="notification-image-preview mt-3 {{ $action->image_path ? '' : 'd-none' }}">
+                <img id="notificationImagePreviewImg" src="{{ $action->image_url ?? '' }}" alt="Notification image preview">
+                <button type="button" id="removeNotificationImageButton" class="btn btn-danger btn-sm rounded-circle" aria-label="Remove notification image" title="Remove image"><i class="fas fa-times"></i></button>
+            </div>
         </div>
         <div class="form-group">
             <label for="available_variables_text">Template variables</label>
@@ -101,6 +97,9 @@
     .phone-date { margin: 2.1rem 0 1rem; text-align: center; font-size: .85rem; color: rgba(255,255,255,.7); }
     .notification-preview { color: #172033; padding: 1rem; border-radius: 16px; border: 1px solid rgba(255,255,255,.65); background: rgba(255,255,255,.95); box-shadow: 0 14px 34px rgba(0,0,0,.24); }
     .notification-logo { width: 38px; height: 38px; border-radius: 10px; object-fit: cover; background: #fff; }
+    .notification-image-preview { position: relative; width: min(100%, 360px); }
+    .notification-image-preview img { display: block; width: 100%; max-height: 210px; border-radius: 12px; border: 1px solid #e4e7ec; object-fit: cover; }
+    .notification-image-preview button { position: absolute; top: .5rem; right: .5rem; width: 30px; height: 30px; padding: 0; box-shadow: 0 2px 8px rgba(0,0,0,.3); }
     #previewTitle { font-weight: 800; font-size: .95rem; margin-bottom: .2rem; }
     #previewBody { line-height: 1.4; }
     .preview-note { display: block; margin-top: 1rem; text-align: center; color: rgba(255,255,255,.64); }
@@ -114,6 +113,11 @@
 (() => {
     const title = document.getElementById('title_template');
     const body = document.getElementById('body_template');
+    const imageInput = document.getElementById('notificationImage');
+    const imagePreview = document.getElementById('notificationImagePreview');
+    const imagePreviewImg = document.getElementById('notificationImagePreviewImg');
+    const removeImage = document.getElementById('removeNotificationImage');
+    let previewObjectUrl = null;
     const render = value => (value || '').replace(/\{\{\s*([\w.-]+)\s*\}\}/g, (_, key) => ({
         user_name: 'Darshan', amount: '499', status: 'approved', sender_name: 'Amit',
         requester_name: 'Priya', applicant_name: 'Rahul', volunteer_name: 'Neha', purpose: 'subscription'
@@ -124,6 +128,22 @@
     };
     title.addEventListener('input', refresh);
     body.addEventListener('input', refresh);
+    imageInput.addEventListener('change', () => {
+        if (!imageInput.files.length) return;
+        if (previewObjectUrl) URL.revokeObjectURL(previewObjectUrl);
+        previewObjectUrl = URL.createObjectURL(imageInput.files[0]);
+        imagePreviewImg.src = previewObjectUrl;
+        imagePreview.classList.remove('d-none');
+        removeImage.value = '0';
+    });
+    document.getElementById('removeNotificationImageButton').addEventListener('click', () => {
+        if (previewObjectUrl) URL.revokeObjectURL(previewObjectUrl);
+        previewObjectUrl = null;
+        imageInput.value = '';
+        imagePreviewImg.removeAttribute('src');
+        imagePreview.classList.add('d-none');
+        removeImage.value = '1';
+    });
     refresh();
 })();
 </script>

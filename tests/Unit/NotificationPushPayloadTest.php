@@ -57,4 +57,25 @@ class NotificationPushPayloadTest extends TestCase
         $this->assertSame(91, $payload['notification_id']);
         $this->assertSame('/business/manage', $payload['action_url']);
     }
+
+    public function test_event_image_is_kept_when_an_action_payload_is_merged(): void
+    {
+        $notification = new Notification([
+            'type' => Notification::TYPE_BLOG_PUBLISHED,
+            'title' => 'New blog',
+            'message' => 'A new blog was published.',
+            'data' => ['blog_id' => 12, 'image_url' => 'https://example.com/tree.jpg'],
+        ]);
+        $notification->id = 92;
+        $action = new NotificationAction([
+            'payload_template' => ['type' => 'blog', 'blog_id' => '{{blog_id}}'],
+        ]);
+
+        $service = (new ReflectionClass(NotificationService::class))->newInstanceWithoutConstructor();
+        $payload = (new ReflectionClass(NotificationService::class))->getMethod('pushData')
+            ->invoke($service, $notification, new User(['name' => 'User']), $action);
+
+        $this->assertSame('https://example.com/tree.jpg', $payload['image_url']);
+        $this->assertSame('blog', $payload['type']);
+    }
 }

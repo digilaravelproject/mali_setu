@@ -86,7 +86,7 @@ class Blog extends Model
         $imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
 
         foreach ((array) $this->media_path as $path) {
-            if (!is_string($path) || !in_array(strtolower(pathinfo($path, PATHINFO_EXTENSION)), $imageExtensions, true)) {
+            if (! is_string($path) || ! in_array(strtolower(pathinfo($path, PATHINFO_EXTENSION)), $imageExtensions, true)) {
                 continue;
             }
 
@@ -94,11 +94,11 @@ class Blog extends Model
                 return $path;
             }
 
-            if (!Storage::disk('public')->exists($path)) {
+            if (! Storage::disk('public')->exists($path)) {
                 continue;
             }
 
-            return asset('storage/' . ltrim($path, '/'));
+            return secure_asset('storage/'.ltrim($path, '/'));
         }
 
         return null;

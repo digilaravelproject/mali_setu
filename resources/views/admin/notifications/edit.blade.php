@@ -7,7 +7,7 @@
     <div class="card shadow">
         <div class="card-header"><strong>{{ $action->name }}</strong></div>
         <div class="card-body">
-            <form method="POST" action="{{ route('admin.notifications.update', $action) }}">
+            <form method="POST" action="{{ route('admin.notifications.update', $action) }}" enctype="multipart/form-data">
                 @include('admin.notifications._form')
             </form>
         </div>

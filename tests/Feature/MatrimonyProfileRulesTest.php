@@ -2,10 +2,10 @@
 
 namespace Tests\Feature;
 
+use App\Models\Blog;
 use App\Models\MatrimonyProfile;
 use App\Models\Notification;
 use App\Models\User;
-use App\Models\Blog;
 use App\Services\MatrimonyProfileSearchService;
 use App\Services\NotificationService;
 use Illuminate\Database\Schema\Blueprint;
@@ -84,6 +84,7 @@ class MatrimonyProfileRulesTest extends TestCase
             $table->text('message');
             $table->json('data')->nullable();
             $table->string('action_url')->nullable();
+            $table->string('external_url', 2048)->nullable();
             $table->string('priority')->default('medium');
             $table->string('channel')->default('in_app');
             $table->boolean('is_read')->default(false);
@@ -92,6 +93,8 @@ class MatrimonyProfileRulesTest extends TestCase
             $table->timestamp('email_sent_at')->nullable();
             $table->boolean('push_sent')->default(false);
             $table->timestamp('push_sent_at')->nullable();
+            $table->timestamp('push_attempted_at')->nullable();
+            $table->text('push_error')->nullable();
             $table->string('related_type')->nullable();
             $table->unsignedBigInteger('related_id')->nullable();
             $table->timestamps();

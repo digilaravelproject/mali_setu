@@ -139,8 +139,26 @@ class VolunteerManagementController extends Controller
 
     public function updateCommission(Request $request, User $user, ReferralService $referrals)
     {
-        $data = $request->validate(['commission_points' => 'required|integer|min:0']);
-        $referrals->activateVolunteer($user)->update($data);
+        $data = $request->validate([
+            'commission_mode' => ['required', 'in:default,role_wise'],
+            'commission_points' => ['nullable', 'required_if:commission_mode,default', 'integer', 'min:0'],
+            'role_commission_points' => ['nullable', 'required_if:commission_mode,role_wise', 'array'],
+            'role_commission_points.general' => ['nullable', 'required_if:commission_mode,role_wise', 'integer', 'min:0'],
+            'role_commission_points.matrimony' => ['nullable', 'required_if:commission_mode,role_wise', 'integer', 'min:0'],
+            'role_commission_points.business' => ['nullable', 'required_if:commission_mode,role_wise', 'integer', 'min:0'],
+            'role_commission_points.volunteer' => ['nullable', 'required_if:commission_mode,role_wise', 'integer', 'min:0'],
+        ]);
+
+        $profile = $referrals->activateVolunteer($user);
+        $profile->update([
+            'commission_mode' => $data['commission_mode'],
+            'commission_points' => $data['commission_mode'] === 'default'
+                ? (int) $data['commission_points']
+                : (int) $profile->commission_points,
+            'role_commission_points' => $data['commission_mode'] === 'role_wise'
+                ? collect($data['role_commission_points'])->map(fn ($points) => (int) $points)->all()
+                : null,
+        ]);
 
         return back()->with('success', 'Commission points updated.');
     }

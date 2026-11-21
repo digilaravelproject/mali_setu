@@ -103,6 +103,8 @@ class ReferralApiTest extends TestCase
             $table->id();
             $table->unsignedBigInteger('user_id')->unique();
             $table->unsignedInteger('commission_points')->default(0);
+            $table->string('commission_mode')->default('default');
+            $table->json('role_commission_points')->nullable();
             $table->unsignedBigInteger('district_id')->nullable();
             $table->unsignedBigInteger('taluka_id')->nullable();
             $table->unsignedBigInteger('locality_id')->nullable();
@@ -264,6 +266,34 @@ class ReferralApiTest extends TestCase
         $this->assertDatabaseHas('referrals', [
             'referrer_user_id' => $ownerId, 'referred_user_id' => $newUserId,
             'referral_code_used' => 'MSUSPONSOR', 'commission_points' => 7,
+        ]);
+    }
+
+    public function test_registration_referral_uses_points_for_the_referred_users_role(): void
+    {
+        Mail::fake();
+        $ownerId = DB::table('users')->insertGetId($this->userRow('Role Sponsor', 'role-sponsor@example.com', '4444444445', 'volunteer', 'MSUROLES'));
+        DB::table('volunteer_profiles')->insert(['user_id' => $ownerId, 'status' => 'active', 'created_at' => now(), 'updated_at' => now()]);
+        DB::table('volunteer_referral_profiles')->insert([
+            'user_id' => $ownerId,
+            'commission_points' => 5,
+            'commission_mode' => 'role_wise',
+            'role_commission_points' => json_encode(['general' => 10, 'matrimony' => 20, 'business' => 30, 'volunteer' => 40]),
+            'is_active' => true,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $response = $this->postJson('/api/auth/register', [
+            'name' => 'Business Member', 'email' => 'business-member@example.com', 'phone' => '5555555556',
+            'password' => 'Password@123', 'password_confirmation' => 'Password@123',
+            'user_type' => 'business', 'referral_code' => 'MSUROLES', 'term_condition' => true,
+        ])->assertCreated();
+
+        $this->assertDatabaseHas('referrals', [
+            'referrer_user_id' => $ownerId,
+            'referred_user_id' => $response->json('data.user.id'),
+            'commission_points' => 30,
         ]);
     }
 

@@ -202,6 +202,7 @@ class NotificationService
 
     private function pushData(Notification $notification, User $user, ?NotificationAction $action): array
     {
+        $eventImage = data_get($notification->data, 'image_url') ?: data_get($notification->data, 'image');
         $pushData = array_merge(
             $notification->data ?? [],
             [
@@ -212,23 +213,29 @@ class NotificationService
             ],
         );
 
-        if (! $action?->payload_template) {
-            return $pushData;
+        if ($action?->payload_template) {
+            $pushData = array_merge($pushData, $action->renderPayload(array_merge(
+                $notification->data ?? [],
+                [
+                    'user_name' => $user->name ?? '',
+                    'user_email' => $user->email ?? '',
+                    'notification_id' => $notification->id,
+                    'action_key' => $notification->type,
+                    'action_url' => $notification->action_url ?? '',
+                    'external_url' => $notification->external_url ?? '',
+                    'notification_title' => $notification->title,
+                    'notification_message' => $notification->message,
+                ],
+            )));
         }
 
-        return array_merge($pushData, $action->renderPayload(array_merge(
-            $notification->data ?? [],
-            [
-                'user_name' => $user->name ?? '',
-                'user_email' => $user->email ?? '',
-                'notification_id' => $notification->id,
-                'action_key' => $notification->type,
-                'action_url' => $notification->action_url ?? '',
-                'external_url' => $notification->external_url ?? '',
-                'notification_title' => $notification->title,
-                'notification_message' => $notification->message,
-            ],
-        )));
+        if ($eventImage) {
+            $pushData['image_url'] = $eventImage;
+        } elseif ($action?->image_path) {
+            $pushData['image_url'] = $action->image_url;
+        }
+
+        return $pushData;
     }
 
     /**
@@ -370,6 +377,7 @@ class NotificationService
                 'blog_id' => $blog->id,
                 'blog_title' => $blog->title,
                 'author_name' => $blog->user?->name ?? 'Mali Setu',
+                'image_url' => $blog->share_image_url,
             ],
             '/blogs/'.$blog->id,
             Notification::PRIORITY_MEDIUM,
