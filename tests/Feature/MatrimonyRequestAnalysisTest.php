@@ -23,21 +23,54 @@ class MatrimonyRequestAnalysisTest extends TestCase
         DB::setDefaultConnection('request_analysis_testing');
 
         Schema::create('users', function (Blueprint $table) {
-            $table->id(); $table->string('name'); $table->string('email')->nullable(); $table->string('phone')->nullable();
-            $table->string('password')->nullable(); $table->string('photo')->nullable(); $table->string('user_type')->default('general');
-            $table->string('cast_certificate')->nullable(); $table->timestamps();
+            $table->id();
+            $table->string('name');
+            $table->string('email')->nullable();
+            $table->string('phone')->nullable();
+            $table->string('password')->nullable();
+            $table->string('photo')->nullable();
+            $table->string('user_type')->default('general');
+            $table->string('cast_certificate')->nullable();
+            $table->timestamps();
         });
         Schema::create('caste_certificates', function (Blueprint $table) {
-            $table->id(); $table->unsignedBigInteger('user_id'); $table->string('file_path')->nullable(); $table->timestamps();
+            $table->id();
+            $table->unsignedBigInteger('user_id');
+            $table->string('file_path')->nullable();
+            $table->timestamps();
         });
         Schema::create('matrimony_profiles', function (Blueprint $table) {
-            $table->id(); $table->unsignedBigInteger('user_id'); $table->string('gender')->nullable(); $table->integer('age')->nullable();
-            $table->json('personal_details')->nullable(); $table->json('location_details')->nullable(); $table->timestamps();
+            $table->id();
+            $table->unsignedBigInteger('user_id');
+            $table->string('gender')->nullable();
+            $table->integer('age')->nullable();
+            $table->json('personal_details')->nullable();
+            $table->json('location_details')->nullable();
+            $table->timestamps();
         });
         Schema::create('connection_requests', function (Blueprint $table) {
-            $table->id(); $table->unsignedBigInteger('sender_id'); $table->unsignedBigInteger('receiver_id');
-            $table->string('status')->default('pending'); $table->text('message')->nullable(); $table->text('response_message')->nullable();
-            $table->timestamp('responded_at')->nullable(); $table->timestamps();
+            $table->id();
+            $table->unsignedBigInteger('sender_id');
+            $table->unsignedBigInteger('receiver_id');
+            $table->string('status')->default('pending');
+            $table->text('message')->nullable();
+            $table->text('response_message')->nullable();
+            $table->timestamp('responded_at')->nullable();
+            $table->timestamps();
+        });
+        Schema::create('matrimony_reports', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('reporter_id');
+            $table->unsignedBigInteger('reported_user_id');
+            $table->string('reason_key');
+            $table->text('details')->nullable();
+            $table->timestamps();
+        });
+        Schema::create('matrimony_blocks', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('blocker_id');
+            $table->unsignedBigInteger('blocked_user_id');
+            $table->timestamps();
         });
 
         $admin = User::create(['name' => 'Admin', 'email' => 'admin@example.test', 'user_type' => 'admin']);
@@ -65,5 +98,23 @@ class MatrimonyRequestAnalysisTest extends TestCase
             ->assertSee('offcanvas offcanvas-end request-details-panel', false)
             ->assertSee('data-bs-target="#requestDetailsPanel"', false)
             ->assertDontSee('if (buttons[0])', false);
+    }
+
+    public function test_request_analysis_has_report_and_block_tabs_with_records(): void
+    {
+        $sender = User::where('email', 'kapil@example.test')->firstOrFail();
+        $receiver = User::where('email', 'laxmi@example.test')->firstOrFail();
+        DB::table('matrimony_reports')->insert([
+            'reporter_id' => $sender->id, 'reported_user_id' => $receiver->id,
+            'reason_key' => 'fake_profile', 'details' => 'Duplicate identity', 'created_at' => now(), 'updated_at' => now(),
+        ]);
+        DB::table('matrimony_blocks')->insert([
+            'blocker_id' => $sender->id, 'blocked_user_id' => $receiver->id, 'created_at' => now(), 'updated_at' => now(),
+        ]);
+
+        $this->get(route('admin.matrimony.connections', ['status' => 'reported']))
+            ->assertOk()->assertSee('Report')->assertSee('fake_profile')->assertSee('Duplicate identity');
+        $this->get(route('admin.matrimony.connections', ['status' => 'blocked']))
+            ->assertOk()->assertSee('Block/Unblock')->assertSee('Blocked');
     }
 }

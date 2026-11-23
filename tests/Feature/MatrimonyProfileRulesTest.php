@@ -70,6 +70,22 @@ class MatrimonyProfileRulesTest extends TestCase
             $table->string('status')->default('pending');
             $table->timestamps();
         });
+        Schema::create('matrimony_reports', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('reporter_id');
+            $table->unsignedBigInteger('reported_user_id');
+            $table->string('reason_key');
+            $table->text('details')->nullable();
+            $table->timestamps();
+            $table->unique(['reporter_id', 'reported_user_id']);
+        });
+        Schema::create('matrimony_blocks', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('blocker_id');
+            $table->unsignedBigInteger('blocked_user_id');
+            $table->timestamps();
+            $table->unique(['blocker_id', 'blocked_user_id']);
+        });
         Schema::create('chat_conversations', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('user1_id');
@@ -274,6 +290,68 @@ class MatrimonyProfileRulesTest extends TestCase
             ->assertJsonPath('data.total', 27)
             ->assertJsonPath('data.per_page', 27)
             ->assertJsonCount(27, 'data.data');
+    }
+
+    public function test_report_api_hides_reported_profile_from_listing_and_direct_view(): void
+    {
+        $this->actingAs(User::findOrFail(1), 'sanctum')
+            ->postJson('/api/matrimony/report-user', [
+                'reported_user_id' => 2,
+                'reason_key' => 'fake_profile',
+                'details' => 'The identity information appears inconsistent.',
+            ])
+            ->assertCreated()
+            ->assertJsonPath('data.report.reason_key', 'fake_profile');
+
+        $this->assertDatabaseHas('matrimony_reports', [
+            'reporter_id' => 1, 'reported_user_id' => 2, 'reason_key' => 'fake_profile',
+        ]);
+
+        $response = $this->postJson('/api/search/matrimony', ['created_at' => 'all']);
+        $returnedUserIds = collect($response->assertOk()->json('data.data'))->pluck('user_id');
+        $this->assertFalse($returnedUserIds->contains(2));
+        $this->getJson('/api/matrimony/profile_user_id/2')->assertNotFound();
+    }
+
+    public function test_block_api_toggles_and_listing_keeps_profile_with_blocked_status(): void
+    {
+        $this->actingAs(User::findOrFail(1), 'sanctum')
+            ->postJson('/api/matrimony/block-user', ['blocked_user_id' => 2])
+            ->assertOk()
+            ->assertJsonPath('data.is_blocked', true)
+            ->assertJsonPath('data.status', 'blocked');
+
+        $response = $this->postJson('/api/search/matrimony', ['created_at' => 'all']);
+        $profile = collect($response->assertOk()->json('data.data'))->firstWhere('user_id', 2);
+        $this->assertNotNull($profile);
+        $this->assertSame('blocked', $profile['connection_status']);
+        $this->assertTrue($profile['is_blocked']);
+
+        $this->postJson('/api/matrimony/block-user', ['blocked_user_id' => 2])
+            ->assertOk()
+            ->assertJsonPath('data.is_blocked', false)
+            ->assertJsonPath('data.status', 'not_connected');
+        $this->assertDatabaseMissing('matrimony_blocks', ['blocker_id' => 1, 'blocked_user_id' => 2]);
+    }
+
+    public function test_web_report_and_block_actions_persist_and_toggle(): void
+    {
+        $this->actingAs(User::findOrFail(1))
+            ->post('/dashboard/matrimony/report-user', [
+                'reported_user_id' => 2,
+                'reason_key' => 'spam',
+                'details' => 'Repeated unsolicited contact.',
+            ])
+            ->assertRedirect(route('matrimony.browse'));
+        $this->assertDatabaseHas('matrimony_reports', [
+            'reporter_id' => 1, 'reported_user_id' => 2, 'reason_key' => 'spam',
+        ]);
+
+        $this->post('/dashboard/matrimony/block-user', ['blocked_user_id' => 2])->assertRedirect();
+        $this->assertDatabaseHas('matrimony_blocks', ['blocker_id' => 1, 'blocked_user_id' => 2]);
+
+        $this->post('/dashboard/matrimony/block-user', ['blocked_user_id' => 2])->assertRedirect();
+        $this->assertDatabaseMissing('matrimony_blocks', ['blocker_id' => 1, 'blocked_user_id' => 2]);
     }
 
     public function test_candidate_name_combines_personal_detail_name_fields(): void

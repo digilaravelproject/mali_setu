@@ -4,16 +4,17 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Business;
-use App\Models\MatrimonyProfile;
+use App\Models\DonationCause;
 use App\Models\JobPosting;
+use App\Models\MatrimonyProfile;
 use App\Models\VolunteerOpportunity;
 use App\Models\VolunteerProfile;
-use App\Models\DonationCause;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\DB;
 use App\Services\MatrimonyProfileSearchService;
+use App\Services\MatrimonySafetyService;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Validator;
 
 class SearchController extends Controller
 {
@@ -27,7 +28,7 @@ class SearchController extends Controller
             'size' => 'sometimes|integer|min:1|max:100',
             'from' => 'sometimes|integer|min:0',
             'modules' => 'sometimes|array',
-            'modules.*' => 'in:businesses,matrimony,jobs,volunteers,donations'
+            'modules.*' => 'in:businesses,matrimony,jobs,volunteers,donations',
         ]);
 
         if ($validator->fails()) {
@@ -80,6 +81,7 @@ class SearchController extends Controller
 
         } catch (\Exception $e) {
             Log::error('Global search failed', ['error' => $e->getMessage()]);
+
             return response()->json(['success' => false, 'message' => 'Search failed'], 500);
         }
     }
@@ -92,9 +94,9 @@ class SearchController extends Controller
         $query = Business::query();
 
         if ($request->filled('query')) {
-            $query->where(function($q) use ($request) {
+            $query->where(function ($q) use ($request) {
                 $q->where('business_name', 'like', "%{$request->input('query')}%")
-                  ->orWhere('description', 'like', "%{$request->input('query')}%");
+                    ->orWhere('description', 'like', "%{$request->input('query')}%");
             });
         }
 
@@ -128,17 +130,17 @@ class SearchController extends Controller
 
         if ($request->filled('name')) {
             $query->where(function ($q) use ($request) {
-                $q->where('personal_details->name', 'like', '%' . $request->name . '%');
+                $q->where('personal_details->name', 'like', '%'.$request->name.'%');
                 if (in_array($q->getConnection()->getDriverName(), ['mysql', 'mariadb'], true)) {
                     $q->orWhereRaw(
                         "LOWER(JSON_UNQUOTE(JSON_EXTRACT(personal_details, '$.name'))) LIKE ?",
-                        ['%' . strtolower(trim($request->name)) . '%']
+                        ['%'.strtolower(trim($request->name)).'%']
                     );
                 }
             });
         }
-        
-        //Basic Details
+
+        // Basic Details
         if ($request->filled('age_min') || $request->filled('age_max')) {
             $query->whereBetween('age', [$request->age_min ?? 18, $request->age_max ?? 100]);
         }
@@ -154,7 +156,7 @@ class SearchController extends Controller
         if ($request->filled('language')) {
             $query->whereJsonContains('personal_details->language', $request->language);
         }
-        
+
         if ($request->filled('personal_details')) {
             $query->whereJsonContains('personal_details->name', $request->name);
         }
@@ -167,7 +169,7 @@ class SearchController extends Controller
             $query->where('physical_status', $request->physical_status);
         }
 
-        //Profesional details
+        // Profesional details
         if ($request->filled('annual_income')) {
             $query->whereBetween('personal_details->annual_income', [0, $request->annual_income]);
         }
@@ -180,7 +182,7 @@ class SearchController extends Controller
             $query->whereJsonContains('personal_details->employment_type', $request->employment_type);
         }
 
-        //Family Details
+        // Family Details
         if ($request->filled('family_status')) {
             $query->whereJsonContains('family_details->family_class', $request->family_status);
         }
@@ -193,7 +195,7 @@ class SearchController extends Controller
             $query->whereJsonContains('family_details->family_value', $request->family_value);
         }
 
-        //Location Details
+        // Location Details
 
         if ($request->filled('state')) {
             $query->where('location_details->state', 'like', $request->state);
@@ -211,7 +213,7 @@ class SearchController extends Controller
             $query->whereJsonContains('personal_details->citizenship', $request->citizenship);
         }
 
-        //Lifestyle Details
+        // Lifestyle Details
         if ($request->filled('diet')) {
             $query->whereJsonContains('lifestyle_details->diet', $request->diet);
         }
@@ -224,12 +226,12 @@ class SearchController extends Controller
             $query->whereJsonContains('lifestyle_details->drinking', $request->drinking);
         }
 
-        //Profile type
+        // Profile type
         // if ($request->filled('photo')) {
         //      $query->where('photo', '!=', '');
         // }
 
-        //Recently created profile
+        // Recently created profile
         if ($request->filled('created_at')) {
             switch ($request->created_at) {
                 case 'all':
@@ -257,11 +259,11 @@ class SearchController extends Controller
                     break;
             }
         }
-        
+
         $authUserId = $request->user()->id;
 
         if ($request->filled('gender') && $request->gender !== 'Any') {
-            $query->where(function($q) use ($request) {
+            $query->where(function ($q) use ($request) {
                 $q->where('personal_details->gender', 'like', $request->gender);
                 if (in_array($q->getConnection()->getDriverName(), ['mysql', 'mariadb'], true)) {
                     $q->orWhereRaw('LOWER(JSON_UNQUOTE(JSON_EXTRACT(personal_details, "$.gender"))) = ?', [strtolower($request->gender)]);
@@ -270,13 +272,14 @@ class SearchController extends Controller
         }
 
         if ($request->filled('occupation') && $request->occupation !== 'Any') {
-            $query->where(function($q) use ($request) {
+            $query->where(function ($q) use ($request) {
                 $q->where('professional_details->occupation', 'like', $request->occupation)
-                  ->orWhere('personal_details->occupation', 'like', $request->occupation);
+                    ->orWhere('personal_details->occupation', 'like', $request->occupation);
             });
         }
-        
+
         $query->where('user_id', '!=', $authUserId);
+        app(MatrimonySafetyService::class)->hideReportedProfiles($query, $authUserId);
 
         $query->where('approval_status', 'approved');
 
@@ -296,113 +299,117 @@ class SearchController extends Controller
         $results = $query->latest()->paginate($perPage);
 
         $filtered = $results->getCollection()->filter(function ($usr) use ($authUserId) {
-        
+
             $connection = DB::table('connection_requests')
                 ->where(function ($q) use ($authUserId, $usr) {
                     $q->where('sender_id', $authUserId)
-                      ->where('receiver_id', $usr->user_id);
+                        ->where('receiver_id', $usr->user_id);
                 })
                 ->orWhere(function ($q) use ($authUserId, $usr) {
                     $q->where('sender_id', $usr->user_id)
-                      ->where('receiver_id', $authUserId);
+                        ->where('receiver_id', $authUserId);
                 })
                 ->orderBy('id', 'desc')
                 ->first();
-                
-         /*
+
+            /*
         ✅ ADD conversation_id (NEW)
         */
             $conversation = DB::table('chat_conversations')
-            ->where(function ($q) use ($authUserId, $usr) {
-                $q->where('user1_id', $authUserId)
-                  ->where('user2_id', $usr->user_id);
-            })
-            ->orWhere(function ($q) use ($authUserId, $usr) {
-                $q->where('user1_id', $usr->user_id)
-                  ->where('user2_id', $authUserId);
-            })
-            ->first();
+                ->where(function ($q) use ($authUserId, $usr) {
+                    $q->where('user1_id', $authUserId)
+                        ->where('user2_id', $usr->user_id);
+                })
+                ->orWhere(function ($q) use ($authUserId, $usr) {
+                    $q->where('user1_id', $usr->user_id)
+                        ->where('user2_id', $authUserId);
+                })
+                ->first();
 
             $usr->conversation_id = $conversation->id ?? null;
-            
-                if ($connection) {
-                    $usr->connection_status = $connection->status;
-                } else {
-                    $usr->connection_status = 'not_connected';
-                }
-                return true;
-            });
-            
-            // ✅ reindex + set back to paginator
-            $results->setCollection($filtered->values());
 
+            if (app(MatrimonySafetyService::class)->isBlockedBy($authUserId, $usr->user_id)) {
+                $usr->connection_status = 'blocked';
+                $usr->is_blocked = true;
+            } elseif ($connection) {
+                $usr->connection_status = $connection->status;
+            } else {
+                $usr->connection_status = 'not_connected';
+            }
+            $usr->is_blocked ??= false;
+
+            return true;
+        });
+
+        // ✅ reindex + set back to paginator
+        $results->setCollection($filtered->values());
 
         return response()->json(['success' => true, 'data' => $results]);
     }
-    
+
     public function searchMatrimony_new(Request $request)
     {
         $query = MatrimonyProfile::query();
-    
+
         /*
         |--------------------------------------------------------------------------
         | BASIC DETAILS
         |--------------------------------------------------------------------------
         */
-    
+
         if ($request->filled('age_min') || $request->filled('age_max')) {
-    
+
             $min = $request->age_min ?? 18;
             $max = $request->age_max ?? 100;
-    
+
             $query->whereBetween('age', [$min, $max]);
         }
-    
+
         /*
     NAME SEARCH
     */
 
-    if ($request->filled('name')) {
+        if ($request->filled('name')) {
 
-        $query->whereRaw(
-            "LOWER(JSON_UNQUOTE(JSON_EXTRACT(personal_details, '$.name'))) LIKE ?",
-            ['%' . strtolower(trim($request->name)) . '%']
+            $query->whereRaw(
+                "LOWER(JSON_UNQUOTE(JSON_EXTRACT(personal_details, '$.name'))) LIKE ?",
+                ['%'.strtolower(trim($request->name)).'%']
+            );
+        }
+
+        /*
+        AGE FILTER
+        */
+
+        if ($request->filled('age_min') || $request->filled('age_max')) {
+
+            $query->whereBetween(
+                'age',
+                [
+                    $request->age_min ?? 18,
+                    $request->age_max ?? 100,
+                ]
+            );
+        }
+
+        /*
+        REQUIRED FILTERS
+        */
+
+        $authUserId = $request->user()->id;
+
+        $query->where('user_id', '!=', $authUserId);
+
+        $query->where(
+            'approval_status',
+            'approved'
         );
+
+        return response()->json([
+            'success' => true,
+            'data' => $query->latest()->paginate(20),
+        ]);
     }
-
-    /*
-    AGE FILTER
-    */
-
-    if ($request->filled('age_min') || $request->filled('age_max')) {
-
-        $query->whereBetween(
-            'age',
-            [
-                $request->age_min ?? 18,
-                $request->age_max ?? 100
-            ]
-        );
-    }
-
-    /*
-    REQUIRED FILTERS
-    */
-
-    $authUserId = $request->user()->id;
-
-    $query->where('user_id', '!=', $authUserId);
-
-    $query->where(
-        'approval_status',
-        'approved'
-    );
-
-    return response()->json([
-        'success' => true,
-        'data' => $query->latest()->paginate(20)
-    ]);
-}
 
     /**
      * 🔎 Search Jobs
@@ -412,10 +419,10 @@ class SearchController extends Controller
         $query = JobPosting::where('status', 'active');
 
         if ($request->filled('query')) {
-            $query->where(function($q) use ($request) {
+            $query->where(function ($q) use ($request) {
                 $q->where('title', 'like', "%{$request->input('query')}%")
-                  ->orWhere('description', 'like', "%{$request->input('query')}%")
-                  ->orWhere('skills_required', 'like', "%{$request->input('query')}%");
+                    ->orWhere('description', 'like', "%{$request->input('query')}%")
+                    ->orWhere('skills_required', 'like', "%{$request->input('query')}%");
             });
         }
 
@@ -442,10 +449,10 @@ class SearchController extends Controller
         $query = VolunteerOpportunity::where('status', 'active');
 
         if ($request->filled('query')) {
-            $query->where(function($q) use ($request) {
+            $query->where(function ($q) use ($request) {
                 $q->where('title', 'like', "%{$request->input('query')}%")
-                  ->orWhere('description', 'like', "%{$request->input('query')}%")
-                  ->orWhere('required_skills', 'like', "%{$request->input('query')}%");
+                    ->orWhere('description', 'like', "%{$request->input('query')}%")
+                    ->orWhere('required_skills', 'like', "%{$request->input('query')}%");
             });
         }
 
@@ -515,10 +522,10 @@ class SearchController extends Controller
         $query = DonationCause::query();
 
         if ($request->filled('query')) {
-            $query->where(function($q) use ($request) {
+            $query->where(function ($q) use ($request) {
                 $q->where('title', 'like', "%{$request->input('query')}%")
-                  ->orWhere('description', 'like', "%{$request->input('query')}%")
-                  ->orWhere('category', 'like', "%{$request->input('query')}%");
+                    ->orWhere('description', 'like', "%{$request->input('query')}%")
+                    ->orWhere('category', 'like', "%{$request->input('query')}%");
             });
         }
 
@@ -546,7 +553,7 @@ class SearchController extends Controller
             'query' => 'required|string|min:1|max:100',
             'modules' => 'sometimes|array',
             'modules.*' => 'in:businesses,matrimony,jobs,volunteers,donations',
-            'size' => 'sometimes|integer|min:1|max:20'
+            'size' => 'sometimes|integer|min:1|max:20',
         ]);
 
         if ($validator->fails()) {
@@ -573,7 +580,7 @@ class SearchController extends Controller
 
         return response()->json(['success' => true, 'data' => $suggestions]);
     }
-    
+
     /**
      * Search businesses by name or description
      */
@@ -592,7 +599,7 @@ class SearchController extends Controller
                 return response()->json([
                     'success' => false,
                     'message' => 'Validation failed',
-                    'errors' => $validator->errors()
+                    'errors' => $validator->errors(),
                 ], 422);
             }
 
@@ -604,54 +611,54 @@ class SearchController extends Controller
             if (is_null($userLatitude) || is_null($userLongitude)) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'atitude and longitude are required'
+                    'message' => 'atitude and longitude are required',
                 ], 422);
             }
 
             $searchQuery = $request->input('search');
             $radiusKm = $request->input('radius', 5);
 
-            $distanceSql = "(
+            $distanceSql = '(
                 6371 * acos(
                     cos(radians(?)) * cos(radians(latitude)) * cos(radians(longitude) - radians(?)) +
                     sin(radians(?)) * sin(radians(latitude))
                 )
-            )";
+            )';
 
             $businesses = Business::with([
                 'user',
                 'category',
                 'products',
                 'services',
-                'reviews.user'
+                'reviews.user',
             ])
-            ->selectRaw("businesses.*, {$distanceSql} AS distance", [
-                $userLatitude,
-                $userLongitude,
-                $userLatitude
-            ])
-            ->where('verification_status', 'approved')
-            ->whereNotNull('latitude')
-            ->whereNotNull('longitude')
-            ->where(function ($query) use ($searchQuery) {
-                $query->where('business_name', 'like', '%' . $searchQuery . '%')
-                      ->orWhere('description', 'like', '%' . $searchQuery . '%')
-                      ->orWhere('country', 'like', '%' . $searchQuery . '%')
-                      ->orWhere('state', 'like', '%' . $searchQuery . '%')
-                      ->orWhere('district', 'like', '%' . $searchQuery . '%')
-                      ->orWhere('village', 'like', '%' . $searchQuery . '%')
-                      ->orWhere('taluka', 'like', '%' . $searchQuery . '%')
-                      ->orWhere('city', 'like', '%' . $searchQuery . '%')
-                      ->orWhere('pincode', 'like', '%' . $searchQuery . '%');
-            })
-            ->havingRaw('distance <= ?', [$radiusKm])
-            ->orderBy('distance', 'asc')
-            ->get();
+                ->selectRaw("businesses.*, {$distanceSql} AS distance", [
+                    $userLatitude,
+                    $userLongitude,
+                    $userLatitude,
+                ])
+                ->where('verification_status', 'approved')
+                ->whereNotNull('latitude')
+                ->whereNotNull('longitude')
+                ->where(function ($query) use ($searchQuery) {
+                    $query->where('business_name', 'like', '%'.$searchQuery.'%')
+                        ->orWhere('description', 'like', '%'.$searchQuery.'%')
+                        ->orWhere('country', 'like', '%'.$searchQuery.'%')
+                        ->orWhere('state', 'like', '%'.$searchQuery.'%')
+                        ->orWhere('district', 'like', '%'.$searchQuery.'%')
+                        ->orWhere('village', 'like', '%'.$searchQuery.'%')
+                        ->orWhere('taluka', 'like', '%'.$searchQuery.'%')
+                        ->orWhere('city', 'like', '%'.$searchQuery.'%')
+                        ->orWhere('pincode', 'like', '%'.$searchQuery.'%');
+                })
+                ->havingRaw('distance <= ?', [$radiusKm])
+                ->orderBy('distance', 'asc')
+                ->get();
 
             if ($businesses->isEmpty()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'No businesses found within ' . $radiusKm . ' km of your location'
+                    'message' => 'No businesses found within '.$radiusKm.' km of your location',
                 ], 200);
             }
 
@@ -660,19 +667,19 @@ class SearchController extends Controller
                 'message' => 'Businesses found successfully',
                 'data' => [
                     'businesses' => $businesses,
-                    'count' => $businesses->count()
-                ]
+                    'count' => $businesses->count(),
+                ],
             ], 200);
 
         } catch (\Throwable $e) {
             \Log::error('Business search API error', [
                 'search_query' => $request->input('search'),
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
 
             return response()->json([
                 'success' => false,
-                'message' => 'Something went wrong. Please try again later.'
+                'message' => 'Something went wrong. Please try again later.',
             ], 500);
         }
     }
@@ -691,25 +698,25 @@ class SearchController extends Controller
                 'latitude' => 'required|numeric|min:-90|max:90',
                 'longitude' => 'required|numeric|min:-180|max:180',
             ]);
-    
+
             if ($validator->fails()) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Validation failed',
-                    'errors' => $validator->errors()
+                    'errors' => $validator->errors(),
                 ], 422);
             }
-    
+
             $userLatitude = $request->input('latitude');
             $userLongitude = $request->input('longitude');
             $searchQuery = $request->input('search');
-    
+
             /*
             |-----------------------------------------------------------
             | Haversine Formula to calculate distance in KM
             |-----------------------------------------------------------
             */
-            $distanceSql = "(
+            $distanceSql = '(
                 6371 * acos(
                     cos(radians(?)) *
                     cos(radians(latitude)) *
@@ -717,74 +724,75 @@ class SearchController extends Controller
                     sin(radians(?)) *
                     sin(radians(latitude))
                 )
-            )";
-    
+            )';
+
             $businesses = Business::with([
-                    'user',
-                    'category',
-                    'products',
-                    'services',
-                    'reviews.user'
-                ])
+                'user',
+                'category',
+                'products',
+                'services',
+                'reviews.user',
+            ])
                 ->selectRaw("
                     businesses.*,
                     {$distanceSql} AS KMfromuser
                 ", [
                     $userLatitude,
                     $userLongitude,
-                    $userLatitude
+                    $userLatitude,
                 ])
                 ->where('verification_status', 'approved')
                 ->whereNotNull('latitude')
                 ->whereNotNull('longitude')
                 ->where(function ($query) use ($searchQuery) {
-                    $query->where('business_name', 'like', '%' . $searchQuery . '%')
-                        ->orWhere('description', 'like', '%' . $searchQuery . '%')
-                        ->orWhere('country', 'like', '%' . $searchQuery . '%')
-                        ->orWhere('state', 'like', '%' . $searchQuery . '%')
-                        ->orWhere('district', 'like', '%' . $searchQuery . '%')
-                        ->orWhere('village', 'like', '%' . $searchQuery . '%')
-                        ->orWhere('taluka', 'like', '%' . $searchQuery . '%')
-                        ->orWhere('city', 'like', '%' . $searchQuery . '%')
-                        ->orWhere('pincode', 'like', '%' . $searchQuery . '%');
+                    $query->where('business_name', 'like', '%'.$searchQuery.'%')
+                        ->orWhere('description', 'like', '%'.$searchQuery.'%')
+                        ->orWhere('country', 'like', '%'.$searchQuery.'%')
+                        ->orWhere('state', 'like', '%'.$searchQuery.'%')
+                        ->orWhere('district', 'like', '%'.$searchQuery.'%')
+                        ->orWhere('village', 'like', '%'.$searchQuery.'%')
+                        ->orWhere('taluka', 'like', '%'.$searchQuery.'%')
+                        ->orWhere('city', 'like', '%'.$searchQuery.'%')
+                        ->orWhere('pincode', 'like', '%'.$searchQuery.'%');
                 })
                 ->orderBy('KMfromuser', 'asc')
                 ->get();
-    
+
             /*
             | Optional: Round KM value to 2 decimal places
             */
             $businesses->transform(function ($business) {
                 $business->KMfromuser = round($business->KMfromuser, 2);
+
                 return $business;
             });
-    
+
             if ($businesses->isEmpty()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'No businesses found'
+                    'message' => 'No businesses found',
                 ], 200);
             }
-    
+
             return response()->json([
                 'success' => true,
                 'message' => 'Businesses found successfully',
                 'data' => [
                     'businesses' => $businesses,
-                    'count' => $businesses->count()
-                ]
+                    'count' => $businesses->count(),
+                ],
             ], 200);
-    
+
         } catch (\Throwable $e) {
-    
+
             \Log::error('Business search API error', [
                 'search_query' => $request->input('search'),
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
-    
+
             return response()->json([
                 'success' => false,
-                'message' => 'Something went wrong. Please try again later.'
+                'message' => 'Something went wrong. Please try again later.',
             ], 500);
         }
     }

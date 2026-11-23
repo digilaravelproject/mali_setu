@@ -8,8 +8,10 @@ use App\Models\ChatConversation;
 use App\Models\ChatMessage;
 use App\Models\ConnectionRequest;
 use App\Models\Education;
+use App\Models\MatrimonyBlock;
 use App\Models\MatrimonyPlan;
 use App\Models\MatrimonyProfile;
+use App\Models\MatrimonyReport;
 use App\Models\Payment;
 use App\Models\SubCast;
 use App\Models\Transaction;
@@ -558,7 +560,7 @@ class MatrimonyManagementController extends Controller
      */
     public function connections(Request $request)
     {
-        $query = ConnectionRequest::with(['sender.matrimonyProfile', 'receiver.matrimonyProfile']);
+        $query = $this->interactionQuery($request->string('status')->toString());
 
         $this->applyConnectionFilters($query, $request);
 
@@ -572,11 +574,17 @@ class MatrimonyManagementController extends Controller
             'accepted' => ConnectionRequest::where('status', 'accepted')->count(),
             'rejected' => ConnectionRequest::where('status', 'rejected')->count(),
             'removed' => ConnectionRequest::where('status', 'removed')->count(),
+            'reported' => MatrimonyReport::count(),
+            'blocked' => MatrimonyBlock::count(),
         ];
 
-        $memberIds = ConnectionRequest::query()
-            ->select('sender_id as user_id')
-            ->union(ConnectionRequest::query()->select('receiver_id as user_id'));
+        $memberIds = ConnectionRequest::pluck('sender_id')
+            ->merge(ConnectionRequest::pluck('receiver_id'))
+            ->merge(MatrimonyReport::pluck('reporter_id'))
+            ->merge(MatrimonyReport::pluck('reported_user_id'))
+            ->merge(MatrimonyBlock::pluck('blocker_id'))
+            ->merge(MatrimonyBlock::pluck('blocked_user_id'))
+            ->filter()->unique();
         $members = User::query()->with('matrimonyProfile')->whereIn('id', $memberIds)->orderBy('name')->get(['id', 'name', 'phone']);
 
         return view('admin.matrimony.connections', compact('connections', 'stats', 'members'));
@@ -584,12 +592,12 @@ class MatrimonyManagementController extends Controller
 
     public function exportConnections(Request $request)
     {
-        $query = ConnectionRequest::with(['sender.matrimonyProfile', 'receiver.matrimonyProfile']);
+        $query = $this->interactionQuery($request->string('status')->toString());
         $this->applyConnectionFilters($query, $request);
 
         return response()->streamDownload(function () use ($query) {
             $output = fopen('php://output', 'w');
-            fputcsv($output, ['ID', 'Sender', 'Sender Mobile', 'Receiver', 'Receiver Mobile', 'Sent On', 'Status', 'Responded On']);
+            fputcsv($output, ['ID', 'From Member', 'From Mobile', 'To Member', 'To Mobile', 'Created On', 'Status', 'Reason / Message', 'Details / Response', 'Responded On']);
             foreach ($query->latest()->cursor() as $connection) {
                 fputcsv($output, [
                     $connection->id,
@@ -599,6 +607,8 @@ class MatrimonyManagementController extends Controller
                     $connection->receiver?->phone,
                     $connection->created_at?->format('Y-m-d H:i:s'),
                     $connection->status,
+                    $connection->message,
+                    $connection->response_message,
                     $connection->responded_at?->format('Y-m-d H:i:s'),
                 ]);
             }
@@ -608,16 +618,22 @@ class MatrimonyManagementController extends Controller
 
     private function applyConnectionFilters($query, Request $request): void
     {
-        if ($request->filled('status')) {
+        [$fromColumn, $toColumn] = match (true) {
+            $query->getModel() instanceof MatrimonyReport => ['reporter_id', 'reported_user_id'],
+            $query->getModel() instanceof MatrimonyBlock => ['blocker_id', 'blocked_user_id'],
+            default => ['sender_id', 'receiver_id'],
+        };
+
+        if ($request->filled('status') && ! in_array($request->string('status')->toString(), ['reported', 'blocked'], true)) {
             $query->where('status', $request->string('status')->toString());
         }
 
         if ($request->filled('from_member')) {
-            $query->where('sender_id', $request->integer('from_member'));
+            $query->where($fromColumn, $request->integer('from_member'));
         }
 
         if ($request->filled('to_member')) {
-            $query->where('receiver_id', $request->integer('to_member'));
+            $query->where($toColumn, $request->integer('to_member'));
         }
 
         foreach (['sender_gender' => 'sender', 'receiver_gender' => 'receiver'] as $field => $relation) {
@@ -672,6 +688,15 @@ class MatrimonyManagementController extends Controller
                 }
             });
         }
+    }
+
+    private function interactionQuery(string $status)
+    {
+        return match ($status) {
+            'reported' => MatrimonyReport::with(['sender.matrimonyProfile', 'receiver.matrimonyProfile']),
+            'blocked' => MatrimonyBlock::with(['sender.matrimonyProfile', 'receiver.matrimonyProfile']),
+            default => ConnectionRequest::with(['sender.matrimonyProfile', 'receiver.matrimonyProfile']),
+        };
     }
 
     /**

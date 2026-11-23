@@ -99,7 +99,17 @@
                         </div>
                     @elseif($connectionStatus === 'rejected')
                         <div class="alert alert-danger p-2 rounded-3 small mb-2">Request was declined.</div>
+                    @elseif($connectionStatus === 'blocked')
+                        <div class="alert alert-dark p-2 rounded-3 small mb-2"><i class="fa-solid fa-user-slash me-1"></i> Status: Blocked</div>
                     @endif
+                    <div class="d-flex gap-2 mt-2">
+                        <form action="{{ route('matrimony.block.toggle') }}" method="POST" class="flex-grow-1">
+                            @csrf
+                            <input type="hidden" name="blocked_user_id" value="{{ $profile->user_id }}">
+                            <button class="btn btn-outline-secondary w-100 btn-sm"><i class="fa-solid {{ $isBlocked ? 'fa-user-check' : 'fa-user-slash' }} me-1"></i>{{ $isBlocked ? 'Unblock' : 'Block' }}</button>
+                        </form>
+                        <button class="btn btn-outline-danger btn-sm flex-grow-1" data-bs-toggle="modal" data-bs-target="#reportUserModal"><i class="fa-solid fa-flag me-1"></i>Report</button>
+                    </div>
                 @endif
 
                 {{-- Quick Stats --}}
@@ -225,6 +235,24 @@
         </div>
     </div>
 </div>
+
+@if($profile->user_id !== $user->id)
+<div class="modal fade" id="reportUserModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered"><div class="modal-content rounded-4 border-0 shadow-lg">
+        <form action="{{ route('matrimony.report') }}" method="POST">
+            @csrf
+            <input type="hidden" name="reported_user_id" value="{{ $profile->user_id }}">
+            <div class="modal-header"><h5 class="modal-title fw-bold">Report User</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+            <div class="modal-body">
+                <label class="form-label fw-bold">Reason</label>
+                <select name="reason_key" class="form-select mb-3" required><option value="">Select reason</option><option value="fake_profile">Fake profile</option><option value="inappropriate_content">Inappropriate content</option><option value="harassment">Harassment</option><option value="spam">Spam</option><option value="fraud_scam">Fraud or scam</option><option value="other">Other</option></select>
+                <label class="form-label fw-bold">Details (optional)</label><textarea name="details" class="form-control" rows="3" maxlength="1000"></textarea>
+            </div>
+            <div class="modal-footer"><button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button><button class="btn btn-danger">Submit Report</button></div>
+        </form>
+    </div></div>
+</div>
+@endif
 
 {{-- Send Request Modal --}}
 <div class="modal fade" id="sendRequestModal" tabindex="-1">

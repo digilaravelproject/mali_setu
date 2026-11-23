@@ -8,10 +8,13 @@ use App\Models\Cast;
 use App\Models\ChatConversation;
 use App\Models\ChatMessage;
 use App\Models\ConnectionRequest;
+use App\Models\MatrimonyBlock;
 use App\Models\MatrimonyProfile;
+use App\Models\MatrimonyReport;
 use App\Models\Notification;
 use App\Models\SubCast;
 use App\Services\MatrimonyProfileSearchService;
+use App\Services\MatrimonySafetyService;
 use App\Services\NotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -463,6 +466,11 @@ class MatrimonyController extends Controller
         }
 
         if ($profile->user_id !== $request->user()->id
+            && app(MatrimonySafetyService::class)->hasReported($request->user()->id, $profile->user_id)) {
+            return response()->json(['success' => false, 'message' => 'No matrimony profile found'], 404);
+        }
+
+        if ($profile->user_id !== $request->user()->id
             && $request->user()->user_type !== 'admin'
             && $profile->approval_status !== 'approved') {
             return response()->json([
@@ -788,6 +796,8 @@ class MatrimonyController extends Controller
 
         $query->where('approval_status', 'approved');
 
+        app(MatrimonySafetyService::class)->hideReportedProfiles($query, $request->user()->id);
+
         app(MatrimonyProfileSearchService::class)->applyDefaultOppositeGender(
             $query,
             $request,
@@ -795,6 +805,11 @@ class MatrimonyController extends Controller
         );
 
         $results = $query->latest()->paginate($request->size ?? 20);
+        $authUserId = $request->user()->id;
+        $results->getCollection()->each(function (MatrimonyProfile $profile) use ($authUserId) {
+            $profile->is_blocked = app(MatrimonySafetyService::class)->isBlockedBy($authUserId, $profile->user_id);
+            $profile->connection_status = $profile->is_blocked ? 'blocked' : 'not_connected';
+        });
 
         return response()->json(['success' => true, 'data' => $results]);
     }
@@ -830,11 +845,15 @@ class MatrimonyController extends Controller
                 })
                 ->first();
 
-            if ($connection) {
+            if (app(MatrimonySafetyService::class)->isBlockedBy($authUserId, $usr_id)) {
+                $profile->connection_status = 'blocked';
+                $profile->is_blocked = true;
+            } elseif ($connection) {
                 $profile->connection_status = $connection->status;
             } else {
                 $profile->connection_status = 'not_connected';
             }
+            $profile->is_blocked ??= false;
         }
 
         return response()->json([
@@ -853,6 +872,11 @@ class MatrimonyController extends Controller
         $profile->user?->makeVisible('cast_certificate');
 
         $authUserId = $request->user()->id;
+
+        if ($profile->user_id !== $authUserId
+            && app(MatrimonySafetyService::class)->hasReported($authUserId, $profile->user_id)) {
+            abort(404);
+        }
 
         if ($profile->user_id !== $authUserId
             && $request->user()->user_type !== 'admin'
@@ -877,7 +901,10 @@ class MatrimonyController extends Controller
                 ->orderBy('id', 'desc')
                 ->first();
 
-            if ($connection) {
+            if (app(MatrimonySafetyService::class)->isBlockedBy($authUserId, $usr_id)) {
+                $profile->connection_status = 'blocked';
+                $profile->is_blocked = true;
+            } elseif ($connection) {
 
                 // ❌ remove user if removed (same pattern as your search logic)
                 if ($connection->status === 'removed') {
@@ -890,6 +917,7 @@ class MatrimonyController extends Controller
 
                 $profile->connection_status = 'not_connected';
             }
+            $profile->is_blocked ??= false;
         }
 
         return response()->json([
@@ -923,6 +951,11 @@ class MatrimonyController extends Controller
         $authUserId = $request->user()->id;
 
         if ($profile->user_id !== $authUserId
+            && app(MatrimonySafetyService::class)->hasReported($authUserId, $profile->user_id)) {
+            abort(404);
+        }
+
+        if ($profile->user_id !== $authUserId
             && $request->user()->user_type !== 'admin'
             && $profile->approval_status !== 'approved') {
             abort(404);
@@ -945,7 +978,10 @@ class MatrimonyController extends Controller
                 ->orderBy('id', 'desc')
                 ->first();
 
-            if ($connection) {
+            if (app(MatrimonySafetyService::class)->isBlockedBy($authUserId, $usr_id)) {
+                $profile->connection_status = 'blocked';
+                $profile->is_blocked = true;
+            } elseif ($connection) {
 
                 // ❌ remove user if removed (same pattern as your search logic)
                 if ($connection->status === 'removed') {
@@ -958,6 +994,7 @@ class MatrimonyController extends Controller
 
                 $profile->connection_status = 'not_connected';
             }
+            $profile->is_blocked ??= false;
         }
 
         return response()->json([
@@ -1014,6 +1051,18 @@ class MatrimonyController extends Controller
                 'message' => $errors->first(), // 👈 get first error message
                 'errors' => $errors,
             ], 422);
+        }
+
+        if ((int) $request->receiver_id === (int) $request->user()->id) {
+            return response()->json(['success' => false, 'message' => 'You cannot send a request to yourself.'], 422);
+        }
+
+        $safety = app(MatrimonySafetyService::class);
+        if ($safety->hasReported($request->user()->id, (int) $request->receiver_id)) {
+            return response()->json(['success' => false, 'message' => 'This profile is no longer available.'], 404);
+        }
+        if ($safety->eitherUserBlocked($request->user()->id, (int) $request->receiver_id)) {
+            return response()->json(['success' => false, 'message' => 'Connection requests are unavailable for blocked users.'], 409);
         }
 
         // Check if request already exists
@@ -1095,6 +1144,81 @@ class MatrimonyController extends Controller
             'message' => 'User removed successfully',
             'data' => ['request' => $connectionRequest],
         ], 201);
+    }
+
+    /** Report a matrimony user. The reported profile is hidden from this reporter. */
+    public function reportUser(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'reported_user_id' => 'required|integer|exists:matrimony_profiles,user_id',
+            'reason_key' => 'required|string|max:100',
+            'details' => 'nullable|string|max:1000',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => $validator->errors()->first(),
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
+        if ((int) $request->reported_user_id === (int) $request->user()->id) {
+            return response()->json(['success' => false, 'message' => 'You cannot report yourself.'], 422);
+        }
+
+        $report = MatrimonyReport::updateOrCreate(
+            ['reporter_id' => $request->user()->id, 'reported_user_id' => $request->integer('reported_user_id')],
+            ['reason_key' => $request->string('reason_key')->toString(), 'details' => $request->input('details')]
+        );
+
+        return response()->json([
+            'success' => true,
+            'message' => 'User reported successfully. This profile will no longer appear in your matrimony listing.',
+            'data' => ['report' => $report],
+        ], $report->wasRecentlyCreated ? 201 : 200);
+    }
+
+    /** Toggle the authenticated user's block for another matrimony user. */
+    public function toggleBlock(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'blocked_user_id' => 'required|integer|exists:matrimony_profiles,user_id',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => $validator->errors()->first(),
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
+        if ((int) $request->blocked_user_id === (int) $request->user()->id) {
+            return response()->json(['success' => false, 'message' => 'You cannot block yourself.'], 422);
+        }
+
+        $attributes = [
+            'blocker_id' => $request->user()->id,
+            'blocked_user_id' => $request->integer('blocked_user_id'),
+        ];
+        $block = MatrimonyBlock::where($attributes)->first();
+
+        if ($block) {
+            $block->delete();
+            $isBlocked = false;
+            $message = 'User unblocked successfully.';
+        } else {
+            $block = MatrimonyBlock::create($attributes);
+            $isBlocked = true;
+            $message = 'User blocked successfully.';
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => $message,
+            'data' => ['is_blocked' => $isBlocked, 'status' => $isBlocked ? 'blocked' : 'not_connected'],
+        ]);
     }
 
     /**

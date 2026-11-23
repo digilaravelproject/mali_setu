@@ -32,6 +32,8 @@
     .status-accepted { background:#dff7e9; color:#087a42; }
     .status-rejected { background:#ffe2e5; color:#c82938; }
     .status-removed, .status-cancelled { background:#edf0f4; color:#52606f; }
+    .status-reported { background:#fff0f0; color:#b42318; }
+    .status-blocked { background:#f0eaff; color:#6941c6; }
     .request-detail-header { padding:1rem; border-bottom:1px solid #e6e9ef; font-weight:800; }
     .request-details-panel { width:min(430px, 100vw) !important; }
     .detail-person { padding:1rem; border:1px solid #e6e9ef; border-radius:12px; }
@@ -51,11 +53,13 @@
         ['Accepted', 'fa-circle-check', 'accepted', ''],
         ['Rejected', 'fa-circle-xmark', 'rejected', ''],
         ['Removed', 'fa-ban', 'removed', ''],
+        ['Report', 'fa-flag', 'reported', ''],
+        ['Block/Unblock', 'fa-user-slash', 'blocked', ''],
     ];
 @endphp
 <div class="container-fluid request-page">
     <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
-        <div><h3 class="fw-bold mb-1">Matrimony Request Analysis</h3><div class="text-muted small">Track who sent a request, who received it, and the current response.</div></div>
+        <div><h3 class="fw-bold mb-1">Matrimony Request Analysis</h3><div class="text-muted small">Track requests, reports, and currently blocked users.</div></div>
         <a class="btn btn-outline-secondary" href="{{ route('admin.matrimony.connections.export', request()->query()) }}"><i class="fas fa-download me-1"></i> Export</a>
     </div>
 
@@ -71,8 +75,9 @@
                 ['total','Total Requests','fa-paper-plane',''], ['sent','Sent Requests','fa-arrow-up-right-from-square',''],
                 ['received','Received Requests','fa-download',''], ['accepted','Accepted','fa-check','success'],
                 ['rejected','Rejected','fa-xmark','danger'], ['removed','Removed','fa-ban','muted'],
+                ['reported','Reported','fa-flag','danger'], ['blocked','Blocked','fa-user-slash','muted'],
             ] as [$key,$label,$icon,$class])
-                <div class="col-6 col-lg-4 col-xxl-2"><div class="request-stat {{ $class }}"><div class="request-stat-icon"><i class="fas {{ $icon }}"></i></div><div><div class="request-stat-value">{{ number_format($stats[$key] ?? 0) }}</div><div class="request-stat-label">{{ $label }}</div></div></div></div>
+                <div class="col-6 col-lg-3"><div class="request-stat {{ $class }}"><div class="request-stat-icon"><i class="fas {{ $icon }}"></i></div><div><div class="request-stat-value">{{ number_format($stats[$key] ?? 0) }}</div><div class="request-stat-label">{{ $label }}</div></div></div></div>
             @endforeach
         </div></div>
 
@@ -98,7 +103,7 @@
 
     <div class="request-shell overflow-hidden">
             <div class="table-responsive"><table class="table request-table align-middle mb-0">
-                <thead><tr><th>#</th><th>Sender</th><th></th><th>Receiver</th><th>Sent On</th><th>Status</th><th>Responded On</th><th>Action</th></tr></thead>
+                <thead><tr><th>#</th><th>From Member</th><th></th><th>To Member</th><th>Created On</th><th>Status</th><th>Reason / Response</th><th>Action</th></tr></thead>
                 <tbody>
                 @forelse($connections as $connection)
                     @php
@@ -128,11 +133,11 @@
                         <td><div class="member-cell"><img src="{{ $receiverPhoto }}" class="member-avatar" alt=""><div><div class="member-name">{{ $receiverName }}{{ $receiverProfile?->age ? ' ('.$receiverProfile->age.')' : '' }}</div><div class="member-meta">{{ $connection->receiver?->phone ?: ($receiverLocation ?: '-') }}</div></div></div></td>
                         <td class="text-nowrap small">{{ $connection->created_at?->format('d M Y, h:i A') }}</td>
                         <td><span class="status-pill status-{{ $connection->status }}">{{ ucfirst($connection->status) }}</span></td>
-                        <td class="text-nowrap small">{{ $connection->responded_at?->format('d M Y, h:i A') ?? '-' }}</td>
+                        <td class="small">{{ $connection->status === 'reported' ? ($connection->reason_key.($connection->details ? ' — '.$connection->details : '')) : ($connection->responded_at?->format('d M Y, h:i A') ?? '-') }}</td>
                         <td><button type="button" class="btn btn-sm btn-outline-primary view-request" data-bs-toggle="offcanvas" data-bs-target="#requestDetailsPanel" aria-controls="requestDetailsPanel" data-details="{{ json_encode($details) }}"><i class="fas fa-eye me-1"></i> View</button></td>
                     </tr>
                 @empty
-                    <tr><td colspan="8" class="request-empty"><i class="fas fa-magnifying-glass fa-2x mb-3 d-block"></i>No matrimony requests match these filters.</td></tr>
+                    <tr><td colspan="8" class="request-empty"><i class="fas fa-magnifying-glass fa-2x mb-3 d-block"></i>No matrimony records match these filters.</td></tr>
                 @endforelse
                 </tbody>
             </table></div>

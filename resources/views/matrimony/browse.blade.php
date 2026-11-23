@@ -703,6 +703,8 @@
                                                 <span class="conn-badge bg-success text-white">Connected</span>
                                             @elseif($profile->my_connection_status === 'pending')
                                                 <span class="conn-badge bg-warning text-dark">Pending</span>
+                                            @elseif($profile->my_connection_status === 'blocked')
+                                                <span class="conn-badge bg-dark text-white">Blocked</span>
                                             @endif
                                         </div>
 
@@ -739,7 +741,41 @@
                                                 <i class="fa-solid fa-comments"></i>
                                             </a>
                                         @endif
+                                        <form action="{{ route('matrimony.block.toggle') }}" method="POST" class="mb-0">
+                                            @csrf
+                                            <input type="hidden" name="blocked_user_id" value="{{ $profile->user_id }}">
+                                            <button class="btn btn-outline-secondary btn-sm rounded-3 px-2" title="{{ $profile->is_blocked ? 'Unblock User' : 'Block User' }}">
+                                                <i class="fa-solid {{ $profile->is_blocked ? 'fa-user-check' : 'fa-user-slash' }}"></i>
+                                            </button>
+                                        </form>
+                                        <button type="button" class="btn btn-outline-danger btn-sm rounded-3 px-2" title="Report User" data-bs-toggle="modal" data-bs-target="#reportProfile{{ $profile->id }}">
+                                            <i class="fa-solid fa-flag"></i>
+                                        </button>
                                     </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal fade" id="reportProfile{{ $profile->id }}" tabindex="-1" aria-hidden="true">
+                            <div class="modal-dialog modal-dialog-centered">
+                                <div class="modal-content rounded-4 border-0">
+                                    <form action="{{ route('matrimony.report') }}" method="POST">
+                                        @csrf
+                                        <input type="hidden" name="reported_user_id" value="{{ $profile->user_id }}">
+                                        <div class="modal-header"><h5 class="modal-title fw-bold">Report {{ $profile->user->name ?? 'Profile' }}</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                                        <div class="modal-body">
+                                            <label class="form-label fw-bold">Reason</label>
+                                            <select name="reason_key" class="form-select mb-3" required>
+                                                <option value="">Select reason</option>
+                                                <option value="fake_profile">Fake profile</option><option value="inappropriate_content">Inappropriate content</option>
+                                                <option value="harassment">Harassment</option><option value="spam">Spam</option>
+                                                <option value="fraud_scam">Fraud or scam</option><option value="other">Other</option>
+                                            </select>
+                                            <label class="form-label fw-bold">Details (optional)</label>
+                                            <textarea name="details" class="form-control" rows="3" maxlength="1000"></textarea>
+                                            <div class="form-text">After reporting, this profile will be hidden from your listing.</div>
+                                        </div>
+                                        <div class="modal-footer"><button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button><button class="btn btn-danger">Submit Report</button></div>
+                                    </form>
                                 </div>
                             </div>
                         </div>

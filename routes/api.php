@@ -253,6 +253,8 @@ Route::middleware(['auth:sanctum'])->group(function () {
         // Connection requests
         Route::post('connection-request', [MatrimonyController::class, 'sendConnectionRequest']);
         Route::post('remove-request', [MatrimonyController::class, 'sendRemoveUser']);
+        Route::post('report-user', [MatrimonyController::class, 'reportUser']);
+        Route::post('block-user', [MatrimonyController::class, 'toggleBlock']);
         Route::put('connection-request/{id}', [MatrimonyController::class, 'respondToConnectionRequest']);
         Route::get('connection-requests', [MatrimonyController::class, 'getConnectionRequests']);
         Route::get('connected-users', [MatrimonyController::class, 'getConnectedUsers']);

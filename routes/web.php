@@ -156,6 +156,8 @@ Route::middleware(['auth', 'redirect.admin'])->group(function () {
         Route::get('/browse', [MatrimonyController::class, 'browse'])->name('browse');
         Route::get('/profile/{id}', [MatrimonyController::class, 'show'])->name('show');
         Route::post('/request/send', [MatrimonyController::class, 'sendRequest'])->name('request.send');
+        Route::post('/report-user', [MatrimonyController::class, 'reportUser'])->name('report');
+        Route::post('/block-user', [MatrimonyController::class, 'toggleBlock'])->name('block.toggle');
         Route::get('/requests', [MatrimonyController::class, 'requests'])->name('requests');
         Route::post('/request/{id}/respond', [MatrimonyController::class, 'respondRequest'])->name('request.respond');
         Route::get('/conversations', [MatrimonyController::class, 'conversations'])->name('conversations');
