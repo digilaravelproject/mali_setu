@@ -90,6 +90,17 @@ class MatrimonyProfileRulesTest extends TestCase
             $table->id();
             $table->unsignedBigInteger('user1_id');
             $table->unsignedBigInteger('user2_id');
+            $table->timestamp('last_message_at')->nullable();
+            $table->timestamps();
+        });
+        Schema::create('chat_messages', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('conversation_id');
+            $table->unsignedBigInteger('sender_id');
+            $table->text('message_text');
+            $table->string('message_type')->default('text');
+            $table->string('attachment_path')->nullable();
+            $table->boolean('is_read')->default(false);
             $table->timestamps();
         });
         Schema::create('notifications', function (Blueprint $table) {
@@ -332,6 +343,78 @@ class MatrimonyProfileRulesTest extends TestCase
             ->assertJsonPath('data.is_blocked', false)
             ->assertJsonPath('data.status', 'not_connected');
         $this->assertDatabaseMissing('matrimony_blocks', ['blocker_id' => 1, 'blocked_user_id' => 2]);
+    }
+
+    public function test_conversations_include_is_block_for_the_other_user(): void
+    {
+        DB::table('chat_conversations')->insert([
+            [
+                'id' => 1,
+                'user1_id' => 1,
+                'user2_id' => 2,
+                'last_message_at' => now(),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+            [
+                'id' => 2,
+                'user1_id' => 3,
+                'user2_id' => 1,
+                'last_message_at' => now()->subMinute(),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+        ]);
+        DB::table('matrimony_blocks')->insert([
+            'blocker_id' => 1,
+            'blocked_user_id' => 2,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $response = $this->actingAs(User::findOrFail(1), 'sanctum')
+            ->getJson('/api/matrimony/conversations')
+            ->assertOk();
+
+        $conversations = collect($response->json('data.conversations'))->keyBy('id');
+        $this->assertTrue($conversations[1]['is_block']);
+        $this->assertFalse($conversations[2]['is_block']);
+    }
+
+    public function test_blocked_users_api_only_lists_users_blocked_by_authenticated_user(): void
+    {
+        DB::table('matrimony_blocks')->insert([
+            [
+                'blocker_id' => 1,
+                'blocked_user_id' => 2,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+            [
+                'blocker_id' => 1,
+                'blocked_user_id' => 3,
+                'created_at' => now()->subMinute(),
+                'updated_at' => now(),
+            ],
+            [
+                'blocker_id' => 4,
+                'blocked_user_id' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+        ]);
+
+        $response = $this->actingAs(User::findOrFail(1), 'sanctum')
+            ->getJson('/api/matrimony/blocked-users')
+            ->assertOk()
+            ->assertJsonPath('data.total', 2)
+            ->assertJsonPath('data.blocked_users.0.user_id', 2)
+            ->assertJsonPath('data.blocked_users.0.is_block', true);
+
+        $this->assertEqualsCanonicalizing(
+            [2, 3],
+            collect($response->json('data.blocked_users'))->pluck('user_id')->all()
+        );
     }
 
     public function test_web_report_and_block_actions_persist_and_toggle(): void

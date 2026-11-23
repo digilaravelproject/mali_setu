@@ -169,6 +169,26 @@ curl --location 'https://malisetu.com/api/matrimony/block-user' \
 
 When blocked, the target stays in the matrimony listing with `connection_status: "blocked"` and `is_blocked: true`. Connection requests are disabled while either user has blocked the other.
 
+## List users blocked by the logged-in user
+
+```bash
+curl --location --request GET 'https://malisetu.com/api/matrimony/blocked-users' \
+  --header 'Accept: application/json' \
+  --header 'Authorization: Bearer YOUR_TOKEN'
+```
+
+The response returns `data.blocked_users`, including each blocked user's account and matrimony profile, plus `data.total`. Every item has `is_block: true`.
+
+## Conversation block status
+
+```bash
+curl --location --request GET 'https://malisetu.com/api/matrimony/conversations' \
+  --header 'Accept: application/json' \
+  --header 'Authorization: Bearer YOUR_TOKEN'
+```
+
+Each item in `data.conversations` includes `is_block`. It is `true` when the logged-in user blocked the other conversation participant, otherwise `false`.
+
 ## Verify listing status
 
 This is the listing endpoint currently used by the mobile search flow. A reported profile is absent; a blocked profile remains present with the blocked status.

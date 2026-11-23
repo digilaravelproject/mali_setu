@@ -1221,6 +1221,34 @@ class MatrimonyController extends Controller
         ]);
     }
 
+    /** List the matrimony users blocked by the authenticated user. */
+    public function getBlockedUsers(Request $request)
+    {
+        $blockedUsers = MatrimonyBlock::query()
+            ->where('blocker_id', $request->user()->id)
+            ->with(['blockedUser.matrimonyProfile'])
+            ->latest()
+            ->get()
+            ->map(function (MatrimonyBlock $block) {
+                return [
+                    'block_id' => $block->id,
+                    'user_id' => $block->blocked_user_id,
+                    'is_block' => true,
+                    'blocked_at' => $block->created_at,
+                    'user' => $block->blockedUser,
+                    'profile' => $block->blockedUser?->matrimonyProfile,
+                ];
+            });
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'blocked_users' => $blockedUsers,
+                'total' => $blockedUsers->count(),
+            ],
+        ]);
+    }
+
     /**
      * Respond to connection request
      */
@@ -1415,6 +1443,10 @@ class MatrimonyController extends Controller
     {
         $userId = $request->user()->id;
 
+        $blockedUserIds = MatrimonyBlock::where('blocker_id', $userId)
+            ->pluck('blocked_user_id')
+            ->flip();
+
         $conversations = ChatConversation::where('user1_id', $userId)
             ->orWhere('user2_id', $userId)
             ->with(['messages' => function ($query) {
@@ -1440,6 +1472,7 @@ class MatrimonyController extends Controller
                     'user_id',
                     $u_id
                 )->first();
+                $conversation->is_block = $blockedUserIds->has($u_id);
             }
         }
 
