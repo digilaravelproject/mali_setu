@@ -77,6 +77,9 @@ class WebinarManagementController extends Controller
         $data['require_registration'] = $request->boolean('require_registration');
         $data['allow_qa'] = $request->boolean('allow_qa');
         $data['allow_recording'] = false;
+        $data['is_paid'] = $request->boolean('is_paid');
+        $data['price'] = $data['is_paid'] ? $data['price'] : null;
+        if ($data['is_paid']) $data['require_registration'] = true;
         $data['plan_ids'] = $data['access_type'] === 'specific_plans' ? ($data['plan_ids'] ?? []) : null;
         $data['starts_at'] = Carbon::createFromFormat('Y-m-d H:i', $data['webinar_date'].' '.$data['webinar_time'], config('app.webinar_timezone'));
         unset($data['webinar_date'], $data['webinar_time']);
@@ -95,6 +98,9 @@ class WebinarManagementController extends Controller
         $data['require_registration'] = $request->boolean('require_registration');
         $data['allow_qa'] = $request->boolean('allow_qa');
         $data['allow_recording'] = false;
+        $data['is_paid'] = $request->boolean('is_paid');
+        $data['price'] = $data['is_paid'] ? $data['price'] : null;
+        if ($data['is_paid']) $data['require_registration'] = true;
         $data['plan_ids'] = $data['access_type'] === 'specific_plans' ? ($data['plan_ids'] ?? []) : null;
         $data['starts_at'] = Carbon::createFromFormat('Y-m-d H:i', $data['webinar_date'].' '.$data['webinar_time'], config('app.webinar_timezone'));
         unset($data['webinar_date'], $data['webinar_time']);
@@ -196,6 +202,8 @@ class WebinarManagementController extends Controller
             'require_registration' => 'sometimes|boolean',
             'allow_qa' => 'sometimes|boolean',
             'access_type' => 'required|in:free,specific_plans',
+            'is_paid' => 'sometimes|boolean',
+            'price' => 'nullable|required_if:is_paid,1|numeric|min:1|max:99999999.99',
             'plan_ids' => 'nullable|required_if:access_type,specific_plans|array|min:1',
             'plan_ids.*' => 'string|max:50',
             'status' => 'required|in:draft,published,cancelled',

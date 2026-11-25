@@ -11,9 +11,12 @@ use App\Models\JobPosting;
 use App\Models\Page;
 use App\Models\Transaction;
 use App\Models\User;
+use App\Models\VolunteerProfile;
 use App\Services\ReferralCodeService;
+use App\Services\ReferralService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
@@ -21,6 +24,22 @@ use Illuminate\Support\Facades\Validator;
 
 class DashboardController extends Controller
 {
+    public function convertToVolunteer(Request $request, ReferralService $referrals)
+    {
+        $user = $request->user();
+        if ($user->user_type === 'volunteer') {
+            return back()->with('success', 'Your account is already a volunteer account.');
+        }
+
+        DB::transaction(function () use ($user, $referrals) {
+            $user->update(['user_type' => 'volunteer']);
+            VolunteerProfile::firstOrCreate(['user_id' => $user->id], ['status' => 'pending']);
+            $referrals->activateVolunteer($user)->update(['is_active' => false]);
+        });
+
+        return redirect()->route('dashboard')->with('success', 'Your account is now a volunteer account. Verification is pending.');
+    }
+
     /**
      * Show User Dashboard Overview
      */

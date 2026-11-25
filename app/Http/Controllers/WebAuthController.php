@@ -179,7 +179,9 @@ class WebAuthController extends Controller
             Auth::login($user);
             $request->session()->regenerate();
 
-            return redirect()->route('dashboard')->with('success', 'Registration successful! Welcome to Mali Setu.');
+            return redirect()->route('dashboard')
+                ->with('success', 'Registration successful! Welcome to Mali Setu.')
+                ->with('show_mobile_app_prompt', filled($request->referral_code));
 
         } catch (\Exception $e) {
             \Log::error('Web registration failure: '.$e->getMessage()."\n".$e->getTraceAsString());

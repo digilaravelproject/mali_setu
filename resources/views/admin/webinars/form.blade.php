@@ -34,6 +34,7 @@
     $selectedCategories = old('categories', $webinar->exists ? $webinar->selected_categories : ['business']);
     $selectedAudience = old('audience', $webinar->audience ?: 'all');
     $selectedAccess = old('access_type', $webinar->access_type ?: 'free');
+    $isPaid = (bool) old('is_paid', $webinar->is_paid);
     $selectedPlans = old('plan_ids', $webinar->plan_ids ?: []);
     $selectedStatus = old('status', $webinar->status ?: 'published');
     $selectedProvider = old('meeting_provider', $webinar->meeting_provider ?: (($providerStatuses['agora'] ?? false) ? 'agora' : 'daily'));
@@ -126,6 +127,20 @@
                 </div>
 
                 <div class="mb-3">
+                    <label class="form-label d-block">Webinar Fee</label>
+                    <div class="form-check form-switch">
+                        <input type="hidden" name="is_paid" value="0">
+                        <input class="form-check-input" type="checkbox" role="switch" id="paidToggle" name="is_paid" value="1" @checked($isPaid)>
+                        <label class="form-check-label fw-semibold" for="paidToggle">Paid webinar</label>
+                    </div>
+                    <div id="priceField" class="mt-2" @if(!$isPaid) style="display:none" @endif>
+                        <label class="form-label">Price per person (INR) <span class="text-danger">*</span></label>
+                        <input type="number" name="price" id="webinarPrice" class="form-control" min="1" step="0.01" value="{{ old('price', $webinar->price) }}" @required($isPaid)>
+                        @error('price')<small class="text-danger">{{ $message }}</small>@enderror
+                    </div>
+                </div>
+
+                <div class="mb-3">
                     <label class="form-label d-block">Status</label>
                     <label class="status-option"><input type="radio" name="status" value="published" @checked($selectedStatus==='published')> Publish Now</label>
                     <label class="status-option"><input type="radio" name="status" value="draft" @checked($selectedStatus==='draft')> Schedule for Later</label>
@@ -156,5 +171,12 @@ document.querySelectorAll('input[name="access_type"]').forEach(input => input.ad
     const select = document.getElementById('planSelect'); select.disabled = this.value !== 'specific_plans';
     if (select.disabled) Array.from(select.options).forEach(option => option.selected = false);
 }));
+document.getElementById('paidToggle')?.addEventListener('change', function () {
+    const field = document.getElementById('priceField');
+    const price = document.getElementById('webinarPrice');
+    field.style.display = this.checked ? '' : 'none';
+    price.required = this.checked;
+    if (!this.checked) price.value = '';
+});
 </script>
 @endpush

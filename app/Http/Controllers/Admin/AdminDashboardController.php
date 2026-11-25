@@ -33,7 +33,21 @@ class AdminDashboardController extends Controller
         $recentUsers = User::latest()->take(5)->get();
         $recentBusinesses = Business::with('user')->latest()->take(5)->get();
         $recentTransactions = Transaction::with('user')->where('status', 'completed')->latest()->take(5)->get();
-        $birthdayUsers = app(BirthdayNotificationService::class)->birthdayUsers();
+        $birthdayUsers = app(BirthdayNotificationService::class)->birthdayUsers()
+            ->each(function (User $user) {
+                $phone = preg_replace('/\D+/', '', (string) $user->phone);
+                if (strlen($phone) === 11 && str_starts_with($phone, '0')) {
+                    $phone = substr($phone, 1);
+                }
+                if (strlen($phone) === 10) {
+                    $phone = '91'.$phone;
+                }
+
+                $message = "Happy Birthday, {$user->name}! 🎉 Wishing you a wonderful year ahead filled with happiness, good health, and success. Best wishes from Mali Setu!";
+                $user->setAttribute('birthday_whatsapp_url', preg_match('/^\d{11,15}$/', $phone)
+                    ? 'https://wa.me/'.$phone.'?text='.rawurlencode($message)
+                    : null);
+            });
         
         // Get pending verifications count
         $pendingVerifications = [

@@ -7,7 +7,10 @@ use App\Mail\WebinarRegistrationMail;
 use App\Models\Webinar;
 use App\Models\WebinarComment;
 use App\Models\WebinarRegistration;
+use App\Models\Transaction;
 use App\Services\AgoraTokenService;
+use App\Services\CCAvenue;
+use App\Services\CCAvenuePaymentService;
 use App\Services\DailyMeetingService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -53,7 +56,7 @@ class WebinarController extends Controller
         $user = $this->authenticatedUser($request);
         $webinar->is_registered = $user
             ? $webinar->registrations()->where('user_id', $user->id)->exists() : false;
-        $webinar->require_registration = $webinar->require_registration
+        $webinar->require_registration = ($webinar->require_registration || $webinar->is_paid)
             && ! $webinar->is_registered
             && $webinar->ends_at->isFuture();
 
@@ -64,6 +67,7 @@ class WebinarController extends Controller
     {
         abort_unless($webinar->status === 'published' && $webinar->starts_at->isFuture(), 422, 'This webinar is not open for registration.');
         abort_unless($webinar->userCanAccess($request->user()), 403, 'You do not have access to this webinar.');
+        abort_if($webinar->is_paid, 402, 'Payment is required. Create a webinar payment order first.');
         $registration = WebinarRegistration::firstOrCreate(['webinar_id' => $webinar->id, 'user_id' => $request->user()->id]);
         try {
             Mail::to($request->user()->email)->send(new WebinarRegistrationMail($webinar));
@@ -72,6 +76,78 @@ class WebinarController extends Controller
         }
 
         return response()->json(['success' => true, 'message' => 'Webinar registration successful. Details were emailed to you.', 'data' => ['registration' => $registration, 'webinar' => $webinar]], 201);
+    }
+
+    public function createPaymentOrder(Request $request, Webinar $webinar, CCAvenue $ccavenue, CCAvenuePaymentService $payments)
+    {
+        abort_unless($webinar->status === 'published' && $webinar->starts_at->isFuture(), 422, 'This webinar is not open for registration.');
+        abort_unless($webinar->userCanAccess($request->user()), 403, 'You do not have access to this webinar.');
+        abort_unless($webinar->is_paid && (float) $webinar->price > 0, 422, 'This webinar does not require payment.');
+
+        $existingRegistration = $webinar->registrations()->where('user_id', $request->user()->id)->first();
+        if ($existingRegistration) {
+            return response()->json(['success' => true, 'message' => 'You are already registered for this webinar.', 'data' => ['registration' => $existingRegistration, 'webinar' => $webinar]]);
+        }
+
+        $orderId = 'WEB-'.$webinar->id.'-'.time().'-'.mt_rand(1000, 9999);
+        $transaction = Transaction::create([
+            'user_id' => $request->user()->id,
+            'amount' => $webinar->price,
+            'currency' => 'INR',
+            'purpose' => 'webinar_registration',
+            'razorpay_order_id' => $orderId,
+            'status' => 'pending',
+            'metadata' => ['webinar_id' => $webinar->id],
+        ]);
+        $payments->createPendingPayment($transaction);
+
+        $params = [
+            'order_id' => $orderId,
+            'amount' => number_format((float) $webinar->price, 2, '.', ''),
+            'currency' => 'INR',
+            'redirect_url' => route('ccavenue.callback'),
+            'cancel_url' => route('ccavenue.callback'),
+            'language' => 'EN',
+            'billing_name' => $request->user()->name ?? '',
+            'billing_email' => $request->user()->email ?? '',
+            'billing_tel' => $request->user()->phone ?? '',
+        ];
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Webinar payment order created successfully.',
+            'data' => [
+                'payment_way' => 'ccavenue',
+                'payment_url' => $ccavenue->getPaymentUrl(),
+                'encRequest' => $ccavenue->encrypt($params),
+                'access_code' => $ccavenue->getAccessCode(),
+                'order_id' => $orderId,
+                'amount' => (float) $webinar->price,
+                'currency' => 'INR',
+                'transaction_id' => $transaction->id,
+                'webinar_id' => $webinar->id,
+            ],
+        ], 201);
+    }
+
+    public function paymentStatus(Request $request, Webinar $webinar)
+    {
+        $transaction = Transaction::where('user_id', $request->user()->id)
+            ->where('purpose', 'webinar_registration')
+            ->where('metadata->webinar_id', $webinar->id)
+            ->latest()
+            ->first();
+        $registration = $webinar->registrations()->where('user_id', $request->user()->id)->first();
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'is_registered' => (bool) $registration,
+                'payment_status' => $transaction?->status ?? ($webinar->is_paid ? 'not_started' : 'not_required'),
+                'transaction' => $transaction,
+                'registration' => $registration,
+            ],
+        ]);
     }
 
     public function comments(Request $request, Webinar $webinar)
@@ -118,7 +194,7 @@ class WebinarController extends Controller
     public function joinToken(Request $request, Webinar $webinar, AgoraTokenService $agora, DailyMeetingService $daily)
     {
         abort_unless($webinar->userCanAccess($request->user()), 403, 'You do not have access to this webinar.');
-        abort_unless(! $webinar->require_registration || $webinar->registrations()->where('user_id', $request->user()->id)->exists(), 403, 'Registration is required.');
+        abort_unless((! $webinar->require_registration && ! $webinar->is_paid) || $webinar->registrations()->where('user_id', $request->user()->id)->exists(), 403, 'Registration is required.');
         abort_unless($webinar->attendeeCanJoin(), 403, 'Attendees can join when the webinar starts.');
 
         $credentials = $webinar->usesDaily()
@@ -143,7 +219,7 @@ class WebinarController extends Controller
             $webinar->setAttribute('is_registered', $isRegistered);
             $webinar->setAttribute(
                 'require_registration',
-                $webinar->require_registration && ! $isRegistered && $webinar->ends_at->isFuture()
+                ($webinar->require_registration || $webinar->is_paid) && ! $isRegistered && $webinar->ends_at->isFuture()
             );
         }
     }

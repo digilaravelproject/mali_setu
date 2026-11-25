@@ -20,6 +20,19 @@
                 </div>
                 
                 <div class="card-body">
+                    <div class="d-flex flex-column flex-sm-row align-items-center align-items-sm-start gap-3 p-3 mb-4 bg-light rounded border">
+                        @if($user->photo)
+                            <img src="{{ asset('storage/'.$user->photo) }}" alt="{{ $user->name }} profile photo" class="rounded-circle shadow-sm border bg-white" style="width:120px;height:120px;object-fit:cover;flex:0 0 120px;">
+                        @else
+                            <img src="{{ asset('default-avatar.png') }}" alt="Default profile photo" class="rounded-circle shadow-sm border bg-white" style="width:120px;height:120px;object-fit:cover;flex:0 0 120px;">
+                        @endif
+                        <div class="text-center text-sm-start pt-sm-2">
+                            <h4 class="mb-1">{{ $user->name }}</h4>
+                            <div class="text-muted mb-2">{{ $user->email }}</div>
+                            <span class="badge bg-info me-1">{{ ucfirst($user->user_type) }}</span>
+                            <span class="badge {{ $user->status === 'active' ? 'bg-success' : 'bg-secondary' }}">{{ ucfirst($user->status) }}</span>
+                        </div>
+                    </div>
                     <div class="row">
                         <!-- User Basic Information -->
                         <div class="col-md-6">

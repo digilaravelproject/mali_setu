@@ -212,6 +212,8 @@ Route::middleware(['auth:sanctum'])->group(function () {
     });
 
     Route::post('webinars/{webinar}/register', [WebinarController::class, 'register']);
+    Route::post('webinars/{webinar}/payment-order', [WebinarController::class, 'createPaymentOrder']);
+    Route::get('webinars/{webinar}/payment-status', [WebinarController::class, 'paymentStatus']);
     Route::post('webinars/{webinar}/comments', [WebinarController::class, 'storeComment']);
     Route::get('webinars/{webinar}/join-token', [WebinarController::class, 'joinToken'])->middleware('throttle:30,1');
     Route::get('my-webinar-registrations', [WebinarController::class, 'myRegistrations']);
@@ -299,6 +301,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
     // Volunteer Routes
     Route::prefix('volunteer')->group(function () {
+        Route::post('convert', [VolunteerController::class, 'convert']);
         // Volunteer profile management
         Route::get('profile', [VolunteerController::class, 'getVolunteerProfile']);
         Route::post('profile', [VolunteerController::class, 'updateVolunteerProfile']);

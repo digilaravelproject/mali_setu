@@ -4,11 +4,13 @@
 
 @push('styles')
 <style>
-@keyframes birthdayFloat { 0%,100%{transform:translateY(0) rotate(-1deg)} 50%{transform:translateY(-7px) rotate(1deg)} }
-@keyframes birthdaySparkle { 0%,100%{opacity:.35;transform:scale(.8)} 50%{opacity:1;transform:scale(1.2)} }
-.birthday-card{position:relative;overflow:hidden;border:0;border-radius:18px;background:linear-gradient(135deg,#83124f,#d51b78 55%,#ff9a44);color:#fff;box-shadow:0 12px 30px rgba(131,18,79,.24);animation:birthdayFloat 4s ease-in-out infinite}
-.birthday-card:before,.birthday-card:after{content:'✦';position:absolute;font-size:2rem;animation:birthdaySparkle 1.8s ease-in-out infinite}.birthday-card:before{right:18px;top:12px}.birthday-card:after{right:70px;bottom:12px;animation-delay:.7s}
-.birthday-avatar{width:58px;height:58px;border-radius:50%;object-fit:cover;border:3px solid rgba(255,255,255,.8);background:#fff;color:#83124f;display:flex;align-items:center;justify-content:center;font-size:1.35rem;font-weight:800}
+.birthday-list-card{height:420px;display:flex;flex-direction:column}
+.birthday-list-card .card-body{min-height:0;display:flex;flex-direction:column}
+.birthday-table-scroll{overflow-y:auto;overflow-x:auto;max-height:310px}
+.birthday-user-avatar{width:38px;height:38px;border-radius:50%;object-fit:cover;background:#f1f3f5;flex:0 0 38px}
+.birthday-table-scroll thead th{position:sticky;top:0;background:#f8f9fc;z-index:2}
+.birthday-whatsapp{width:34px;height:34px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;background:#25d366;color:#fff!important;text-decoration:none}
+.birthday-whatsapp:hover{background:#1fb958;color:#fff}
 </style>
 @endpush
 
@@ -24,23 +26,37 @@
         </div>
     </div>
 
-    @if($birthdayUsers->isNotEmpty())
-    <section class="mb-4" aria-labelledby="birthday-heading">
-        <div class="d-flex align-items-center justify-content-between mb-3"><h5 id="birthday-heading" class="fw-bold mb-0">🎂 Birthdays Today</h5><span class="badge badge-primary">{{ $birthdayUsers->count() }} celebration{{ $birthdayUsers->count() === 1 ? '' : 's' }}</span></div>
-        <div class="row">
-            @foreach($birthdayUsers as $birthdayUser)
-            <div class="col-xl-4 col-md-6 mb-3">
-                <article class="birthday-card p-4 h-100">
-                    <div class="d-flex align-items-center position-relative" style="z-index:1">
-                        @if($birthdayUser->photo)<img class="birthday-avatar mr-3" src="{{ asset('storage/'.$birthdayUser->photo) }}" alt="{{ $birthdayUser->name }}">@else<div class="birthday-avatar mr-3">{{ mb_strtoupper(mb_substr($birthdayUser->name,0,1)) }}</div>@endif
-                        <div><div class="small text-white-50 text-uppercase font-weight-bold">Happy Birthday</div><h5 class="font-weight-bold mb-1 text-white">{{ $birthdayUser->name }}</h5><div class="small"><i class="fas fa-phone mr-1"></i>{{ $birthdayUser->phone }} · {{ ucfirst($birthdayUser->user_type) }}</div></div>
-                    </div>
-                </article>
-            </div>
-            @endforeach
+    <div class="row">
+        <div class="col-lg-6 mb-4">
+            <section class="card shadow mb-4 birthday-list-card" aria-labelledby="birthday-heading">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 id="birthday-heading" class="m-0 font-weight-bold text-primary"><i class="fas fa-birthday-cake mr-2"></i>Birthdays Today</h6>
+                    <span class="badge bg-primary text-white rounded-pill">{{ $birthdayUsers->count() }}</span>
+                </div>
+                <div class="card-body">
+                    @if($birthdayUsers->isNotEmpty())
+                        <div class="table-responsive birthday-table-scroll">
+                            <table class="table table-sm table-hover align-middle mb-0">
+                                <thead><tr><th>User</th><th>Type</th><th>Phone</th><th class="text-center">Wish</th></tr></thead>
+                                <tbody>
+                                @foreach($birthdayUsers as $birthdayUser)
+                                    <tr>
+                                        <td><div class="d-flex align-items-center gap-2">@if($birthdayUser->photo)<img class="birthday-user-avatar" src="{{ asset('storage/'.$birthdayUser->photo) }}" alt="{{ $birthdayUser->name }}">@else<img class="birthday-user-avatar" src="{{ asset('default-avatar.png') }}" alt="">@endif<div><strong>{{ $birthdayUser->name }}</strong><div class="small text-muted">{{ $birthdayUser->email }}</div></div></div></td>
+                                        <td><span class="badge badge-secondary text-black">{{ ucfirst($birthdayUser->user_type) }}</span></td>
+                                        <td class="text-nowrap">{{ $birthdayUser->phone ?: 'N/A' }}</td>
+                                        <td class="text-center">@if($birthdayUser->birthday_whatsapp_url)<a class="birthday-whatsapp" href="{{ $birthdayUser->birthday_whatsapp_url }}" target="_blank" rel="noopener noreferrer" title="Send birthday wish to {{ $birthdayUser->name }}"><i class="fab fa-whatsapp"></i><span class="sr-only">Send birthday wish</span></a>@else<span class="text-muted" title="WhatsApp number unavailable"><i class="fab fa-whatsapp"></i></span>@endif</td>
+                                    </tr>
+                                @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    @else
+                        <div class="d-flex flex-column align-items-center justify-content-center text-muted h-100"><i class="fas fa-birthday-cake fa-2x mb-2"></i><p class="mb-0">No birthdays today.</p></div>
+                    @endif
+                </div>
+            </section>
         </div>
-    </section>
-    @endif
+    </div>
 
     <!-- Statistics Cards Row -->
     <div class="row">

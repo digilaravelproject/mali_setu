@@ -174,6 +174,25 @@ class ReferralApiTest extends TestCase
         $this->assertDatabaseHas('volunteer_referral_profiles', ['is_active' => false]);
     }
 
+    public function test_authenticated_member_can_convert_to_volunteer(): void
+    {
+        $userId = DB::table('users')->insertGetId($this->userRow('General Member', 'member@example.com', '9876500000', 'general', 'MSUGENERAL'));
+        Sanctum::actingAs(User::findOrFail($userId));
+
+        $this->postJson('/api/volunteer/convert')
+            ->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('data.user.user_type', 'volunteer')
+            ->assertJsonPath('data.volunteer_profile.status', 'pending');
+
+        $this->assertDatabaseHas('users', ['id' => $userId, 'user_type' => 'volunteer']);
+        $this->assertDatabaseHas('volunteer_profiles', ['user_id' => $userId, 'status' => 'pending']);
+        $this->assertDatabaseHas('volunteer_referral_profiles', ['user_id' => $userId, 'is_active' => false]);
+
+        $this->postJson('/api/volunteer/convert')->assertOk();
+        $this->assertSame(1, DB::table('volunteer_profiles')->where('user_id', $userId)->count());
+    }
+
     public function test_registration_builds_referral_code_from_first_name_taluka_and_birth_date(): void
     {
         Mail::fake();

@@ -14,7 +14,7 @@ class Webinar extends Model
         'created_by', 'title', 'category', 'categories', 'description', 'banner_path', 'speaker_name', 'agenda',
         'starts_at', 'duration_minutes', 'meeting_provider', 'agora_channel', 'agora_link',
         'daily_room_name', 'daily_room_url', 'audience',
-        'require_registration', 'allow_qa', 'allow_recording', 'access_type', 'plan_ids', 'status',
+        'require_registration', 'allow_qa', 'allow_recording', 'access_type', 'is_paid', 'price', 'plan_ids', 'status',
     ];
 
     protected $casts = [
@@ -22,6 +22,8 @@ class Webinar extends Model
         'require_registration' => 'boolean',
         'allow_qa' => 'boolean',
         'allow_recording' => 'boolean',
+        'is_paid' => 'boolean',
+        'price' => 'decimal:2',
         'plan_ids' => 'array',
         'categories' => 'array',
     ];

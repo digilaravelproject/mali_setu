@@ -39,7 +39,7 @@ class CCAvenuePaymentReconciliationService
 
         $transactions = Transaction::query()
             ->where('status', 'pending')
-            ->whereIn('purpose', ['business_registration', 'matrimony_profile', 'donation'])
+            ->whereIn('purpose', ['business_registration', 'matrimony_profile', 'donation', 'webinar_registration'])
             ->whereNotNull('razorpay_order_id')
             ->where('created_at', '>=', now()->subDays($lookbackDays))
             ->oldest('id')

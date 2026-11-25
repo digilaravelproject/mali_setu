@@ -1,6 +1,40 @@
 @extends('layouts.app')
 
 @section('content')
+@if($user->user_type !== 'volunteer')
+<div class="d-flex justify-content-end mb-3">
+    <form method="POST" action="{{ route('dashboard.volunteer.convert') }}" onsubmit="return confirm('Convert your account to a volunteer account?');">
+        @csrf
+        <button type="submit" class="btn btn-success rounded-3 fw-semibold"><i class="fa-solid fa-hand-holding-heart me-2"></i>Convert as a Volunteer</button>
+    </form>
+</div>
+@endif
+
+@if(session('show_mobile_app_prompt'))
+<div class="modal fade mobile-app-install-prompt" id="mobileAppInstallPrompt" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered mx-3">
+        <div class="modal-content border-0 rounded-4 shadow-lg">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold">Get the Mali Setu App</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body pt-2 pb-4">
+                <p class="mb-0 text-secondary">You have not installed the Mali Setu app yet. Install the app first for the best mobile experience.</p>
+            </div>
+        </div>
+    </div>
+</div>
+<style>
+@media (min-width: 768px) { .mobile-app-install-prompt { display: none !important; } }
+</style>
+@push('scripts')
+<script>
+if (window.matchMedia('(max-width: 767.98px)').matches) {
+    window.addEventListener('DOMContentLoaded', () => new bootstrap.Modal(document.getElementById('mobileAppInstallPrompt')).show());
+}
+</script>
+@endpush
+@endif
 <style>
     /* Premium Hover Scale Micro-Animations */
     .hover-scale {

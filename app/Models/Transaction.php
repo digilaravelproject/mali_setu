@@ -70,6 +70,7 @@ class Transaction extends Model
             'business_registration' => 'Business Registration',
             'matrimony_profile' => 'Matrimony Profile',
             'donation' => 'Donation',
+            'webinar_registration' => 'Webinar Registration',
             default => ucfirst(str_replace('_', ' ', $this->purpose))
         };
     }

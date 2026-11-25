@@ -9,6 +9,8 @@ use App\Models\MatrimonyPlan;
 use App\Models\MatrimonyProfile;
 use App\Models\Payment;
 use App\Models\Transaction;
+use App\Models\Webinar;
+use App\Models\WebinarRegistration;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -231,6 +233,18 @@ class CCAvenuePaymentService
                     'payment_method' => 'ccavenue',
                 ]);
                 $donation->cause?->updateRaisedAmount();
+            }
+
+            return;
+        }
+
+        if ($transaction->purpose === 'webinar_registration') {
+            $webinar = Webinar::find($transaction->metadata['webinar_id'] ?? null);
+            if ($webinar && $webinar->status === 'published' && $webinar->ends_at->isFuture()) {
+                WebinarRegistration::updateOrCreate(
+                    ['webinar_id' => $webinar->id, 'user_id' => $transaction->user_id],
+                    ['transaction_id' => $transaction->id, 'paid_at' => now()]
+                );
             }
         }
     }

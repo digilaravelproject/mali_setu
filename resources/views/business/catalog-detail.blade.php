@@ -14,8 +14,20 @@
     <div class="glass-card bg-white border shadow-sm overflow-hidden p-0">
         <div class="row g-0">
             <div class="col-lg-5 bg-light d-flex align-items-center justify-content-center" style="min-height: 420px;">
-                @if($item->image_path)
-                    <img src="{{ asset('storage/' . $item->image_path) }}" alt="{{ $item->name }}" class="w-100 h-100" style="min-height: 420px; max-height: 560px; object-fit: cover;">
+                @if(count($item->images))
+                    <div id="catalogCarousel" class="carousel slide w-100" data-bs-ride="carousel">
+                        <div class="carousel-inner">
+                            @foreach($item->images as $image)
+                                <div class="carousel-item @if($loop->first) active @endif">
+                                    <img src="{{ $image['url'] }}" alt="{{ $item->name }} photo {{ $loop->iteration }}" class="d-block w-100" style="min-height:420px;max-height:560px;object-fit:cover;">
+                                </div>
+                            @endforeach
+                        </div>
+                        @if(count($item->images) > 1)
+                            <button class="carousel-control-prev" type="button" data-bs-target="#catalogCarousel" data-bs-slide="prev"><span class="carousel-control-prev-icon"></span><span class="visually-hidden">Previous</span></button>
+                            <button class="carousel-control-next" type="button" data-bs-target="#catalogCarousel" data-bs-slide="next"><span class="carousel-control-next-icon"></span><span class="visually-hidden">Next</span></button>
+                        @endif
+                    </div>
                 @else
                     <div class="text-center text-secondary p-5">
                         <i class="fa-solid {{ $icon }} fa-5x mb-3"></i>

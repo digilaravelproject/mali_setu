@@ -367,6 +367,7 @@
                                                                         data-name="{{ $prod->name }}" data-cost="{{ $prod->cost }}"
                                                                         data-description="{{ $prod->description }}"
                                                                         data-image-url="{{ $prod->image_path ? asset('storage/'.$prod->image_path) : '' }}"
+                                                                        data-images='@json($prod->images)'
                                                                         title="Edit product">
                                                                     <i class="fa-solid fa-pen-to-square"></i>
                                                                 </button>
@@ -430,6 +431,7 @@
                                                                         data-name="{{ $serv->name }}" data-cost="{{ $serv->cost }}"
                                                                         data-description="{{ $serv->description }}"
                                                                         data-image-url="{{ $serv->image_path ? asset('storage/'.$serv->image_path) : '' }}"
+                                                                        data-images='@json($serv->images)'
                                                                         title="Edit service">
                                                                     <i class="fa-solid fa-pen-to-square"></i>
                                                                 </button>
@@ -698,9 +700,9 @@
                         @enderror
                     </div>
                     <div class="mb-3 text-start">
-                        <label class="form-label fw-semibold small">Product Image *</label>
-                        <input type="file" name="image" class="form-control @error('image', 'product') is-invalid @enderror" accept="image/*" required>
-                        @error('image', 'product')
+                        <label class="form-label fw-semibold small">Product Images * <span class="text-muted">(up to 10)</span></label>
+                        <input type="file" name="images[]" class="form-control @error('images', 'product') is-invalid @enderror" accept="image/*" multiple required>
+                        @error('images', 'product')
                             <div class="text-danger small mt-1">{{ $message }}</div>
                         @enderror
                     </div>
@@ -745,9 +747,9 @@
                         <textarea name="description" id="editProductDescription" class="form-control" rows="3" required></textarea>
                     </div>
                     <div class="mb-3 text-start">
-                        <label class="form-label fw-semibold small">Replace Product Image</label>
-                        <input type="file" name="image" class="form-control" accept="image/*">
-                        <img id="editProductPreview" class="rounded shadow-sm mt-2 d-none" alt="Current product image" style="width:80px;height:80px;object-fit:cover;">
+                        <label class="form-label fw-semibold small">Add Product Images <span class="text-muted">(up to 10 total)</span></label>
+                        <input type="file" name="images[]" class="form-control" accept="image/*" multiple>
+                        <div id="editProductImages" class="d-flex flex-wrap gap-2 mt-2"></div>
                     </div>
                 </div>
                 <div class="modal-footer border-0">
@@ -795,9 +797,9 @@
                         @enderror
                     </div>
                     <div class="mb-3 text-start">
-                        <label class="form-label fw-semibold small">Service Image *</label>
-                        <input type="file" name="image" class="form-control @error('image', 'service') is-invalid @enderror" accept="image/*" required>
-                        @error('image', 'service')
+                        <label class="form-label fw-semibold small">Service Images * <span class="text-muted">(up to 10)</span></label>
+                        <input type="file" name="images[]" class="form-control @error('images', 'service') is-invalid @enderror" accept="image/*" multiple required>
+                        @error('images', 'service')
                             <div class="text-danger small mt-1">{{ $message }}</div>
                         @enderror
                     </div>
@@ -842,9 +844,9 @@
                         <textarea name="description" id="editServiceDescription" class="form-control" rows="3" required></textarea>
                     </div>
                     <div class="mb-3 text-start">
-                        <label class="form-label fw-semibold small">Replace Service Image</label>
-                        <input type="file" name="image" class="form-control" accept="image/*">
-                        <img id="editServicePreview" class="rounded shadow-sm mt-2 d-none" alt="Current service image" style="width:80px;height:80px;object-fit:cover;">
+                        <label class="form-label fw-semibold small">Add Service Images <span class="text-muted">(up to 10 total)</span></label>
+                        <input type="file" name="images[]" class="form-control" accept="image/*" multiple>
+                        <div id="editServiceImages" class="d-flex flex-wrap gap-2 mt-2"></div>
                     </div>
                 </div>
                 <div class="modal-footer border-0">
@@ -1381,9 +1383,7 @@
                 document.getElementById('editProductName').value = button.dataset.name;
                 document.getElementById('editProductCost').value = button.dataset.cost;
                 document.getElementById('editProductDescription').value = button.dataset.description;
-                const preview = document.getElementById('editProductPreview');
-                preview.src = button.dataset.imageUrl || '';
-                preview.classList.toggle('d-none', !button.dataset.imageUrl);
+                renderCatalogImages('editProductImages', JSON.parse(button.dataset.images || '[]'));
             });
         }
 
@@ -1397,10 +1397,13 @@
                 document.getElementById('editServiceName').value = button.dataset.name;
                 document.getElementById('editServiceCost').value = button.dataset.cost;
                 document.getElementById('editServiceDescription').value = button.dataset.description;
-                const preview = document.getElementById('editServicePreview');
-                preview.src = button.dataset.imageUrl || '';
-                preview.classList.toggle('d-none', !button.dataset.imageUrl);
+                renderCatalogImages('editServiceImages', JSON.parse(button.dataset.images || '[]'));
             });
+        }
+
+        function renderCatalogImages(containerId, images) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = images.map(image => `<label class="position-relative"><img src="${image.url}" class="rounded border" style="width:76px;height:76px;object-fit:cover"><span class="d-block small"><input type="checkbox" name="remove_image_paths[]" value="${image.path}"> Remove</span></label>`).join('');
         }
 
         @if(request()->filled('business_id') && $user->is_business)

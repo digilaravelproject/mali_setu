@@ -115,8 +115,10 @@
                                     <div class="col-md-6 col-12">
                                         <a href="{{ route('dashboard.business.products.show', $p->id) }}" class="card h-100 border rounded-4 p-3 bg-light bg-opacity-50 text-decoration-none">
                                             <div class="d-flex gap-3 align-items-start">
-                                                @if($p->image_path)
-                                                    <img src="{{ asset('storage/' . $p->image_path) }}" class="rounded shadow-sm border" style="width: 80px; height: 80px; object-fit: cover;">
+                                                @if(count($p->images))
+                                                    <div id="productCarousel{{ $p->id }}" class="carousel slide rounded overflow-hidden shadow-sm border" style="width:80px;height:80px" data-bs-ride="carousel">
+                                                        <div class="carousel-inner h-100">@foreach($p->images as $image)<div class="carousel-item h-100 @if($loop->first) active @endif"><img src="{{ $image['url'] }}" class="d-block w-100 h-100" style="object-fit:cover" alt="{{ $p->name }} photo {{ $loop->iteration }}"></div>@endforeach</div>
+                                                    </div>
                                                 @else
                                                     <div class="bg-light border text-secondary rounded d-flex align-items-center justify-content-center" style="width: 80px; height: 80px;"><i class="fa-solid fa-box fs-3"></i></div>
                                                 @endif
@@ -143,8 +145,10 @@
                                     <div class="col-md-6 col-12">
                                         <a href="{{ route('dashboard.business.services.show', $s->id) }}" class="card h-100 border rounded-4 p-3 bg-light bg-opacity-50 text-decoration-none">
                                             <div class="d-flex gap-3 align-items-start">
-                                                @if($s->image_path)
-                                                    <img src="{{ asset('storage/' . $s->image_path) }}" class="rounded shadow-sm border" style="width: 80px; height: 80px; object-fit: cover;">
+                                                @if(count($s->images))
+                                                    <div id="serviceCarousel{{ $s->id }}" class="carousel slide rounded overflow-hidden shadow-sm border" style="width:80px;height:80px" data-bs-ride="carousel">
+                                                        <div class="carousel-inner h-100">@foreach($s->images as $image)<div class="carousel-item h-100 @if($loop->first) active @endif"><img src="{{ $image['url'] }}" class="d-block w-100 h-100" style="object-fit:cover" alt="{{ $s->name }} photo {{ $loop->iteration }}"></div>@endforeach</div>
+                                                    </div>
                                                 @else
                                                     <div class="bg-light border text-secondary rounded d-flex align-items-center justify-content-center" style="width: 80px; height: 80px;"><i class="fa-solid fa-server fs-3"></i></div>
                                                 @endif

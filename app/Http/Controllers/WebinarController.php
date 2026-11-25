@@ -36,6 +36,7 @@ class WebinarController extends Controller
     {
         abort_unless($webinar->status === 'published' && $webinar->starts_at->isFuture(), 422);
         abort_unless($webinar->userCanAccess(auth()->user()), 403, 'You do not have access to this webinar.');
+        abort_if($webinar->is_paid, 402, 'This is a paid webinar. Complete payment in the Mali Setu app to register.');
         WebinarRegistration::firstOrCreate(['webinar_id'=>$webinar->id,'user_id'=>auth()->id()]);
         try { Mail::to(auth()->user()->email)->send(new WebinarRegistrationMail($webinar)); }
         catch (\Throwable $e) { Log::warning('Webinar mail failed', ['error'=>$e->getMessage()]); }
@@ -102,7 +103,7 @@ class WebinarController extends Controller
     private function authorizeAttendee(Webinar $webinar): void
     {
         abort_unless($webinar->userCanAccess(auth()->user()), 403);
-        abort_unless(! $webinar->require_registration || $webinar->registrations()->where('user_id', auth()->id())->exists(), 403);
+        abort_unless((! $webinar->require_registration && ! $webinar->is_paid) || $webinar->registrations()->where('user_id', auth()->id())->exists(), 403);
         abort_unless($webinar->attendeeCanJoin(), 403, 'Attendees can join when the webinar starts.');
     }
 

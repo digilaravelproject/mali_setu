@@ -626,9 +626,10 @@ class BusinessController extends Controller
             'name' => 'required|string|max:255',
             'description' => 'required|string',
             'cost' => 'required|numeric|min:0',
-            'image' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'images' => 'required|array|min:1|max:10',
+            'images.*' => 'image|mimes:jpeg,png,jpg,gif,webp|max:2048',
         ], [
-            'image.required' => 'Product image is required.',
+            'images.required' => 'At least one product image is required.',
             'name.required' => 'Product name is required.',
             'description.required' => 'Product description is required.',
             'cost.required' => 'Product cost is required.',
@@ -642,17 +643,15 @@ class BusinessController extends Controller
             ->where('user_id', Auth::id())
             ->firstOrFail();
 
-        $imagePath = null;
-        if ($request->hasFile('image')) {
-            $imagePath = $request->file('image')->store('products', 'public');
-        }
+        $imagePaths = $this->storeCatalogImages($request->file('images', []), 'products');
 
         Product::create([
             'business_id' => $request->business_id,
             'name' => $request->name,
             'description' => $request->description,
             'cost' => $request->cost,
-            'image_path' => $imagePath,
+            'image_path' => $imagePaths[0] ?? null,
+            'image_paths' => $imagePaths,
         ]);
 
         return redirect()->route('dashboard.business.index', ['business_id' => $request->business_id])->with('success', 'Product added successfully!');
@@ -668,9 +667,7 @@ class BusinessController extends Controller
             ->where('user_id', Auth::id())
             ->firstOrFail();
 
-        if ($product->image_path && Storage::disk('public')->exists($product->image_path)) {
-            Storage::disk('public')->delete($product->image_path);
-        }
+        $this->deleteCatalogImages($product->image_paths ?: array_filter([$product->image_path]));
 
         $product->delete();
 
@@ -691,18 +688,27 @@ class BusinessController extends Controller
             'description' => 'required|string',
             'cost' => 'required|numeric|min:0',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
+            'images' => 'nullable|array|max:10',
+            'images.*' => 'image|mimes:jpeg,png,jpg,gif,webp|max:2048',
+            'remove_image_paths' => 'nullable|array',
+            'remove_image_paths.*' => 'string|max:500',
         ]);
 
-        $oldImagePath = $product->image_path;
+        $paths = $product->image_paths ?: array_values(array_filter([$product->image_path]));
+        $remove = array_values(array_intersect($paths, $validated['remove_image_paths'] ?? []));
+        $paths = array_values(array_diff($paths, $remove));
         if ($request->hasFile('image')) {
-            $validated['image_path'] = $request->file('image')->store('products', 'public');
+            $replacement = $request->file('image')->store('products', 'public');
+            $remove = array_values(array_unique(array_merge($remove, $paths)));
+            $paths = [$replacement];
         }
-        unset($validated['image']);
+        $paths = array_values(array_merge($paths, $this->storeCatalogImages($request->file('images', []), 'products')));
+        if ($paths === []) return back()->withErrors(['images' => 'Keep or upload at least one product image.'], 'productEdit');
+        $this->deleteCatalogImages($remove);
+        unset($validated['image'], $validated['images'], $validated['remove_image_paths']);
+        $validated['image_path'] = $paths[0];
+        $validated['image_paths'] = $paths;
         $product->update($validated);
-
-        if (isset($validated['image_path']) && $oldImagePath && Storage::disk('public')->exists($oldImagePath)) {
-            Storage::disk('public')->delete($oldImagePath);
-        }
 
         return redirect()->route('dashboard.business.index', ['business_id' => $product->business_id])
             ->with('success', 'Product updated successfully!');
@@ -718,9 +724,10 @@ class BusinessController extends Controller
             'name' => 'required|string|max:255',
             'description' => 'required|string',
             'cost' => 'required|numeric|min:0',
-            'image' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'images' => 'required|array|min:1|max:10',
+            'images.*' => 'image|mimes:jpeg,png,jpg,gif,webp|max:2048',
         ], [
-            'image.required' => 'Service image is required.',
+            'images.required' => 'At least one service image is required.',
             'name.required' => 'Service name is required.',
             'description.required' => 'Service description is required.',
             'cost.required' => 'Service charge is required.',
@@ -734,17 +741,15 @@ class BusinessController extends Controller
             ->where('user_id', Auth::id())
             ->firstOrFail();
 
-        $imagePath = null;
-        if ($request->hasFile('image')) {
-            $imagePath = $request->file('image')->store('services', 'public');
-        }
+        $imagePaths = $this->storeCatalogImages($request->file('images', []), 'services');
 
         Service::create([
             'business_id' => $request->business_id,
             'name' => $request->name,
             'description' => $request->description,
             'cost' => $request->cost,
-            'image_path' => $imagePath,
+            'image_path' => $imagePaths[0] ?? null,
+            'image_paths' => $imagePaths,
         ]);
 
         return redirect()->route('dashboard.business.index', ['business_id' => $request->business_id])->with('success', 'Service added successfully!');
@@ -760,9 +765,7 @@ class BusinessController extends Controller
             ->where('user_id', Auth::id())
             ->firstOrFail();
 
-        if ($service->image_path && Storage::disk('public')->exists($service->image_path)) {
-            Storage::disk('public')->delete($service->image_path);
-        }
+        $this->deleteCatalogImages($service->image_paths ?: array_filter([$service->image_path]));
 
         $service->delete();
 
@@ -783,21 +786,42 @@ class BusinessController extends Controller
             'description' => 'required|string',
             'cost' => 'required|numeric|min:0',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
+            'images' => 'nullable|array|max:10',
+            'images.*' => 'image|mimes:jpeg,png,jpg,gif,webp|max:2048',
+            'remove_image_paths' => 'nullable|array',
+            'remove_image_paths.*' => 'string|max:500',
         ]);
 
-        $oldImagePath = $service->image_path;
+        $paths = $service->image_paths ?: array_values(array_filter([$service->image_path]));
+        $remove = array_values(array_intersect($paths, $validated['remove_image_paths'] ?? []));
+        $paths = array_values(array_diff($paths, $remove));
         if ($request->hasFile('image')) {
-            $validated['image_path'] = $request->file('image')->store('services', 'public');
+            $replacement = $request->file('image')->store('services', 'public');
+            $remove = array_values(array_unique(array_merge($remove, $paths)));
+            $paths = [$replacement];
         }
-        unset($validated['image']);
+        $paths = array_values(array_merge($paths, $this->storeCatalogImages($request->file('images', []), 'services')));
+        if ($paths === []) return back()->withErrors(['images' => 'Keep or upload at least one service image.'], 'serviceEdit');
+        $this->deleteCatalogImages($remove);
+        unset($validated['image'], $validated['images'], $validated['remove_image_paths']);
+        $validated['image_path'] = $paths[0];
+        $validated['image_paths'] = $paths;
         $service->update($validated);
-
-        if (isset($validated['image_path']) && $oldImagePath && Storage::disk('public')->exists($oldImagePath)) {
-            Storage::disk('public')->delete($oldImagePath);
-        }
 
         return redirect()->route('dashboard.business.index', ['business_id' => $service->business_id])
             ->with('success', 'Service updated successfully!');
+    }
+
+    private function storeCatalogImages(array $images, string $directory): array
+    {
+        return collect($images)->map(fn ($image) => $image->store($directory, 'public'))->values()->all();
+    }
+
+    private function deleteCatalogImages(array $paths): void
+    {
+        foreach (array_unique(array_filter($paths)) as $path) {
+            if (Storage::disk('public')->exists($path)) Storage::disk('public')->delete($path);
+        }
     }
 
     /**

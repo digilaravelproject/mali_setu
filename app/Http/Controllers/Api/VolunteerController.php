@@ -14,6 +14,27 @@ use Illuminate\Support\Facades\Validator;
 
 class VolunteerController extends Controller
 {
+    public function convert(Request $request, ReferralService $referrals)
+    {
+        $user = $request->user();
+        if ($user->user_type === 'volunteer') {
+            return response()->json(['success' => true, 'message' => 'Your account is already a volunteer account.', 'data' => ['user' => $user->fresh(), 'volunteer_profile' => $user->volunteer]]);
+        }
+
+        $profile = DB::transaction(function () use ($user, $referrals) {
+            $user->update(['user_type' => 'volunteer']);
+            $profile = VolunteerProfile::firstOrCreate(['user_id' => $user->id], ['status' => 'pending']);
+            $referrals->activateVolunteer($user)->update(['is_active' => false]);
+            return $profile;
+        });
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Your account has been converted to a volunteer account. Verification is pending.',
+            'data' => ['user' => $user->fresh(), 'volunteer_profile' => $profile],
+        ]);
+    }
+
     /**
      * Get all volunteer opportunities with filters
      */
