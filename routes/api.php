@@ -88,7 +88,7 @@ Route::prefix('business')->group(function () {
     Route::get('/services/{id}', [BusinessController::class, 'getServiceById']);
     Route::get('/{id}/products', [BusinessController::class, 'getProducts']);
     Route::get('/{id}/services', [BusinessController::class, 'getServices']);
-    Route::get('/{id}', [BusinessController::class, 'show']);
+    Route::get('/{id}', [BusinessController::class, 'show'])->whereNumber('id');
 });
 
 // Public matrimony routes (for browsing)
@@ -230,6 +230,9 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::put('services/{id}', [BusinessController::class, 'updateService']);
         Route::post('services/{id}', [BusinessController::class, 'updateService']);
         Route::delete('services/{id}', [BusinessController::class, 'deleteService']);
+        Route::post('enquiries', [BusinessController::class, 'createEnquiry']);
+        Route::get('enquiries', [BusinessController::class, 'enquiries']);
+        Route::get('enquiries/{enquiry}', [BusinessController::class, 'enquiryDetails']);
     });
 
     // Business Management Routes

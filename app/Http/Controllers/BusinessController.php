@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Jobs\SendPaymentPendingEmail;
 use App\Models\Business;
 use App\Models\BusinessCategory;
+use App\Models\BusinessEnquiry;
 use App\Models\BusinessPlan;
 use App\Models\BusinessReview;
 use App\Models\JobApplication;
@@ -453,6 +454,52 @@ class BusinessController extends Controller
             'itemType' => 'Service',
             'icon' => 'fa-server',
         ]);
+    }
+
+    public function storeEnquiry(Request $request)
+    {
+        $validated = $request->validate([
+            'product_id' => 'nullable|required_without:service_id|integer|exists:products,id',
+            'service_id' => 'nullable|required_without:product_id|integer|exists:services,id',
+            'price' => 'nullable|numeric|min:0|max:9999999999.99',
+            'description' => 'required|string|max:2000',
+        ]);
+        abort_if(filled($validated['product_id'] ?? null) && filled($validated['service_id'] ?? null), 422);
+        $item = filled($validated['product_id'] ?? null)
+            ? Product::with('business')->where('status', 'active')->findOrFail($validated['product_id'])
+            : Service::with('business')->where('status', 'active')->findOrFail($validated['service_id']);
+        abort_if($item->business->user_id === Auth::id(), 422, 'You cannot enquire about your own business listing.');
+
+        $enquiry = BusinessEnquiry::create([
+            'user_id' => Auth::id(), 'business_id' => $item->business_id,
+            'enquirable_type' => $item::class, 'enquirable_id' => $item->id,
+            'price' => $validated['price'] ?? $item->cost, 'description' => $validated['description'],
+        ]);
+        app(NotificationService::class)->createNotification(
+            $item->business->user_id, 'business_enquiry', 'New enquiry for '.$item->name,
+            Auth::user()->name.' sent an enquiry for '.$item->name.'.',
+            ['enquiry_id' => $enquiry->id, 'business_id' => $item->business_id],
+            '/dashboard/business/enquiries/'.$enquiry->id, Notification::PRIORITY_MEDIUM, $enquiry, ['in_app', 'push']
+        );
+
+        return redirect()->route('dashboard.business.enquiries.show', $enquiry)->with('success', 'Enquiry sent successfully.');
+    }
+
+    public function enquiries()
+    {
+        $enquiries = BusinessEnquiry::with(['user:id,name,email,phone', 'business', 'enquirable'])
+            ->where(fn ($query) => $query->where('user_id', Auth::id())->orWhereHas('business', fn ($business) => $business->where('user_id', Auth::id())))
+            ->latest()->paginate(20);
+
+        return view('business.enquiries.index', compact('enquiries'));
+    }
+
+    public function showEnquiry(BusinessEnquiry $enquiry)
+    {
+        $enquiry->load(['user:id,name,email,phone,photo', 'business.user:id,name,email,phone', 'business.category', 'enquirable']);
+        abort_unless($enquiry->user_id === Auth::id() || $enquiry->business->user_id === Auth::id(), 403);
+
+        return view('business.enquiries.show', compact('enquiry'));
     }
 
     /**

@@ -12,7 +12,8 @@ class Webinar extends Model
 
     protected $fillable = [
         'created_by', 'title', 'category', 'categories', 'description', 'banner_path', 'speaker_name', 'agenda',
-        'starts_at', 'duration_minutes', 'agora_channel', 'agora_link', 'audience',
+        'starts_at', 'duration_minutes', 'meeting_provider', 'agora_channel', 'agora_link',
+        'daily_room_name', 'daily_room_url', 'audience',
         'require_registration', 'allow_qa', 'allow_recording', 'access_type', 'plan_ids', 'status',
     ];
 
@@ -64,6 +65,11 @@ class Webinar extends Model
     {
         return $this->status === 'published'
             && now()->between($this->starts_at, $this->ends_at);
+    }
+
+    public function usesDaily(): bool
+    {
+        return $this->meeting_provider === 'daily';
     }
 
     public function userCanAccess(User $user): bool

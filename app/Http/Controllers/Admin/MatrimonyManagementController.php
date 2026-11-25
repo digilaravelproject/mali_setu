@@ -360,6 +360,10 @@ class MatrimonyManagementController extends Controller
             $user->update(['user_type' => 'matrimony']);
         }
 
+        if ($profile->approval_status === 'approved') {
+            $this->notifyApprovedSafely($profile);
+        }
+
         return redirect()->route('admin.matrimony.show', $profile->id)
             ->with('success', 'Matrimony profile created successfully.');
     }
@@ -383,6 +387,7 @@ class MatrimonyManagementController extends Controller
     public function update(Request $request, $id)
     {
         $profile = MatrimonyProfile::findOrFail($id);
+        $wasApproved = $profile->approval_status === 'approved';
 
         $request->validate([
             'age' => 'required|integer|min:18|max:100',
@@ -512,6 +517,10 @@ class MatrimonyManagementController extends Controller
             'approval_status' => $request->approval_status,
             'profile_expires_at' => $request->profile_expires_at,
         ]);
+
+        if (! $wasApproved && $profile->approval_status === 'approved') {
+            $this->notifyApprovedSafely($profile);
+        }
 
         return redirect()->route('admin.matrimony.show', $profile->id)
             ->with('success', 'Matrimony profile updated successfully.');
@@ -810,5 +819,18 @@ class MatrimonyManagementController extends Controller
         $profile->delete();
 
         return redirect()->back()->with('success', 'Matrimony profile and all associated payment data deleted successfully!');
+    }
+
+    private function notifyApprovedSafely(MatrimonyProfile $profile): void
+    {
+        try {
+            $this->notifications->notifyMatrimonyApproved($profile->fresh());
+        } catch (\Throwable $error) {
+            Log::error('Matrimony approval notification failed', [
+                'profile_id' => $profile->id,
+                'user_id' => $profile->user_id,
+                'error' => $error->getMessage(),
+            ]);
+        }
     }
 }

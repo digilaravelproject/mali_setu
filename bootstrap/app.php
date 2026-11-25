@@ -18,6 +18,7 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withSchedule(function (Schedule $schedule) {
         $schedule->command('subscriptions:send-reminders')->daily();
+        $schedule->command('notifications:send-birthday-wishes')->dailyAt('08:00')->withoutOverlapping();
         $schedule->command('payment:backfill-audit-rows')->everyFiveMinutes();
         $schedule->command('payment:pending-reminders')->everyMinute();
         $schedule->command('payment:reconcile-ccavenue')

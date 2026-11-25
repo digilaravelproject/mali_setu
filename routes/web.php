@@ -135,6 +135,10 @@ Route::middleware(['auth', 'redirect.admin'])->group(function () {
         Route::put('services/{id}', [BusinessController::class, 'updateService'])->name('services.update');
         Route::delete('services/{id}', [BusinessController::class, 'deleteService'])->name('services.delete');
 
+        Route::post('enquiries', [BusinessController::class, 'storeEnquiry'])->name('enquiries.store');
+        Route::get('enquiries', [BusinessController::class, 'enquiries'])->name('enquiries.index');
+        Route::get('enquiries/{enquiry}', [BusinessController::class, 'showEnquiry'])->name('enquiries.show');
+
         // Jobs Hub CRUD & Applicant tracking
         Route::post('jobs', [BusinessController::class, 'addJob'])->name('jobs.add');
         Route::post('jobs/apply', [BusinessController::class, 'applyJob'])->name('jobs.apply');

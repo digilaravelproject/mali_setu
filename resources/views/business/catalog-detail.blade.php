@@ -49,6 +49,28 @@
                         <div><i class="fa-solid fa-location-dot text-primary me-2"></i>{{ $item->business->address }}, {{ $item->business->city }}, {{ $item->business->state }}</div>
                     @endif
                 </div>
+
+                @if(Auth::id() !== $item->business->user_id)
+                    <div class="border-top mt-4 pt-4">
+                        <h5 class="fw-bold text-dark mb-3"><i class="fa-solid fa-paper-plane text-primary me-2"></i>Send an enquiry</h5>
+                        <form method="POST" action="{{ route('dashboard.business.enquiries.store') }}">
+                            @csrf
+                            <input type="hidden" name="{{ $itemType === 'Product' ? 'product_id' : 'service_id' }}" value="{{ $item->id }}">
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">Expected price</label>
+                                <div class="input-group"><span class="input-group-text">₹</span><input type="number" name="price" min="0" step="0.01" value="{{ old('price', $item->cost) }}" class="form-control"></div>
+                                @error('price')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">Description / requirement <span class="text-danger">*</span></label>
+                                <textarea name="description" rows="4" maxlength="2000" class="form-control" required placeholder="Describe quantity, requirements, preferred date, or any questions.">{{ old('description') }}</textarea>
+                                @error('description')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
+                            </div>
+                            <button class="btn btn-primary rounded-3 px-4"><i class="fa-solid fa-paper-plane me-2"></i>Send Enquiry</button>
+                            <a href="{{ route('dashboard.business.enquiries.index') }}" class="btn btn-light rounded-3 ms-2">My Enquiries</a>
+                        </form>
+                    </div>
+                @endif
             </div>
         </div>
     </div>

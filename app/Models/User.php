@@ -87,6 +87,7 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'blog_access' => 'boolean',
+            'dob' => 'date',
         ];
     }
 

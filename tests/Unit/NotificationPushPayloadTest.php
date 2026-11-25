@@ -25,6 +25,15 @@ class NotificationPushPayloadTest extends TestCase
         }
     }
 
+    public function test_birthday_action_is_visible_and_push_enabled(): void
+    {
+        $action = collect(NotificationAction::defaults())->firstWhere('key', Notification::TYPE_BIRTHDAY_WISH);
+
+        $this->assertNotNull($action);
+        $this->assertTrue($action['push_enabled']);
+        $this->assertSame('birthday', $action['payload_template']['type']);
+    }
+
     public function test_admin_payload_is_rendered_and_merged_into_push_data(): void
     {
         $notification = new Notification([

@@ -36,6 +36,7 @@
     $selectedAccess = old('access_type', $webinar->access_type ?: 'free');
     $selectedPlans = old('plan_ids', $webinar->plan_ids ?: []);
     $selectedStatus = old('status', $webinar->status ?: 'published');
+    $selectedProvider = old('meeting_provider', $webinar->meeting_provider ?: (($providerStatuses['agora'] ?? false) ? 'agora' : 'daily'));
 @endphp
 <div class="text-muted small mb-3">
     <a href="{{ route('admin.dashboard') }}" class="text-decoration-none">Home</a>
@@ -79,7 +80,15 @@
                     <div class="col-md-3 mb-3"><label class="form-label">Duration (Minutes) <span class="text-danger">*</span></label><input type="number" min="15" max="480" required name="duration_minutes" class="form-control" value="{{ old('duration_minutes',$webinar->duration_minutes ?: 60) }}"></div>
                 </div>
 
-                {{-- Platform is intentionally omitted because Agora is used automatically. --}}
+                <div class="mb-3">
+                    <label class="form-label">Video Provider <span class="text-danger">*</span></label>
+                    <select name="meeting_provider" class="form-select" required>
+                        <option value="agora" @selected($selectedProvider === 'agora')>Agora — {{ ($providerStatuses['agora'] ?? false) ? 'Working' : 'Not working (keys missing)' }}</option>
+                        <option value="daily" @selected($selectedProvider === 'daily')>Daily.co — {{ ($providerStatuses['daily'] ?? false) ? 'Working' : 'Not working (key missing)' }}</option>
+                    </select>
+                    <div class="form-text">Agora is the primary provider. Select Daily.co when you want to use the fallback provider.</div>
+                    @error('meeting_provider')<small class="text-danger">{{ $message }}</small>@enderror
+                </div>
                 <div class="mb-1">
                     <label class="form-label d-block">Meeting Settings <span class="text-danger">*</span></label>
                     <label class="compact-check"><input type="checkbox" name="require_registration" value="1" @checked(old('require_registration',$webinar->exists ? $webinar->require_registration : true))> Require Registration</label>
@@ -122,7 +131,7 @@
                     <label class="status-option"><input type="radio" name="status" value="draft" @checked($selectedStatus==='draft')> Schedule for Later</label>
                 </div>
 
-                @if($webinar->exists)<div class="alert alert-light border py-2 px-3 small mb-3"><strong>Agora channel:</strong> {{ $webinar->agora_channel }}</div>@endif
+                @if($webinar->exists)<div class="alert alert-light border py-2 px-3 small mb-3"><strong>Provider:</strong> {{ str($webinar->meeting_provider)->headline() }}<br><strong>Meeting channel:</strong> {{ $webinar->usesDaily() ? ($webinar->daily_room_name ?: 'Created securely when host starts') : $webinar->agora_channel }}</div>@endif
                 <div class="d-flex justify-content-end gap-2 pt-1"><a href="{{ route('admin.webinars.index') }}" class="btn btn-outline-secondary px-4">Cancel</a><button class="btn btn-webinar px-4">{{ $webinar->exists ? 'Update Webinar' : 'Create Webinar' }}</button></div>
             </div>
         </div>

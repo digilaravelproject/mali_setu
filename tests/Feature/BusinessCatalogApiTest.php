@@ -32,6 +32,7 @@ class BusinessCatalogApiTest extends TestCase
 
         Schema::create('users', function (Blueprint $table) {
             $table->id(); $table->string('name'); $table->string('email');
+            $table->string('phone')->nullable(); $table->string('photo')->nullable();
             $table->string('password')->nullable(); $table->timestamps();
         });
         Schema::create('businesses', function (Blueprint $table) {
@@ -48,6 +49,12 @@ class BusinessCatalogApiTest extends TestCase
                 $table->string('status')->default('active'); $table->timestamps();
             });
         }
+        Schema::create('business_enquiries', function (Blueprint $table) {
+            $table->id(); $table->unsignedBigInteger('user_id'); $table->unsignedBigInteger('business_id');
+            $table->string('enquirable_type')->nullable(); $table->unsignedBigInteger('enquirable_id')->nullable();
+            $table->decimal('price', 12, 2)->nullable(); $table->text('description');
+            $table->string('status')->default('new'); $table->timestamps();
+        });
 
         $this->user = User::create(['name' => 'Owner', 'email' => 'owner@example.test']);
         $this->business = Business::forceCreate(['user_id' => $this->user->id, 'business_name' => 'Garden Store']);
@@ -121,5 +128,34 @@ class BusinessCatalogApiTest extends TestCase
         Storage::disk('public')->assertMissing('services/old.jpg');
         Storage::disk('public')->assertExists($product->fresh()->image_path);
         Storage::disk('public')->assertExists($service->fresh()->image_path);
+    }
+
+    public function test_user_can_create_and_read_an_enquiry_for_another_users_product(): void
+    {
+        $buyer = User::create(['name' => 'Buyer', 'email' => 'buyer@example.test', 'phone' => '9999999999']);
+        $product = Product::create([
+            'business_id' => $this->business->id, 'name' => 'Garden Kit',
+            'description' => 'Complete kit', 'cost' => 2500, 'status' => 'active',
+        ]);
+        $this->actingAs($buyer, 'sanctum');
+
+        $id = $this->postJson('/api/business/enquiries', [
+            'product_id' => $product->id,
+            'price' => 2200,
+            'description' => 'Please confirm availability for two kits.',
+        ])->assertCreated()
+            ->assertJsonPath('data.enquiry.user.name', 'Buyer')
+            ->assertJsonPath('data.enquiry.enquirable.name', 'Garden Kit')
+            ->json('data.enquiry.id');
+
+        $this->getJson('/api/business/enquiries/'.$id)
+            ->assertOk()
+            ->assertJsonPath('data.enquiry.business.business_name', 'Garden Store')
+            ->assertJsonPath('data.enquiry.price', '2200.00');
+
+        $this->actingAs($this->user, 'sanctum')
+            ->getJson('/api/business/enquiries/'.$id)
+            ->assertOk()
+            ->assertJsonPath('data.enquiry.user.email', 'buyer@example.test');
     }
 }

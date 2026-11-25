@@ -277,6 +277,17 @@
                                            data-toggle="tooltip" title="Download PDF">
                                             <i class="fas fa-file-pdf"></i>
                                         </a>
+                                        @if($user->phone)
+                                            @php
+                                                $whatsAppNumber = preg_replace('/\D+/', '', $user->phone);
+                                                if (strlen($whatsAppNumber) === 10) $whatsAppNumber = '91'.$whatsAppNumber;
+                                            @endphp
+                                            <a href="https://wa.me/{{ $whatsAppNumber }}?text={{ rawurlencode('Hello '.$user->name.', this is Mali Setu support.') }}"
+                                               target="_blank" rel="noopener" class="btn btn-success btn-sm"
+                                               data-toggle="tooltip" title="Chat on WhatsApp" aria-label="Chat with {{ $user->name }} on WhatsApp">
+                                                <i class="fab fa-whatsapp"></i>
+                                            </a>
+                                        @endif
                                         @if($user->status == 'active')
                                             <button type="button" class="btn btn-danger btn-sm" 
                                                     onclick="suspendUser({{ $user->id }})" 

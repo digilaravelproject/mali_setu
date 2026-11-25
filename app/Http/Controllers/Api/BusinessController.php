@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Business;
+use App\Models\BusinessEnquiry;
 use App\Models\Product;
 use App\Models\Service;
 use App\Models\Notification;
@@ -1262,6 +1263,83 @@ class BusinessController extends Controller
         $service->delete();
 
         return response()->json(['success' => true, 'message' => 'Service deleted successfully']);
+    }
+
+    /** Create an enquiry for another user's product or service. */
+    public function createEnquiry(Request $request)
+    {
+        $validated = $request->validate([
+            'product_id' => 'nullable|required_without:service_id|integer|exists:products,id',
+            'service_id' => 'nullable|required_without:product_id|integer|exists:services,id',
+            'price' => 'nullable|numeric|min:0|max:9999999999.99',
+            'description' => 'required|string|max:2000',
+        ]);
+        abort_if(filled($validated['product_id'] ?? null) && filled($validated['service_id'] ?? null), 422, 'Send either product_id or service_id, not both.');
+
+        $item = filled($validated['product_id'] ?? null)
+            ? Product::with('business')->where('status', 'active')->findOrFail($validated['product_id'])
+            : Service::with('business')->where('status', 'active')->findOrFail($validated['service_id']);
+        abort_if($item->business->user_id === $request->user()->id, 422, 'You cannot enquire about your own business listing.');
+
+        $enquiry = BusinessEnquiry::create([
+            'user_id' => $request->user()->id,
+            'business_id' => $item->business_id,
+            'enquirable_type' => $item::class,
+            'enquirable_id' => $item->id,
+            'price' => $validated['price'] ?? $item->cost,
+            'description' => $validated['description'],
+        ]);
+
+        $this->notifications->createNotification(
+            $item->business->user_id,
+            'business_enquiry',
+            'New enquiry for '.$item->name,
+            $request->user()->name.' sent an enquiry for '.$item->name.'.',
+            ['enquiry_id' => $enquiry->id, 'business_id' => $item->business_id],
+            '/dashboard/business/enquiries/'.$enquiry->id,
+            Notification::PRIORITY_MEDIUM,
+            $enquiry,
+            ['in_app', 'push']
+        );
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Enquiry sent successfully.',
+            'data' => ['enquiry' => $this->enquiryQuery()->findOrFail($enquiry->id)],
+        ], 201);
+    }
+
+    /** List enquiries sent by the user or received by their businesses. */
+    public function enquiries(Request $request)
+    {
+        $items = $this->enquiryQuery()
+            ->where(function ($query) use ($request) {
+                $query->where('user_id', $request->user()->id)
+                    ->orWhereHas('business', fn ($business) => $business->where('user_id', $request->user()->id));
+            })
+            ->latest()
+            ->paginate(min(100, max(1, $request->integer('per_page', 20))));
+
+        return response()->json(['success' => true, 'data' => $items]);
+    }
+
+    /** Get one enquiry with requester, catalog item and business details. */
+    public function enquiryDetails(Request $request, BusinessEnquiry $enquiry)
+    {
+        $enquiry->load(['user:id,name,email,phone,photo', 'business.user:id,name,email,phone', 'business.category', 'enquirable']);
+        abort_unless($enquiry->user_id === $request->user()->id || $enquiry->business->user_id === $request->user()->id, 403, 'You cannot view this enquiry.');
+
+        return response()->json(['success' => true, 'data' => ['enquiry' => $enquiry]]);
+    }
+
+    private function enquiryQuery()
+    {
+        return BusinessEnquiry::with([
+            'user:id,name,email,phone,photo',
+            'business.user:id,name,email,phone',
+            'business.category',
+            'enquirable',
+        ]);
     }
 
     /**

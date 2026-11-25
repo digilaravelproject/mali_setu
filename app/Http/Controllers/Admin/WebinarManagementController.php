@@ -7,11 +7,13 @@ use App\Models\Webinar;
 use App\Models\BusinessPlan;
 use App\Models\MatrimonyPlan;
 use App\Services\AgoraTokenService;
+use App\Services\DailyMeetingService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 use App\Models\User;
 use App\Models\WebinarComment;
 
@@ -44,6 +46,7 @@ class WebinarManagementController extends Controller
             'webinar' => new Webinar,
             'businessPlans' => BusinessPlan::where('active', true)->get(),
             'matrimonyPlans' => MatrimonyPlan::where('active', true)->get(),
+            'providerStatuses' => $this->providerStatuses(),
         ]);
     }
 
@@ -53,6 +56,7 @@ class WebinarManagementController extends Controller
             'webinar' => $webinar,
             'businessPlans' => BusinessPlan::where('active', true)->get(),
             'matrimonyPlans' => MatrimonyPlan::where('active', true)->get(),
+            'providerStatuses' => $this->providerStatuses(),
         ]);
     }
 
@@ -81,7 +85,7 @@ class WebinarManagementController extends Controller
         $data['agora_channel'] = 'webinar_'.Str::uuid();
         $webinar = Webinar::create($data + ['agora_link' => 'pending']);
         $webinar->update(['agora_link' => route('webinars.join', $webinar)]);
-        return redirect()->route('admin.webinars.index')->with('success', 'Webinar created with Agora channel and join link.');
+        return redirect()->route('admin.webinars.index')->with('success', 'Webinar created with '.str($webinar->meeting_provider)->headline().' and its secure join link.');
     }
 
     public function update(Request $request, Webinar $webinar)
@@ -124,11 +128,13 @@ class WebinarManagementController extends Controller
         ]);
     }
 
-    public function token(Request $request, Webinar $webinar, AgoraTokenService $tokens)
+    public function token(Request $request, Webinar $webinar, AgoraTokenService $agora, DailyMeetingService $daily)
     {
         abort_unless($webinar->adminCanGoLive(), 403, 'You can go live from 10 minutes before the webinar until it ends.');
 
-        return response()->json($tokens->credentials($webinar, $request->user(), true));
+        return response()->json($webinar->usesDaily()
+            ? $daily->credentials($webinar, $request->user(), true)
+            : $agora->credentials($webinar, $request->user(), true));
     }
 
     public function comments(Request $request, Webinar $webinar)
@@ -175,7 +181,7 @@ class WebinarManagementController extends Controller
 
     private function validated(Request $request): array
     {
-        return $request->validate([
+        $data = $request->validate([
             'title' => 'required|string|max:255',
             'categories' => 'required|array|min:1',
             'categories.*' => 'distinct|in:business,matrimony,other',
@@ -185,6 +191,7 @@ class WebinarManagementController extends Controller
             'webinar_date' => 'required|date',
             'webinar_time' => 'required|date_format:H:i',
             'duration_minutes' => 'required|integer|min:15|max:480',
+            'meeting_provider' => 'required|in:agora,daily',
             'audience' => 'required|in:all,subscribers',
             'require_registration' => 'sometimes|boolean',
             'allow_qa' => 'sometimes|boolean',
@@ -193,5 +200,21 @@ class WebinarManagementController extends Controller
             'plan_ids.*' => 'string|max:50',
             'status' => 'required|in:draft,published,cancelled',
         ]);
+
+        if (! ($this->providerStatuses()[$data['meeting_provider']] ?? false)) {
+            throw ValidationException::withMessages([
+                'meeting_provider' => str($data['meeting_provider'])->headline().' is not working because its server credentials are missing.',
+            ]);
+        }
+
+        return $data;
+    }
+
+    private function providerStatuses(): array
+    {
+        return [
+            'agora' => filled(config('services.agora.app_id')) && filled(config('services.agora.app_certificate')),
+            'daily' => filled(config('services.daily.api_key')),
+        ];
     }
 }

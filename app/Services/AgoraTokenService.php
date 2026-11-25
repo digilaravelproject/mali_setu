@@ -33,6 +33,7 @@ class AgoraTokenService
             ->setPrivilegeExpire($expiresIn);
 
         return [
+            'provider' => 'agora',
             'app_id' => $appId,
             'channel' => $webinar->agora_channel,
             'uid' => $account,

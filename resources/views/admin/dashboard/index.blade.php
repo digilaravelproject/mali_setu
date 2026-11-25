@@ -2,6 +2,16 @@
 
 @section('title', 'Dashboard')
 
+@push('styles')
+<style>
+@keyframes birthdayFloat { 0%,100%{transform:translateY(0) rotate(-1deg)} 50%{transform:translateY(-7px) rotate(1deg)} }
+@keyframes birthdaySparkle { 0%,100%{opacity:.35;transform:scale(.8)} 50%{opacity:1;transform:scale(1.2)} }
+.birthday-card{position:relative;overflow:hidden;border:0;border-radius:18px;background:linear-gradient(135deg,#83124f,#d51b78 55%,#ff9a44);color:#fff;box-shadow:0 12px 30px rgba(131,18,79,.24);animation:birthdayFloat 4s ease-in-out infinite}
+.birthday-card:before,.birthday-card:after{content:'✦';position:absolute;font-size:2rem;animation:birthdaySparkle 1.8s ease-in-out infinite}.birthday-card:before{right:18px;top:12px}.birthday-card:after{right:70px;bottom:12px;animation-delay:.7s}
+.birthday-avatar{width:58px;height:58px;border-radius:50%;object-fit:cover;border:3px solid rgba(255,255,255,.8);background:#fff;color:#83124f;display:flex;align-items:center;justify-content:center;font-size:1.35rem;font-weight:800}
+</style>
+@endpush
+
 @section('content')
 <div class="container-fluid">
     <!-- Page Header -->
@@ -13,6 +23,24 @@
             </a>
         </div>
     </div>
+
+    @if($birthdayUsers->isNotEmpty())
+    <section class="mb-4" aria-labelledby="birthday-heading">
+        <div class="d-flex align-items-center justify-content-between mb-3"><h5 id="birthday-heading" class="fw-bold mb-0">🎂 Birthdays Today</h5><span class="badge badge-primary">{{ $birthdayUsers->count() }} celebration{{ $birthdayUsers->count() === 1 ? '' : 's' }}</span></div>
+        <div class="row">
+            @foreach($birthdayUsers as $birthdayUser)
+            <div class="col-xl-4 col-md-6 mb-3">
+                <article class="birthday-card p-4 h-100">
+                    <div class="d-flex align-items-center position-relative" style="z-index:1">
+                        @if($birthdayUser->photo)<img class="birthday-avatar mr-3" src="{{ asset('storage/'.$birthdayUser->photo) }}" alt="{{ $birthdayUser->name }}">@else<div class="birthday-avatar mr-3">{{ mb_strtoupper(mb_substr($birthdayUser->name,0,1)) }}</div>@endif
+                        <div><div class="small text-white-50 text-uppercase font-weight-bold">Happy Birthday</div><h5 class="font-weight-bold mb-1 text-white">{{ $birthdayUser->name }}</h5><div class="small"><i class="fas fa-phone mr-1"></i>{{ $birthdayUser->phone }} · {{ ucfirst($birthdayUser->user_type) }}</div></div>
+                    </div>
+                </article>
+            </div>
+            @endforeach
+        </div>
+    </section>
+    @endif
 
     <!-- Statistics Cards Row -->
     <div class="row">

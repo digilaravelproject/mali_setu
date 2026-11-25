@@ -102,6 +102,8 @@ class Notification extends Model
 
     const TYPE_SUBSCRIPTION_EXPIRY_REMINDER = 'subscription_expiry_reminder';
 
+    const TYPE_BIRTHDAY_WISH = 'birthday_wish';
+
     // Priority levels
     const PRIORITY_LOW = 'low';
 

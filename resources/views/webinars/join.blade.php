@@ -70,8 +70,8 @@
 @endsection
 
 @section('scripts')
-    @include('webinars.partials.live-script')
+    @include($webinar->usesDaily() ? 'webinars.partials.daily-script' : 'webinars.partials.live-script')
 @endsection
 @push('scripts')
-    @include('webinars.partials.live-script')
+    @include($webinar->usesDaily() ? 'webinars.partials.daily-script' : 'webinars.partials.live-script')
 @endpush

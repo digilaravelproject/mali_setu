@@ -8,6 +8,7 @@ use App\Models\Webinar;
 use App\Models\WebinarComment;
 use App\Models\WebinarRegistration;
 use App\Services\AgoraTokenService;
+use App\Services\DailyMeetingService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
@@ -30,7 +31,7 @@ class WebinarController extends Controller
             $query->where('starts_at', '<', now());
         }
 
-        $webinars = $query->orderBy('starts_at')->paginate($request->integer('per_page', 12));
+        $webinars = $query->orderByDesc('starts_at')->paginate($request->integer('per_page', 12));
         $this->applyEffectiveRegistrationRequirement($webinars->getCollection(), $request);
 
         return response()->json(['success' => true, 'data' => $webinars]);
@@ -114,13 +115,17 @@ class WebinarController extends Controller
         return response()->json(['success' => true, 'data' => $items]);
     }
 
-    public function joinToken(Request $request, Webinar $webinar, AgoraTokenService $tokens)
+    public function joinToken(Request $request, Webinar $webinar, AgoraTokenService $agora, DailyMeetingService $daily)
     {
         abort_unless($webinar->userCanAccess($request->user()), 403, 'You do not have access to this webinar.');
         abort_unless(! $webinar->require_registration || $webinar->registrations()->where('user_id', $request->user()->id)->exists(), 403, 'Registration is required.');
         abort_unless($webinar->attendeeCanJoin(), 403, 'Attendees can join when the webinar starts.');
 
-        return response()->json(['success' => true, 'data' => $tokens->credentials($webinar, $request->user(), false)]);
+        $credentials = $webinar->usesDaily()
+            ? $daily->credentials($webinar, $request->user(), false)
+            : $agora->credentials($webinar, $request->user(), false);
+
+        return response()->json(['success' => true, 'data' => $credentials]);
     }
 
     private function applyEffectiveRegistrationRequirement($webinars, Request $request): void

@@ -17,6 +17,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\PasswordChangedMail;
 use Carbon\Carbon;
+use App\Services\BirthdayNotificationService;
 
 class AdminDashboardController extends Controller
 {
@@ -32,6 +33,7 @@ class AdminDashboardController extends Controller
         $recentUsers = User::latest()->take(5)->get();
         $recentBusinesses = Business::with('user')->latest()->take(5)->get();
         $recentTransactions = Transaction::with('user')->where('status', 'completed')->latest()->take(5)->get();
+        $birthdayUsers = app(BirthdayNotificationService::class)->birthdayUsers();
         
         // Get pending verifications count
         $pendingVerifications = [
@@ -197,7 +199,8 @@ class AdminDashboardController extends Controller
             'recentBusinesses', 
             'recentTransactions',
             'pendingVerifications',
-            'expiryReminders'
+            'expiryReminders',
+            'birthdayUsers'
         ));
     }
     

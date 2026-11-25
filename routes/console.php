@@ -15,6 +15,11 @@ Artisan::command('subscriptions:send-reminders', function () {
     $this->info('Subscription expiry reminders completed.');
 })->purpose('Send subscription expiry reminder emails to users.');
 
+Artisan::command('notifications:send-birthday-wishes', function () {
+    $sent = app(\App\Services\BirthdayNotificationService::class)->sendToday();
+    $this->info("Sent {$sent} birthday notification(s).");
+})->purpose('Send one in-app and Firebase birthday wish to today’s users.');
+
 Artisan::command('payment:backfill-audit-rows', function () {
     $created = 0;
 

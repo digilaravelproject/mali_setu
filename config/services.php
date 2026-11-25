@@ -85,4 +85,10 @@ return [
         'token_expiration' => env('AGORA_TOKEN_EXPIRATION', 3600),
     ],
 
+    'daily' => [
+        'api_key' => env('DAILY_API_KEY'),
+        'api_url' => env('DAILY_API_URL', 'https://api.daily.co/v1'),
+        'timeout' => env('DAILY_API_TIMEOUT', 15),
+    ],
+
 ];

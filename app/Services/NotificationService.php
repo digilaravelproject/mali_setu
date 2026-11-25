@@ -474,7 +474,7 @@ class NotificationService
 
     public function notifyMatrimonyApproved(MatrimonyProfile $profile)
     {
-        return $this->createNotification(
+        $ownerNotification = $this->createNotification(
             $profile->user_id,
             Notification::TYPE_MATRIMONY_APPROVED,
             'Matrimony Profile Approved',
@@ -485,6 +485,29 @@ class NotificationService
             $profile,
             ['in_app', 'email']
         );
+
+        $recipientIds = User::query()
+            ->whereKeyNot($profile->user_id)
+            ->whereHas('matrimonyProfile')
+            ->pluck('id')
+            ->all();
+        $profileName = $profile->candidate_name
+            ?: data_get($profile->personal_details, 'name')
+            ?: $profile->user?->name
+            ?: 'A new member';
+        $memberNotifications = $this->sendBulkNotifications(
+            $recipientIds,
+            Notification::TYPE_MATRIMONY_PROFILE_CREATED,
+            'New approved matrimony profile',
+            $profileName.' has joined Mali Setu Matrimony.',
+            ['profile_id' => $profile->id, 'profile_name' => $profileName],
+            '/dashboard/matrimony/browse',
+            Notification::PRIORITY_MEDIUM,
+            ['in_app'],
+            $profile
+        );
+
+        return ['owner' => $ownerNotification, 'matrimony_users' => $memberNotifications];
     }
 
     public function notifyMatrimonyRejected(MatrimonyProfile $profile, string $reason)
@@ -560,7 +583,7 @@ class NotificationService
 
     public function notifyMatrimonyProfileCreated(MatrimonyProfile $profile)
     {
-        $creatorNotification = $this->createNotification(
+        return $this->createNotification(
             $profile->user_id,
             Notification::TYPE_MATRIMONY_PENDING,
             'Matrimony profile pending approval',
@@ -571,29 +594,6 @@ class NotificationService
             $profile,
             ['in_app', 'email']
         );
-
-        $existingUserIds = User::whereKeyNot($profile->user_id)
-            ->whereHas('matrimonyProfile')
-            ->pluck('id')
-            ->all();
-
-        $profileName = data_get($profile->personal_details, 'name', 'A new member');
-        $existingUserNotifications = $this->sendBulkNotifications(
-            $existingUserIds,
-            Notification::TYPE_MATRIMONY_PROFILE_CREATED,
-            'New matrimony profile created',
-            $profileName.' has created a matrimony profile.',
-            ['profile_id' => $profile->id],
-            '/dashboard/matrimony/browse',
-            Notification::PRIORITY_MEDIUM,
-            ['in_app'],
-            $profile
-        );
-
-        return [
-            'creator' => $creatorNotification,
-            'existing_users' => $existingUserNotifications,
-        ];
     }
 
     public function notifyJobApplication($jobPosting, $applicant)

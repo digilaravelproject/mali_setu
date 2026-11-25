@@ -83,6 +83,11 @@ class Business extends Model
         return $this->hasMany(Service::class);
     }
 
+    public function enquiries(): HasMany
+    {
+        return $this->hasMany(BusinessEnquiry::class);
+    }
+
     /**
      * Get the locations for the business
      */

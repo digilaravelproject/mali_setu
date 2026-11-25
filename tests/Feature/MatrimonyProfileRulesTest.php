@@ -479,7 +479,7 @@ class MatrimonyProfileRulesTest extends TestCase
         $this->assertSame([2, 3], $matches);
     }
 
-    public function test_new_profile_notifies_creator_and_all_existing_matrimony_users(): void
+    public function test_new_profile_broadcasts_to_matrimony_users_only_after_admin_approval(): void
     {
         Mail::fake();
         $newProfile = MatrimonyProfile::findOrFail(1);
@@ -489,6 +489,15 @@ class MatrimonyProfileRulesTest extends TestCase
         $this->assertDatabaseHas('notifications', [
             'user_id' => 1,
             'type' => Notification::TYPE_MATRIMONY_PENDING,
+        ]);
+        $this->assertDatabaseCount('notifications', 1);
+
+        $newProfile->update(['approval_status' => 'approved']);
+        app(NotificationService::class)->notifyMatrimonyApproved($newProfile->fresh());
+
+        $this->assertDatabaseHas('notifications', [
+            'user_id' => 1,
+            'type' => Notification::TYPE_MATRIMONY_APPROVED,
         ]);
         foreach ([2, 3, 4] as $existingUserId) {
             $this->assertDatabaseHas('notifications', [

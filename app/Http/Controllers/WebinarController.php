@@ -7,6 +7,7 @@ use App\Models\Webinar;
 use App\Models\WebinarComment;
 use App\Models\WebinarRegistration;
 use App\Services\AgoraTokenService;
+use App\Services\DailyMeetingService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
@@ -68,11 +69,13 @@ class WebinarController extends Controller
         ]);
     }
 
-    public function token(Request $request, Webinar $webinar, AgoraTokenService $tokens)
+    public function token(Request $request, Webinar $webinar, AgoraTokenService $agora, DailyMeetingService $daily)
     {
         $this->authorizeAttendee($webinar);
 
-        return response()->json($tokens->credentials($webinar, $request->user(), false));
+        return response()->json($webinar->usesDaily()
+            ? $daily->credentials($webinar, $request->user(), false)
+            : $agora->credentials($webinar, $request->user(), false));
     }
 
     public function liveComments(Request $request, Webinar $webinar)
