@@ -74,8 +74,8 @@ class WebAuthController extends Controller
      */
     public function showRegister(Request $request)
     {
-        $referralCode = strtoupper(trim((string) $request->query('referral_code', $request->query('ref'))));
-        if ($referralCode !== '' && ! User::whereRaw('UPPER(reffral_code) = ?', [$referralCode])->exists()) {
+        $referralCode = trim((string) $request->query('referral_code', $request->query('ref')));
+        if ($referralCode !== '' && ! User::whereRaw('LOWER(reffral_code) = ?', [Str::lower($referralCode)])->exists()) {
             $referralCode = '';
         }
 
@@ -112,7 +112,17 @@ class WebAuthController extends Controller
             'company_name' => 'nullable|string|max:255',
             'dept_name' => 'nullable|string|max:255',
             'designation' => 'nullable|string|max:255',
-            'referral_code' => 'nullable|string|max:50|exists:users,reffral_code',
+            'referral_code' => [
+                'nullable',
+                'string',
+                'max:50',
+                function (string $attribute, mixed $value, \Closure $fail) {
+                    $code = trim((string) $value);
+                    if ($code !== '' && ! User::whereRaw('LOWER(reffral_code) = ?', [Str::lower($code)])->exists()) {
+                        $fail('The referral code is invalid.');
+                    }
+                },
+            ],
             'password' => 'required|string|min:8|confirmed',
             'term_condition' => 'accepted',
             'latitude' => 'nullable|numeric|between:-90,90',

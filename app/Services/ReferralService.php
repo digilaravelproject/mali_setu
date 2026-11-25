@@ -6,6 +6,7 @@ use App\Models\Referral;
 use App\Models\User;
 use App\Models\VolunteerReferralProfile;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Support\Str;
 
 class ReferralService
 {
@@ -27,12 +28,12 @@ class ReferralService
 
     public function record(?string $submittedCode, User $referredUser): ?Referral
     {
-        $submittedCode = strtoupper(trim((string) $submittedCode));
+        $submittedCode = trim((string) $submittedCode);
         if ($submittedCode === '') {
             return null;
         }
 
-        $referrer = User::whereRaw('UPPER(reffral_code) = ?', [$submittedCode])->first();
+        $referrer = User::whereRaw('LOWER(reffral_code) = ?', [Str::lower($submittedCode)])->first();
         if (! $referrer || $referrer->is($referredUser)) {
             return null;
         }
@@ -63,7 +64,7 @@ class ReferralService
     {
         $user = User::query()
             ->with(['volunteer', 'volunteerReferralProfile.district', 'volunteerReferralProfile.taluka', 'volunteerReferralProfile.locality'])
-            ->whereRaw('UPPER(reffral_code) = ?', [strtoupper(trim($code))])
+            ->whereRaw('LOWER(reffral_code) = ?', [Str::lower(trim($code))])
             ->first();
 
         if (! $user) {

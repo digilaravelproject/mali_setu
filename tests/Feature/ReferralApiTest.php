@@ -347,6 +347,16 @@ class ReferralApiTest extends TestCase
             ->assertSee('Referral code applied from your invitation link.');
     }
 
+    public function test_web_referral_link_accepts_lowercase_and_special_characters(): void
+    {
+        DB::table('users')->insert($this->userRow('Special Inviter', 'special@example.com', '9000000001', 'general', 'MsU+Special@1'));
+
+        $this->get('/register?referral_code='.rawurlencode('msu+special@1'))
+            ->assertOk()
+            ->assertSee('value="msu+special@1"', false)
+            ->assertSee('readonly', false);
+    }
+
     public function test_owner_can_send_referral_link_by_email(): void
     {
         Mail::fake();
