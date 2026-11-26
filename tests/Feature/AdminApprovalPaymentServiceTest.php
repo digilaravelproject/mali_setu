@@ -138,8 +138,9 @@ class AdminApprovalPaymentServiceTest extends TestCase
             'status' => 'pending',
             'payment_method' => 'other',
         ]);
+        $failedTransaction = Transaction::create($this->transactionData(20, 'failed', 10));
 
-        app(AdminApprovalPaymentService::class)->approveMatrimony($profile, $plan, 99);
+        $payment = app(AdminApprovalPaymentService::class)->approveMatrimony($profile, $plan, 99);
 
         $profile->refresh();
         $this->assertSame('approved', $profile->approval_status);
@@ -153,6 +154,11 @@ class AdminApprovalPaymentServiceTest extends TestCase
             'payment_method' => 'other',
         ]);
         $this->assertSame(2, Payment::where('user_id', 20)->count());
+        $failedTransaction->refresh();
+        $this->assertSame('completed', $failedTransaction->status);
+        $this->assertSame($payment->payment_id, $failedTransaction->razorpay_payment_id);
+        $this->assertSame('MAT-10', $failedTransaction->razorpay_order_id);
+        $this->assertSame(24, $failedTransaction->subscription_period);
     }
 
     public function test_admin_can_add_business_payment_and_fully_approve_business(): void
@@ -162,8 +168,18 @@ class AdminApprovalPaymentServiceTest extends TestCase
         $plan = BusinessPlan::create([
             'company_type' => 'Private Ltd', 'duration_years' => 3, 'price' => 2499, 'active' => true,
         ]);
+        $failedTransaction = Transaction::create([
+            'user_id' => 30,
+            'amount' => 2499,
+            'currency' => 'INR',
+            'purpose' => 'business_registration',
+            'razorpay_order_id' => 'BUS-OLD-ORDER',
+            'status' => 'failed',
+            'subscription_period' => 12,
+            'metadata' => [],
+        ]);
 
-        app(AdminApprovalPaymentService::class)->approveBusiness($business, $plan, 99);
+        $payment = app(AdminApprovalPaymentService::class)->approveBusiness($business, $plan, 99);
 
         $business->refresh();
         $this->assertSame('approved', $business->verification_status);
@@ -176,6 +192,12 @@ class AdminApprovalPaymentServiceTest extends TestCase
             'amount' => 2499,
             'status' => 'completed',
         ]);
+        $transaction = Transaction::where('user_id', 30)->where('purpose', 'business_registration')->sole();
+        $this->assertSame($failedTransaction->id, $transaction->id);
+        $this->assertSame('completed', $transaction->status);
+        $this->assertSame($payment->payment_id, $transaction->razorpay_payment_id);
+        $this->assertSame('BUS-OLD-ORDER', $transaction->razorpay_order_id);
+        $this->assertSame(36, $transaction->subscription_period);
     }
 
     private function transactionData(int $userId, string $status, int $sequence): array
