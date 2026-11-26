@@ -1334,6 +1334,25 @@ class BusinessController extends Controller
         return response()->json(['success' => true, 'data' => $items]);
     }
 
+    /** List all product and service enquiries for one business owned by the authenticated user. */
+    public function businessEnquiries(Request $request, Business $business)
+    {
+        abort_unless($business->user_id === $request->user()->id, 403, 'You cannot view enquiries for this business.');
+
+        $items = $this->enquiryQuery()
+            ->where('business_id', $business->id)
+            ->latest()
+            ->paginate(min(100, max(1, $request->integer('per_page', 20))));
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'business' => $business->load('category'),
+                'enquiries' => $items,
+            ],
+        ]);
+    }
+
     /** List enquiries received for one product owned by the authenticated user. */
     public function productEnquiries(Request $request, Product $product)
     {

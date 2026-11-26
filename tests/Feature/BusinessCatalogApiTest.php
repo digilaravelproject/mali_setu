@@ -190,6 +190,12 @@ class BusinessCatalogApiTest extends TestCase
         $this->getJson('/api/business/enquiries/received')
             ->assertOk()
             ->assertJsonPath('data.total', 2);
+
+        $this->getJson('/api/business/'.$this->business->id.'/enquiries')
+            ->assertOk()
+            ->assertJsonPath('data.business.business_name', 'Garden Store')
+            ->assertJsonPath('data.enquiries.total', 2)
+            ->assertJsonPath('data.enquiries.data.0.user.email', 'buyer2@example.test');
     }
 
     public function test_non_owner_cannot_read_enquiries_for_a_catalog_item(): void
@@ -202,6 +208,9 @@ class BusinessCatalogApiTest extends TestCase
 
         $this->actingAs($other, 'sanctum')
             ->getJson('/api/business/products/'.$product->id.'/enquiries')
+            ->assertForbidden();
+
+        $this->getJson('/api/business/'.$this->business->id.'/enquiries')
             ->assertForbidden();
     }
 }
