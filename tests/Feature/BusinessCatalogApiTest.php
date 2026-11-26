@@ -175,6 +175,12 @@ class BusinessCatalogApiTest extends TestCase
         $this->postJson('/api/business/enquiries', ['product_id' => $product->id, 'description' => 'Product enquiry'])->assertCreated();
         $this->postJson('/api/business/enquiries', ['service_id' => $service->id, 'description' => 'Service enquiry'])->assertCreated();
 
+        $this->getJson('/api/business/'.$this->business->id.'/enquiries')
+            ->assertOk()
+            ->assertJsonPath('data.scope', 'sent_by_me')
+            ->assertJsonPath('data.enquiries.total', 2)
+            ->assertJsonPath('data.enquiries.data.0.user.id', $buyer->id);
+
         $this->actingAs($this->user, 'sanctum')
             ->getJson('/api/business/products/'.$product->id.'/enquiries')
             ->assertOk()
@@ -194,6 +200,7 @@ class BusinessCatalogApiTest extends TestCase
         $this->getJson('/api/business/'.$this->business->id.'/enquiries')
             ->assertOk()
             ->assertJsonPath('data.business.business_name', 'Garden Store')
+            ->assertJsonPath('data.scope', 'received')
             ->assertJsonPath('data.enquiries.total', 2)
             ->assertJsonPath('data.enquiries.data.0.user.email', 'buyer2@example.test');
     }
@@ -211,6 +218,8 @@ class BusinessCatalogApiTest extends TestCase
             ->assertForbidden();
 
         $this->getJson('/api/business/'.$this->business->id.'/enquiries')
-            ->assertForbidden();
+            ->assertOk()
+            ->assertJsonPath('data.scope', 'sent_by_me')
+            ->assertJsonPath('data.enquiries.total', 0);
     }
 }
