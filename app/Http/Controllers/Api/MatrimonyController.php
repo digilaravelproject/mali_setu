@@ -796,6 +796,18 @@ class MatrimonyController extends Controller
 
         $query->where('approval_status', 'approved');
 
+        // A profile explicitly removed by either party must not reappear in
+        // search results. The connection row stores user IDs (not profile IDs).
+        $authUserId = $request->user()->id;
+        $query->whereNotIn('user_id', ConnectionRequest::query()
+            ->select('receiver_id')
+            ->where('sender_id', $authUserId)
+            ->where('status', 'removed'))
+            ->whereNotIn('user_id', ConnectionRequest::query()
+                ->select('sender_id')
+                ->where('receiver_id', $authUserId)
+                ->where('status', 'removed'));
+
         app(MatrimonySafetyService::class)->hideReportedProfiles($query, $request->user()->id);
 
         app(MatrimonyProfileSearchService::class)->applyDefaultOppositeGender(
@@ -805,7 +817,6 @@ class MatrimonyController extends Controller
         );
 
         $results = $query->latest()->paginate($request->size ?? 20);
-        $authUserId = $request->user()->id;
         $results->getCollection()->each(function (MatrimonyProfile $profile) use ($authUserId) {
             $profile->is_blocked = app(MatrimonySafetyService::class)->isBlockedBy($authUserId, $profile->user_id);
             $profile->connection_status = $profile->is_blocked ? 'blocked' : 'not_connected';

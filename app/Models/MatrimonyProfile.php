@@ -40,7 +40,7 @@ class MatrimonyProfile extends Model
     ];
 
     protected $casts = [
-        'date_of_birth' => 'date',
+        'date_of_birth' => 'date:Y-m-d',
         'personal_details' => 'array',
         'family_details' => 'array',
         'education_details' => 'array',

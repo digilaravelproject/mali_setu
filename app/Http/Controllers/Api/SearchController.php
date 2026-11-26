@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Business;
+use App\Models\ConnectionRequest;
 use App\Models\DonationCause;
 use App\Models\JobPosting;
 use App\Models\MatrimonyProfile;
@@ -283,6 +284,15 @@ class SearchController extends Controller
 
         $query->where('approval_status', 'approved');
 
+        $query->whereNotIn('user_id', ConnectionRequest::query()
+            ->select('receiver_id')
+            ->where('sender_id', $authUserId)
+            ->where('status', 'removed'))
+            ->whereNotIn('user_id', ConnectionRequest::query()
+                ->select('sender_id')
+                ->where('receiver_id', $authUserId)
+                ->where('status', 'removed'));
+
         app(MatrimonyProfileSearchService::class)->applyDefaultOppositeGender(
             $query,
             $request,
@@ -332,6 +342,9 @@ class SearchController extends Controller
                 $usr->connection_status = 'blocked';
                 $usr->is_blocked = true;
             } elseif ($connection) {
+                if ($connection->status === 'removed') {
+                    return false;
+                }
                 $usr->connection_status = $connection->status;
             } else {
                 $usr->connection_status = 'not_connected';

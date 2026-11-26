@@ -56,6 +56,9 @@
             <button id="micButton" class="control-button" type="button" disabled title="Microphone"><i class="fas fa-microphone"></i></button>
             <button id="cameraButton" class="control-button" type="button" disabled title="Camera"><i class="fas fa-video"></i></button>
             <button id="screenButton" class="control-button" type="button" disabled title="Present screen"><i class="fas fa-desktop"></i></button>
+            @if($isHost && $webinar->allow_recording)
+            <button id="recordButton" class="control-button" type="button" title="Start recording"><i class="fas fa-circle"></i></button>
+            @endif
             <button id="leaveButton" class="control-button hangup" type="button" title="Leave meeting"><i class="fas fa-phone-slash"></i></button>
         </div>
         <div class="meet-actions">
@@ -71,7 +74,9 @@
 
 @section('scripts')
     @include($webinar->usesDaily() ? 'webinars.partials.daily-script' : 'webinars.partials.live-script')
+    @if($isHost && $webinar->allow_recording) @include('webinars.partials.recording-script') @endif
 @endsection
 @push('scripts')
     @include($webinar->usesDaily() ? 'webinars.partials.daily-script' : 'webinars.partials.live-script')
+    @if($isHost && $webinar->allow_recording) @include('webinars.partials.recording-script') @endif
 @endpush

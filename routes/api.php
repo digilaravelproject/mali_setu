@@ -234,6 +234,9 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::delete('services/{id}', [BusinessController::class, 'deleteService']);
         Route::post('enquiries', [BusinessController::class, 'createEnquiry']);
         Route::get('enquiries', [BusinessController::class, 'enquiries']);
+        Route::get('enquiries/received', [BusinessController::class, 'receivedEnquiries']);
+        Route::get('products/{product}/enquiries', [BusinessController::class, 'productEnquiries']);
+        Route::get('services/{service}/enquiries', [BusinessController::class, 'serviceEnquiries']);
         Route::get('enquiries/{enquiry}', [BusinessController::class, 'enquiryDetails']);
     });
 

@@ -14,7 +14,8 @@ class Webinar extends Model
         'created_by', 'title', 'category', 'categories', 'description', 'banner_path', 'speaker_name', 'agenda',
         'starts_at', 'duration_minutes', 'meeting_provider', 'agora_channel', 'agora_link',
         'daily_room_name', 'daily_room_url', 'audience',
-        'require_registration', 'allow_qa', 'allow_recording', 'access_type', 'is_paid', 'price', 'plan_ids', 'status',
+        'require_registration', 'allow_qa', 'allow_recording', 'recording_path', 'recorded_at',
+        'access_type', 'is_paid', 'price', 'plan_ids', 'status',
     ];
 
     protected $casts = [
@@ -22,6 +23,7 @@ class Webinar extends Model
         'require_registration' => 'boolean',
         'allow_qa' => 'boolean',
         'allow_recording' => 'boolean',
+        'recorded_at' => 'datetime',
         'is_paid' => 'boolean',
         'price' => 'decimal:2',
         'plan_ids' => 'array',
@@ -37,6 +39,11 @@ class Webinar extends Model
     public function getBannerUrlAttribute(): ?string
     {
         return $this->banner_path ? Storage::disk('public')->url($this->banner_path) : null;
+    }
+
+    public function getRecordingUrlAttribute(): ?string
+    {
+        return $this->recording_path ? Storage::disk('public')->url($this->recording_path) : null;
     }
 
     public function getEndsAtAttribute()

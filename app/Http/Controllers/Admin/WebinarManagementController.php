@@ -76,7 +76,7 @@ class WebinarManagementController extends Controller
         $data['category'] = $data['categories'][0];
         $data['require_registration'] = $request->boolean('require_registration');
         $data['allow_qa'] = $request->boolean('allow_qa');
-        $data['allow_recording'] = false;
+        $data['allow_recording'] = $request->boolean('allow_recording');
         $data['is_paid'] = $request->boolean('is_paid');
         $data['price'] = $data['is_paid'] ? $data['price'] : null;
         if ($data['is_paid']) $data['require_registration'] = true;
@@ -97,7 +97,7 @@ class WebinarManagementController extends Controller
         $data['category'] = $data['categories'][0];
         $data['require_registration'] = $request->boolean('require_registration');
         $data['allow_qa'] = $request->boolean('allow_qa');
-        $data['allow_recording'] = false;
+        $data['allow_recording'] = $request->boolean('allow_recording');
         $data['is_paid'] = $request->boolean('is_paid');
         $data['price'] = $data['is_paid'] ? $data['price'] : null;
         if ($data['is_paid']) $data['require_registration'] = true;
@@ -115,6 +115,7 @@ class WebinarManagementController extends Controller
     public function destroy(Webinar $webinar)
     {
         if ($webinar->banner_path) Storage::disk('public')->delete($webinar->banner_path);
+        if ($webinar->recording_path) Storage::disk('public')->delete($webinar->recording_path);
         $webinar->delete();
         return back()->with('success', 'Webinar deleted.');
     }
@@ -131,7 +132,56 @@ class WebinarManagementController extends Controller
             'controlsUrl' => null,
             'moderationUrl' => route('admin.webinars.participant-control', $webinar),
             'participantUrl' => route('admin.webinars.participant', [$webinar, '__USER__']),
+            'recordingUploadUrl' => route('admin.webinars.recording.upload', $webinar),
         ]);
+    }
+
+    public function uploadRecordingChunk(Request $request, Webinar $webinar)
+    {
+        abort_unless($webinar->allow_recording, 403, 'Recording is disabled for this webinar.');
+
+        $data = $request->validate([
+            'recording_id' => ['required', 'uuid'],
+            'chunk_index' => ['required', 'integer', 'min:0'],
+            'is_final' => ['required', 'boolean'],
+            'chunk' => ['required', 'file', 'max:51200'],
+        ]);
+
+        $disk = Storage::disk('public');
+        $temporaryPath = "webinars/recordings/.chunks/{$webinar->id}-{$data['recording_id']}.webm";
+        if ((int) $data['chunk_index'] === 0) {
+            $disk->delete($temporaryPath);
+        }
+
+        $absolutePath = $disk->path($temporaryPath);
+        if (! is_dir(dirname($absolutePath))) {
+            mkdir(dirname($absolutePath), 0775, true);
+        }
+        file_put_contents($absolutePath, file_get_contents($request->file('chunk')->getRealPath()), FILE_APPEND | LOCK_EX);
+
+        if (! $request->boolean('is_final')) {
+            return response()->json(['success' => true, 'chunk_index' => (int) $data['chunk_index']]);
+        }
+
+        $recordingPath = 'webinars/recordings/webinar-'.$webinar->id.'-'.now()->format('Ymd-His').'.webm';
+        if ($webinar->recording_path) {
+            $disk->delete($webinar->recording_path);
+        }
+        $disk->move($temporaryPath, $recordingPath);
+        $webinar->update(['recording_path' => $recordingPath, 'recorded_at' => now()]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Webinar recording saved successfully.',
+            'recording_url' => $webinar->fresh()->recording_url,
+        ]);
+    }
+
+    public function recording(Webinar $webinar)
+    {
+        abort_unless($webinar->recording_path && Storage::disk('public')->exists($webinar->recording_path), 404);
+
+        return view('admin.webinars.recording', compact('webinar'));
     }
 
     public function token(Request $request, Webinar $webinar, AgoraTokenService $agora, DailyMeetingService $daily)
@@ -201,6 +251,7 @@ class WebinarManagementController extends Controller
             'audience' => 'required|in:all,subscribers',
             'require_registration' => 'sometimes|boolean',
             'allow_qa' => 'sometimes|boolean',
+            'allow_recording' => 'sometimes|boolean',
             'access_type' => 'required|in:free,specific_plans',
             'is_paid' => 'sometimes|boolean',
             'price' => 'nullable|required_if:is_paid,1|numeric|min:1|max:99999999.99',

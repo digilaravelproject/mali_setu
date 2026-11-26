@@ -158,4 +158,50 @@ class BusinessCatalogApiTest extends TestCase
             ->assertOk()
             ->assertJsonPath('data.enquiry.user.email', 'buyer@example.test');
     }
+
+    public function test_owner_can_list_received_enquiries_by_product_service_and_all_listings(): void
+    {
+        $buyer = User::create(['name' => 'Buyer', 'email' => 'buyer2@example.test', 'phone' => '9888888888']);
+        $product = Product::create([
+            'business_id' => $this->business->id, 'name' => 'Garden Kit',
+            'description' => 'Complete kit', 'cost' => 2500, 'status' => 'active',
+        ]);
+        $service = Service::create([
+            'business_id' => $this->business->id, 'name' => 'Garden Setup',
+            'description' => 'On-site setup', 'cost' => 5000, 'status' => 'active',
+        ]);
+
+        $this->actingAs($buyer, 'sanctum');
+        $this->postJson('/api/business/enquiries', ['product_id' => $product->id, 'description' => 'Product enquiry'])->assertCreated();
+        $this->postJson('/api/business/enquiries', ['service_id' => $service->id, 'description' => 'Service enquiry'])->assertCreated();
+
+        $this->actingAs($this->user, 'sanctum')
+            ->getJson('/api/business/products/'.$product->id.'/enquiries')
+            ->assertOk()
+            ->assertJsonPath('data.item.name', 'Garden Kit')
+            ->assertJsonPath('data.enquiries.total', 1)
+            ->assertJsonPath('data.enquiries.data.0.user.email', 'buyer2@example.test');
+
+        $this->getJson('/api/business/services/'.$service->id.'/enquiries')
+            ->assertOk()
+            ->assertJsonPath('data.item.name', 'Garden Setup')
+            ->assertJsonPath('data.enquiries.total', 1);
+
+        $this->getJson('/api/business/enquiries/received')
+            ->assertOk()
+            ->assertJsonPath('data.total', 2);
+    }
+
+    public function test_non_owner_cannot_read_enquiries_for_a_catalog_item(): void
+    {
+        $product = Product::create([
+            'business_id' => $this->business->id, 'name' => 'Private Product',
+            'description' => 'Owner only', 'cost' => 100, 'status' => 'active',
+        ]);
+        $other = User::create(['name' => 'Other', 'email' => 'other@example.test']);
+
+        $this->actingAs($other, 'sanctum')
+            ->getJson('/api/business/products/'.$product->id.'/enquiries')
+            ->assertForbidden();
+    }
 }

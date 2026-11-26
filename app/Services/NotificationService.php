@@ -486,11 +486,26 @@ class NotificationService
             ['in_app', 'email']
         );
 
-        $recipientIds = User::query()
-            ->whereKeyNot($profile->user_id)
-            ->whereHas('matrimonyProfile')
-            ->pluck('id')
-            ->all();
+        $gender = strtolower(trim((string) (
+            data_get($profile->personal_details, 'gender')
+            ?? $profile->gender
+            ?? ''
+        )));
+        $recipientGender = match ($gender) {
+            'male' => 'female',
+            'female' => 'male',
+            default => null,
+        };
+
+        $recipientIds = $recipientGender
+            ? User::query()
+                ->whereKeyNot($profile->user_id)
+                ->whereHas('matrimonyProfile', fn ($query) => $query
+                    ->where('approval_status', 'approved')
+                    ->adminGender($recipientGender))
+                ->pluck('id')
+                ->all()
+            : [];
         $profileName = $profile->candidate_name
             ?: data_get($profile->personal_details, 'name')
             ?: $profile->user?->name
@@ -503,7 +518,7 @@ class NotificationService
             ['profile_id' => $profile->id, 'profile_name' => $profileName],
             '/dashboard/matrimony/browse',
             Notification::PRIORITY_MEDIUM,
-            ['in_app'],
+            ['in_app', 'push'],
             $profile
         );
 

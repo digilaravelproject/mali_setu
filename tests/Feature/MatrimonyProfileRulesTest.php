@@ -345,6 +345,24 @@ class MatrimonyProfileRulesTest extends TestCase
         $this->assertDatabaseMissing('matrimony_blocks', ['blocker_id' => 1, 'blocked_user_id' => 2]);
     }
 
+    public function test_search_excludes_profiles_removed_by_either_user(): void
+    {
+        DB::table('connection_requests')->insert([
+            'sender_id' => 1,
+            'receiver_id' => 2,
+            'status' => 'removed',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $response = $this->actingAs(User::findOrFail(1), 'sanctum')
+            ->postJson('/api/search/matrimony', ['created_at' => 'all']);
+
+        $returnedUserIds = collect($response->assertOk()->json('data.data'))->pluck('user_id');
+        $this->assertFalse($returnedUserIds->contains(2));
+        $this->assertFalse(collect($response->json('data.data'))->pluck('connection_status')->contains('removed'));
+    }
+
     public function test_conversations_include_is_block_for_the_other_user(): void
     {
         DB::table('chat_conversations')->insert([
@@ -499,17 +517,19 @@ class MatrimonyProfileRulesTest extends TestCase
             'user_id' => 1,
             'type' => Notification::TYPE_MATRIMONY_APPROVED,
         ]);
-        foreach ([2, 3, 4] as $existingUserId) {
+        foreach ([2, 3] as $femaleCandidateId) {
             $this->assertDatabaseHas('notifications', [
-                'user_id' => $existingUserId,
+                'user_id' => $femaleCandidateId,
                 'type' => Notification::TYPE_MATRIMONY_PROFILE_CREATED,
                 'related_id' => 1,
             ]);
         }
-        $this->assertSame(
-            3,
-            Notification::where('type', Notification::TYPE_MATRIMONY_PROFILE_CREATED)->count()
-        );
+        $this->assertDatabaseMissing('notifications', [
+            'user_id' => 4,
+            'type' => Notification::TYPE_MATRIMONY_PROFILE_CREATED,
+            'related_id' => 1,
+        ]);
+        $this->assertSame(2, Notification::where('type', Notification::TYPE_MATRIMONY_PROFILE_CREATED)->count());
     }
 
     public function test_published_blog_creates_push_enabled_notifications_for_other_active_users(): void

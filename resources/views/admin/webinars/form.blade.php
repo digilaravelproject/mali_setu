@@ -93,7 +93,8 @@
                 <div class="mb-1">
                     <label class="form-label d-block">Meeting Settings <span class="text-danger">*</span></label>
                     <label class="compact-check"><input type="checkbox" name="require_registration" value="1" @checked(old('require_registration',$webinar->exists ? $webinar->require_registration : true))> Require Registration</label>
-                    <label class="compact-check mb-0"><input type="checkbox" name="allow_qa" value="1" @checked(old('allow_qa',$webinar->exists ? $webinar->allow_qa : true))> Allow Q&amp;A</label>
+                    <label class="compact-check"><input type="checkbox" name="allow_qa" value="1" @checked(old('allow_qa',$webinar->exists ? $webinar->allow_qa : true))> Allow Q&amp;A</label>
+                    <label class="compact-check mb-0"><input type="checkbox" name="allow_recording" value="1" @checked(old('allow_recording',$webinar->allow_recording))> Record Session</label>
                 </div>
             </div>
         </div>

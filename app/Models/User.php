@@ -87,7 +87,10 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'blog_access' => 'boolean',
-            'dob' => 'date',
+            // DOB is a calendar date, not an instant in time. Serializing it as
+            // YYYY-MM-DD prevents clients from applying a timezone offset and
+            // displaying the previous day.
+            'dob' => 'date:Y-m-d',
         ];
     }
 

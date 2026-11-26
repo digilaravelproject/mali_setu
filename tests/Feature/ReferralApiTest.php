@@ -380,6 +380,16 @@ class ReferralApiTest extends TestCase
         });
     }
 
+    public function test_user_dob_serializes_as_a_date_without_a_timezone_shift(): void
+    {
+        $userId = DB::table('users')->insertGetId(array_merge(
+            $this->userRow('Date Test', 'date@example.com', '9222222222', 'general', 'MSUDATE'),
+            ['dob' => '2008-11-11']
+        ));
+
+        $this->assertSame('2008-11-11', User::findOrFail($userId)->toArray()['dob']);
+    }
+
     private function userRow(string $name, string $email, string $phone, string $type, string $code): array
     {
         return [

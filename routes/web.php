@@ -278,6 +278,8 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::match(['get', 'post'], '/{webinar}/go-live/comments', [WebinarManagementController::class, 'comments'])->name('comments')->middleware('throttle:60,1');
             Route::post('/{webinar}/go-live/participant-control', [WebinarManagementController::class, 'controlParticipant'])->name('participant-control')->middleware('throttle:60,1');
             Route::get('/{webinar}/go-live/participants/{user}', [WebinarManagementController::class, 'participant'])->name('participant')->middleware('throttle:60,1');
+            Route::post('/{webinar}/recording/chunks', [WebinarManagementController::class, 'uploadRecordingChunk'])->name('recording.upload')->middleware('throttle:240,1');
+            Route::get('/{webinar}/recording', [WebinarManagementController::class, 'recording'])->name('recording.show');
             Route::delete('/{webinar}', [WebinarManagementController::class, 'destroy'])->name('destroy');
         });
 

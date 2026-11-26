@@ -1323,6 +1323,33 @@ class BusinessController extends Controller
         return response()->json(['success' => true, 'data' => $items]);
     }
 
+    /** List every enquiry received for the authenticated user's products and services. */
+    public function receivedEnquiries(Request $request)
+    {
+        $items = $this->enquiryQuery()
+            ->whereHas('business', fn ($business) => $business->where('user_id', $request->user()->id))
+            ->latest()
+            ->paginate(min(100, max(1, $request->integer('per_page', 20))));
+
+        return response()->json(['success' => true, 'data' => $items]);
+    }
+
+    /** List enquiries received for one product owned by the authenticated user. */
+    public function productEnquiries(Request $request, Product $product)
+    {
+        $this->authorizeEnquiryItemOwner($request, $product);
+
+        return $this->enquiriesForItem($request, $product);
+    }
+
+    /** List enquiries received for one service owned by the authenticated user. */
+    public function serviceEnquiries(Request $request, Service $service)
+    {
+        $this->authorizeEnquiryItemOwner($request, $service);
+
+        return $this->enquiriesForItem($request, $service);
+    }
+
     /** Get one enquiry with requester, catalog item and business details. */
     public function enquiryDetails(Request $request, BusinessEnquiry $enquiry)
     {
@@ -1340,6 +1367,29 @@ class BusinessController extends Controller
             'business.category',
             'enquirable',
         ]);
+    }
+
+    private function enquiriesForItem(Request $request, Product|Service $item)
+    {
+        $items = $this->enquiryQuery()
+            ->where('enquirable_type', $item::class)
+            ->where('enquirable_id', $item->id)
+            ->latest()
+            ->paginate(min(100, max(1, $request->integer('per_page', 20))));
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'item' => $item->load('business'),
+                'enquiries' => $items,
+            ],
+        ]);
+    }
+
+    private function authorizeEnquiryItemOwner(Request $request, Product|Service $item): void
+    {
+        $item->loadMissing('business');
+        abort_unless($item->business && $item->business->user_id === $request->user()->id, 403, 'You cannot view enquiries for this listing.');
     }
 
     /**
